@@ -1,0 +1,25 @@
+<div id="edit">
+<% response.message %>
+<form method="post" name="form">
+<table>
+<tr><td></td><td>Read</td><td>Register</td><td>Comment</td><td>Create</td><td>Edit</td><td>Administrate</td></tr>
+<% param.rows %>
+<tr><td></td><td colspan="6" align="right"><input type="button" value="Cancel" onClick="document.location='<% param.href %>'"> <input type="submit" value="Save" name="submit"></td></tr>
+</table>
+<table>
+<tr>
+<td>Create User:</td>
+<td><input type="text" value="" name="user" size="10"></td>
+</tr>
+<tr>
+<td>Password:</td>
+<td><input type="password" value="" name="password" size="10"></td>
+</tr>
+<tr>
+<td></td>
+<td align="right"><input type="button" value="Create" onClick="document.location='<% param.href %>admin?user=' + document.form.user.value + '&password=' + document.form.password.value;"></td>
+</tr>
+</table>
+</form>
+</div>
+

@@ -1,0 +1,6 @@
+<form method="get">
+	<table>
+		<tr><td><input type="text" name="seachTerm"></td></tr>
+		<tr><td><input type="submit" value="Search" name="submit"></td></tr>
+	</table>
+</form>

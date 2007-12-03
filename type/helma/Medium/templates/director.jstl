@@ -1,0 +1,7 @@
+<object classid="clsid:166B1BCA-3F9C-11CF-8075-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/director/sw.cab#version=8,0,0,0" width="<%= param.width %>" height="<%= param.height %>">
+<param name="src" value="<%= param.src %>">
+<param name="swRemote" value="swSaveEnabled='false' swVolume='false' swRestart='false' swPausePlay='false' swFastForward='false' swContextMenu='false' ">
+<param name="swStretchStyle" value="none">
+<param name="bgColor" value="#ffffff"> 
+<embed src="<%= param.src %>" bgColor="#ffffff"  width="<%= param.width %>" height="<%= param.height %>" swRemote="swSaveEnabled='false' swVolume='false' swRestart='false' swPausePlay='false' swFastForward='false' swContextMenu='false' " swStretchStyle="none" type="application/x-director" pluginspage="http://www.macromedia.com/shockwave/download/"></embed>
+</object>

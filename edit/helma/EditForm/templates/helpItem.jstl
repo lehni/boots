@@ -1,0 +1,1 @@
+<div class="edit-help hidden"><b>Help:</b><div><%= param.text %></div></div>

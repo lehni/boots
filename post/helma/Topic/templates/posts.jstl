@@ -1,0 +1,5 @@
+<div id="posts">
+<%= param.first -%>
+<a name="replies" id="replies"></a>
+<%= param.posts -%>
+</div>

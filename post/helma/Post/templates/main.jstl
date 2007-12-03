@@ -1,0 +1,31 @@
+<div class="<%= param.styleClass %>">
+<div id="<%= param.id %>">
+<a name="<%= param.id %>"></a>
+<div class="block-header">
+	<div class="block-title">
+<% if (param.topicFields) %>
+<%= param.topicFields -%>
+<% else %>
+		<% param.title prefix="<b>" suffix="</b><br />" %>
+		<b>From:</b>&nbsp;&nbsp;<%= param.user %><br />
+		<b>Date:</b>&nbsp;&nbsp;<%= param.date %><br />
+<% end %>
+	</div>
+	<% this.edit_buttons buttons="edit,remove" inline="true" %>
+	<div class="clear"></div>
+</div>
+<div class="block-text">
+<%= param.text %>
+</div>
+<% if (param.resources.length > 0) %>
+<div class="block-resources">
+<% foreach ($resource in param.resources) %>
+<% $resource.renderThumbnail %>
+<% end %>
+</div>
+<div class="clear"></div>
+<% end %>
+<%= param.topicFooter -%>
+</div>
+</div>
+<%= param.outer -%>

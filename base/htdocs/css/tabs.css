@@ -1,0 +1,52 @@
+.tab-pane {
+	position: relative;
+	margin: -2px -2px 0px -2px;
+}
+
+.tab-pane .row {
+	padding-top: 2px;
+	z-index: 1;
+	white-space: nowrap;
+}
+
+.tab-pane .tab a {
+	margin: 1px -2px 1px 2px;
+	padding: 1px 5px 2px 5px;
+	color: #333;
+	background: #ddd;
+	border: 1px solid;
+	border-color: #fff #999 #999 #fff;
+	border-bottom: 0;
+	z-index: 1;
+	position: relative;
+	text-decoration: none;
+}
+
+.tab-pane .tab.selected a {
+	border-bottom: 0;
+	z-index: 3;
+	padding: 1px 6px 3px 7px;
+	margin: 1px -3px -1px 0px;
+	top: -1px;
+}
+
+.tab-pane .hover a {
+	background: #eee;
+}
+
+.tab-pane .title {
+	display: inline;
+	float: left;
+	padding: 0px 6px 0px 2px;
+}
+
+.tab-pane .content {
+	clear: both;
+	border: 1px solid;
+	border-color: #fff #999 #999 #fff;
+	background: #ddd;
+	z-index: 2;
+	position: relative;
+	top: 0px;
+	margin: 4px;
+}

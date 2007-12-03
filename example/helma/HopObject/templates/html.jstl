@@ -1,0 +1,45 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+<% $title = param.title.cutAt(28) %>
+<title>Scriptographer.com - <%= $title %></title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8">
+<link rel="stylesheet" href="/static/css/style.css">
+<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<link rel="shortcut icon" href="/static/favicon.ico">
+<script type="text/javascript" src="/static/base/js/bootstrap.js"></script>
+<script type="text/javascript" src="/static/edit/js/editshim.js"></script>
+<script type="text/javascript" src="/static/js/scripts.js"></script>
+<%= param.head -%>
+</head>
+<body>
+<div id="page">
+<div id="title">
+	<div class="left">
+		<span class="title"><a href="/"><% renderText font="fontTitle" size="20" color="#009dec" charSpacing="-50" text="BootLib" %></a></span>
+	</div>
+	<div class="center">
+		<span class="title"><% renderText font="fontTitle" size="20" color="#000000" text=$title %></span><% this.edit_buttons buttons="edit" inline="true" target="content" style="border:1px solid #999;" %>
+	</div>
+	<div class="right">
+		<span class="title"><% renderText font="fontTitle" size="20" color="#e4141b" text=param.columnTitle %></span>
+	</div>
+</div>
+<div id="main">
+	<div class="left">
+<% root.menu default="&nbsp;" %>
+	</div>
+	<div class="center">
+		<div id="content">
+<%= param.content default="&nbsp;" %>
+		</div>
+		<div class="content-end"></div>
+	</div>
+	<div class="right">
+<%= param.column default="&nbsp;" %>
+		<div class="content-end"></div>
+	</div>
+</div>
+</div>
+</body>
+</html>

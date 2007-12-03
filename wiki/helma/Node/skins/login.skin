@@ -1,0 +1,12 @@
+<div id="edit">
+<% response.message default="Please log in."%>
+<form method="post" action="<% response.action %>">
+	<input type="hidden" name="action" value="<% response.loginAction %>">
+	<table>
+		<input type="hidden" name="action" value="<% response.action %>">
+		<tr><td>Name: </td><td><input type="text" name="username" value="<% response.username %>"></td></tr>
+		<tr><td>Password:</td><td><input type="password" name="password" value="<% response.password %>"></td></tr>
+		<tr><td></td><td align="right"><input type="button" value="Cancel" onClick="document.location='<% response.cancel %>'"> <input type="submit" value="Login" name="submit"></td></tr>
+	</table>
+</form>
+</div>

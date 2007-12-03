@@ -1,0 +1,157 @@
+body, select, input, textarea {
+	font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif;
+}
+
+body {
+	background: #fff;
+	margin: 32px;
+	font-size: 11px;
+}
+
+select, input, textarea {
+	font-size: 10px;
+	margin: 0px;
+	color: #000;
+}
+
+a {
+	padding-bottom: 1px;
+	text-decoration: none;
+}
+
+form {
+	margin: 0px;
+}
+
+img {
+	border: 0;
+}
+
+div {
+	line-height: 17px;
+}
+
+p {
+	margin-top: 0px;
+	margin-bottom: 17px;
+}
+
+ul {
+	padding: 0;
+	margin: 0 0 0 14px;
+}
+
+/* column layout */
+
+.left {
+	width: 90px;
+	clear: left;
+	float: left;
+}
+
+.center {
+	width: 420px;
+	margin-left: 24px;
+	float: left;
+}
+
+.right {
+	width: 190px;
+	margin-left: 24px;
+	float: left;
+}
+
+/* column colors */
+
+.left, .left a {
+	color: #009dec;
+	border-bottom-color: #009dec;
+}
+
+.left a:hover {
+	background: #e3f4fc;
+}
+
+.center, .center a {
+	color: #000;
+	border-bottom-color: #000;
+}
+
+.center a:hover {
+	background: #e5e5e5;
+}
+
+.right, .right a, .error {
+	color: #e4141b;
+	border-bottom-color: #e4141b;
+}
+
+.right a:hover {
+	background: #fce6e6;
+}
+
+/* row layout */
+
+#page {
+	width: 750px;
+}
+
+#header {
+	float: left;
+}
+
+#title {
+	padding-top: 40px;
+	float: left;
+}
+
+#title div {
+	height: 40px;
+	border-bottom: 1px solid;
+}
+
+/* content styles */
+
+#main {
+	padding-top: 16px;
+	float: left;
+}
+
+#main .center a, #main .right a {
+	border-bottom: 1px solid;
+}
+
+.title {
+	float: left;
+}
+
+.title a:hover {
+	background: #fff;
+}
+
+.content-end {
+	height: 34px;
+}
+
+/* helpers */
+
+.clear {
+	clear: both;
+}
+
+.float-left {
+	float: left;
+}
+
+.float-right {
+	float: right;
+}
+
+.hidden {
+	display: none;
+}
+
+.edit-elements {
+	float: right;
+	text-align: right;
+}

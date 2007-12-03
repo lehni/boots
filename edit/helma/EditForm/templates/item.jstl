@@ -1,0 +1,9 @@
+<% if param.spacer %>
+<td width="<%= param.spacerWidth %>"></td>
+<% end %>
+<td<%= param.span prefix=" colspan=\"" suffix="\"" -%>
+<%= param.align prefix=" align=\"" suffix="\"" -%>
+<%= param.calculatedWidth prefix=" width=\"" suffix="\"" -%>
+<% if param.scaleToFit %> class="edit-scale"<% end %>>
+<%= param.item -%>
+</td>

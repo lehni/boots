@@ -1,0 +1,15 @@
+		<item>
+			<title><% param.title %></title> 
+			<link><% param.link %></link>
+			<guid isPermaLink="true"><% param.link %></guid>
+			<pubDate><% param.date %></pubDate>
+<!--
+			<dc:creator><% param.creator %></dc:creator>
+-->
+			<description><% param.description %></description>
+<!--
+			<content:encoded><![CDATA[<% param.content %>]]></content:encoded>
+			<comments></comments>
+			<wfw:commentRSS></wfw:commentRSS>
+-->
+		</item>

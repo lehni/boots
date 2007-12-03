@@ -1,0 +1,205 @@
+#edit {
+	margin: 0px;
+}
+
+#edit a {
+	color: #000;
+	text-decoration: none;
+	border-bottom: 1px solid #000;
+}
+
+/* default */
+
+.edit, #edit td, #edit input, #edit select, #edit textarea, #edit .tab-pane .edit-title {
+	font-family: "Lucida Grande", Verdana, sans-serif;
+	font-size: 10px;
+}
+
+#edit td, #edit .tab-pane .edit-title {
+	font-size: 11px;
+	line-height: 17px;
+}
+
+#edit td {
+	white-space: nowrap;
+	vertical-align: top;
+}
+
+#edit .edit-progress {
+	float: right;
+	padding: 8px;
+}
+
+#edit .edit-buttons-left {
+	padding: 0px 0px 8px 8px;
+}
+
+#edit .edit-buttons-right {
+	padding: 0px 8px 8px 0px;
+	text-align: right;
+}
+
+#edit .edit-nounderline a {
+	border: none;
+	padding: 0px;
+}
+
+/* Not nested in #edit, as it is used for color choosers and such */ 
+.edit-chooser-element, .edit-chooser-element select, .edit-chooser-element input {
+	font-family: "Lucida Grande", Verdana, sans-serif;
+	font-size: 9px;
+	line-height: 10px;
+	margin: 1px;
+}
+
+.edit-chooser-element input[type=text] {
+	height: 10px;
+}
+
+.edit-chooser {
+	font-size: 10px;
+	line-height: 14px;
+}
+
+.edit-chooser {
+	max-width: 300px;
+	max-height: 400px;
+	overflow: auto;
+}
+
+.edit-chooser li {
+	list-style: none;
+	padding: 0;
+	margin-left: -14px;
+	list-style-image: none;
+	white-space: nowrap;
+}
+
+.edit-chooser ul {
+	padding: 0;
+	margin: 0 0 0 14px;
+}
+
+.edit-chooser a {
+	color: #000;
+	padding: 0;
+	margin: 0;
+}
+
+.edit-chooser a:hover {
+	background: #f7f7f7;
+}
+
+/* TODO: remove edit-spacer and handle like item spacer */
+
+#edit .edit-spacer {
+	height: 0px;
+}
+
+#edit .edit-ruler {
+	margin: 6px -8px 2px -8px;
+	border-bottom: 1px dotted #999;
+}
+
+#edit .edit-scale .edit-element {
+	width: 100%;
+}
+
+#edit .edit-color {
+	border: 1px solid;
+	border-color: #999 #fff #fff #999;
+}
+
+#edit .edit-label {
+	font-weight: bold;
+	display: inline;
+}
+
+#edit .edit-error {
+	font-weight: normal;
+	color: #ff3300;
+	display: inline;
+}
+
+#edit .edit-help div {
+	border: 1px dotted #999;
+	background: #fff;
+	padding: 4px;
+	margin-bottom: 4px;
+}
+
+#edit .edit-help div, #edit .edit-help td {
+	font-size: 9px;
+	line-height: 13px;
+	white-space: normal;
+}
+
+/* tab pane */
+
+#edit .tab-pane {
+	position: relative;
+}
+
+#edit .tab-pane .row {
+	z-index: 1;
+	white-space: nowrap;
+}
+
+#edit .tab-pane .tab a {
+	margin: 1px -9px 0px 8px;
+	padding: 1px 7px 3px 7px;
+	color: #000;
+	background: #f7f7f7;
+	border: 1px dotted #999;
+	border-top: 0;
+	z-index: 1;
+	top: -1px;
+	position: relative;
+	text-decoration: none;
+}
+
+#edit .tab-pane .tab.selected a {
+	background: #fff;
+	margin: 0px -9px 0px 8px;
+	padding: 2px 7px 3px 7px;
+	z-index: 3;
+}
+
+#edit .tab-pane .hover a {
+	background: #ddd;
+}
+
+#edit .tab-pane .edit-title {
+	border-bottom: 1px dotted #999;
+	padding: 8px;
+	/* for layering over the edit-progress progress bar */
+	position: relative;
+	z-index: 2;
+}
+
+#edit .tab-pane .edit-content {
+	margin: 6px 8px 6px 8px;
+}
+
+#edit .edit-upload {
+	position: absolute;
+	background: #ff0;
+	z-index: 1;
+	width: 0;
+	height: 34px;
+}
+
+/* icons */
+
+#edit .icon a {
+	border-bottom: 0px;
+}
+
+#edit .icon-small img {
+	vertical-align: middle;
+}
+
+#edit .icon-small a {
+	padding: 0px 2px 3px 0;
+	border-bottom: 0px;
+}

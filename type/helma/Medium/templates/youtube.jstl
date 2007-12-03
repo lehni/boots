@@ -1,0 +1,4 @@
+<object width="<%= param.width %>" height="<%= param.height + 27 %>">
+<param name="movie" value="http://www.youtube.com/v/<%= param.id %>"></param>
+<embed src="http://www.youtube.com/v/<%= param.id %>" type="application/x-shockwave-flash" width="<%= param.width %>" height="<%= param.height + 27 %>"></embed>
+</object>

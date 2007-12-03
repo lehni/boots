@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<rss version="0.92">
+	<channel>
+		<title><% response.title %></title> 
+		<link><% response.link %></link>
+		<description><% response.description %></description>
+		<lastBuildDate><% response.date %></lastBuildDate>
+		<docs>http://backend.userland.com/rss092</docs>
+		<language><% response.language %></language>
+				<item>
+				<title>Dave&#8217;s page of art and programming</title>
+		<description>	
+	Dave Griffiths: WigWamJam
+
+	I&#8217;ve previously posted about Dave Griffiths&#8217; livecoding visual tool Fluxus, but his web site is an amazing place so I&#8217;m posting about it separately. 
+	What he calls &#8220;dave&#8217;s page of art and programming&#8221; is an overflowing sketchbook of projects dealing with Artificial Life, sound synthesis and software for ...</description>
+
+		<link>http://www.generatorx.no/20050812/daves-page-of-art-and-programming/</link></item>
+<% response.items %>
+	</channel>
+</rss>

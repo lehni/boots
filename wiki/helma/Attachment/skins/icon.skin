@@ -1,0 +1,1 @@
+<img src="<% response.icon %>" width="<% response.width %>" height="<% response.height %>" alt="" border="0">

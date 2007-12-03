@@ -1,0 +1,23 @@
+<tr>
+	<td>
+		<a href="<% param.href %>"><% param.name %></a>
+	</td>
+	<td align="center">
+		<input type="radio" name="<% param.name %>" value="0"<% param.priv0 %>>
+	</td>
+	<td align="center">
+		<input type="radio" name="<% param.name %>" value="1"<% param.priv1 %>>
+	</td>
+	<td align="center">
+		<input type="radio" name="<% param.name %>" value="2"<% param.priv2 %>>
+	</td>
+	<td align="center">
+		<input type="radio" name="<% param.name %>" value="3"<% param.priv3 %>>
+	</td>
+	<td align="center">
+		<input type="radio" name="<% param.name %>" value="4"<% param.priv4 %>>
+	</td>
+	<td align="center">
+		<input type="radio" name="<% param.name %>" value="5"<% param.priv5 %>>
+	</td>
+</tr>

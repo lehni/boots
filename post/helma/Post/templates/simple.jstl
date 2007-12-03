@@ -1,0 +1,10 @@
+<p>
+<%= param.text %>
+</p>
+<% if (param.resources.length > 0) %>
+<p>
+<% foreach ($resource in param.resources) %>
+	<% $resource.renderThumbnail simple="true" %>
+<% end %>
+</p>
+<% end %>

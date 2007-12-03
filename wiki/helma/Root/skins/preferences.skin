@@ -1,0 +1,10 @@
+<div id="edit">
+<form method="post" action="<% response.action %>">
+	<input type="hidden" name="action" value="<% response.action %>">
+	<table>
+		<tr><td>Password:</td><td><input type="password" name="password"></td></tr>
+		<tr><td>Confirm Password:</td><td><input type="password" name="confirmPassword"></td></tr>
+		<tr><td></td><td align="right"><input type="button" value="Cancel" onClick="document.location='<% response.cancel %>'"> <input type="submit" value="Save" name="submit"></td></tr>
+	</table>
+</form>
+</div>

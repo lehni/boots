@@ -1,0 +1,22 @@
+<div id="edit-<%= param.id %>" class="edit-elements">
+<% if (param.showProgress) %>
+	<span class="edit-progress hidden"><img src="/static/edit/img/progress.gif" width="16" height="16"></span>
+<% end %>
+	<span class="edit-buttons">
+		<form>
+<% foreach ($button in param.buttons) %>
+			<% this.template "#button" value=$button.title onclick=<% this.template "#onclick" mode=$button.mode confirm=$button.confirm edit_item=$button.edit_item edit_prototype=$button.edit_prototype edit_back=$button.edit_back %> %>
+<% end %>
+		</form>
+	</span>
+</div>
+
+<% #onclick %>
+<% if (param.inline) %>
+EditForm.inline('<%= param.url %>', <% json filter="mode,id,target,confirm,style,edit_item,edit_prototype,edit_back" param %>);<%-%>
+<% else %>
+EditForm.open('<%= param.url %>', { id: '<%= param.id %>', mode: '<%= param.mode %>', edit_item: '<%= param.item %>', width: <%= param.width %>, height: <%= param.height %><%= param.confirm encoding="js" prefix=", confirm: '" suffix="'" %> });<%-%>
+<% end %>
+
+<% #button %>
+<input type="button" value="<% param.value %>" onclick="return <%= param.onclick %>">

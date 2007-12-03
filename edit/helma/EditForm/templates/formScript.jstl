@@ -1,0 +1,3 @@
+<% if (res.data.editException) %>
+Edit.focus('<%= res.data.editException.variableName %>'<%= res.data.editException.tabIndex prefix=", " %>);
+<% end %>

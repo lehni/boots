@@ -1,0 +1,6 @@
+<%= this.text %>
+<div class="thumbnails">
+<% foreach ($resource in this.resources) %>
+<% $resource.renderThumbnail %>
+<% end %>
+</div>

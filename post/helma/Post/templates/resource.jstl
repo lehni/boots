@@ -1,0 +1,1 @@
+<input type="file" name="file-<%= param.id %>"> <input type="button" value="Remove" onclick="return removeFile('file-<%= param.id %>')">

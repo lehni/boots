@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+	<channel>
+		<title><%= param.title %></title> 
+		<link><%= param.link %></link>
+		<description><%= param.description %></description>
+		<lastBuildDate><%= param.date %></lastBuildDate>
+		<generator><%= param.generator %></generator>
+		<language><% param.language %></language>
+<% foreach (item in param.items) %>
+	<% set link = item.absoluteHref() %>
+		<item>
+			<title><%= item.getTitle() %></title> 
+			<link><%= link %></link>
+			<guid isPermaLink="true"><%= link %></guid>
+			<pubDate><%= this.FEED_DATE_FORMAT.format(item.modificationDate) %></pubDate>
+			<dc:creator><%= item.renderUser() %></dc:creator>
+			<description><%= encodeXml(item.renderSimple()) %></description>
+		</item>
+<% end %>
+	</channel>
+</rss>

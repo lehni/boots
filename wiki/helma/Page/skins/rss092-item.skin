@@ -1,0 +1,9 @@
+		<item>
+			<title><% param.title %></title> 
+			<link>
+				<% param.link %>
+			</link>
+			<description>
+				<% param.description %>
+			</description>
+		</item>

@@ -1,0 +1,14 @@
+<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=5,0,0,0" width="<% response.width %>" height="<% response.height %>">
+<param name=movie value="<% response.src %>">
+<param name=quality value="high">
+<param name=menu value="false">
+<embed
+name=movie src="<% response.src %>"
+quality="high"
+menu="false"
+width="<% response.width %>"
+height="<% response.height %>"
+swliveconnect="false"
+type="application/x-shockwave-flash" pluginspage="http://www.macromedia.com/shockwave/download/index.cgi?P1_Prod_Version=ShockwaveFlash">
+</embed>
+</object>

@@ -1,0 +1,9 @@
+Hello <%= param.username %>,
+
+You are following one or more topics on <%= param.serverUrl %>
+Since your last post, the following topics have received replies:
+
+<%= param.topics %>
+
+Yours sincerely,
+The management.

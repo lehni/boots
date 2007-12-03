@@ -1,0 +1,15 @@
+<object width="<% response.width %>" height="<% response.height %>" classid="clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B" codebase="http://www.apple.com/qtactivex/qtplugin.cab">
+<param name="bgcolor" value="#000000">
+<param name="pluginspage" value="http://www.apple.com/quicktime/download/indext.html">
+<param name="src" value="<% response.src %>">
+<param name="controller" value="true">
+<embed
+width="<% response.width %>"
+height="<% response.height %>"
+controller="true"
+src="<% response.src %>"
+bgcolor="#000000"
+border="0"
+pluginspage="http://www.apple.com/quicktime/download/indext.html">
+</embed>
+</object>
