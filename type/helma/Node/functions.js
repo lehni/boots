@@ -1,9 +1,8 @@
 Node.inject({
 	getEditForm: function() {
 		var form = new EditForm(this, { removable: true });
-		var nodeTab = form.addTab("Node");
 		var parent = this.getEditParent();
-		nodeTab.add({
+		form.addTab("Node", {
 			label: "Name", name: "name", type: "string",
 			requirements: {
 				notNull: true, maxLength: 32,

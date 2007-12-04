@@ -75,10 +75,9 @@ EditItem = Base.extend(new function() {
 		},
 
 		statics: {
-			extend: function(src, name) {
+			extend: function(src) {
 				return src._types.split(',').each(function(type) {
 					types[type] = this;
-					this.test = type;
 				}, this.base(src));
 			},
 

@@ -450,6 +450,13 @@ Array.inject(new function() {
 			return this;
 		},
 
+		intersect: function(items) {
+			for (var i = this.length - 1; i >= 0; i--)
+				if (!items.find(this[i]))
+					this.splice(i, 1);
+			return this;
+		},
+
 		associate: function(obj) {
 			if (obj.length != null) {
 				var that = this;
