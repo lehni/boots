@@ -16,25 +16,21 @@ Markup = {
 				}
 				if (start >= 0) {
 					end = text.indexOf('>', start) + 1;
-					var open = false, last, name, args = null, content;
-					if (text.charAt(start + 1) != '/') {
-						// opening tag, might be closing at the end
-						if (text.charAt(end - 2) == '/') {
-							last = end - 2;
-							content = null;
-						} else {
-							open = true;
-							last = end - 1;
-						}
-						var parts = text.substring(start + 1, last).split(/\s+/);
+					var open = text.charAt(start + 1) != '/';
+					var name, args = null, content = null;
+					if (open) {
+						// Opening tag
+						var parts = text.substring(start + 1, end - 1).split(/\s+/);
 						name = parts.shift();
 						args = parts;
 					} else {
-						// closing tag
+						// Closing tag
 						name = text.substring(start + 2, end - 1);
-						// pop tags from stack to find fitting tag
+						// Pop tags from stack until we find the fitting tag
 						do {
-							tag = tags.length > 1 && tags.pop() || null;
+							// Make sure we keep the last tag on the stack, since
+							// it contains the root buffer
+							tag = tags.length > 1 && tags.pop();
 						} while (tag && tag.name != name);
 						if (tag) {
 							content = tag.buffer.join('');
