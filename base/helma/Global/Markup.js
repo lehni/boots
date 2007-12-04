@@ -1,168 +1,220 @@
+MarkupTag = Base.extend(new function() {
+	var tags = new Hash();
+
+	return {
+		parse: function(args, content, resources, param) {
+			// TODO: define in subclasses
+		},
+
+		statics: {
+			extend: function(src) {
+				return src._tags.split(',').each(function(tag) {
+					// create a new instance of this prototype and put it in tags
+					tags[tag] = new this();
+				}, this.base(src));
+			},
+
+			parse: function(name, args, content, resources, param) {
+				var tag = tags[name];
+				if (tag) {
+					return tag.parse(args, content, resources, param) || '';
+				} else {
+					return '&lt;' + name + ' ' + args.join(' ') + (content != null ? '&gt;' + content + '&lt;/' + name + '&gt;' : '&gt;');
+				}
+			}
+		}
+	}
+});
+
+NodeTag = MarkupTag.extend({
+	_tags: 'node',
+
+	parse: function(args, content, resources, param) {
+		var id = args[0];
+		if (!id) {
+			id = content;
+			content = null;
+		}
+		var node = HopObject.get(id);
+		if (node)
+			return node.renderLink(content);
+	}
+});
+
+CodeTag = MarkupTag.extend({
+	_tags: 'code',
+
+	parse: function(args, content, resources, param) {
+		return "<pre><code>" + content.replaceAll('<br />', '') + "</code></pre>";
+	}
+});
+
+ResourceTag = MarkupTag.extend({
+	_tags: 'resource',
+
+	getResourceLookup: function(resources, param) {
+		if (!param.resourceLookup) {
+			param.resourceLookup = {};
+			if (resources && resources.length) {
+				for (var i = 0; i < resources.length; i++) {
+					var resource = resources[i]
+					param.resourceLookup[resource.name] = { resource: resource, index: i };
+				}
+			}
+		}
+		return param.resourceLookup;
+	},
+
+	removeResource: function(resources, resourceLookup, index) {
+		// Adjust indices and remove item
+		for (var i = index + 1; i < resources.length; i++)
+			resourceLookup[resources[i].name].index--;
+		resources.splice(index, 1);
+	},
+
+	parse: function(args, content, resources, param) {
+		var resourceLookup = this.getResourceLookup(resources, param);
+		var obj = resourceLookup[args[0] || content];
+		if (obj) {
+			this.removeResource(resources, resourceLookup, obj.index);
+			return obj.resource.renderIcon({ small: true });
+		}
+	}
+});
+
+ImageTag = ResourceTag.extend({
+	_tags: 'img',
+
+	parse: function(args, content, resources, param) {
+		var resourceLookup = this.getResourceLookup(resources, param);
+		if (!/^http/.test(content)) {
+			var obj = resourceLookup[content];
+			if (obj && obj.resource instanceof Picture) {
+				this.removeResource(resources, resourceLookup, obj.index);
+				res.push();
+				// TODO: renderThumbnail_macro is SG code...
+				obj.resource.renderThumbnail_macro(param);
+				return res.pop();
+			}
+		} else {
+			return '<img src="' + content + '"/>';
+		}
+	}
+})
+
+BoldTag = MarkupTag.extend({
+	_tags: 'bold,b',
+
+	parse: function(args, content, resources, param) {
+		return '<b>' + content + '</b>';
+	}
+});
+
+UrlTag = MarkupTag.extend({
+	_tags: 'url',
+
+	parse: function(args, content, resources, param) {
+		var url, title;
+		if (args[0]) {
+			url = args[0];
+			title = content;
+		} else {
+			url = content;
+			title = content;
+		}
+		if (!title) title = url;
+		var str = '<a href="';
+		var isLocal = /^\//.test(url);
+		// allways write domain part of url for simple rendering (e.g. in rss feeds)
+		if (param.simple && isLocal)
+			str += getProperty("serverUrl");
+		str += url;
+		// links to local pages do not need to open blank
+		if (!isLocal)
+			str += '" target="_blank';
+		str += '">' + title + '</a>';
+		return str;
+	}
+});
+
+QuoteTag = MarkupTag.extend({
+	_tags: 'quote',
+
+	parse: function(args, content, resources, param) {
+		var title;
+		if (args[0]) {
+			title = args[0] + " wrote:";
+		} else {
+			title = "Quote:";
+		}
+		return '<div class="quote-title">' + title + '</div><div class="quote">' + content + '</div>';
+	}
+});
+
+ListTag = MarkupTag.extend({
+	_tags: 'list',
+
+	parse: function(args, content, resources, param) {
+		return '<ul>' + content + '</ul>';
+	}
+});
+
 Markup = {
 	encodeText: function(text, resources, param) {
 		if (text) {
 			if (!param)
 				param = {};
+			// TODO: remove inline hack?
 			param.inline = true; // for resources
-			text = encode(text);
 
-			// format tags. they got escaped above, so replace it back:
-			// indices:
-			//   1: tag
-			//   2: tag attribute
-			//   3: tag content
-			//   4: swallowed trailing break, if any
-			//   5: all the chars allowed before an url
-			//   6: url
-			//   7: all the chars allowed after an url
-
-			var Pattern = java.util.regex.Pattern;
-			// \\1 in the closing tag references the tag name in the opening tag!
-			var parser = Pattern.compile(
-					"&lt;\\s*(url|node|mail|code|resource|img|quote|list|b)\\s*(.*?)\\s*(?:/&gt;|&gt;(.*?)&lt;\/\\s*\\1\\s*&gt;(<br />|))|" + // tags
-					"(^|\\s|>|\\()((?:http|https)\\://\\S*?)($|\\s|<|\\))", // urls
-					Pattern.MULTILINE | Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
-				
-			var matcher = parser.matcher(text);
-			res.push();
-
-			var lastIndex = 0;
-			var resourceLookup = {};
-			if (resources && resources.length) {
-				for (var i = 0; i < resources.length; i++) {
-					var resource = resources[i]
-					resourceLookup[resource.name] = { resource: resource, index: i };
+			var start = 0, end = 0;
+			var tag = { buffer: [] };
+			var tags = [tag];
+			while (start != -1) { 
+				start = text.indexOf('<', end);
+				if (start > end) {
+					tag.buffer.push(encode(text.substring(end, start)));
 				}
-			}
-
-			while (matcher.find()) {
-				var index = matcher.start();
-				if (index > lastIndex)
-					res.write(text.substring(lastIndex, index));
-				var ok = false;
-				var tag = matcher.group(1);
-				if (tag) {
-					var attribute = matcher.group(2);
-					var content = matcher.group(3);
-					switch(tag) {
-						case 'code':
-							res.write("<pre><code>");
-							res.write(content.replaceAll('<br />', ''));
-							res.write("</code></pre>");
-							ok = true;
-							break;
-						case 'resource':
-							var info = resourceLookup[content];
-							if (info) {
-								info.resource.renderIcon({ small: true }, res);
-								resources[info.index] = null;
-								res.write(matcher.group(4)); // write the swallowed break, if any
-								ok = true;
-							}
-							break;
-						case 'img':
-							if (!content.startsWith("http")) {
-								var info = resourceLookup[content];
-								if (info && info.resource instanceof Picture) {
-									info.resource.renderThumbnail_macro(param);
-									resources[info.index] = null;
-									ok = true;
-								}
-							} else {
-								res.write('<img src="');
-								res.write(content);
-								res.write('"/>');
-								ok = true;
-							}
-							if (ok) {
-								res.write(matcher.group(4)); // write the swallowed break, if any
-							}
-							break;
-						case 'url':
-							var url, title;
-							if (attribute) {
-								url = attribute;
-								title = content;
-							} else {
-								url = content;
-								title = content;
-							}
-							if (!title) title = url;
-							res.write('<a href="');
-							var isLocal = url.startsWith('/');
-							// allways write domain part of url for simple rendering (e.g. in rss feeds)
-							if (param.simple && isLocal)
-								res.write(getProperty("serverUrl"));
-							res.write(url);
-							// links to local pages do not need to open blank
-							if (!isLocal)
-								res.write('" target="_blank');
-							res.write('">');
-							res.write(title);
-							res.write('</a>');
-							res.write(matcher.group(4)); // write the swallowed break, if any
-							ok = true;
-							break;
-						case 'mail':
-						break;
-						case 'node':
-							var node = HopObject.get(attribute);
-							if (node)
-								node.renderLink(content, res);
-							ok = true;
-							break;
-						case 'quote':
-							var title;
-							if (attribute) {
-								title = attribute + " wrote:";
-							} else {
-								title = "Quote:";
-							}
-							res.write('<div class="quote-title">');
-							res.write(title);
-							res.write('</div><div class="quote">');
-							res.write(content);
-							res.write('</div>');
-							ok = true;
-							break;
-						case 'list':
-							res.write('<ul>');
-							res.write(content);
-							res.write('</ul>');
-							ok = true;
-							break;
-						case 'b':
-							res.write('<b>');
-							res.write(content);
-							res.write('</b>');
-							ok = true;
-							break;
+				if (start >= 0) {
+					end = text.indexOf('>', start) + 1;
+					var open = false, last, name, args = null, content;
+					if (text.charAt(start + 1) != '/') {
+						// opening tag, might be closing at the end
+						if (text.charAt(end - 2) == '/') {
+							last = end - 2;
+							content = null;
+						} else {
+							open = true;
+							last = end - 1;
+						}
+						var parts = text.substring(start + 1, last).split(/\s+/);
+						name = parts.shift();
+						args = parts;
+					} else {
+						// closing tag
+						name = text.substring(start + 2, end - 1);
+						// pop tags from stack to find fitting tag
+						do {
+							tag = tags.pop();
+						} while (tag && tag.name != name);
+						if (tag) {
+							content = tag.buffer.join('');
+							args = tag.args;
+						}
 					}
-				} else { // url
-					res.write(matcher.group(5));
-					res.write('<a href="');
-					res.write(matcher.group(6));
-					res.write('" target="_blank">');
-					res.write(matcher.group(6));
-					res.write('</a>');
-					res.write(matcher.group(7));
-					ok = true;
+					if (open) {
+						tag = { name: name, args: args, buffer: [] };
+						tags.push(tag);
+					} else {
+						tag = tags[tags.length - 1];
+						if (tag)
+							tag.buffer.push(MarkupTag.parse(name, args, content, resources, param));
+					}
 				}
-				if (!ok) // write the unmodified string if nothing fitted
-					res.write(matcher.group(0));
-				lastIndex = matcher.end();
 			}
-			// Write the rest:
-			if (lastIndex < text.length)
-				res.write(text.substring(lastIndex, text.length));
-			text = res.pop();
-			
-			// remove the fields set to null above:
-			if (resources) {
-				for (var i = resources.length - 1; i >= 0; i--) {
-					if (!resources[i])
-						resources.splice(i, 1);
-				}
+			if (tag) {
+				tag.buffer.push(encode(text.substring(end)));
+				text = tag.buffer.join('');
 			}
 		}
 		return text;
