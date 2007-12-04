@@ -1,4 +1,4 @@
-<% $text = Html.stripTags(Markup.encodeText(this.text), 128) || ""; %>
+<% $text = Html.stripTags(Markup.parse(this.text), 128) || ""; %>
 <% $title = this.title ? this.title.trim() : ""; %>
 		<td width="75%"><%= this.renderLink($title ? $title.breakAt(30) : $text.cutAt(16)) %></td>
 <% if (!param.dontShowUser) %>
