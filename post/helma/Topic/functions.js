@@ -31,7 +31,7 @@ Topic.inject({
 		// Only edit the topic with admin rights. The default user can only
 		// edit posts. Also, when creating a new post, even the admin only edits the post
 		// Except when removing, we need the full information about children and all that
-		if (!param.removing && (this.isCreating() || !(User.getRole() & User.FLAG_ADMINISTRATOR))) {
+		if (!param.removing && (this.isCreating() || !User.hasRole(User.ADMINISTRATOR))) {
 			return this.get(0).getEditForm(param);
 		} else {
 			var form = new EditForm(this, { removable: true });

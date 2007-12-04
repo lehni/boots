@@ -132,7 +132,7 @@ HopObject.inject({
 			var user = root.users.get(req.data.username);
 			var login = true;
 			if (user) {
-				if (user.role & User.FLAG_UNVERIFIED) {
+				if (user.hasRole(User.UNVERIFIED)) {
 					User.setMessage("loginUnverified");
 					login = false;
 				}

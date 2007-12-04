@@ -25,7 +25,7 @@ Root.inject({
 						user.email = users.getColumnItem("user_email");
 						user.website = users.getColumnItem("user_website");
 						user.location = users.getColumnItem("user_from");
-						user.role = User.ROLE_EDITOR;
+						user.roles = User.READER | User.EDITOR;
 						var occupation = users.getColumnItem("user_occ");
 						var interests = users.getColumnItem("user_interests");
 						var text = "";

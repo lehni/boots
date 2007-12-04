@@ -34,7 +34,7 @@ Topic.inject({
 		if (req.data.key == post.getPostKey()) {
 			var error = null;
 			var waitTime = new Date().getTime() - session.data.postTime;
-			if (User.getRole() == User.ROLE_NONE && waitTime < 60 * 1000) {
+			if (User.getRoles() == User.NONE && waitTime < 60 * 1000) {
 				// only allow posting one post per minute
 			 	error = "To avoid abuse, only one post per minute is allowed.<br />You can post again in " + Math.round(60 - waitTime / 1000) + " seconds.";
 			} else if (post != null) {

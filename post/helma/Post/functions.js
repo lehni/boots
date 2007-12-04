@@ -33,8 +33,8 @@ Post.inject({
 			type: "boolean", name: "notify",
 			suffix: "Notify on subsequent posts"
 		};
-		// TODO: add FLAG_POSTER, and cosinder renaming from name to role (EDITOR -> EDIT...)
-		if (User.getRole() & User.FLAG_EDITOR) {
+		// TODO: add POSTER, and cosinder renaming from name to role (EDITOR -> EDIT...)
+		if (User.hasRole(User.EDITOR)) {
 			form.add([
 				{
 					suffix: "<b>Posting as: </b>" +
@@ -95,7 +95,7 @@ Post.inject({
 			prototypes: "Resource,Medium,Picture", moveable: true,
 			size: 6, autoRemove: true
 		});
-		if (true && User.getRole() & User.FLAG_ADMINISTRATOR) {
+		if (true && User.hasRole(User.ADMINISTRATOR)) {
 			form.add({
 				type: "ruler"
 			}, { 
@@ -215,11 +215,11 @@ Post.inject({
 		// first posts in topics also can show fields of the topic (e.g. for scripts, gallery)
 		if (this.isFirst) {
 			if (this.topic.renderFields)
-				param.topicFields = this.topic.renderFields(param);
+				param.topicFields = this.topic.renderFields(param, resources);
 			if (this.topic.renderFooter)
-				param.topicFooter = this.topic.renderFooter(param);
+				param.topicFooter = this.topic.renderFooter(param, resources);
 			if (this.topic.renderOuter)
-				param.outer = this.topic.renderOuter();
+				param.outer = this.topic.renderOuter(param, resources);
 		}
 		return this.renderTemplate("main", param, out);
 	},

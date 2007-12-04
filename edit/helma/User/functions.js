@@ -1,24 +1,16 @@
-////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////
 // Roles
 
 // Flags to check single attributes. A role consists of more of one of these
 // e.g. the superuser has all the flags set.
 
-User.FLAG_NONE= 0;
-User.FLAG_READER = 1;
-User.FLAG_EDITOR = 2;
-User.FLAG_ADMINISTRATOR = 4;
-User.FLAG_SUPERUSER = 8;
-User.FLAG_DISABLED = 16;
-User.FLAG_UNVERIFIED = 32;
-
-// the actual roles, to be set in the database. any combinations of the flags could be are possible
-User.ROLE_NONE = User.FLAG_NONE;
-User.ROLE_READER = User.ROLE_NONE | User.FLAG_READER;
-User.ROLE_EDITOR = User.ROLE_READER | User.FLAG_EDITOR;
-User.ROLE_ADMINISTRATOR = User.ROLE_EDITOR | User.FLAG_ADMINISTRATOR;
-User.ROLE_SUPERUSER = User.ROLE_ADMINISTRATOR | User.FLAG_SUPERUSER;
-User.ROLE_UNVERIFIED = User.ROLE_NONE | User.FLAG_UNVERIFIED;
+User.NONE= 0;
+User.READER = 1;
+User.EDITOR = 2;
+User.ADMINISTRATOR = 4;
+User.SUPERUSER = 8;
+User.DISABLED = 16;
+User.UNVERIFIED = 32;
 
 ////////////////////////////////////////////////////////////////////////
 // Needed for EditForm:
@@ -31,10 +23,9 @@ User.ROLE_UNVERIFIED = User.ROLE_NONE | User.FLAG_UNVERIFIED;
 
 User.inject({
 	getEditForm: function() {
-		var role = User.getRole();
-		var isAdmin = role & User.FLAG_ADMINISTRATOR;
-		var isSuperuser = role & User.FLAG_SUPERUSER;
-		var editSuperuser = this.role & User.FLAG_SUPERUSER;
+		var isAdmin = User.hasRole(User.ADMINISTRATOR);
+		var isSuperuser = User.hasRole(User.SUPERUSER);
+		var editSuperuser = this.hasRole(User.SUPERUSER);
 		var isSameUser = session.user == this;
 		var form = new EditForm(this, { removable: isAdmin && !editSuperuser && !isSameUser });
 		var tab = form.addTab("User");
@@ -48,11 +39,11 @@ User.inject({
 			tab.add({ label: "Password", name: "password", type: "password", length: 16, onApply: this.onApplyPassword });
 		if (isAdmin && !isSameUser && !editSuperuser) {
 			var roles = [
-				{ name: "Editor", value: User.ROLE_EDITOR },
-				{ name: "Admin", value: User.ROLE_ADMINISTRATOR }
+				{ name: "Editor", value: User.READER | User.EDITOR },
+				{ name: "Admin", value: User.READER | User.EDITOR | User.ADMINISTRATOR }
 			];
 			if (isSuperuser)
-				roles.push({ name: "Superuser", value: User.ROLE_SUPERUSER });
+				roles.push({ name: "Superuser", value: User.READER | User.EDITOR | User.ADMINISTRATOR | User.SUPERUSER });
 			tab.add({ label: "Role", name: "role", type: "select", options: roles });
 		}
 		return form;
@@ -67,6 +58,14 @@ User.inject({
 			}
 		}
 		return false;
+	},
+
+	getRoles: function() {
+		return this.roles;
+	},
+
+	hasRole: function(role) {
+		return this.roles & role;
 	},
 
 	// call with object = null just to see wether the user is an editor or an admin,
@@ -145,10 +144,10 @@ User.inject({
 		login: function(username, password, remember) {
 			var user = root.users.get(username);
 			if (user != null) {
-				if (user.role & User.FLAG_DISABLED) {
+				if (user.hasRole(User.DISABLED)) {
 					User.setMessage("loginDisabled");
 					return false;
-				} else if (!User.isLoginAllowed() && !(user.role & User.FLAG_SUPERUSER)) {
+				} else if (!User.isLoginAllowed() && !(user.hasRole(User.SUPERUSER))) {
 					User.setMessage("loginTemporarilyDisabled");
 					return false;
 				}
@@ -187,7 +186,7 @@ User.inject({
 			var user = session.user;
 			if (user && (user.canEdit && user.canEdit(object) ||
 				object.isEditableBy && object.isEditableBy(user))) {
-				if (User.isLoginAllowed() || user.role & User.FLAG_SUPERUSER) {
+				if (User.isLoginAllowed() || user.hasRole(User.SUPERUSER)) {
 					return true;
 				} else {
 					User.setMessage("loginDisabled");
@@ -217,12 +216,12 @@ User.inject({
 			}
 		},
 
-		getRole: function() {
-			if (session.user) {
-				return session.user.role;
-			} else {
-				return User.ROLE_NONE;
-			}
+		getRoles: function() {
+			return session.user ? session.user.getRoles() : User.NONE;
+		},
+
+		hasRole: function(role) {
+			return session.user && session.user.hasRole(role);
 		}
 	}
 });
