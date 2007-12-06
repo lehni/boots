@@ -19,27 +19,36 @@ String.inject({
 		return this.unaccent().replace(/([^a-z0-9\.]+)/gi, "-").trim('-');
 	},
 
-	cutAt: function(length) {
-		if (this.length > length)
-			return this.substring(0, length - 3).trim() + "...";
+	truncate: function(length, suffix) {
+		if (this.length > length) {
+			if (suffix == null)
+				suffix = '';
+			return this.substring(0, length - suffix.length).trim() + suffix;
+		}
 		return this;
 	},
 
-	breakAt: function(max) {
-		if (this.length > max) {
-			// see if we can break at special chars. if not, force a break: 
+	stripTags: function() {
+		return stripTags(this);
+	},
+
+	wordwrap: function(width) {
+		// TODO: wordwrap is not quite right, since all it does is forcing too long
+		// words appart with a space. The wrapping is then done by the HTML engine...
+		if (this.length > width) {
+			// See if we can break at special chars. If not, force a break: 
 			var st = new java.util.StringTokenizer(this, " \t\n\r\f!#$%&()*+,-./:;<=>?@[\]^_`{|}~", true);
 			res.push();
 			var length = 0;
 			while (st.hasMoreTokens()) {
 				var token = st.nextToken();
-				if (length + token.length > max) {
+				if (length + token.length > width) {
 					if (!length) { // we haven't had a word yet, so force break the current token
-						res.write(token.substring(0, max));
+						res.write(token.substring(0, width));
 						// the second part will be written bellow
-						token = token.substring(max);
+						token = token.substring(width);
 					}
-					res.write(" ");
+					res.write(' ');
 					length = 0;
 				}
 				res.write(token);
@@ -48,13 +57,6 @@ String.inject({
 			return res.pop();
 		}
 		return this;
-	},
-
-	convertBreaks: function() {
-		// convert any possible kind of line breaks to \n
-		// TODO: exchange with platform linebreak here...
-		// this can be used when retrieveing values from forms
-		return this.replace(/\n\r|\r\n|\r/g, '\n');
 	},
 
 	replaceAll: function(search, replace) {

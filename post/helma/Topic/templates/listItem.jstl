@@ -10,4 +10,4 @@
 			&nbsp;
 		<% end %>
 		</td>
-		<td nowrap><%= app.data.dateMedium.format(this.modificationDate) %></td>
+		<td nowrap><%= this.modificationDate | format properties.dateMedium %></td>

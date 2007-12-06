@@ -225,6 +225,22 @@ Template.prototype = {
 			}
 		}
 
+		function parseParam(param) {
+			var data = param.match(/^(param|response|request|session|properties)\.(.*)$/);
+			if (data) {
+				if (!/^session\.user\b/.test(data)) {
+					var buf = {
+						response: ['res.data.'], request: ['req.data.'], 
+						session: ['session.data.'], param: ['param.'],
+						properties: ['getProperty("', '")']
+					}[data[1]];
+					buf.splice(1, 0, data[2]);
+					return buf.join('');
+				}
+			}
+			return param;
+		}
+
 		var macros = [], macro = null, isMain = true;
 
 		function nextMacro(next) {
@@ -256,15 +272,9 @@ Template.prototype = {
 				};
 				if (isMain) {
 					macro.isControl = allowControls && /^(foreach|if|elseif|else|end)$/.test(next);
-					var data = macro.command.match(/^(param|response|request|session)\.(.*)$/);
-					if (data) {
-						if (!/^session\.user\b/.test(macro.command))
-							macro.command = {
-								response: "res.data.", request: "req.data.", 
-								session: "session.data.", param: "param."
-							}[data[1]] + data[2];
-					}
-					macro.isData = isEqualTag || data;
+					var param = parseParam(macro.command);
+					macro.isData = isEqualTag || param != macro.command;
+					macro.command = param;
 					macro.isSetter = next[0] == '$'; 
 				}
 			}
@@ -277,7 +287,7 @@ Template.prototype = {
 				value = "param_" + (macroParam++) + "";
 				code.push("var " + value + " = " + that.parseMacro(nested, code, stack, false, true) + ";");
 			}
-			return value;
+			return parseParam(value);
 		}
 
 		var part, isFirst = true, append;

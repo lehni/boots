@@ -1,10 +1,8 @@
-<% $text = Html.stripTags(Markup.parse(this.text), 128) || ""; %>
-<% $title = this.title ? this.title.trim() : ""; %>
-		<td width="75%"><%= this.renderLink($title ? $title.breakAt(30) : $text.cutAt(16)) %></td>
+		<td width="75%"><% this.link <%= this.title | trim | truncate 16 '...' %> %></td>
 <% if (!param.dontShowUser) %>
 		<td nowrap><%= this.renderUser() %></td>
 <% end %>
-		<td nowrap align="right"><%= app.data.dateMedium.format(this.modificationDate) %></td>
+		<td nowrap align="right"><%= this.modificationDate | format properties.dateShort %></td>
 	</tr>
 	<tr class="blocks-row-<%= param.style %>">
-		<td colspan="3"><%= $text.cutAt(128) %></td>
+		<td colspan="3"><%= this.text | stripTags | truncate 128 '...' %></td>

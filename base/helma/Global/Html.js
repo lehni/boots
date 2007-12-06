@@ -120,34 +120,6 @@ Html = new function() {
 			if (!attributes.id) attributes.id = attributes.name;
 			delete attributes.current;
 			return this.element('input', attributes, null, out);
-		},
-
-		// TODO: replace with global stripTags that I didn't know of back then?
-		stripTags: function(str, maxLength) {
-			// this is so much faster than return str.replace(/<.*?>/gi, '');
-			if (!str)
-				return str;
-			if (!maxLength)
-				maxLength = str.length;
-			res.push();
-			var start = 0, length = 0;
-			while (true) {
-				var end = str.indexOf('<', start);
-				if (end == -1)
-					break;
-				length += end - start;
-				if (length >= maxLength)
-					break;
-				res.write(str.substring(start, end));
-				start = str.indexOf('>', end);
-				if (start == -1)
-					break;
-				start++;
-			}
-			// now append the rest, unstripped
-			if (start < str.length)
-				res.write(str.substring(start));
-			return res.pop();
 		}
 	}
 };

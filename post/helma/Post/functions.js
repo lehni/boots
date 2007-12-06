@@ -15,7 +15,7 @@ Post.inject({
 
 	getEditName: function() {
 		if (this.title)
-			return this.title.cutAt(28) + " [" + this._id + "]";
+			return this.title.truncate(28, '...') + " [" + this._id + "]";
 	},
 
 	getDisplayName: function() {
@@ -204,9 +204,7 @@ Post.inject({
 		var title = encode(this.title);
 		var param = {
 			id: this.getEditId(),
-			date: app.data.dateLong.format(this.creationDate),
-			user: this.renderUser(),
-			text: Markup.parse(this.text, { resources: resources, inline: true }),
+		//	text: Markup.parse(this.text, { resources: resources, inline: true }),
 			title: withLink ? this.topic.renderLink(title) : title,
 			isEditable: User.canEdit(this),
 			resources: resources,
