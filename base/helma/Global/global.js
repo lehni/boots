@@ -1,6 +1,6 @@
 // getResource for the global scope:
 function getResource(name) {
-	// get a list of all resource in the Global prototype and scan for the
+	// Get a list of all resource in the Global prototype and scan for the
 	// given resource
 	var resources = app.getPrototype("Global").getResources();
 	// scan backwards to get newer versions first (does this work?)

@@ -11,6 +11,13 @@ EditItem = Base.extend(new function() {
 			return EditForm.DONT_APPLY;
 		},
 
+		convertBreaks: function(str) {
+			// Helper function: convert any possible kind of line breaks to \n
+			// TODO: exchange with platform linebreak here...
+			// this can be used when retrieveing values from forms
+			return str ? str.replace(/\n\r|\r\n|\r/g, '\n') : str;
+		},
+
 		apply: function(value) {
 			// Only set if it changed
 			if (this.getValue() != value) {
@@ -118,7 +125,7 @@ StringItem = EditItem.extend(new function() {
 				// in case it's still PSEUDO_PASSWORD, don't apply:
 				return value == pseudoPassword ? EditForm.DONT_APPLY : value;
 			} else {
-				return value ? value.convertBreaks() : value;
+				return this.convertBreaks(value);
 			}
 		},
 
@@ -154,7 +161,7 @@ TextItem = StringItem.extend({
 	},
 
 	convert: function(value) {
-		return value ? value.convertBreaks() : value;
+		return this.convertBreaks(value);
 	}
 });
 

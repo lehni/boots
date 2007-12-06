@@ -11,7 +11,7 @@ HopObject.inject({
 			if (out == res)	this.renderSkin(skin);
 			else out.write(this.renderSkinAsString(skin));
 		}
-	}.toRender(),
+	},
 
 	statics: {
 		get: function(prototype, id) {
