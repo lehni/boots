@@ -194,7 +194,7 @@ Post.inject({
 	renderSimple: function(out) {
 		var resources = this.resources.list();
 		return this.renderTemplate("simple", {
-			text: Markup.parse(this.text, resources, { simple: true }),
+			text: Markup.parse(this.text, { resources: resources, simple: true, inline: true }),
 			resources: resources,
 		}, out);
 	},
@@ -206,7 +206,7 @@ Post.inject({
 			id: this.getEditId(),
 			date: app.data.dateLong.format(this.creationDate),
 			user: this.renderUser(),
-			text: Markup.parse(this.text, resources),
+			text: Markup.parse(this.text, { resources: resources, inline: true }),
 			title: withLink ? this.topic.renderLink(title) : title,
 			isEditable: User.canEdit(this),
 			resources: resources,
