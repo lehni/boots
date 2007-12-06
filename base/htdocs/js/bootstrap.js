@@ -19,11 +19,13 @@ new function() {
 					}
 				}
 				dest[name] = res;
+				if (src._hide && dest.dontEnum)
+					dest.dontEnum(name);
 			}
 		}
 		if (src) {
 			for (var name in src)
-				if (visible(src, name) && !/^(prototype|constructor|toString|valueOf|statics|_generics)$/.test(name))
+				if (visible(src, name) && !/^(toString|valueOf|statics|_generics|_hide)$/.test(name))
 					field(name, generics);
 			field('toString');
 			field('valueOf');
@@ -40,7 +42,9 @@ new function() {
 	}
 
 	function visible(obj, name) {
-		return obj[name] !== obj.__proto__[name]&& name.indexOf('__') != 0;
+		var entry;
+		return name in obj && (!(entry = obj._dontEnum && obj._dontEnum[name]) ||
+				!entry._object || entry._allow && entry._object[name] !== obj[name]);
 	}
 
 	inject(Function.prototype, {
@@ -71,7 +75,21 @@ new function() {
 		}
 	});
 
-	Base = Object.extend({
+	Base = Object.inject({
+		dontEnum: function(force) {
+			var d = this._dontEnum = !(d = this._dontEnum) ? {} :
+					d._object != this ? new (extend(d)) : d;
+			d._object = this;
+			for (var i = force == true ? 1 : 0; i < arguments.length; ++i)
+				d[arguments[i]] = { _object: this, _allow: force != true };
+		}
+	});
+
+	Base.prototype.dontEnum(true, 'dontEnum', '_dontEnum', '__proto__',
+		'prototype', 'constructor');
+
+	Base.inject({
+		_hide: true,
 		has: function(name) {
 			return visible(this, name);
 		},
@@ -147,6 +165,7 @@ Function.inject(new function() {
 
 Enumerable = new function() {
 	Base.iterate = function(fn, name) {
+		Base.prototype.dontEnum(true, name);
 		return function(iter, bind) {
 			if (!iter) iter = function(val) { return val };
 			else if (typeof iter != 'function') iter = function(val) { return val == iter };
@@ -166,14 +185,16 @@ Enumerable = new function() {
 	};
 
 	var each_Object = function(iter, bind) {
+		var entries = this._dontEnum || {};
 		for (var i in this) {
-			var val = this[i];
-			if (val !== this.__proto__[i]&& i.indexOf('__') != 0)
+			var val = this[i], entry = entries[i];
+			if (!entry || entry.allow && entry.object[i] !== this[i])
 				bind.__each(val, i, this);
 		}
 	};
 
 	return {
+		_hide: true,
 		_generics: true,
 
 		each: Base.iterate(function(iter, bind) {
@@ -262,6 +283,7 @@ Enumerable = new function() {
 }
 
 Base.inject({
+	_hide: true,
 	_generics: true,
 
 	each: Enumerable.each,
@@ -278,22 +300,6 @@ Base.inject({
 	},
 
 	statics: {
-		inject: function() {
-			var args = arguments;
-			Base.each([Array, Number, RegExp, String], function(ctor) {
-				ctor.inject.apply(ctor, args);
-			});
-			return this.base.apply(this, args);
-		},
-
-		extend: function() {
-			var ret = this.base();
-			ret.extend = Function.extend;
-			ret.inject = Function.inject;
-			ret.inject.apply(ret, arguments);
-			return ret;
-		},
-
 		check: function(obj) {
 			return !!(obj || obj === 0);
 		},
@@ -302,8 +308,7 @@ Base.inject({
 			return (obj || obj === 0) && ((obj._type || obj.nodeName && obj.nodeType == 1 && 'element') || typeof obj) || null;
 		}
 	}
-
-}, Base.prototype);
+});
 
 $each = Base.each;
 $stop = $break = Base.stop;
@@ -311,6 +316,7 @@ $check = Base.check;
 $type = Base.type;
 
 Hash = Base.extend(Enumerable, {
+	_hide: true,
 	_generics: true,
 
 	initialize: function() {
@@ -454,6 +460,13 @@ Array.inject(new function() {
 		subtract: function(items) {
 			for (var i = 0, j = items.length; i < j; ++i)
 				Array.remove(this, items[i]);
+			return this;
+		},
+
+		intersect: function(items) {
+			for (var i = this.length - 1; i >= 0; i--)
+				if (!items.find(this[i]))
+					this.splice(i, 1);
 			return this;
 		},
 
@@ -611,6 +624,7 @@ Math.rand = function(min, max) {
 }
 
 Array.inject({
+	_hide: true,
 
 	hexToRgb: function(toArray) {
 		if (this.length >= 3) {
@@ -1272,8 +1286,10 @@ new function() {
 			if (tag) filter.push("hasTag(el, tag)");
 			for (var i = classNames.length; i;)
 				filter.push("el.className && (' ' + el.className + ' ').indexOf(' ' + classNames[" + (--i) + "] + ' ') != -1");
-			if (filter.length) 
-				items = items.filter(eval('(function(el) { return ' + filter.join(' && ') + ' })'));
+			if (filter.length) {
+				eval('function func(el) { return ' + filter.join(' && ') + ' }');
+				items = items.filter(func);
+			}
 			for (i = pseudos.length; i;) {
 				var pseudo = getPseudo(pseudos[--i], FILTER), handler = pseudo.handler;
 				if (handler) {
@@ -1710,7 +1726,7 @@ DomEvent = Base.extend(new function() {
 				mousewheel: { type: Browser.GECKO ? 'DOMMouseScroll' : 'mousewheel' },
 
 				domready: function(func) { 
-					if (window.loaded) func.call(this);
+					if (this.loaded) func.call(this);
 					else if (!this.domReady) {
 						this.domReady = true;
 						var domReady = function() {
@@ -1724,12 +1740,12 @@ DomEvent = Base.extend(new function() {
 								if (/^(loaded|complete)$/.test(document.readyState)) domReady();
 							}).periodic(50);
 						} else if (document.readyState && Browser.IE) { 
-							document.write('<script id=ie_ready defer src="'
+							document.write('<script id=ie_domready defer src="'
 								+ (window.location.protocol == 'https:' ? '://0' : 'javascript:void(0)')
 								+ '"><\/script>');
-							document.getElementById('ie_ready').onreadystatechange = function() {
-								if (window.readyState == 'complete') domReady();
-							};
+							$('ie_domready').addEvent('readystatechange', function() {
+								if (this.$.readyState == 'complete') domReady();
+							});
 						} else { 
 							Window.addEvent('load', domReady);
 							Document.addEvent('DOMContentLoaded', domReady);
@@ -2717,6 +2733,7 @@ Ajax = HttpRequest.extend({
 });
 
 Base.inject({
+	_hide: true,
 	_generics: true,
 
 	toQueryString: function() {
