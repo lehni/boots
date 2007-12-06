@@ -135,7 +135,7 @@ ResourceTag = MarkupTag.extend({
 	},
 
 	cleanUp: function(name, param) {
-		if (param.removeUsedResources) {
+		if (param.removeUsedResources && param.resources) {
 			// Remove the resources that have been flaged 'used'
 			for (var i = param.resources.length - 1; i >= 0; i--)
 				if (param.resourceLookup[param.resources[i].name].used)
