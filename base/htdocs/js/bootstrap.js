@@ -1083,39 +1083,44 @@ DomElement.inject(new function() {
 		},
 
 		appendChild: function(el) {
-			el = DomElement.get(el).$;
-			var text = Browser.IE && el.text;
-			this.$.appendChild(el);
-			if (text) el.text = text;
+			if (el = DomElement.get(el)) {
+				var text = Browser.IE && el.$.text;
+		 		this.$.appendChild(el.$);
+				if (text) el.$.text = text;
+			}
 			return this;
 		},
 
 		insertBefore: function(el) {
-			el = DomElement.get(el);
-			var text = Browser.IE && el.text;
-			el.$.parentNode.insertBefore(this.$, el.$);
-			if (text) this.$.text = text;
+			if (el = DomElement.get(el)) {
+				var text = Browser.IE && el.text;
+				el.$.parentNode.insertBefore(this.$, el.$);
+				if (text) this.$.text = text;
+			}
 			return this;
 		},
 
 		insertAfter: function(el) {
-			el = DomElement.get(el);
-			var next = el.getNext();
-			if (next) this.insertBefore(next);
-			else el.getParent().appendChild(this);
+			if (el = DomElement.get(el)) {
+				var next = el.getNext();
+				if (next) this.insertBefore(next);
+				else el.getParent().appendChild(this);
+			}
 			return this;
 		},
 
 		insertFirst: function(el) {
-			el = DomElement.get(el);
-			var first = el.getFirst();
-			if (first) this.insertBefore(first);
-			else el.appendChild(this);
+			if (el = DomElement.get(el)) {
+				var first = el.getFirst();
+				if (first) this.insertBefore(first);
+				else el.appendChild(this);
+			}
 			return this;
 		},
 
 		insertInside: function(el) {
-			DomElement.get(el).appendChild(this);
+			if (el = DomElement.get(el))
+				el.appendChild(this);
 			return this;
 		},
 
