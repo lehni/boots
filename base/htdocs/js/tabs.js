@@ -75,7 +75,7 @@ TabPage = Base.extend({
 		this.tab.appendChild(this.anchor);
 		var that = this;
 		this.tab.addEvents({
-			click: function() { that.select(); },
+			click: function(event) { that.select(); event.stop(); },
 			mouseover: function() { that.tab.addClass('hover'); },
 			mouseout: function() { that.tab.removeClass('hover'); }
 		});
