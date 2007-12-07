@@ -96,65 +96,58 @@ Font = Base.extend({
 		return this.charSpacing;
 	},
 
-	/**
-	 * This cuts a string at maxWidth and appends "..." so the string fits into the widht
-	 * This can be used to cut client sided strings, if a web TTF file is used for calculation
-	 * of the width of the string.
-	 */
-	cutStringAt: function(text, maxWidth) {
-		if (!this.cutCache || this.cutCacheLength > 256) {
-			this.cutCache = {};
-			this.cutCacheLength = 0;
-		}
-		// cache the results of this process for speed improvements
-		var key = encodeMD5(text + ":" + maxWidth);
-		var str = this.cutCache[key];
-		if (!str) {
-			var glyphs = this.layoutGlyphs(text, maxWidth);
-			if (glyphs && glyphs.text.length < text.length) {
-				str = glyphs.text.trim() + "...";
-			} else {
-				str = text;
-			}
-			this.cutCache[key] = str;
-		}
-		return str;
-	},
-	
-	layoutGlyphs: function(text, maxWidth) {
+	processGlyphLine: function(text, maxWidth, layout) {
 		if (this.nativeFont) {
 			var glyphs = this.nativeFont.createGlyphVector(this.renderInfo.context, text);
-			var bounds = glyphs.getLogicalBounds();
-			// call getCharSpacing with a the text, so subclasses of Font
+			// Call getCharSpacing with a the text, so subclasses of Font
 			// can alter spacing depending on the case of the chars (used in Lineto)
 			var charSpacing = this.getCharSpacing(text);
-			// use the font's size, not this.size, as the font may be scaled (used in Lineto)
+			// Use the font's size, not this.size, as the font may be scaled (used in Lineto)
 			var size = this.nativeFont.getSize();
 	
 			var x = 0;
 			var num = glyphs.getNumGlyphs();
 			for (var i = 0; i < num; i++) {
-				var pos = glyphs.getGlyphPosition(i);
-				var gm = glyphs.getGlyphMetrics(i);
-				pos.x = x;
-				glyphs.setGlyphPosition(i, pos);
-				x += gm.getAdvance();
-				if (i < num - 1) x += (charSpacing + this.getKerning(text.charAt(i), text.charAt(i + 1))) * 0.001 * size;
-				// this is only used by cutStringAt right now:
+				if (layout) {
+					var pos = glyphs.getGlyphPosition(i);
+					pos.x = x;
+					glyphs.setGlyphPosition(i, pos);
+				}
+				x += glyphs.getGlyphMetrics(i).getAdvance();
+				if (i < num - 1)
+					x += (charSpacing + this.getKerning(text.charAt(i), text.charAt(i + 1))) * 0.001 * size;
+				// This is only used by cutStringAt right now:
 				if (maxWidth && x >= maxWidth) {
 					text = text.substring(0, i);
+					if (layout) {
+						// Reproduce glyph vector
+						var newGlyphs = this.nativeFont.createGlyphVector(this.renderInfo.context, text);
+						for (var j = 0; j < i; j++)
+							newGlyphs.setGlyphPosition(j, glyphs.getGlyphPosition(j));
+						glyphs = newGlyphs;
+					}
 					break;
 				}
 			}
-			// instead of using the internal baseLine and height settings, use general ones, depending on the height of font only:
-			// this makes code like correctBaseLines in FontRenderer.js obsolete and solves many problems with very differently mastered fonts:
+			return { text: text, glyphs: glyphs, width: x };
+		}
+	},
+
+	layoutGlyphLine: function(text, maxWidth) {
+		var desc = this.processGlyphLine(text, maxWidth, true);
+		if (desc) {
+			desc.font = this;
+			desc.size = this.size;
+			// Instead of using the internal baseLine and height settings, use
+			// general ones, depending on the height of font only:
+			// this makes code like correctBaseLines in FontRenderer.js obsolete
+			// and solves many problems with very differently mastered fonts:
 			// the values 0.3 and 1.3 are trial & error values which look quite nice...
-			return {
-				glyphs: glyphs, text: text, font: this, size: this.size,
-				baseLine: /* bounds.getMaxY() */ this.size * 0.3,
-				width: x, height: /* bounds.getHeight() */ this.size * 1.3
-			}
-		} else return null;
+			// var bounds = glyphs.getLogicalBounds();
+			desc.baseLine = this.size * 0.3; // bounds.getMaxY()
+			desc.height = this.size * 1.3; // bounds.getHeight()
+		}
+		return desc;
 	},
 	
 	getOutline: function(desc, x, y) {
@@ -173,31 +166,91 @@ Font = Base.extend({
 			(this.antialias ? '_1_' : '_0_') +
 			this.size.format('#0.00') + '_' + this.charSpacing);
 	},
+
+	/**
+	 * This breaks text into lines based on the maxWidth
+	 * Breaking happens on newlines and spaces
+	 * Of a single word is wider then maxWidth, it will break on a character.
+	 */
+	breakIntoLines: function(text, maxWidth) {
+		var lines =[];
+		// Split at linebreaks first
+		text.split(/\n|\r\n|\r/mg).each(function(line) {
+			var more = true;
+			while (more) {
+				var desc = this.processGlyphLine(line, maxWidth);
+				if (desc && desc.text.length < line.length) {
+					var part = desc.text;
+					var lastSpace = part.lastIndexOf(' ') + 1;
+					if(lastSpace)
+						part = part.substring(0, lastSpace - 1);
+					lines.push(part);
+					line = line.substring(part.length + 1);
+				} else {
+					lines.push(desc.text);
+					more = false;
+				}
+			}
+		}, this);
+		return lines;
+	},
+
+	/**
+	 * This cuts a string at maxWidth and appends "..." so the string fits into the widht
+	 * This can be used to cut client sided strings, if a web TTF file is used for calculation
+	 * of the width of the string.
+	 */
+	truncate: function(text, maxWidth, suffix) {
+		// Cache the results of this process for speed improvements
+		var key = encodeMD5(text + '_' + maxWidth + '_' + this.getUniqueString());
+		var cache = Font.truncateCache;
+		var str = cache.lookup[key];
+		if (str == null) {
+			var glyphs = this.layoutGlyphLine(text, maxWidth);
+			if (glyphs && glyphs.text.length < text.length) {
+				str = glyphs.text.trim();
+			} else {
+				str = text;
+			}
+			cache.lookup[key] = str;
+			cache.keys.push(key);
+			// Clean cache if growing too much
+			var del = cache.keys.length - 1024;
+			if (del > 0) {
+				// Remove lookup objects first
+				for (var i = 0; i < del; i++)
+					delete cache.lookup[cache.keys[i]];
+				// Now remove the keys
+				cache.keys.splice(0, del);
+			}
+		}
+		return suffix ? str + suffix : str;
+	},
 	
 	renderText: function(text, param, out) {
 		this.setSize(param.size ? parseFloat(param.size) : 16);
 		this.setCharSpacing(param.charSpacing ? parseFloat(param.charSpacing) : 0);
-		// var t = java.lang.System.nanoTime();
-		// app.log("RT " + (java.lang.System.nanoTime() - t));
 		var color = param.color || '#000000';
 		var bgColor = param.bgColor || '#ffffff';
-		res.push();
-		res.write(text);
-		res.write(color);
-		res.write(bgColor);
-		res.write(this.getUniqueString());
-		var filename = encodeMD5(res.pop()) + '.gif';
+		var filename = encodeMD5(text + color + bgColor + param.maxWidth + param.lineHeight + this.getUniqueString()) + '.gif';
 		var file = new File(getProperty('fontRenderDir'), filename);
+
 		if (!file.exists()) {
-			var desc = this.layoutGlyphs(text);
-			var width = Math.round(desc.width), height = Math.round(desc.height);
+			var lines = this.breakIntoLines(text, param.maxWidth);
+			var desc = this.layoutGlyphLine(lines[0]);
+			var lineHeight = param.lineHeight ? param.lineHeight : Math.ceil(desc.height);
+			var width = param.maxWidth || Math.round(desc.width);
+			var height = lineHeight * (lines.length - 1) + Math.round(desc.height);
 			var image = new Image(width, height);
 			var g2d = image.getGraphics();
 			g2d.setColor(java.awt.Color.decode(bgColor));
 			g2d.fillRect(0, 0, width, height);
 			g2d.setColor(java.awt.Color.decode(color));
 			g2d.setRenderingHints(this.getRenderingHints());
-			this.drawGlyphs(g2d, desc, 0, 0);
+			
+			for (var i = 0; i < lines.length; i++)
+				this.drawGlyphs(g2d, i == 0 ? desc : this.layoutGlyphLine(lines[i]), 0, i * lineHeight);
+			
 			image.reduceColors(16, false, true);
 			image.setTransparentPixel(image.getPixel(0, 0));
 			image.saveAs(file.getPath(), 1, true);
@@ -225,7 +278,12 @@ Font = Base.extend({
 		renderInfos: {},
 
 		fontObjects: {},
-		
+
+		truncateCache: {
+			keys: [],
+			lookup: {}
+		},
+
 		getInstance: function(filename, antialias, fractionalMetrics) {
 			return new Font(
 				getProperty('fontDir') + filename,
