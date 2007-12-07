@@ -1,7 +1,10 @@
-<object width="<%= param.width %>" height="16" classid="clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B" codebase="http://www.apple.com/qtactivex/qtplugin.cab">
-<param name="bgcolor" value="#000000">
-<param name="pluginspage" value="http://www.apple.com/quicktime/download/indext.html">
+<% $height = param.controller || param.controller == undefined ? 16 : 0 -%>
+<object width="<%= param.width %>" height="<%= $height %>" classid="clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B" codebase="http://www.apple.com/qtactivex/qtplugin.cab">
 <param name="src" value="<%= param.src %>">
-<param name="controller" value="true">
-<embed width="<%= param.width %>" height="16" controller="true" src="<%= param.src %>" bgcolor="#000000" border="0" pluginspage="http://www.apple.com/quicktime/download/indext.html"></embed>
+<param name="bgcolor" value="<%= param.bgColor default="#000000" %>">
+<param name="autoplay" value="<%= param.autoPlay default="true" %>">
+<param name="controller" value="<%= param.controller default="true" %>">
+<param name="kioskmode" value="<%= param.kioskMode default="false" %>">
+<param name="pluginspage" value="http://www.apple.com/quicktime/download/indext.html">
+<embed width="<%= param.width %>" height="<%= $height %>" src="<%= param.src %>" bgcolor="<%= param.bgColor default="#000000" %>" autoplay="<%= param.autoPlay default="true" %>" controller="<%= param.controller default="true" %>" kioskmode="<%= param.kioskMode default="false" %>" border="0" pluginspage="http://www.apple.com/quicktime/download/indext.html"></embed>
 </object>
