@@ -44,7 +44,7 @@ Markup = {
 									(content != null ? '&gt;' + content + '&lt;/' + name + '&gt;' : '&gt;'));
 							// If the object defines the cleanUp function, 
 							// collect it now:
-							if (tagObj.cleanUp)
+							if (tagObj && tagObj.cleanUp)
 								cleanUps[name] = tagObj;
 						}
 					}
