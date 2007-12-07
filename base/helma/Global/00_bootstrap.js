@@ -586,7 +586,11 @@ String.inject({
 
 	contains: function(string, s) {
 		return (s ? (s + this + s).indexOf(s + string + s) : this.indexOf(string)) != -1;
-	}
+	},
+
+	times: function(count) {
+		return count < 1 ? '' : new Array(count + 1).join(this);
+	},
 });
 
 Number.inject({
@@ -599,6 +603,11 @@ Number.inject({
 	times: function(func, bind) {
 		for (var i = 0; i < this; ++i) func.call(bind, i);
 		return bind || this;
+	},
+
+	toPaddedString: function(length, base) {
+		var str = this.toString(base || 10);
+		return '0'.times(length - str.length) + str;
 	}
 });
 

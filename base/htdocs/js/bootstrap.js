@@ -1,3 +1,9 @@
+if (!this.__proto__) {
+	var fix = [Object, Function, Number, Boolean, String, Array, Date, RegExp];
+	for (var i in fix)
+		fix[i].prototype.__proto__ = fix[i].prototype;
+}
+
 new function() { 
 	function inject(dest, src, base, generics) {
 		function field(name, generics) {
@@ -34,6 +40,7 @@ new function() {
 
 	function extend(obj) {
 		function ctor(dont) {
+			if (!this.__proto__) this.__proto__ = obj;
 			if (this.initialize && dont !== ctor.dont)
 				return this.initialize.apply(this, arguments);
 		}
@@ -599,7 +606,11 @@ String.inject({
 
 	contains: function(string, s) {
 		return (s ? (s + this + s).indexOf(s + string + s) : this.indexOf(string)) != -1;
-	}
+	},
+
+	times: function(count) {
+		return count < 1 ? '' : new Array(count + 1).join(this);
+	},
 });
 
 Number.inject({
@@ -612,6 +623,11 @@ Number.inject({
 	times: function(func, bind) {
 		for (var i = 0; i < this; ++i) func.call(bind, i);
 		return bind || this;
+	},
+
+	toPaddedString: function(length, base) {
+		var str = this.toString(base || 10);
+		return '0'.times(length - str.length) + str;
 	}
 });
 
