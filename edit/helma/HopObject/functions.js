@@ -202,7 +202,7 @@ HopObject.inject({
 				if (!param.height) param.height = 400;
 			}
 			param.showProgress = EditForm.SHOW_PROGRESS;
-			return this.renderTemplate("edit_buttons", param, out);
+			return this.renderTemplate("editButtons", param, out);
 		}
 	}
 });

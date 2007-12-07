@@ -11,7 +11,7 @@
 		<b>Date:</b>&nbsp;&nbsp;<%= this.creationDate | format properties.dateLong %><br />
 <% end %>
 	</div>
-	<% this.edit_buttons buttons="edit,remove" inline="true" %>
+	<% this.editButtons buttons="edit,remove" inline="true" %>
 	<div class="clear"></div>
 </div>
 <div class="block-text">

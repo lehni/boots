@@ -1,9 +1,9 @@
 HopObject.inject({
-	edit_buttons_macro: function(param) {
+	editButtons_macro: function(param) {
 		this.renderEditButtons(param, res);
 	},
 
-	edit_id_macro: function() {
+	editId_macro: function() {
 		return this.getEditId();
 	},
 
