@@ -1,23 +1,46 @@
+/**
+ * A Font prototype that wraps both a native java.awt.Font and a 
+ * com.lowagie.text.pdf.BaseFont pointing to the same TrueType file.
+ *
+ * BaseFont is then used to apply kerning corrections by reading the tables.
+ *
+ * Carefull: One Font object is not thread safe, so make sure to retrieve
+ * new instances for each rendering session (e.g. when changin size).
+ * Font.getInstance and Font#initialize handle this properly. 
+ */
+
 Font = Base.extend({
-	initialize: function(fontFile, antialias, fractionalMetrics) {
-		if (fontFile) {
-			this.antialias = antialias;
-			this.renderInfo = Font.getRenderInfos(antialias, fractionalMetrics);
-	
-			var file = new File(fontFile);
+	initialize: function(filename, antialias, fractionalMetrics) {
+		// Cache the native objects for each font, so creation of new
+		// instances of font objects can be very fust.
+		// This is better than caching the  font objects itself, since they
+		// s are not thread safe.
+		var fontObj = Font.fontObjects[filename];
+		if (!fontObj) {
+			var file = new File(filename);
 			if (file.exists()) {
-				this.fontFile = fontFile;
-			
 				// Use BaseFont from itext to read kerning tables
 				var BaseFont = Packages.com.lowagie.text.pdf.BaseFont;
-				this.kernedFont = BaseFont.createFont(fontFile, BaseFont.WINANSI, false, false, null, null); // don't use the internal font cache!
-
 				var input = new java.io.FileInputStream(file);
-				this.font = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, input);
-				this.size = this.font.getSize();
-				this.setCharSpacing(0);
+				var nativeFont = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, input);
 				input.close();
+				// Don't use the internal font cache!
+				var kernedFont = BaseFont.createFont(filename, BaseFont.WINANSI, false, false, null, null);
+				fontObj = Font.fontObjects[filename] = {
+					nativeFont: nativeFont,
+					kernedFont: kernedFont,
+					size: nativeFont.size
+				};
 			}
+		}
+		if (fontObj) {
+			this.nativeFont = fontObj.nativeFont;
+			this.kernedFont = fontObj.kernedFont;
+			this.size = fontObj.size;
+			this.antialias = antialias;
+			this.charSpacing = 0;
+			this.filename = filename;
+			this.renderInfo = Font.getRenderInfos(antialias, fractionalMetrics);
 		}
 	},
 	
@@ -26,8 +49,8 @@ Font = Base.extend({
 	},
 	
 	finalize: function() {
-		if (this.font != null)
-			delete this.font;
+		if (this.nativeFont != null)
+			delete this.nativeFont;
 	},
 	
 	getKerning: function(c1, c2) {
@@ -38,13 +61,13 @@ Font = Base.extend({
 		if (this.size != size) {
 			this.size = parseFloat(size);
 			this.uniqueString = null;
-			if (this.font != null)
-				this.font = this.font.deriveFont(this.size);
+			if (this.nativeFont)
+				this.nativeFont = this.nativeFont.deriveFont(this.size);
 		}
 	},
 	
 	getFont: function() {
-		return this.font;
+		return this.nativeFont;
 	},
 	
 	getSize: function() {
@@ -99,14 +122,14 @@ Font = Base.extend({
 	},
 	
 	layoutGlyphs: function(text, maxWidth) {
-		if (this.font) {
-			var glyphs = this.font.createGlyphVector(this.renderInfo.context, text);
+		if (this.nativeFont) {
+			var glyphs = this.nativeFont.createGlyphVector(this.renderInfo.context, text);
 			var bounds = glyphs.getLogicalBounds();
 			// call getCharSpacing with a the text, so subclasses of Font
 			// can alter spacing depending on the case of the chars (used in Lineto)
 			var charSpacing = this.getCharSpacing(text);
 			// use the font's size, not this.size, as the font may be scaled (used in Lineto)
-			var size = this.font.getSize();
+			var size = this.nativeFont.getSize();
 	
 			var x = 0;
 			var num = glyphs.getNumGlyphs();
@@ -145,16 +168,10 @@ Font = Base.extend({
 
 	// getUniqueString returns a string that represents this font identically. this is used for the image rendering
 	getUniqueString: function() {
-		if (!this.uniqueString) {
-			res.push();
-			res.write(this.kernedFont.getPostscriptFontName());
-			res.write(this.antialias ? '_1_' : '_0_');
-			res.write(Font.numberFormat.format(this.size));
-			res.write('_');
-			res.write(this.charSpacing);
-			this.uniqueString = res.pop();
-		}
-		return this.uniqueString;
+		return this.uniqueString || (this.uniqueString =
+			this.kernedFont.getPostscriptFontName() +
+			(this.antialias ? '_1_' : '_0_') +
+			this.size.format('#0.00') + '_' + this.charSpacing);
 	},
 	
 	renderText: function(text, param, out) {
@@ -162,14 +179,14 @@ Font = Base.extend({
 		this.setCharSpacing(param.charSpacing ? parseFloat(param.charSpacing) : 0);
 		// var t = java.lang.System.nanoTime();
 		// app.log("RT " + (java.lang.System.nanoTime() - t));
-		var color = param.color ? param.color : "#000000";
-		var bgColor = param.bgColor ? param.bgColor : "#ffffff";
+		var color = param.color || '#000000';
+		var bgColor = param.bgColor || '#ffffff';
 		res.push();
 		res.write(text);
 		res.write(color);
 		res.write(bgColor);
 		res.write(this.getUniqueString());
-		var filename = encodeMD5(res.pop()) + ".gif";
+		var filename = encodeMD5(res.pop()) + '.gif';
 		var file = new File(getProperty('fontRenderDir'), filename);
 		if (!file.exists()) {
 			var desc = this.layoutGlyphs(text);
@@ -192,7 +209,6 @@ Font = Base.extend({
 				var height = info.getHeight();
 			}
 		}
-
 		out.write('<img src="');
 		out.write(getProperty('fontRenderUri'));
 		out.write(filename);
@@ -206,22 +222,16 @@ Font = Base.extend({
 	}.toRender(),
 	
 	statics: {
-		numberFormat: (function() {
-			var f = java.text.NumberFormat.getInstance();
-			f.setMaximumFractionDigits(2);
-			return f;
-		})(),
-		
 		renderInfos: {},
-		
-		getInstance: function(fontName) {
-			if (!app.data.fonts)
-				app.data.fonts = {};
 
-			if (!app.data.fonts[fontName])
-				app.data.fonts[fontName] = new Font(getProperty(fontName), true);
-	
-			return app.data.fonts[fontName];
+		fontObjects: {},
+		
+		getInstance: function(filename, antialias, fractionalMetrics) {
+			return new Font(
+				getProperty('fontDir') + filename,
+				antialias != null ? antialias : getProperty('fontAntialias', 'true') == 'true',
+				fractionalMetrics != null ? fractionalMetrics : getProperty('fontFractionalMetrics', 'true') == 'true'
+			);
 		},
 
 		getRenderInfos: function(antialias, fractionalMetrics) {
@@ -235,7 +245,7 @@ Font = Base.extend({
 			// create a infoId an cash the renderingInfos
 			var id = (antialias ? '1' : '0') + (fractionalMetrics ? '1' : '0');
 	
-			var infos = Font.renderInfos[id];
+			var infos = this.renderInfos[id];
 			// only create if it's not cached already
 			if (!infos) {
 				var RenderingHints = java.awt.RenderingHints;
@@ -246,7 +256,7 @@ Font = Base.extend({
 				map.put(RenderingHints.KEY_TEXT_ANTIALIASING, antialias ? RenderingHints.VALUE_TEXT_ANTIALIAS_ON : RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
 				map.put(RenderingHints.KEY_FRACTIONALMETRICS, fractionalMetrics ? RenderingHints.VALUE_FRACTIONALMETRICS_ON : RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
 				map.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-				infos = Font.renderInfos[id] = {
+				infos = this.renderInfos[id] = {
 					context: new java.awt.font.FontRenderContext(null, !!antialias, !!fractionalMetrics),
 					hints: new RenderingHints(map)
 				};
