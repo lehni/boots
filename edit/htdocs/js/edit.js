@@ -8,12 +8,16 @@ EditForm = Base.extend({
 		this.targetId = target.getId();
 		this.parent = parent;
 		this.choosers = [];
-		// mark as empty until it gets set, so empty editforms can be skipped
+		// Mark as empty until it gets set, so empty editforms can be skipped
 		// in close()
 		this.empty = true;
 		if (EditForm.mode == 'inline') {
 			this.container = target.createAfter('div', { id: 'edit-container-' + id });
-			if (parent) this.container.setStyle(parent.container.getStyle());
+			// Pass on style and class settings
+			if (parent) {
+				this.container.setStyle(parent.container.getStyle());
+				this.container.addClass(parent.container.getClass());
+			}
 		}
 	},
 
@@ -320,8 +324,10 @@ EditForm = Base.extend({
 		},
 
 		inline: function(url, param) {
-			if (!param.confirm || confirm(param.confirm)) {
-				var target = $('#' + param.target);
+			var target = $('#' + param.target);
+			if (!target) {
+				alert('Cannot find target element for editor of object ' + param.id);
+			} else if (!param.confirm || confirm(param.confirm)) {
 				var elements = $('div#edit-' + param.id + '.edit-elements');
 				var progress = $('span.edit-progress', elements);
 				var buttons = $('span.edit-buttons', elements);
@@ -345,6 +351,8 @@ EditForm = Base.extend({
 						// Only set the style once the stuff is loaded and hidden
 						if (param.style)
 							editForm.container.setStyle(param.style);
+						if (param['class'])
+							editForm.container.addClass(param['class']);
 					} else {
 						EditForm.close(param.id);
 						alert('Error: ' + this.status);
@@ -511,12 +519,14 @@ EditForm.register(new function() {
 		var values = [];
 		sels.each(function(sel) {
 			sel = $('#' + sel, editForm.form);
-			sel.getOptions().each(function(opt) {
-				if (opt.getSelected() && opt.getValue()) {
-					names.push(opt.getText());
-					values.push(opt.getValue());
-				}
-			});
+			if (sel) {
+				sel.getOptions().each(function(opt) {
+					if (opt.getSelected() && opt.getValue()) {
+						names.push(opt.getText());
+						values.push(opt.getValue());
+					}
+				});
+			}
 		});
 		return values.length > 0 ?
 			{ values: values, names: names.join(', '), ids: values.join(',') } : null;
