@@ -32,14 +32,14 @@ function createEditForm(flags) {
 	if (flags & Node.HAS_ATTACHMENTS) {
 		mask.addTab('Attachments', {
 			label: "Attachments", name: "attachments", showOptions: true, size: 8,
-			type: "multiselect", prototypes: "Attachment", moveable: true,
+			type: "multiselect", prototypes: "Attachment", movable: true,
 			collection: this.allAttachments, value: this.attachments,
 			autoRemove: true, scaleToFit: true
 		});
 	}
 	var pages = {
 		label: "Sub Pages", name: "pages", showOptions: true, size: 8,
-		type: "multiselect", prototypes: "Page", moveable: true,
+		type: "multiselect", prototypes: "Page", movable: true,
 		collection: this.allPages, value: this.pages, autoRemove: true,
 		scaleToFit: true
 	};

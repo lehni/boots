@@ -92,7 +92,7 @@ Post.inject({
 		}, {
 			label: "Resources", type: "multiselect", name: "resources",
 			showOptions: true, collection: this.allResources, value: this.resources,
-			prototypes: "Resource,Medium,Picture", moveable: true,
+			prototypes: "Resource,Medium,Picture", movable: true,
 			size: 6, autoRemove: true
 		});
 		if (true && User.hasRole(User.ADMINISTRATOR)) {
