@@ -25,13 +25,11 @@ new function() {
 					}
 				}
 				dest[name] = res;
-				if (src._hide && dest.dontEnum)
-					dest.dontEnum(name);
 			}
 		}
 		if (src) {
 			for (var name in src)
-				if (visible(src, name) && !/^(toString|valueOf|statics|_generics|_hide)$/.test(name))
+				if (visible(src, name) && !/^(prototype|constructor|toString|valueOf|statics|_generics)$/.test(name))
 					field(name, generics);
 			field('toString');
 			field('valueOf');
@@ -49,9 +47,7 @@ new function() {
 	}
 
 	function visible(obj, name) {
-		var entry;
-		return name in obj && (!(entry = obj._dontEnum && obj._dontEnum[name]) ||
-				!entry._object || entry._allow && entry._object[name] !== obj[name]);
+		return obj[name] !== obj.__proto__[name]&& name.indexOf('__') != 0;
 	}
 
 	inject(Function.prototype, {
@@ -82,21 +78,7 @@ new function() {
 		}
 	});
 
-	Base = Object.inject({
-		dontEnum: function(force) {
-			var d = this._dontEnum = !(d = this._dontEnum) ? {} :
-					d._object != this ? new (extend(d)) : d;
-			d._object = this;
-			for (var i = force == true ? 1 : 0; i < arguments.length; ++i)
-				d[arguments[i]] = { _object: this, _allow: force != true };
-		}
-	});
-
-	Base.prototype.dontEnum(true, 'dontEnum', '_dontEnum', '__proto__',
-		'prototype', 'constructor');
-
-	Base.inject({
-		_hide: true,
+	Base = Object.extend({
 		has: function(name) {
 			return visible(this, name);
 		},
@@ -172,7 +154,6 @@ Function.inject(new function() {
 
 Enumerable = new function() {
 	Base.iterate = function(fn, name) {
-		Base.prototype.dontEnum(true, name);
 		return function(iter, bind) {
 			if (!iter) iter = function(val) { return val };
 			else if (typeof iter != 'function') iter = function(val) { return val == iter };
@@ -192,16 +173,14 @@ Enumerable = new function() {
 	};
 
 	var each_Object = function(iter, bind) {
-		var entries = this._dontEnum || {};
 		for (var i in this) {
-			var val = this[i], entry = entries[i];
-			if (!entry || entry.allow && entry.object[i] !== this[i])
+			var val = this[i];
+			if (val !== this.__proto__[i]&& i.indexOf('__') != 0)
 				bind.__each(val, i, this);
 		}
 	};
 
 	return {
-		_hide: true,
 		_generics: true,
 
 		each: Base.iterate(function(iter, bind) {
@@ -290,7 +269,6 @@ Enumerable = new function() {
 }
 
 Base.inject({
-	_hide: true,
 	_generics: true,
 
 	each: Enumerable.each,
@@ -307,15 +285,39 @@ Base.inject({
 	},
 
 	statics: {
+		inject: function() {
+			var args = arguments;
+			Base.each([Array, Number, RegExp, String], function(ctor) {
+				ctor.inject.apply(ctor, args);
+			});
+			return this.base.apply(this, args);
+		},
+
+		extend: function() {
+			var ret = this.base();
+			ret.extend = Function.extend;
+			ret.inject = Function.inject;
+			ret.inject.apply(ret, arguments);
+			return ret;
+		},
+
 		check: function(obj) {
 			return !!(obj || obj === 0);
 		},
 
 		type: function(obj) {
 			return (obj || obj === 0) && ((obj._type || obj.nodeName && obj.nodeType == 1 && 'element') || typeof obj) || null;
+		},
+
+		pick: function() {
+			for (var i = 0, l = arguments.length; i < l; i++)
+				if (arguments[i] !== undefined)
+					return arguments[i];
+			return null;
 		}
 	}
-});
+
+}, Base.prototype);
 
 $each = Base.each;
 $stop = $break = Base.stop;
@@ -323,7 +325,6 @@ $check = Base.check;
 $type = Base.type;
 
 Hash = Base.extend(Enumerable, {
-	_hide: true,
 	_generics: true,
 
 	initialize: function() {
@@ -359,6 +360,7 @@ $H = Hash.create;
 
 Array.inject(new function() {
 	var proto = Array.prototype;
+
 	var fields = Hash.merge({}, Enumerable, {
 		_generics: true,
 		_type: 'array',
@@ -640,7 +642,6 @@ Math.rand = function(min, max) {
 }
 
 Array.inject({
-	_hide: true,
 
 	hexToRgb: function(toArray) {
 		if (this.length >= 3) {
@@ -2305,7 +2306,7 @@ HtmlElement.inject(new function() {
 			return this.$['offset' + part];
 		};
 		fields['set' + part] = function(value) {
-			this.$.style[name] = value + 'px';
+			this.$.style[name] = isNaN(value) ? value : value + 'px';
 		};
 	});
 
@@ -2754,7 +2755,6 @@ Ajax = HttpRequest.extend({
 });
 
 Base.inject({
-	_hide: true,
 	_generics: true,
 
 	toQueryString: function() {
