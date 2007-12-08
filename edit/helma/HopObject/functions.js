@@ -194,10 +194,10 @@ HopObject.inject({
 			param.buttons = items;
 			param.id = this.getEditId();
 			param.url = path.href('edit');
-			param.inline = param.inline == "true";
+			param.popup = param.popup == 'true';
 			if (!param.target)
 				param.target = param.id;
-			if (!param.inline) {
+			if (param.popup) {
 				if (!param.width) param.width = 400;
 				if (!param.height) param.height = 400;
 			}

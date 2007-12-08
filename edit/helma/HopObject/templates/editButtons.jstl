@@ -12,10 +12,10 @@
 </div>
 
 <% #onclick %>
-<% if (param.inline) %>
-EditForm.inline('<%= param.url %>', <% json filter="mode,id,target,confirm,style,edit_item,edit_prototype,edit_back" param %>);<%-%>
-<% else %>
+<% if (param.popup) %>
 EditForm.open('<%= param.url %>', { id: '<%= param.id %>', mode: '<%= param.mode %>', edit_item: '<%= param.item %>', width: <%= param.width %>, height: <%= param.height %><%= param.confirm encoding="js" prefix=", confirm: '" suffix="'" %> });<%-%>
+<% else %>
+EditForm.inline('<%= param.url %>', <% json singleQuotes="true" include="mode,id,target,confirm,style,class,edit_item,edit_prototype,edit_back" param %>);<%-%>
 <% end %>
 
 <% #button %>
