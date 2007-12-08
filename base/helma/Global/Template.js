@@ -313,6 +313,8 @@ Template.prototype = {
 					macro.unnamed.push(part);
 					append = false;
 				} else if (append) { 
+					if (macro.isSetter) 
+						part = nestedMacro(this, part, code, stack);
 					macro.opcode.push(part);
 				} else {
 					throw "Syntax error: '" + part + "'";
@@ -545,6 +547,10 @@ Template.prototype = {
 			if (macro) {
 				try {
 					var prm = args[0];
+					if (prm.param)
+						for (var i in prm.param)
+							if (prm[i] === undefined)
+								prm[i] = prm.param[i];
 					prm.__template__ = this.parent || this;
 					prm.__param__ = param;
 					prm.__out__ = out;
