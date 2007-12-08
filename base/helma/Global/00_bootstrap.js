@@ -294,6 +294,13 @@ Base.inject({
 
 		type: function(obj) {
 			return (obj || obj === 0) && (obj._type || typeof obj) || null;
+		},
+
+		pick: function() {
+			for (var i = 0, l = arguments.length; i < l; i++)
+				if (arguments[i] !== undefined)
+					return arguments[i];
+			return null;
 		}
 	}
 });
@@ -340,6 +347,7 @@ $H = Hash.create;
 
 Array.inject(new function() {
 	var proto = Array.prototype;
+
 	var fields = Hash.merge({}, Enumerable, {
 		_generics: true,
 		_type: 'array',
@@ -700,11 +708,6 @@ String.inject({
 });
 
 Json = new function() {
-	var special = { '\b': '\\b', '\t': '\\t', '\n': '\\n', '\f': '\\f', '\r': '\\r', '"' : '\\"', '\\': '\\\\' };
-
-	function replace(chr) {
-		return special[chr] || '\\u00' + Math.floor(chr.charCodeAt() / 16).toString(16) + (chr.charCodeAt() % 16).toString(16);
-	}
 
 	return {
 		encode: function(obj) {
