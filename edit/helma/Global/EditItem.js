@@ -339,8 +339,6 @@ SelectItem = EditItem.extend({
 				if (typeof proto == 'function')
 					this.prototypes[i] = proto.name;
 			}
-		} else {
-			this.prototypes = [];
 		}
 	},
 
@@ -367,10 +365,7 @@ SelectItem = EditItem.extend({
 		};
 		if (this.size)
 			select.size = this.size;
-		/*
-		if (this.width)
-			select.style = 'width: ' + this.width + 'px;';
-		*/
+
 		var editButtons = this.renderEditButtons(baseForm);
 		if (editButtons) {
 			select.onDblClick = baseForm.renderHandle('select_edit', [name],
@@ -413,13 +408,13 @@ SelectItem = EditItem.extend({
 			: [ name ];
 
 		var buttons = [];
-		if (this.prototypes || this.edit) {
+		if (this.prototypes || this.editable) {
 			buttons.push({
 				value: 'Edit',
 				onClick: baseForm.renderHandle('select_edit', selParams, editParams)
 			});
 		}
-		if (this.moveable) {
+		if (this.movable) {
 			buttons.push({
 				value: 'Move',
 				name: name + '_move',
@@ -553,7 +548,7 @@ MultiSelectItem = SelectItem.extend({
 		if (this.showOptions) {
 			param.right = Html.select({
 				size: size, name: right, multiple: true,
-				/* style: "width: " + width + "px;", */
+				/* style: 'width: ' + width + 'px;', */
 				options: options, className: this.className || 'edit-element',
 				onDblClick: !editParam ? null
 					: baseForm.renderHandle('select_edit', [right], editParam)
@@ -633,7 +628,7 @@ ReferenceItem = EditItem.extend({
 			// TODO: allow display of current selection in object choosers!
 			onClick: baseForm.renderHandle('choose_reference', name, false /*, value ? value.getEditId() : ''*/)
 		}];
-		if (this.edit) {
+		if (this.editable) {
 			buttons.push({
 				name: name + '_edit', value: 'Edit', 
 				onClick: baseForm.renderHandle('execute', 'edit',
@@ -721,7 +716,7 @@ HelpItem = EditItem.extend({
 			// Add the button only once to the form!
 			// TODO: this.form or baseForm?
 			this.form.addButtons({
-				value: 'Help', className: "edit-help-button",
+				value: 'Help', className: 'edit-help-button',
 				onClick: baseForm.renderHandle('help_toggle')
 			});
 			this.initialized = true;
