@@ -11,11 +11,11 @@
 		<b>Date:</b>&nbsp;&nbsp;<%= this.creationDate | format properties.dateLong %><br />
 <% end %>
 	</div>
-	<% this.editButtons buttons="edit,remove" inline="true" %>
+	<% this.editButtons buttons="edit,remove" %>
 	<div class="clear"></div>
 </div>
 <div class="block-text">
-<%= this.text | markup resources=param.resources inline="true" %>
+<%= this.text | markup resources=param.resources %>
 </div>
 <% if (param.resources.length > 0) %>
 <div class="block-resources">
