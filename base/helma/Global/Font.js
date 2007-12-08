@@ -262,17 +262,14 @@ Font = Base.extend({
 				var height = info.getHeight();
 			}
 		}
-		out.write('<img src="');
-		out.write(getProperty('fontRenderUri'));
-		out.write(filename);
-		out.write('" width="');
-		out.write(width);
-		out.write('" height="');
-		out.write(height);
-		out.write('" alt="');
-		out.write(text);
-		out.write('">');
-	}.toRender(),
+		var image = param.attributes || {};
+		image.src = getProperty('fontRenderUri') + filename;
+		image.width = width;
+		image.height = height;
+		if (!image.alt)
+			image.alt = text;
+		return Html.image(image, out);
+	},
 	
 	statics: {
 		renderInfos: {},
