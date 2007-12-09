@@ -1,5 +1,5 @@
 if (!this.__proto__) {
-	var fix = [Object, Function, Number, Boolean, String, Array, Date, RegExp];
+	var fix = [Function, Number, Boolean, String, Array, Date, RegExp];
 	for (var i in fix)
 		fix[i].prototype.__proto__ = fix[i].prototype;
 }
@@ -795,7 +795,7 @@ DomElements = Array.extend(new function() {
 		},
 
 		append: function(items) {
-			for (var i = 0, j = items.length; i < j; ++i) {
+			for (var i = 0, l = items.length; i < l; ++i) {
 				var el = items[i];
 				if ((el = el && (el._wrapper || DomElement.get(el))) && el._unique != this._unique) {
 					el._unique = this._unique;
@@ -828,7 +828,7 @@ DomElements = Array.extend(new function() {
 
 DomElement = Base.extend(new function() {
 	var elements = [];
-	var tags = {}, classes = {}, classCheck;
+	var tags = {}, classes = {}, classCheck, unique = 0;
 
 	function dispose(force) {
 		for (var i = elements.length - 1; i >= 0; i--) {
@@ -838,13 +838,12 @@ DomElement = Base.extend(new function() {
 	            if (el) {
 					var obj = el._wrapper;
 					if (obj && obj.dispose) obj.dispose();
-					el._wrapper = el._children = null;
+					el._wrapper = el._unique = null;
 				}
 				if (!force) elements.splice(i, 1);
 	        }
 		}
 	}
-	dispose.periodic(30000);
 
 	function inject(src) {
 		src = src || {};
@@ -969,6 +968,13 @@ DomElement = Base.extend(new function() {
 
 			collect: function(el) {
 				elements.push(el);
+			},
+
+			unique: function(el) {
+				if (!el._unique) {
+					DomElement.collect(el);
+					el._unique = ++unique;
+				}
 			},
 
 			isAncestor: function(el, parent) {
@@ -1220,443 +1226,6 @@ DomElement.inject(new function() {
 		}
 	}
 });
-
-new function() {
-	function hasTag(el, tag) {
-		return tag == '*' || el.tagName && el.tagName.toLowerCase() == tag;
-	}
-
-	function getPseudo(pseudo, method) {
-		var match = pseudo.match(/^([\w-]+)(?:\((.*)\))?$/);
-		if (!match) throw 'Bad pseudo selector: ' + pseudo;
-		var name = match[1];
-		var argument = match[2] || false;
-		var handler = DomElement.pseudos[name];
-		return {
-			name: name,
-			argument: handler && handler.parser
-				? (handler.parser.apply ? handler.parser(argument) : handler.parser)
-				: argument,
-			handler: (handler.handler || handler)[method]
-		};
-	}
-
-	function getAttribute(attribute) {
-		var match = attribute.match(/^(\w+)(?:([!*^$~|]?=)["']?([^"'\]]*)["']?)?$/);
-		if (!match) throw 'Bad attribute selector: ' + attribute;
-		return match;
-	}
-
-	function resolver(prefix) {
-		return prefix == 'xhtml' ? 'http://www.w3.org/1999/xhtml' : false;
-	}
-
-	var XPATH= 0, FILTER = 1;
-
-	var methods = [{ 
-		getParam: function(items, separator, context, tag, id, classNames, attributes, pseudos) {
-			var temp = context.namespaceURI ? 'xhtml:' : '';
-			seperator = separator && (separator = DomElement.separators[separator]);
-			temp += seperator ? separator[XPATH](tag) : tag;
-			for (var i = pseudos.length; i;) {
-				var pseudo = getPseudo(pseudos[--i], XPATH);
-				var handler = pseudo.handler;
-				if (handler) temp += handler(pseudo.argument);
-				else temp += pseudo.argument != undefined
-					? '[@' + pseudo.name + '="' + pseudo.argument + '"]'
-					: '[@' + pseudo.name + ']';
-			}
-			if (id) temp += '[@id="' + id + '"]';
-			for (i = classNames.length; i;)
-				temp += '[contains(concat(" ", @class, " "), " ' + classNames[--i] + ' ")]';
-			for (i = attributes.length; i;) {
-				var attribute = getAttribute(attributes[--i]);
-				if (attribute[2] && attribute[3]) {
-					var operator = DomElement.operators[attribute[2]];
-					if (operator) temp += operator[XPATH](attribute[1], attribute[3]);
-				} else {
-					temp += '[@' + attribute[1] + ']';
-				}
-			}
-			items.push(temp);
-			return items;
-		},
-
-		getElements: function(items, elements, context) {
-			var res = document.evaluate('.//' + items.join(''), context,
-				resolver, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-			for (var i = 0, j = res.snapshotLength; i < j; ++i)
-				elements.push(res.snapshotItem(i));
-		}
-	}, { 
-		getParam: function(items, separator, context, tag, id, classNames, attributes, pseudos) {
-			if (separator && (separator = DomElement.separators[separator])) {
-				if (separator) items = separator[FILTER](items, tag);
-				tag = null; 
-			} else if (!items.length) {
-				if (id) {
-					var el = document.getElementById(id);
-					if (el && (!context || DomElement.isAncestor(el, context)) && hasTag(el, tag))
-						items = [el];
-				}
-				if (items.length) id = null; 
-				else items = Array.create(context.getElementsByTagName(tag));
-				tag = null; 
-			}
-			var filter = [];
-			if (id) filter.push("el.id == id");
-			if (tag) filter.push("hasTag(el, tag)");
-			for (var i = classNames.length; i;)
-				filter.push("el.className && (' ' + el.className + ' ').indexOf(' ' + classNames[" + (--i) + "] + ' ') != -1");
-			if (filter.length) {
-				eval('function func(el) { return ' + filter.join(' && ') + ' }');
-				items = items.filter(func);
-			}
-			for (i = pseudos.length; i;) {
-				var pseudo = getPseudo(pseudos[--i], FILTER), handler = pseudo.handler;
-				if (handler) {
-					items = items.filter(function(el) {
-						return handler(el, pseudo.argument);
-					});
-				} else {
-					attributes.push([null, pseudo.name, pseudo.argument != undefined ? '=' : null, pseudo.argument]);
-				}
-			}
-			for (i = attributes.length; i;) {
-				var attribute = getAttribute(attributes[--i]);
-				var name = attribute[1], operator = DomElement.operators[attribute[2]], value = attribute[3];
-				operator = operator && operator[FILTER];
-				items = items.filter(function(el) {
-					this.$ = el; 
-					var att = this.getProperty(name);
-					return att && (!operator || operator(att, value));
-				}, DomElement.prototype);
-				delete DomElement.prototype.$;
-			}
-			return items;
-		},
-
-		getElements: function(items, elements, context) {
-			elements.append(items);
-		}
-	}];
-
-	var version = 0;
-
-	function evaluate(items, selector, context, elements) {
-		var method = methods[typeof selector == 'string' &&
-			selector.contains('option[') || items.length || !Browser.XPATH
-			? FILTER : XPATH];
-		var separators = [];
-		selector = selector.trim().replace(/\s*([+>~\s])[a-zA-Z#.*\s]/g, function(match) {
-			if (match.charAt(2)) match = match.trim();
-			separators.push(match.charAt(0));
-			return '%' + match.charAt(1);
-		}).split('%');
-		for (var i = 0, j = selector.length; i < j; ++i) {
-			var tag = '*', id = null, classes = [], attributes = [], pseudos = [];
-			if (selector[i].replace(/:[^:]+|\[[^\]]+\]|\.[\w-]+|#[\w-]+|\w+|\*/g, function(str) {
-				switch (str.charAt(0)) {
-					case ':': pseudos.push(str.slice(1)); break;
-					case '[': attributes.push(str.slice(1, str.length - 1)); break;
-					case '.': classes.push(str.slice(1)); break;
-					case '#': id = str.slice(1); break;
-					default: tag = str;
-				}
-				return '';
-			})) break;
-			var temp = method.getParam(items, separators[i - 1], context, tag, id, classes, attributes, pseudos);
-			if (!temp) break;
-			items = temp;
-		}
-		method.getElements(items, elements, context);
-		return elements;
-	}
-
-	function following(one) {
-		return [
-			function(tag) {
-				return '/following-sibling::' + tag + (one ? '[1]' : '');
-			},
-
-			function(items, tag) {
-				var found = [];
-				for (var i = 0, j = items.length; i < j; ++i) {
-					var next = items[i].nextSibling;
-					while (next) {
-						if (hasTag(next, tag)) {
-							found[found.length] = next;
-							if (one) break;
-						}
-						next = next.nextSibling;
-					}
-				}
-				return found;
-			}
-		];
-	}
-
-	DomElement.separators = {
-		'~': following(false),
-
-		'+': following(true),
-
-		'>': [
-		 	function(tag) {
-				return '/' + tag;
-			},
-			function(items, tag) {
-				var found = [];
-				for (var i = 0, j = items.length; i < j; ++i) {
-					var children = items[i].childNodes;
-					for (var k = 0, l = children.length; k < l; k++) {
-						var child = children[k]
-						if (hasTag(child, tag)) found[found.length] = child;
-					}
-				}
-				return found;
-			}
-		],
-
-		' ': [
-			function(tag) {
-				return '//' + tag;
-			},
-			function(items, tag) {
-				var found = [];
-				for (var i = 0, j = items.length; i < j; ++i)
-					found.append(items[i].getElementsByTagName(tag));
-				return found;
-			}
-		]
-	};
-
-	function contains(sep) {
-		return [
-			function(a, v) {
-				return '[contains(' + (sep ? 'concat("' + sep + '", @' + a + ', "' + sep + '")' : '@' + a) + ', "' + sep + v + sep + '")]';
-			},
-			function(a, v) {
-				return a.contains(v, sep);
-			}
-		]
-	}
-
-	DomElement.operators = {
-		'=': [
-			function(a, v) {
-				return '[@' + a + '="' + v + '"]';
-			},
-			function(a, v) {
-				return a == v;
-			}
-		],
-
-		'^=': [
-	 		function(a, v) {
-				return '[starts-with(@' + a + ', "' + v + '")]';
-			},
-			function(a, v) {
-				return a.substr(0, v.length) == v;
-			}
-		],
-
-		'$=': [
-			function(a, v) {
-				return '[substring(@' + a + ', string-length(@' + a + ') - ' + v.length + ' + 1) = "' + v + '"]';
-			},
-			function(a, v) {
-				return a.substr(a.length - v.length) == v;
-			}
-		],
-
-		'!=': [
-			function(a, v) {
-				return '[@' + a + '!="' + v + '"]';
-			},
-			function(a, v) {
-				return a != v;
-			}
-		],
-
-		'*=': contains(''),
-
-		'|=': contains('-'),
-
-		'~=': contains(' ')
-	};
-
-	var nthChild = [
-		function(argument) {
-			switch (argument.special) {
-				case 'n': return '[count(preceding-sibling::*) mod ' + argument.a + ' = ' + argument.b + ']';
-				case 'last': return '[count(following-sibling::*) = 0]';
-				case 'only': return '[not(preceding-sibling::* or following-sibling::*)]';
-				default: return '[count(preceding-sibling::*) = ' + argument.a + ']';
-			}
-		},
-
-		function(el, argument) {
-			var parent = el.parentNode, children = parent._children;
-			if (!children || children.version != version) {
-				if (!children) DomElement.collect(parent);
-				children = parent._children = Array.filter(parent.childNodes, function(child) {
-					return child.nodeName && child.nodeType == 1;
-				});
-				children.version = version;
-			}
-			switch (argument.special) {
-				case 'n': if (children.indexOf(el) % argument.a == argument.b) return true; break;
-				case 'last': if (children.last() == el) return true; break;
-				case 'only': if (children.length == 1) return true; break;
-				case 'index': if (children[argument.a] == el) return true;
-			}
-			return false;
-		}
-	];
-
-	function contains(caseless) {
-		var abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		return [
-			function(argument) {
-				return '[contains(' + (caseless ? 'translate(text(), "' + abc
-					+ '", "' + abc.toLowerCase() + '")' : 'text()') + ', "'
-					+ (caseless && argument ? argument.toLowerCase() : argument) + '")]';
-			},
-			function(el, argument) {
-				if (caseless && argument) argument = argument.toLowerCase();
-				var nodes = el.childNodes;
-				for (var i = 0; i < nodes.length; ++i) {
-					var child = nodes[i];
-					if (child.nodeName && child.nodeType == 3 &&
-						(caseless ? child.nodeValue.toLowerCase() : child.nodeValue).contains(argument))
-							return true;
-				}
-				return false;
-			}
-		];
-	}
-
-	DomElement.pseudos = {
-		'nth-child': {
-			parser: function(argument) {
-				var match = argument ? argument.match(/^([+-]?\d*)?([nodev]+)?([+-]?\d*)?$/) : [null, 1, 'n', 0];
-				if (!match) throw 'Bad nth pseudo selector arguments: ' + argument;
-				var i = parseInt(match[1]);
-				var a = isNaN(i) ? 1 : i;
-				var special = match[2];
-				var b = parseInt(match[3]) || 0;
-				b = b - 1;
-				while (b < 1) b += a;
-				while (b >= a) b -= a;
-				switch (special) {
-					case 'n': return { a: a, b: b, special: 'n' };
-					case 'odd': return { a: 2, b: 0, special: 'n' };
-					case 'even': return { a: 2, b: 1, special: 'n' };
-					case 'first': return { a: 0, special: 'index' };
-					case 'last': return { special: 'last' };
-					case 'only': return { special: 'only' };
-					default: return { a: (a - 1), special: 'index' };
-				}
-			},
-			handler: nthChild
-		},
-
-		'even': {
-			parser: { a: 2, b: 1, special: 'n' },
-			handler: nthChild
-		},
-
-		'odd': {
-			parser: { a: 2, b: 0, special: 'n' },
-			handler: nthChild
-		},
-
-		'first-child': {
-			parser: { a: 0, special: 'index' },
-			handler: nthChild
-		},
-
-		'last-child': {
-			parser: { special: 'last' },
-			handler: nthChild
-		},
-
-		'only-child': {
-			parser: { special: 'only' },
-			handler: nthChild
-		},
-
-		'enabled': [
-			function() {
-				return '[not(@disabled)]';
-			},
-			function(el) {
-				return !el.disabled;
-			}
-		],
-
-		'empty': [
-		 	function() {
-				return '[not(node())]';
-			},
-			function(el) {
-				return el.nodeName && el.nodeType == 3 && el.nodeValue.length == 0;
-			}
-		],
-
-		'contains': contains(false),
-
-		'contains-caseless': contains(true)
-	};
-
-	DomElement.inject({
-		getElements: function(selectors, nowrap) {
-			version++;
-			var elements = nowrap ? [] : new this._elements();
-			selectors = !selectors ? ['*'] : typeof selectors == 'string'
-				? selectors.split(',')
-				: selectors.length != null ? selectors : [selectors];
-			for (var i = 0; i < selectors.length; ++i) {
-				var selector = selectors[i];
-				if (Base.type(selector) == 'element') elements.push(selector);
-				else evaluate([], selector, this.$, elements);
-			}
-			return elements;
-		},
-
-		getElement: function(selector) {
-			var el, type = Base.type(selector), match;
-			if (type == 'string' && (match = selector.match(/^#?([\w-]+)$/)))
-				el = document.getElementById(match[1]);
-			else if (type == 'element')
-				el = DomElement.unwrap(selector);
-			if (el && !DomElement.isAncestor(el, this.$)) el = null;
-			if (!el) el = this.getElements(selector, true)[0];
-			return DomElement.get(el);
-		},
-
-		hasElement: function(selector) {
-			return !!this.getElement(selector);
-		},
-
-		getParents: function(selector) {
-			var parents = [];
-			for (var el = this.$.parentNode; el; el = el.parentNode)
-				parents.push(el);
-			version++;
-			return evaluate(parents, selector, this.$, new this._elements());
-		},
-
-		getParent: function(selector) {
-			return !selector ? this.base() : this.getParents(selector)[0];
-		},
-
-		hasParent: function(selector) {
-			return typeof selector == 'string' ? !!this.getParent(selector) : this.base(selector);
-		}
-	});
-}
 
 DomEvent = Base.extend(new function() {
 	var keys = {
@@ -1975,6 +1544,471 @@ DomEvent.add(new function() {
 		dragend: {}
 	};
 });
+
+DomElement.inject(new function() {
+	var XPATH= 0, FILTER = 1;
+
+	var methods = [{ 
+		getParam: function(items, separator, context, params) {
+			var str = context.namespaceURI ? 'xhtml:' + params.tag : params.tag;
+			if (separator && (separator = DomElement.separators[separator]))
+				str = separator[XPATH] + str;
+			for (var i = params.pseudos.length; i--;) {
+				var pseudo = params.pseudos[i];
+				str += pseudo.handler[XPATH](pseudo.argument);
+			}
+			if (params.id) str += '[@id="' + params.id + '"]';
+			for (var i = params.classes.length; i--;)
+				str += '[contains(concat(" ", @class, " "), " ' + params.classes[i] + ' ")]';
+			for (var i = params.attributes.length; i--;) {
+				var attribute = params.attributes[i];
+				var operator = DomElement.operators[attribute[1]];
+				if (operator) str += operator[XPATH](attribute[0], attribute[2]);
+				else str += '[@' + attribute[0] + ']';
+			}
+			items.push(str);
+			return items;
+		},
+
+		getElements: function(items, elements, context) {
+			function resolver(prefix) {
+				return prefix == 'xhtml' ? 'http://www.w3.org/1999/xhtml' : false;
+			}
+			var res = document.evaluate('.//' + items.join(''), context,
+				resolver, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+			for (var i = 0, j = res.snapshotLength; i < j; ++i)
+				elements.push(res.snapshotItem(i));
+		}
+	}, { 
+		getParam: function(items, separator, context, params, data) {
+			var found = [];
+			var tag = params.tag;
+			if (separator && (separator = DomElement.separators[separator])) {
+				separator = separator[FILTER];
+				var uniques = {};
+				function add(item) {
+					if (!item._unique)
+						DomElement.unique(item);
+					if (!uniques[item._unique] && match(item, params, data)) {
+						uniques[item._unique] = true;
+						found.push(item);
+						return true;
+					}
+				}
+				for (var i = 0, l = items.length; i < l; i++)
+					separator(items[i], params, add);
+				if (params.clearTag)
+					params.tag = params.match = params.clearTag = null;
+				return found;
+			}
+			if (params.id) {
+				var el = document.getElementById(params.id);
+				params.id = params.match = null;
+				return el && DomElement.isAncestor(el, context)
+					&& match(el, params, data) ? [el] : null;
+			} else {
+				items = context.getElementsByTagName(tag);
+				params.tag = params.match = null;
+				for (var i = 0, l = items.length; i < l; i++)
+					if (match(items[i], params, data))
+						found.push(items[i]);
+			}
+			return found;
+		},
+
+		getElements: function(items, elements, context) {
+			elements.append(items);
+		}
+	}];
+
+	function parse(selector) {
+		var params = { tag: '*', id: null, classes: [], attributes: [], pseudos: [] };
+		selector.replace(/:([^:(]+)*(?:\((["']?)(.*?)\2\))?|\[(\w+)(?:([!*^$~|]?=)(["']?)(.*?)\6)?\]|\.[\w-]+|#[\w-]+|\w+|\*/g, function(part) {
+			switch (part.charAt(0)) {
+				case '.': params.classes.push(part.slice(1)); break;
+				case '#': params.id = part.slice(1); break;
+				case '[': params.attributes.push([arguments[4], arguments[5], arguments[7]]); break;
+				case ':':
+					var handler = DomElement.pseudos[arguments[1]];
+					if (!handler) {
+						params.attributes.push([arguments[1], arguments[3] ? '=' : '', arguments[3]]);
+						break;
+					}
+					params.pseudos.push({
+						name: arguments[1],
+						argument: handler && handler.parser
+							? (handler.parser.apply ? handler.parser(arguments[3]) : handler.parser)
+							: arguments[3],
+						handler: handler.handler || handler
+					});
+				break;
+				default: params.tag = part;
+			}
+			return '';
+		});
+		return params;
+	}
+
+	function match(el, params, data) {
+		if (params.id && params.id != el.id)
+			return false;
+
+		if (params.tag && params.tag != '*' && params.tag != el.tagName.toLowerCase())
+			return false;
+
+		for (var i = params.classes.length; i--;)
+			if (!el.className || !el.className.contains(params.classes[i], ' '))
+				return false;
+
+		var proto = DomElement.prototype;
+		for (var i = params.attributes.length; i--;) {
+			var attribute = params.attributes[i];
+			proto.$ = el; 
+			var val = proto.getProperty(attribute[0]);
+			if (!val) return false;
+			var operator = DomElement.operators[attribute[1]];
+			operator = operator && operator[FILTER];
+			if (operator && (!val || !operator(val, attribute[2])))
+				return false;
+		}
+
+		for (var i = params.pseudos.length; i--;) {
+			var pseudo = params.pseudos[i];
+			if (!pseudo.handler[FILTER](el, pseudo.argument, data))
+				return false;
+		}
+
+		return true;
+	}
+
+	function filter(items, selector, context, elements, data) {
+		var method = methods[!Browser.XPATH || items.length ||
+			typeof selector == 'string' && selector.contains('option[')
+			? FILTER : XPATH];
+		var separators = [];
+		selector = selector.trim().replace(/\s*([+>~\s])[a-zA-Z#.*\s]/g, function(match) {
+			if (match.charAt(2)) match = match.trim();
+			separators.push(match.charAt(0));
+			return ':)' + match.charAt(1);
+		}).split(':)');
+		for (var i = 0, l = selector.length; i < l; ++i) {
+			var params = parse(selector[i]);
+			if (!params) return elements; 
+			var next = method.getParam(items, separators[i - 1], context, params, data);
+			if (!next) break;
+			items = next;
+		}
+		method.getElements(items, elements, context);
+		return elements;
+	}
+
+	return {
+		getElements: function(selectors, nowrap) {
+			var elements = nowrap ? [] : new this._elements();
+			selectors = !selectors ? ['*'] : typeof selectors == 'string'
+				? selectors.split(',')
+				: selectors.length != null ? selectors : [selectors];
+			for (var i = 0, l = selectors.length; i < l; ++i) {
+				var selector = selectors[i];
+				if (Base.type(selector) == 'element') elements.push(selector);
+				else filter([], selector, this.$, elements, {});
+			}
+			return elements;
+		},
+
+		getElement: function(selector) {
+			var el, type = Base.type(selector), match;
+			if (type == 'string' && (match = selector.match(/^#?([\w-]+)$/)))
+				el = document.getElementById(match[1]);
+			else if (type == 'element')
+				el = DomElement.unwrap(selector);
+			if (el && !DomElement.isAncestor(el, this.$)) el = null;
+			if (!el) el = this.getElements(selector, true)[0];
+			return DomElement.get(el);
+		},
+
+		hasElement: function(selector) {
+			return !!this.getElement(selector);
+		},
+
+		getParents: function(selector) {
+			var parents = [];
+			for (var el = this.$.parentNode; el; el = el.parentNode)
+				parents.push(el);
+			return filter(parents, selector, this.$, new this._elements(), {});
+		},
+
+		getParent: function(selector) {
+			return !selector ? this.base() : this.getParents(selector)[0];
+		},
+
+		hasParent: function(selector) {
+			return typeof selector == 'string' ?
+				!!this.getParent(selector) : this.base(selector);
+		},
+
+		match: function(selector) {
+			return !selector || match(this, parse(selector), {});
+		},
+
+		filter: function(elements, selector) {
+			return filter(elements, selector, this.$, new this._elements(), {});
+		}
+	};
+});
+
+DomElement.separators = {
+	'~': [
+		'/following-sibling::',
+		function(item, params, add) {
+			while (item = item.nextSibling)
+				if (item.nodeType == 1 && add(item))
+					break;
+		}
+	],
+
+	'+': [
+		'/following-sibling::*[1]/self::',
+		function(item, params, add) {
+			while (item = item.nextSibling) {
+				if (item.nodeType == 1) {
+					add(item);
+					break;
+				}
+			}
+		}
+	],
+
+	'>': [
+	 	'/',
+		function(item, params, add) {
+			var children = item.childNodes;
+			for (var i = 0, l = children.length; i < l; i++)
+				if (children[i].nodeType == 1)
+					add(children[i]);
+		}
+	],
+
+	' ': [
+		'//',
+		function(item, params, add) {
+			var children = item.getElementsByTagName(params.tag);
+			params.clearTag = true;
+			for (var i = 0, l = children.length; i < l; i++)
+				add(children[i]);
+		}
+	]
+};
+
+DomElement.operators = new function() {
+	function contains(sep) {
+		return [
+			function(a, v) {
+				return '[contains(' + (sep ? 'concat("' + sep + '", @' + a + ', "' + sep + '")' : '@' + a) + ', "' + sep + v + sep + '")]';
+			},
+			function(a, v) {
+				return a.contains(v, sep);
+			}
+		]
+	}
+
+	return {
+		'=': [
+			function(a, v) {
+				return '[@' + a + '="' + v + '"]';
+			},
+			function(a, v) {
+				return a == v;
+			}
+		],
+
+		'^=': [
+	 		function(a, v) {
+				return '[starts-with(@' + a + ', "' + v + '")]';
+			},
+			function(a, v) {
+				return a.substr(0, v.length) == v;
+			}
+		],
+
+		'$=': [
+			function(a, v) {
+				return '[substring(@' + a + ', string-length(@' + a + ') - ' + v.length + ' + 1) = "' + v + '"]';
+			},
+			function(a, v) {
+				return a.substr(a.length - v.length) == v;
+			}
+		],
+
+		'!=': [
+			function(a, v) {
+				return '[@' + a + '!="' + v + '"]';
+			},
+			function(a, v) {
+				return a != v;
+			}
+		],
+
+		'*=': contains(''),
+
+		'|=': contains('-'),
+
+		'~=': contains(' ')
+	};
+};
+
+DomElement.pseudos = new function() {
+	var nthChild = [
+		function(argument) {
+			switch (argument.special) {
+				case 'n': return '[count(preceding-sibling::*) mod ' + argument.a + ' = ' + argument.b + ']';
+				case 'first': return '[count(preceding-sibling::*) = 0]';
+				case 'last': return '[count(following-sibling::*) = 0]';
+				case 'only': return '[not(preceding-sibling::* or following-sibling::*)]';
+				case 'index': return '[count(preceding-sibling::*) = ' + argument.a + ']';
+			}
+		},
+		function(el, argument, data) {
+			var count = 0;
+			switch (argument.special) {
+				case 'n':
+					data.indices = data.indices || {};
+					if (!data.indices[el._unique]) {
+						var children = el.parentNode.childNodes;
+						for (var i = 0, l = children.length; i < l; i++){
+							var child = children[i];
+							if (child.nodeType == 1) {
+								if (!child._unique)
+									DomElement.unique(child);
+								data.indices[child._unique] = count++;
+							}
+						}
+					}
+					return data.indices[el._unique] % argument.a == argument.b;
+				case 'first':
+					while (el = el.previousSibling)
+						if (el.nodeType == 1)
+							return false;
+					return true;
+				case 'last':
+					while (el = el.nextSibling)
+						if (el.nodeType == 1)
+							return false;
+					return true;
+				case 'only':
+					var prev = el;
+					while(prev = prev.previousSibling)
+						if (prev.nodeType == 1)
+							return false;
+					var next = el;
+					while (next = next.nextSibling)
+						if (next.nodeType == 1)
+							return false;
+					return true;
+				case 'index':
+					while (el = el.previousSibling)
+						if (el.nodeType == 1 && ++count > argument.a)
+							return false;
+					return true;
+			}
+			return false;
+		}
+	];
+
+	function contains(caseless) {
+		var abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		return [
+			function(argument) {
+				return '[contains(' + (caseless ? 'translate(text(), "' + abc
+					+ '", "' + abc.toLowerCase() + '")' : 'text()') + ', "'
+					+ (caseless && argument ? argument.toLowerCase() : argument) + '")]';
+			},
+			function(el, argument) {
+				if (caseless && argument) argument = argument.toLowerCase();
+				var nodes = el.childNodes;
+				for (var i = nodes.length - 1; i >= 0; i--) {
+					var child = nodes[i];
+					if (child.nodeName && child.nodeType == 3 &&
+						(caseless ? child.nodeValue.toLowerCase() : child.nodeValue).contains(argument))
+							return true;
+				}
+				return false;
+			}
+		];
+	}
+
+	return {
+		'nth-child': {
+			parser: function(argument) {
+				var match = argument ? argument.match(/^([+-]?\d*)?([devon]+)?([+-]?\d*)?$/) : [null, 1, 'n', 0];
+				if (!match) return null;
+				var i = parseInt(match[1]);
+				var a = isNaN(i) ? 1 : i;
+				var special = match[2];
+				var b = (parseInt(match[3]) || 0) - 1;
+				while (b < 1) b += a;
+				while (b >= a) b -= a;
+				switch (special) {
+					case 'n': return { a: a, b: b, special: 'n' };
+					case 'odd': return { a: 2, b: 0, special: 'n' };
+					case 'even': return { a: 2, b: 1, special: 'n' };
+					case 'first': return { special: 'first' };
+					case 'last': return { special: 'last' };
+					case 'only': return { special: 'only' };
+					default: return { a: a - 1, special: 'index' };
+				}
+			},
+			handler: nthChild
+		},
+
+		'even': {
+			parser: { a: 2, b: 1, special: 'n' },
+			handler: nthChild
+		},
+
+		'odd': {
+			parser: { a: 2, b: 0, special: 'n' },
+			handler: nthChild
+		},
+
+		'first-child': {
+			parser: { special: 'first' },
+			handler: nthChild
+		},
+
+		'last-child': {
+			parser: { special: 'last' },
+			handler: nthChild
+		},
+
+		'only-child': {
+			parser: { special: 'only' },
+			handler: nthChild
+		},
+
+		'enabled': [
+			function() {
+				return '[not(@disabled)]';
+			},
+			function(el) {
+				return !el.disabled;
+			}
+		],
+
+		'empty': [
+		 	function() {
+				return '[not(node())]';
+			},
+			function(el) {
+				return !(el.innerText || el.textContent || '').length;
+			}
+		],
+
+		'contains': contains(false),
+
+		'contains-caseless': contains(true)
+	};
+};
 
 HtmlElements = Document._elements = DomElements.extend();
 
@@ -2482,7 +2516,7 @@ Chain = {
 
 	callChain: function() {
 		if (this.chains && this.chains.length)
-			this.chains.shift().delay(1, this);
+			this.chains.shift().delay(0.01, this);
 	},
 
 	clearChain: function() {
