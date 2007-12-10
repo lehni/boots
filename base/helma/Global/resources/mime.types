@@ -596,6 +596,7 @@ video/vnd.vivo
 video/x-dv			dv dif
 video/x-msvideo			avi
 video/x-sgi-movie		movie
+video/x-flv			flv
 x-conference/x-cooltalk		ice
 
 #bootLib extensions
