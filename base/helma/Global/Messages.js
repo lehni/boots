@@ -2,10 +2,9 @@
 
 Messages = Base.extend({
 	initialize: function(prototype) {
-		// this is hackish: get prototype name from javascript prototype object (scope):
-		var protoName = prototype.toString();
-		var match = protoName.match(/\[object (\w*)\]/);
-		if (match) protoName = match[1];
+		// The prototype name can be accessed through the name field of the
+		// constructor:
+		var protoName = prototype.constructor.name;
 		// walk through all the resources of the prototype and find the resource named messages.properites
 		var proto = app.__app__.getPrototypeByName(protoName);
 		var name = "messages.properties";
