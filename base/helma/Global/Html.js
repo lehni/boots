@@ -1,5 +1,6 @@
 Html = new function() {
 
+	// Translate JavaScript names to HTML names
 	var properties = {
 		'className': 'class', 'htmlFor': 'for', colSpan: 'colspan',
 		rowSpan: 'rowspan', accessKey: 'accesskey', tabIndex: 'tabindex',
