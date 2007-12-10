@@ -1165,6 +1165,17 @@ DomElement.inject(new function() {
 
 		createInside: create('Inside'),
 
+		wrap: function() {
+			var el = this.create(arguments), last;
+			el.insertBefore(this);
+			do {
+				last = el;
+				el = el.getFirst();
+			} while(el);
+			last.appendChild(this);
+			return last;
+		},
+
 		remove: function() {
 			if (this.$.parentNode)
 				this.$.parentNode.removeChild(this.$);
@@ -1446,11 +1457,11 @@ Document = DomElement.get(document).inject({
 });
 
 function $(selector, root) {
-	return DomElement.get(root || Document).getElement(selector);
+	return (DomElement.get(root) || Document).getElement(selector);
 }
 
 function $$(selector, root) {
-	return DomElement.get(root || Document).getElements(selector);
+	return (DomElement.get(root) || Document).getElements(selector);
 }
 
 /*@cc_on
@@ -1598,17 +1609,17 @@ DomElement.inject(new function() {
 				for (var i = 0, l = items.length; i < l; i++)
 					separator(items[i], params, add);
 				if (params.clearTag)
-					params.tag = params.match = params.clearTag = null;
+					params.tag = params.clearTag = null;
 				return found;
 			}
 			if (params.id) {
 				var el = document.getElementById(params.id);
-				params.id = params.match = null;
+				params.id = null;
 				return el && DomElement.isAncestor(el, context)
 					&& match(el, params, data) ? [el] : null;
 			} else {
 				items = context.getElementsByTagName(tag);
-				params.tag = params.match = null;
+				params.tag = null;
 				for (var i = 0, l = items.length; i < l; i++)
 					if (match(items[i], params, data))
 						found.push(items[i]);
