@@ -11,8 +11,8 @@ Picture.inject({
 				this.height = info.height;
 				return true;
 			}
+			this.width = this.height = 0;
 		}
-		this.width = this.height = 0;
 		return false;
 	},
 
@@ -20,31 +20,12 @@ Picture.inject({
 		return this.width != 0 && this.height != 0;
 	},
 
-	getThumbnailFile: function(id, check) {
-		if (check && !/[a-z0-9]{32}/.test(id)) {
-			return null;
-		} else {
-			return new File(getProperty("resourceDir"), "thumb_" + this._id + "_" + id + "." + this.extension);
-		}
-	},
-
-	forwardFile: function(file) {
-		if (!file && req.data.thumb) {
-			file = this.getThumbnailFile(req.data.thumb, true);
-			if (!file.exists())
-				file = null;
-		}
-		this.base(file);
-	},
-
 	renderLink: function(param, out) {
-		if (param && !param.href) {
-			// param can be a string or an associative array, with content 
-			// point to the string. convert it here if it's still a string, as
-			// we want to add popup.
-			if (typeof param == "string")
-				param = { content: param };
-			// only set the popup if this is actually linking to the image.
+		// Convert to object param first:
+		if (!param || typeof param == 'string')
+			param = { content: param };
+		if (!param.href) {
+			// Only set the popup if this is actually linking to the image.
 			// if href is set, the image is taking us to another page, so don't popup!
 			param.popup = {
 				title: this.name,
@@ -163,12 +144,7 @@ Picture.inject({
 	},
 
 	renderImage: function(param, out) {
-		var img = this.processImage(param);
-		out.write('<img ');
-		if (param.id)
-		 	out.write('id="' + param.id + '" ');
-		if (param.className)
-			out.write('class="' + param.className + '" ');
-		out.write('src="' + img.src + '" width="' + img.width + '" height="' + img.height + '">');
-	}.toRender()
+		var image = this.processImage(param);
+		return Html.image(Hash.merge(image, param), out);
+	}
 });

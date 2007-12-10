@@ -86,20 +86,18 @@ Resource.inject({
 	},
 
 	setFile: function(mimeObj) {
-		if (mimeObj && mimeObj.name) {
-			var ext = File.getExtension(mimeObj.name);
-			if (ext) {
-				ext = ext.toLowerCase();
-				// remove old file:
-				this.removeResource();
-				this.name = mimeObj.name;
-				this.extension = ext;
-				var file = this.getFile();
-				mimeObj.writeToFile(file.getParent(), file.getName());
-				if (this.version == null) this.version = 0;
-				else this.version++;
-				return true;
-			}
+		var ext = mimeObj && File.getExtension(mimeObj.name);
+		if (ext) {
+			ext = ext.toLowerCase();
+			// remove old file:
+			this.removeResource();
+			this.name = mimeObj.name;
+			this.extension = ext;
+			var file = this.getFile();
+			mimeObj.writeToFile(file.getParent(), file.getName());
+			if (this.version == null) this.version = 0;
+			else this.version++;
+			return true;
 		}
 		return false;
 	},
@@ -122,30 +120,44 @@ Resource.inject({
 	 * Renders the link for a link to the resource.
 	 */
 	renderLink: function(param, out) {
+		// Convert to object param first:
+		if (!param || typeof param == 'string')
+			param = { content: param };
 		// override default href (this.href())
 		if (!param.href)
 			param.href = this.getHref();
+		// Open in blank window if it's not forcing a download
+		if (!this.forceDownload()) {
+			if (!param.attributes)
+				param.attributes = {};
+			param.attributes.target = '_blank';
+		}
 		return this.base(param, out);
 	},
 
-	removeThumbnails: function() {
+	getThumbnailFile: function(id, extension) {
+		return new File(getProperty('resourceDir'), 'thumb_' + this._id +
+			(id != null ? '_' + id : '') + '.' + (extension || this.extension));
+	},
+
+	removeThumbnailFiles: function() {
 		if (this.extension) {
 			// remove all thumbnails of this image through java.io.File filtering
-			var prefix = "thumb_" + this._id + "_";
+			var exp = new RegExp("^thumb_" + this._id + "[_.]");
 			var thumbs = new java.io.File(getProperty("resourceDir")).listFiles(new java.io.FilenameFilter() {
 				accept: function(dir, name) {
-					return name.startsWith(prefix);
+					return exp.test(name);
 				}
 			});
 			for (var i = 0, l = thumbs.length; i < l; ++i)
-				thumbs[i]['delete'](); // File.delete
+				thumbs[i]['delete'](); // File#delete
 		}
 	},
 
 	removeResource: function() {
 		if (this.extension) {
 			this.getFile().remove();
-			this.removeThumbnails();
+			this.removeThumbnailFiles();
 			this.extension = null;
 
 		}
@@ -162,7 +174,7 @@ Resource.inject({
 	forwardFile: function(file) {
 		if (!file)
 			file = this.getFile();
-		res.contentType = this.getContentType();
+		res.contentType = file.getContentType();
 		if (req.data.download || this.forceDownload()) {
 			this.counter++;	
 			res.getServletResponse().setHeader('Content-Disposition', 'attachment; filename="' + this.name + '"');
@@ -186,6 +198,7 @@ Resource.inject({
 				// File size
 				this.getFile().getLengthAsString() + 
 				')';
+		param.width = param.height = param.small ? 16 : 32;
 		return this.renderTemplate("icon", param, out);
 	},
 
