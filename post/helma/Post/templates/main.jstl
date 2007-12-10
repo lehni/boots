@@ -20,7 +20,7 @@
 <% if (param.resources.length > 0) %>
 <div class="block-resources">
 <% foreach ($resource in param.resources) %>
-<% $resource.renderThumbnail %>
+<% $resource.thumbnail %>
 <% end %>
 </div>
 <div class="clear"></div>
