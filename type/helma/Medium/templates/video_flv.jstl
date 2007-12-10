@@ -1,0 +1,2 @@
+<% $height = param.height + 16 -%>
+<embed src="/static/type/media/flvplayer.swf" width="<%= param.width %>" height="<%= $height %>" allowfullscreen="<%= param.fullscreen default="true" %>" allowscriptaccess="<%= param.scriptaccess default="always" %>" flashvars="&file=<%= param.src %>&width=<%= param.width %>&height=<%= $height %><%= param.image prefix="&image=" %>" />
