@@ -15,6 +15,10 @@ HopObject.inject({
 		return false;
 	},
 
+	isEditable: function() {
+		return User.canEdit(this);
+	},
+
 	isCreating: function() {
 		return !!this.cache.creating;
 	},
@@ -35,11 +39,13 @@ HopObject.inject({
 		return this._id[0] == 't';
 	},
 
+	/** 
+	 * Returns the target id to be used for inline editing forms.
+	 * By default this is just the object's full id.
+	 * This can be overridden.
+	 */
 	getEditId: function() {
-		// Use this.cache.id instead of real _if if set, so transient
-		// nodes can pretend to be another node. Used when transient nodes
-		// are lost in the cache. See EditNode#initialize
-		return this._prototype + '-' + (this.cache.id || this._id);
+		return this.getFullId();
 	},
 
 	getParent: function() {
@@ -192,11 +198,11 @@ HopObject.inject({
 				}
 			}
 			param.buttons = items;
-			param.id = this.getEditId();
+			param.id = this.getFullId();
 			param.url = path.href('edit');
 			param.popup = param.popup == 'true';
 			if (!param.target)
-				param.target = param.id;
+				param.target = this.getEditId();
 			if (param.popup) {
 				if (!param.width) param.width = 400;
 				if (!param.height) param.height = 400;

@@ -2,7 +2,7 @@
 	<div class="row">
 <% if (param.showProgress) %>
 		<div class="edit-upload"></div>
-		<div class="edit-progress hidden"><img src="/static/edit/img/progress.gif" width="16" height="16"></div>
+		<div class="edit-progress hidden"><img src="/static/edit/media/progress.gif" width="16" height="16"></div>
 <% end %>
 		<%= param.title prefix="<div class=\"edit-title\">" suffix="</div>" %>
 	</div>

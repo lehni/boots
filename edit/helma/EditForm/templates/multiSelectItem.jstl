@@ -4,8 +4,8 @@
 			<table border="0" cellpadding="0" cellspacing="0" width="100%">
 				<tr>
 					<td>
-						<a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "up" %>"><img src="/static/edit/img/arrow-up.gif" width="15" height="15" border="0"></a><br />
-						<a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "down" %>"><img src="/static/edit/img/arrow-down.gif" width="15" height="15" border="0"></a>
+						<a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "up" %>"><img src="/static/edit/media/arrow-up.gif" width="15" height="15" border="0"></a><br />
+						<a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "down" %>"><img src="/static/edit/media/arrow-down.gif" width="15" height="15" border="0"></a>
 					</td>
 					<td width="100%">
 						<%= param.left %>
@@ -18,8 +18,8 @@
 			<table border="0" cellpadding="0" cellspacing="0" width="100%">
 				<tr>
 					<td>
-						<a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "left" %>"><img src="/static/edit/img/arrow-left.gif" width="15" height="15" border="0"></a><br />
-						<a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "right" %>"><img src="/static/edit/img/arrow-right.gif" width="15" height="15" border="0"></a>
+						<a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "left" %>"><img src="/static/edit/media/arrow-left.gif" width="15" height="15" border="0"></a><br />
+						<a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "right" %>"><img src="/static/edit/media/arrow-right.gif" width="15" height="15" border="0"></a>
 					</td>
 					<td width="100%">
 						<%= param.right %>
@@ -30,7 +30,7 @@
 <% end %>
 	</tr>
 	<tr>
-		<td colspan="2"><div class="edit-spacer"></div><div><img src="/static/edit/img/spacer.gif" width="15" height="1" border="0"><%= param.buttons %></div></td>
+		<td colspan="2"><div class="edit-spacer"></div><div><img src="/static/edit/media/spacer.gif" width="15" height="1" border="0"><%= param.buttons %></div></td>
 	</tr>
 </table>
 <% input type="hidden" name=param.name value=param.ids %>

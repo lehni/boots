@@ -29,8 +29,8 @@ EditForm = Base.extend({
 			this.empty = false;
 			this.url = this.form.getAction();
 			var tab = $('div.tab-pane', this.form);
-			this.tab = tab && tab.tabPane;
 			TabPane.setup();
+			this.tab = tab && tab.tabPane;
 			this.target.addClass('hidden');
 			this.show(true);
 			if (values.error) {
@@ -328,7 +328,7 @@ EditForm = Base.extend({
 			if (!target) {
 				alert('Cannot find target element for editor of object ' + param.id);
 			} else if (!param.confirm || confirm(param.confirm)) {
-				var elements = $('div#edit-' + param.id + '.edit-elements');
+				var elements = $('div#edit-elements-' + param.id + '.edit-elements');
 				var progress = $('span.edit-progress', elements);
 				var buttons = $('span.edit-buttons', elements);
 				if (progress) {
@@ -411,6 +411,7 @@ EditForm = Base.extend({
 				chooser.element.remove();
 			});
 			// Replace the content of the body only...
+			Document.fireEvent('updating');
 			var body = $('body');
 			body.setHtml(html);
 			// now insert forms again
@@ -425,6 +426,12 @@ EditForm = Base.extend({
 					form.close();
 				}
 			});
+			// Retrigger domready event since things have completely changed.
+			Window.fireEvent('domready');
+			// Fire event on document so website can react to html update
+			// and do some JS magic with it if needed before the ditors are
+			// injected again.
+			Document.fireEvent('updated');
 			this.choosers.each(function(chooser) {
 				chooser.element.insertInside(body);
 			});
@@ -867,19 +874,19 @@ ColorChooser = EditChooser.extend({
 				<tr>\
 					<td rowspan="8">\
 						<div class="edit-chooser-element edit-dont-click">\
-							<div style="position:absolute;clip:rect(0px,' + size + 'px,' + size + 'px,0px)"><div id="edit-color-cross" style="position:relative; width:12px; height:12px; background-image:url(/static/edit/img/color-cross.gif);"></div></div>\
-							<img id="edit-color-overlay" class="edit-color" src="/static/edit/img/color-overlay.png" width="' + size + '" height="' + size + '" border="0" alt="">\
+							<div style="position:absolute;clip:rect(0px,' + size + 'px,' + size + 'px,0px)"><div id="edit-color-cross" style="position:relative; width:12px; height:12px; background-image:url(/static/edit/media/color-cross.gif);"></div></div>\
+							<img id="edit-color-overlay" class="edit-color" src="/static/edit/media/color-overlay.png" width="' + size + '" height="' + size + '" border="0" alt="">\
 						</div>\
 					</td>\
 					<td rowspan="8">\
 						<div class="edit-chooser-element edit-dont-click">\
-							<div style="position:absolute;clip:rect(0px,' + Math.round(size / 10 + 5) + 'px,' + size + 'px,-4px)"><div id="edit-color-slider" style="position:relative; left:-4px; width:25px; height:7px; background-image:url(/static/edit/img/color-slider.gif);"></div></div>\
-							<img id="edit-color-rainbow" class="edit-color" src="/static/edit/img/color-rainbow.png" width="' + Math.round(size / 10) + '" height="' + size + '" border="0" alt="">\
+							<div style="position:absolute;clip:rect(0px,' + Math.round(size / 10 + 5) + 'px,' + size + 'px,-4px)"><div id="edit-color-slider" style="position:relative; left:-4px; width:25px; height:7px; background-image:url(/static/edit/media/color-slider.gif);"></div></div>\
+							<img id="edit-color-rainbow" class="edit-color" src="/static/edit/media/color-rainbow.png" width="' + Math.round(size / 10) + '" height="' + size + '" border="0" alt="">\
 						</div>\
 					</td>\
 					<td colspan="2">\
 						<div class="edit-chooser-element edit-dont-click">\
-							<img id="edit-color-preview" class="edit-color" src="/static/edit/img/spacer.gif" width="100%" height="' + Math.round(size / 4) + '" border="0" alt="">\
+							<img id="edit-color-preview" class="edit-color" src="/static/edit/media/spacer.gif" width="100%" height="' + Math.round(size / 4) + '" border="0" alt="">\
 						</div>\
 					</td>\
 				</tr>\
@@ -895,7 +902,7 @@ ColorChooser = EditChooser.extend({
 						<tr>\
 							<td class="edit-dont-click" width="100%"></td>\
 							<td class="edit-chooser-element">' + this.renderButton('Cancel', null, 'edit-color-cancel') + '</td>\
-							<td><img src="/static/edit/img/spacer.gif" width="4" height="1" border="0" alt=""></td>\
+							<td><img src="/static/edit/media/spacer.gif" width="4" height="1" border="0" alt=""></td>\
 							<td class="edit-chooser-element">' + this.renderButton('OK', null, 'edit-color-ok') + '</td>\
 						</tr>\
 					</table>\

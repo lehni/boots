@@ -1,6 +1,6 @@
-<div id="edit-<%= param.id %>" class="edit-elements">
+<div id="edit-elements-<%= param.id %>" class="edit-elements">
 <% if (param.showProgress) %>
-	<span class="edit-progress hidden"><img src="/static/edit/img/progress.gif" width="16" height="16"></span>
+	<span class="edit-progress hidden"><img src="/static/edit/media/progress.gif" width="16" height="16"></span>
 <% end %>
 	<span class="edit-buttons">
 		<form>
@@ -10,7 +10,6 @@
 		</form>
 	</span>
 </div>
-
 <% #onclick %>
 <% if (param.popup) %>
 EditForm.open('<%= param.url %>', { id: '<%= param.id %>', mode: '<%= param.mode %>', edit_item: '<%= param.item %>', width: <%= param.width %>, height: <%= param.height %><%= param.confirm encoding="js" prefix=", confirm: '" suffix="'" %> });<%-%>

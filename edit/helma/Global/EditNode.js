@@ -1,26 +1,26 @@
 EditNode = Base.extend({
-	initialize: function(editId, object) {
-		// editId: prototype-id-group
-		var parts = editId.split('-');
+	initialize: function(fullId, object) {
+		// fullId: prototype-id-group
+		var parts = fullId.split('-');
 		if (!object) {
-			var proto = parts[0], id = parts[1];
+			var prototype = parts[0], id = parts[1];
 			// If we're asked to produce a transient object that has gone in 
 			// the meantime as the editData cache was lost, just reproduce a new
 			// object that will be stored in the nodes cache under the
 			// transient id of the old one.
 			if (id[0] == 't') {
-				User.log('WARNING: Lost transient object, producing new one (' + proto + ', ' + id + ')');
-				object = new global[proto]();
-				// Store previously associated id in cache._id, so this object's node can
-				// still be found in EditNode.get. See HopObject#getEditId
+				User.log('WARNING: Lost transient object, producing new one (' + prototype + ', ' + id + ')');
+				object = new global[prototype]();
+				// Store previously associated id in cache.id, so this object's node can
+				// still be found in EditNode.get. See HopObject#getFullId
 				object.cache.id = id;
 				object.setCreating(true);
 			} else {
-				object = HopObject.get(proto, id);
+				object = HopObject.get(id, prototype);
 			}
 		}
 		this.object = object;
-		this.id = editId;
+		this.id = fullId;
 		this.group = parts[2];
 		// Nodes are by default invisible, and get visible only when they are rendered.
 		this.visible = false;
@@ -104,19 +104,21 @@ EditNode = Base.extend({
 	},
 
 	statics: {
-		get: function(id, parentItem, fetchForm, cached) {
+		get: function(fullIdOrObject, parentItem, fetchForm, cached) {
 			var data = EditNode.getEditData(cached);
 			var node = null;
 			if (data) {
-				var object = null;
-				if (id._id != null) {
-					object = id;
-					id = object.getEditId();
+				var object = null, fullId;
+				if (fullIdOrObject._id != null) {
+					object = fullIdOrObject;
+					fullId = object.getFullId();
+				} else {
+					fullId = fullIdOrObject;
 				}
-				node = data.nodes[id];
+				node = data.nodes[fullId];
 				if (!cached) {
 					if (!node)
-						node = data.nodes[id] = new EditNode(id, object);
+						node = data.nodes[fullId] = new EditNode(fullId, object);
 					// Remove any old forms if the fetching of a new form is required.
 					if (fetchForm)
 						delete node.form;
@@ -129,8 +131,8 @@ EditNode = Base.extend({
 		/**
 		 * Same as get(), but does not create nodes if they do not exist.
 		 */
-		getCached: function(id, parentItem) {
-			return this.get(id, parentItem, false, true);
+		getCached: function(fullIdOrObject, parentItem) {
+			return this.get(fullIdOrObject, parentItem, false, true);
 		},
 
 		getEditData: function(cached) {
@@ -170,14 +172,14 @@ EditNode = Base.extend({
 				// Synchronize the local node cache with the client sided
 				// version.
 				// Filter out nodes that do not have a listing in nodes
-				editData.nodes = editData.nodes.each(function(val, id) {
-					if (clientData.nodes[id])
-						this[id] = val;
+				editData.nodes = editData.nodes.each(function(val, fullId) {
+					if (clientData.nodes[fullId])
+						this[fullId] = val;
 				}, {});
 				// Now make sure all client nodes exist, and create if necessary
-				clientData.nodes.each(function(clientNode, id) {
+				clientData.nodes.each(function(clientNode, fullId) {
 					var parent = clientNode.parent;
-					var node = EditNode.get(id, parent && EditNode.get(parent.id).form.getItem(parent.item, parent.group));
+					var node = EditNode.get(fullId, parent && EditNode.get(parent.id).form.getItem(parent.item, parent.group));
 					node.visible = clientNode.visible;
 				});
 				editData.version = clientData.version;

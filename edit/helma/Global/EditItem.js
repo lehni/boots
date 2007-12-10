@@ -4,6 +4,24 @@ EditItem = Base.extend(new function() {
 	return {
 		_scale: false,
 
+		initialize: function() {
+			if (this.prototypes) {
+				// Convert prototypes string to array
+				if (typeof this.prototypes == 'string') {
+					this.prototypes = this.prototypes.split(/\s*,\s*/);
+				} else if (this.prototypes instanceof Array) {
+					// Make sure the array only contains strings. If constructor functions
+					// are listed, access their name field which seems to be defined
+					// for HopObject constructors:
+					for (var i = 0, j = this.prototypes.length; i < j; i++) {
+						var proto = this.prototypes[i];
+						if (typeof proto == 'function')
+							this.prototypes[i] = proto.name;
+					}
+				}
+			}
+		},
+
 		render: function(baseForm, name, value, param, out) {
 		},
 
@@ -326,22 +344,6 @@ SelectItem = EditItem.extend({
 	_types: 'select',
 	_scale: true,
 
-	initialize: function() {
-		// Convert prototypes to array containing strings
-		if (typeof this.prototypes == 'string') {
-			this.prototypes = this.prototypes.split(/\s*,\s*/);
-		} else if (this.prototypes instanceof Array) {
-			// Make sure the array only contains strings. If constructor functions
-			// are listed, access their name field which seems to be defined
-			// for HopObject constructors:
-			for (var i = 0, j = this.prototypes.length; i < j; i++) {
-				var proto = this.prototypes[i];
-				if (typeof proto == 'function')
-					this.prototypes[i] = proto.name;
-			}
-		}
-	},
-
 	getOptions: function() {
 		return { scaleToFit: !!this.size };
 	},
@@ -367,11 +369,12 @@ SelectItem = EditItem.extend({
 			select.size = this.size;
 
 		var editButtons = this.renderEditButtons(baseForm);
-		if (editButtons) {
+		if (editButtons)
 			select.onDblClick = baseForm.renderHandle('select_edit', [name],
 				{ edit_item: this.name, edit_group: this.form.name });
-			select.options = options;
-			Html.select(select, out);
+		select.options = options;
+		Html.select(select, out);
+		if (editButtons) {
 			// for multi line items, add the buttons bellow,
 			// for pulldown, add them to the right
 			out.write(this.size ? '<div class="edit-spacer"></div>' : ' ');
@@ -626,7 +629,7 @@ ReferenceItem = EditItem.extend({
 		var buttons = [{
 			name: name + '_choose', value: 'Choose',
 			// TODO: allow display of current selection in object choosers!
-			onClick: baseForm.renderHandle('choose_reference', name, false /*, value ? value.getEditId() : ''*/)
+			onClick: baseForm.renderHandle('choose_reference', name, false /*, value ? value.getFullId() : ''*/)
 		}];
 		if (this.editable) {
 			buttons.push({
@@ -638,7 +641,7 @@ ReferenceItem = EditItem.extend({
 		this.form.renderButtons(buttons, out);
 		Html.input({
 			type: 'hidden', name: name,
-			value: value ? value.getEditId() : null
+			value: value ? value.getFullId() : null
 		}, out);
 	},
 
@@ -655,6 +658,10 @@ ObjectItem = EditItem.extend({
 	_types: 'edit', // TODO: rename!
 
 	render: function(baseForm, name, value, param, out) {
+		// Convert prototypes string to array
+		if (typeof this.prototypes == 'string')
+			this.prototypes = this.prototypes.split(/\s*,\s*/);
+
 		var title = this.title ? ' ' + this.title : '';
 		var mode;
 		if (value) {

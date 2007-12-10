@@ -32,11 +32,12 @@ EditForm.inject(new function() {
 				res.data.editResponse = new Hash();
 				var parent = base.getParent();
 				var mode = req.data.edit_mode || 'edit';
-				var editId = req.data.edit_id || base.getEditId();
+				var fullId = req.data.edit_id || base.getFullId();
 				var handler = handlers[mode];
 				var out = null;
-				// only allow editing modes if the edi stack is valid. otherwise it just renders the
-				// edit form again and ignores the editing step
+				// Only allow editing modes if the edi stack is valid.
+				// Otherwise it just renders the edit form again and ignores
+				// the editing step.
 				var handled = true;
 				if (req.data.helma_upload_error) {
 					EditForm.alert(req.data.helma_upload_error);
@@ -44,7 +45,7 @@ EditForm.inject(new function() {
 					res.push();
 					try {
 						// Make sure a new form is produced each time when editing
-						var node = EditNode.get(editId, null, mode == 'edit');
+						var node = EditNode.get(fullId, null, mode == 'edit');
 						// check again that we have the rights to edit:
 						if (node) {
 							// call the handler and commit changes if there are any
@@ -446,7 +447,7 @@ EditForm.register({
 		// TODO: canEdit?!
 //		if (User.canEdit()) {
 			var obj = HopObject.get(req.data.edit_base_id) || root;
-			var objId = obj.getEditId();
+			var objId = obj.getFullId();
 			var isRoot = obj == root;
 
 			res.write('<ul id="edit-choose-children-' + objId + '">');
@@ -455,14 +456,14 @@ EditForm.register({
 				var child = children[i];
 				if (child != null) {
 					var name = EditForm.getEditName(child);
-					var id = child.getEditId();
+					var id = child.getFullId();
 					res.write('<li>');
 					if (child.count()) {
 						res.write('<a href="javascript:' + node.form.renderHandle('choose_toggle', id) + '">' +
-							'<img id="edit-choose-arrow-' +  id + '" src="/static/img/arrow-close.gif" width="8" height="8" border="0"></a>' + 
-							'<img src="/static/img/spacer.gif" width="6" height="1">');
+							'<img id="edit-choose-arrow-' +  id + '" src="/static/edit/media/arrow-close.gif" width="8" height="8" border="0"></a>' + 
+							'<img src="/static/media/spacer.gif" width="6" height="1">');
 					} else {
-						res.write('<img src="/static/img/spacer.gif" width="14" height="1">');
+						res.write('<img src="/static/media/spacer.gif" width="14" height="1">');
 					}
 					res.write('<a href="javascript:' + node.form.renderHandle('choose_select', id, name) + '">' + name + '</a><ul id="edit-choose-children-' + id + '" class="hidden"></ul></li>');
 				}
