@@ -6,7 +6,7 @@ zipLib() {
 		cp -pfRL htdocs ../bootLib/$1/
 	fi
 	cd helma
-	zip -9 -r ../../bootLib/$1/$1.zip * -x *.DS_Store -x app.properties -x db.properties
+	zip -9 -r ../../bootLib/$1/$1.zip * -x "*/.DS_Store" "*/.svn/*"
 	cd ../..
 }
 
@@ -19,6 +19,6 @@ zipLib "postLib"
 zipLib "wikiLib"
 zipLib "feedLib"
 
-zip -9 -r bootLib.zip bootLib/*
+zip -9 -r bootLib.zip bootLib/* -x "*/.DS_Store" "*/.svn/*"
 
 rm -fr bootLib
