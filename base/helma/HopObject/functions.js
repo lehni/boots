@@ -5,12 +5,27 @@ HopObject.inject({
 		return getProperty("serverUrl") + this.href();
 	},
 
+	/**
+	 * Parses the text into a helma skin and renders it. This will be deprecated
+	 * in favour of Markup.js and Template.js
+	 */
 	renderText: function(text, out) {
 		if (text) {
 			var skin = createSkin(format(text));
 			if (out == res)	this.renderSkin(skin);
 			else out.write(this.renderSkinAsString(skin));
 		}
+	},
+
+	/**
+	 * Render HTML is the method in baseLib apps that's supposed to render the
+	 * final result. This here is just a scafold, apps should provide their own.
+	 * But since core parts rely on it to be there, here it is, along with a
+	 * simple template.
+	 */
+	renderHtml: function(param) {
+		param.title = param.title || this.name;
+		this.renderTemplate('html', param, res);
 	},
 
 	/** 
@@ -26,6 +41,10 @@ HopObject.inject({
 	},
 
 	statics: {
+		/**
+		 * Takes either an id / prototype pair of a full id ("prototype-id")
+		 * and returns the corresponding object, if any.
+		 */
 		get: function(id, prototype) {
 			// Support fullId prototype-id notation for string parameters:
 			if (prototype == undefined) {

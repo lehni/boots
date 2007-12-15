@@ -65,12 +65,12 @@ MarkupTag = Base.extend(new function() {
 
 	return {
 		parse: function(name, args, content, param, encoder) {
-			// TODO: define in subclasses
+			// Define in subclasses
 		},
 
 		/*
 		cleanUp: function(name, param) {
-			// TODO: define only if tag needs to clean up something in param
+			// Define only if tag needs to clean up something in param
 		}
 		*/
 
