@@ -2,6 +2,10 @@ Node.inject({
 	getEditForm: function(param) {
 		var form = new EditForm(this, { removable: true });
 		var parent = this.getEditParent();
+		if (param.children == undefined)
+			param.children = true;
+		if (param.resources == undefined)
+			param.resources = true;
 		form.addTab('node', param.tabLabel || 'Node',
 			{
 				label: 'Name', name: 'name', type: 'string',
@@ -16,17 +20,20 @@ Node.inject({
 			param.children ? {
 				type: 'multiselect', name: 'children',
 				label: param.children.label || 'Sub Pages',
+				ordered: Base.pick(param.children.ordered, true),
 				showOptions: Base.pick(param.children.showOptions, true),
+				collection: this.all, value: this,
 				prototypes: Base.pick(param.children.prototypes, 'Node'),
 				movable: Base.pick(param.children.movable, true),
 				editable: true, // always
-				collection: this.all, value: this,
 				size: Base.pick(param.children.size, 6), autoRemove: true,
 			} : null,
 			param.resources ? {
 				type: 'multiselect', name: 'resources',
 				label: param.resources.label || 'Resources',
-				showOptions: true, collection: this.allResources, value: this.resources,
+				ordered: Base.pick(param.resources.ordered, true),
+				showOptions: Base.pick(param.resources.showOptions, true),
+				collection: this.allResources, value: this.resources,
 				prototypes: Base.pick(param.resources.prototypes, 'Resource,Medium,Picture'),
 				movable: Base.pick(param.resources.movable, true),
 				editable: true, // always
