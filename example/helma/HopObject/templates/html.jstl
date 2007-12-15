@@ -19,7 +19,7 @@
 		<span class="title"><a href="/"><% renderText font="fontTitle" size="20" color="#009dec" charSpacing="-50" text="BootLib" %></a></span>
 	</div>
 	<div class="center">
-		<span class="title"><% renderText font="fontTitle" size="20" color="#000000" text=$title %></span><% this.edit_buttons buttons="edit" inline="true" target="content" style="border:1px solid #999;" %>
+		<span class="title"><% renderText font="fontTitle" size="20" color="#000000" text=$title %></span><% this.editButtons buttons="edit" target="content" style="border:1px solid #999;" %>
 	</div>
 	<div class="right">
 		<span class="title"><% renderText font="fontTitle" size="20" color="#e4141b" text=param.columnTitle %></span>
