@@ -6,16 +6,21 @@ EditItem = Base.extend(new function() {
 
 		initialize: function() {
 			if (this.prototypes) {
-				// Convert prototypes string to array
+				// Convert prototypes string to array of prototype names
 				if (typeof this.prototypes == 'string') {
 					this.prototypes = this.prototypes.split(/\s*,\s*/);
+				} else if (this.prototypes instanceof Function) {
+					// If it's one constructor, create an array containing its name.
+					this.prototypes = [this.prototypes.name];
 				} else if (this.prototypes instanceof Array) {
 					// Make sure the array only contains strings. If constructor functions
 					// are listed, access their name field which seems to be defined
 					// for HopObject constructors:
 					for (var i = 0, j = this.prototypes.length; i < j; i++) {
 						var proto = this.prototypes[i];
-						if (typeof proto == 'function')
+						// If it's a constructor, assume it's a HopObject and
+						// use its name
+						if (proto instanceof Function)
 							this.prototypes[i] = proto.name;
 					}
 				}
@@ -149,7 +154,7 @@ StringItem = EditItem.extend(new function() {
 
 		renderLinkButtons: function(baseForm, name, out) {
 			out.write('<div class="edit-spacer"></div>');
-			this.form.renderButtons([{
+			baseForm.renderButtons([{
 				name: name + '_link',
 				value: 'Internal Link',
 				onClick: baseForm.renderHandle('choose_link', name)
@@ -264,6 +269,7 @@ DateItem = EditItem.extend({
 			renderSelect(name + '_month', 0, 12, 'MMMM',
 				date.getMonth());
 		if (this.year)
+			// TODO: app properties for start and end point?
 			renderSelect(name + '_year', 1999, now.getFullYear() + 2, '0000',
 				date.getFullYear());
 		if (this.hours)
@@ -281,11 +287,11 @@ DateItem = EditItem.extend({
 		var prefix = this.form.variablePrefix + this.name;
 		return new Date(
 			req.data[prefix + '_year'],
-			req.data[prefix + '_month'],
-			req.data[prefix + '_day'],
-			req.data[prefix + '_hours'],
-			req.data[prefix + '_minutes'],
-			req.data[prefix + '_seconds']
+			req.data[prefix + '_month'] || 0,
+			req.data[prefix + '_day'] || 1,
+			req.data[prefix + '_hours'] || 0,
+			req.data[prefix + '_minutes'] || 0,
+			req.data[prefix + '_seconds'] || 0
 		);
 	}
 });
@@ -334,8 +340,8 @@ FileItem = EditItem.extend({
 	},
 
 	convert: function(value) {
-		// TODO: Fix in Helma: even if no file was attached,
-		// i seem to get a mime type object. test name:
+		// TODO: Fix in Helma: even if no file was attached, we seem to get a
+		// mime type object. The solution is to test name too:
 		return value && (!value.getName || !value.getName()) ? EditForm.DONT_APPLY : value;
 	}
 });
@@ -448,7 +454,7 @@ SelectItem = EditItem.extend({
 				onClick: baseForm.renderHandle('select_remove', selParams, editParams)
 			});
 		}
-		return this.form.renderButtons(buttons, out);
+		return baseForm.renderButtons(buttons, out);
 	},
 
 	// toOptions returns an array with option descriptions:
@@ -461,7 +467,6 @@ SelectItem = EditItem.extend({
 			if (param instanceof Array) {
 				options = param;
 			} else if (param instanceof HopObject) {
-				// TODO: optimize
 				options = [];
 				var list = param.list();
 				for (var i = 0; i < list.length; i++) {
@@ -475,6 +480,17 @@ SelectItem = EditItem.extend({
 						});
 					}
 				}
+				/*
+				options = param.list().each(function(obj) {
+					if (obj) {
+						var name = EditForm.getEditName(obj);
+						this.push({
+							name: name ? name : '[' + obj._prototype + ' ' + obj._id + ']',
+							value: obj._id
+						});
+					}
+				}, []);
+				*/
 			}
 		}
 		if (options) {
@@ -521,19 +537,21 @@ MultiSelectItem = SelectItem.extend({
 		}
 		// param already contains width, calculatedWidth, etc
 		param.name = name;
+		param.ordered = this.ordered;
 		// render the ids of the left column as a hidden input.
 		// This value is manipulated by select_* handlers
 		param.ids = ids.join(',');
 		if (this.type == 'references') {
 			// references has only the name + _left column and
 			// different edit buttons
-			param.buttons = [{
-				value: 'Add',
-				onClick: baseForm.renderHandle('choose_reference', name + '_left')
+			param.buttons = baseForm.renderButtons([{
+				name: name + '_choose', value: 'Add',
+				onClick: baseForm.renderHandle('choose_reference', name, true)
 			}, {
-				value: 'Delete',
-				onClick: baseForm.renderHandle('reference_remove', [name + '_left'])
-			}];
+				value: 'Remove',
+				onClick: baseForm.renderHandle('references_remove', name)
+			}]);
+			app.log("CHOOSE: " + name + '_choose');
 		} else {
 			param.buttons = this.renderEditButtons(baseForm);
 		}
@@ -557,15 +575,39 @@ MultiSelectItem = SelectItem.extend({
 					: baseForm.renderHandle('select_edit', [right], editParam)
 			});
 		}
-		baseForm.renderTemplate('multiSelectItem', param, out);
+		baseForm.renderTemplate('multiselectItem', param, out);
 	},
 
 	convert: function(value) {
-		if (this.type == 'multiselect') {
-			// don't  convert to array for string id lists
-			if (!this.linkedCollection)
-				value = value ? value.split(',') : [];
+		value = value ? value.split(',') : [];
+		// For references, convert full id lists to id lists by filtering out
+		// the prototypes that are not allowed, as defined by prototypes.
+		// It is the user's responisibility to make sure they are all in the
+		// same table, so ids alone are enough a reference!
+		if (this.type == 'references') {
+			// Convert string prototype names to constructors
+			var prototypes = this.prototypes && this.prototypes.map(function(proto) {
+				return global[proto];
+			});
+			// Now convert the fullIds in the array to only _id, by filtering
+			// according to prototypes.
+			value = value.each(function(id) {
+				if (/-/.test(id)) { // A full id
+					var obj = HopObject.get(id);
+					// See if the object is an instance of any of the allowed
+					// prototypes, and if so, add its id to the list
+					if (obj && (!prototypes || prototypes.find(function(proto) {
+							return obj instanceof proto
+						})))
+						this.push(obj._id);
+				} else { // Already a simple id, from previous elements
+					this.push(id);
+				}
+			}, []);
 		}
+		// Create a string for string id lists:
+		if (this.linkedCollection)
+			value = value.join(',');
 		return value;
 	},
 
@@ -638,7 +680,7 @@ ReferenceItem = EditItem.extend({
 					{ edit_item: this.name, edit_group: this.form.name })
 			});
 		}
-		this.form.renderButtons(buttons, out);
+		baseForm.renderButtons(buttons, out);
 		Html.input({
 			type: 'hidden', name: name,
 			value: value ? value.getFullId() : null
@@ -658,10 +700,6 @@ ObjectItem = EditItem.extend({
 	_types: 'edit', // TODO: rename!
 
 	render: function(baseForm, name, value, param, out) {
-		// Convert prototypes string to array
-		if (typeof this.prototypes == 'string')
-			this.prototypes = this.prototypes.split(/\s*,\s*/);
-
 		var title = this.title ? ' ' + this.title : '';
 		var mode;
 		if (value) {

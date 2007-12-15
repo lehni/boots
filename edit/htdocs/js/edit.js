@@ -574,15 +574,16 @@ EditForm.register(new function() {
 					editForm.execute('remove', params);
 				}
 			} else {
-				// remove links from list
+				// Remove links from list
 				sels.each(function(sel) {
 					sel = $('#' + sel, editForm.form);
 					sel.getOptions().each(function(opt) {
 						if (opt.getSelected())
 							opt.remove();
 					});
-				 	// generate values
-					this.multiselect_update(editForm, el.name.substr(0, el.name.indexOf('_left')));
+				 	// Generate values
+					// TODO: replace substring with regexp
+					this.multiselect_update(editForm, el.name.substring(0, el.name.indexOf('_left')));
 				}, this);
 			}
 		},
@@ -654,7 +655,8 @@ EditForm.register(new function() {
 		},
 
 		multiselect_update: function(editForm, name) {
-			$('#' + name, editForm.form).setValue($('#' + name + '_left', editForm.form).getOptions().getProperty('value').join(','));
+			var ids = $('#' + name + '_left', editForm.form).getOptions().getProperty('value');
+			$('#' + name, editForm.form).setValue(ids.join(','));
 		}
 	};
 });
@@ -723,18 +725,19 @@ EditForm.register(new function() {
 		},
 
 		choose_reference: function(editForm, name, multiple, baseId) {
+			var that = this;
 			choose(editForm, name + '_choose', baseId, function(id, title) {
 				var match;
 				if (multiple) {
-					/* TODO: Port this
-					var os = el.options;
-					var at = el.selectedIndex;
-					if (at < 0) at = os.length;
-					else at++;
-					this.spliceOptions(os, at, 0, new Option(name, id));
-					// generate values
-					this.editMultiSelect(match[1]);
-					*/
+					var el = $('#' + name + '_left');
+					var selected = el.getSelected().last();
+					var opt = new SelectOption({ text: title, value: id });
+					// TODO: this sets full ids, where we need a proper id list really. fix this
+					if (selected)
+						opt.insertAfter(selected);
+					else
+						opt.insertInside(el);
+					that.multiselect_update(editForm, name);
 				} else {
 					$('#' + name + '_reference').setValue(title);
 					$('#' + name).setValue(id);
@@ -777,6 +780,16 @@ EditForm.register(new function() {
 			}
 		}
 	};
+});
+
+// References:
+
+EditForm.register({
+	references_remove: function(editForm, name) {
+		var el = $('#' + name + '_left');
+		el.getSelected().remove();
+		this.multiselect_update(editForm, name);
+	}
 });
 
 // Choosers:
