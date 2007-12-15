@@ -86,7 +86,7 @@ HopObject.inject({
 				// only remove objects that are also allowed to remove directly and
 				// don't override the base object
 				// TODO: bad not to check for object match? In case of Topic / Post
-				// this would not work, as editing a topic returns the editor for the
+				// this would not work, as editing a node returns the editor for the
 				// first post....
 				if (form.removable/* && form.object == this*/) {
 					User.log("Remove " + this._prototype + ' ' + this._id);
@@ -134,6 +134,7 @@ HopObject.inject({
 	},
 
 	handleLogin: function(url) {
+		url = url || req.data.url || this.href();
 		if (req.data.login) {
 			var user = root.users.get(req.data.username);
 			var login = true;
@@ -146,7 +147,7 @@ HopObject.inject({
 			if (login && 
 				User.login(req.data.username, req.data.password,
 				req.data.remember == true)) {
-					res.redirect(url || req.data.url || this.href());
+					res.redirect(url);
 			}
 		} else if (req.data.cancel) {
 			res.redirect(this.href());
@@ -159,10 +160,10 @@ HopObject.inject({
 		}
 	},
 
-	handleLogout: function() {
+	handleLogout: function(url) {
 		if (session.user)
 			session.user.logout();
-		res.redirect(this.href());	
+		res.redirect(url || req.data.url || this.href());	
 	},
 
 	renderEditButtons: function(param, out) {
@@ -173,8 +174,6 @@ HopObject.inject({
 				var button = buttons[i].split(':');
 				var type = button[0];
 				var title = button[1];
-				// TODO: for create and remove, we create new edit_stacks by hand.
-				// this could be integrated into EditStack
 				switch (type) {
 				case 'create':
 					items.push({
