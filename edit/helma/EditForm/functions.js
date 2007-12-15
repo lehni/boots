@@ -94,7 +94,7 @@ EditForm.inject(new function() {
 		if (typeof label != "string") {
 			startIndex = 1;
 			label = name;
-			name = name.hyphenate();
+			name = name.hyphenate().replace(/\s+/gi, '-');
 		}
 		// see if the parameter was a previously created form already,
 		// or a HopObject that creates its own:
@@ -499,7 +499,7 @@ EditForm.inject(new function() {
 			// done afterwards. Used by items of type "button" and "hidden".
 			DONT_APPLY: {},
 
-			// Setting onApply to EditForm.DO_NOTHING prevents execution of applyDefault
+			// Setting onApply to EditForm.DO_NOTHING prevents execution of onApply
 			DO_NOTHING: function() {}
 		}
 	}
