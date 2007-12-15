@@ -142,10 +142,11 @@ EditForm.inject(new function() {
 							if (name != 'notNull')
 								checkRequirement(item, name, value);
 					}
-					// if onApply is set, execute it even if convert returned DONT_APPLY
-					// This is just for applyDefault. TODO: find out why this was added!
 					// Setting onApply to EditForm.DO_NOTHING prevents execution
 					// of applyDefault
+					// if onApply is set, execute it even if convert returned DONT_APPLY
+					// DONT_APPLY is just ot prevent item.apply being called.
+					/// TODO: find out why this was added!
 					if (item.onApply && item.onApply != EditForm.DO_NOTHING) {
 						// call the handler, prevent passing DONT_APPLY 
 						if (item.onApply.call(item.form.object,
