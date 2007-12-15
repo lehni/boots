@@ -168,7 +168,7 @@ Enumerable = new function() {
 	Base.stop = {};
 
 	var each_Array = Array.prototype.forEach || function(iter, bind) {
-		for (var i = 0, j = this.length; i < j; ++i)
+		for (var i = 0, l = this.length; i < l; ++i)
 			bind.__each(this[i], i, this);
 	};
 
@@ -598,6 +598,10 @@ String.inject({
 		});
 	},
 
+	escapeRegExp: function(){
+		return this.replace(/([-.*+?^${}()|[\]\/\\])/g, '\\$1');
+	},
+
 	trim: function() {
 		return this.replace(/^\s+|\s+$/g, '');
 	},
@@ -612,7 +616,7 @@ String.inject({
 
 	times: function(count) {
 		return count < 1 ? '' : new Array(count + 1).join(this);
-	},
+	}
 });
 
 Number.inject({
@@ -1010,8 +1014,7 @@ DomElement.inject(new function() {
 		var list = handlers[prefix];
 		var fn = name == 'events' && prefix == 'set' ? that.addEvents : list[name];
 		if (fn === undefined)
-			fn = list[name] = that[prefix +
-				name.charAt(0).toUpperCase() + name.substring(1)] || null;
+			fn = list[name] = that[prefix + name.capitalize()] || null;
 		if (fn) return fn[val && val.push ? 'apply' : 'call'](that, val);
 		else return that[prefix + 'Property'](name, val);
 	}
@@ -1618,8 +1621,10 @@ DomElement.inject(new function() {
 				return el && DomElement.isAncestor(el, context)
 					&& match(el, params, data) ? [el] : null;
 			} else {
-				items = context.getElementsByTagName(tag);
-				params.tag = null;
+				if (!items.length) {
+					items = context.getElementsByTagName(tag);
+					params.tag = null;
+				}
 				for (var i = 0, l = items.length; i < l; i++)
 					if (match(items[i], params, data))
 						found.push(items[i]);
@@ -1743,10 +1748,10 @@ DomElement.inject(new function() {
 		},
 
 		getParents: function(selector) {
-			var parents = [];
-			for (var el = this.$.parentNode; el; el = el.parentNode)
+			var parents = [], doc = this.$.ownerDocument;
+			for (var el = this.$.parentNode; el && el != doc; el = el.parentNode)
 				parents.push(el);
-			return filter(parents, selector, this.$, new this._elements(), {});
+			return filter(parents, selector, doc, new this._elements(), {});
 		},
 
 		getParent: function(selector) {
@@ -1759,7 +1764,7 @@ DomElement.inject(new function() {
 		},
 
 		match: function(selector) {
-			return !selector || match(this, parse(selector), {});
+			return !selector || match(this.$, parse(selector), {});
 		},
 
 		filter: function(elements, selector) {
@@ -2088,7 +2093,7 @@ HtmlElement.inject({
 			} else
 				this.$.innerHTML = text;
 		} else
-			this[this.innerText !== undefined ? 'innerText' : 'textContent'] = text;
+			this.$[this.$.innerText !== undefined ? 'innerText' : 'textContent'] = text;
 		return this;
 	}
 });

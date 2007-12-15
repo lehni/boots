@@ -172,7 +172,7 @@ Enumerable = new function() {
 	Base.stop = {};
 
 	var each_Array = Array.prototype.forEach || function(iter, bind) {
-		for (var i = 0, j = this.length; i < j; ++i)
+		for (var i = 0, l = this.length; i < l; ++i)
 			bind.__each(this[i], i, this);
 	};
 
@@ -584,6 +584,10 @@ String.inject({
 		});
 	},
 
+	escapeRegExp: function(){
+		return this.replace(/([-.*+?^${}()|[\]\/\\])/g, '\\$1');
+	},
+
 	trim: function() {
 		return this.replace(/^\s+|\s+$/g, '');
 	},
@@ -598,7 +602,7 @@ String.inject({
 
 	times: function(count) {
 		return count < 1 ? '' : new Array(count + 1).join(this);
-	},
+	}
 });
 
 Number.inject({
