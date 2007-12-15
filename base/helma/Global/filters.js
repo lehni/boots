@@ -69,8 +69,12 @@ function substring_filter(input, param, from, to) {
 	);
 }
 
-function format_filter(date, param, format, locale) {
-	return date && date.format(param.format || format, param.locale || locale);
+/**
+ * input can be a number or a date object. For date, the locale parameter is
+ * supported too.
+ */
+function format_filter(input, param, format, locale) {
+	return input != null && input.format(param.format || format, param.locale || locale);
 }
 
 function markup_filter(input, param) {
