@@ -110,7 +110,12 @@ Resource.inject({
 		return new File(getProperty("resourceDir"), this.getFilename(id));
 	},
 
-	getHref: function() {
+	/**
+	 * Returns the href without the trailing /, so a differenciation can be
+	 * made between requestion the resource (without /) and the html code to
+	 * display it (with /).
+	 */
+	getUrl: function() {
 		var href = this.href();
 		if (href)
 			return href.substring(0, href.length - 1);
@@ -125,7 +130,7 @@ Resource.inject({
 			param = { content: param };
 		// override default href (this.href())
 		if (!param.href)
-			param.href = this.getHref();
+			param.href = this.getUrl();
 		// Open in blank window if it's not forcing a download
 		if (!this.forceDownload()) {
 			if (!param.attributes)
@@ -142,7 +147,7 @@ Resource.inject({
 
 	removeThumbnailFiles: function() {
 		if (this.extension) {
-			// remove all thumbnails of this image through java.io.File filtering
+			// Remove all thumbnails of this image through java.io.File filtering
 			var exp = new RegExp("^thumb_" + this._id + "[_.]");
 			var thumbs = new java.io.File(getProperty("resourceDir")).listFiles(new java.io.FilenameFilter() {
 				accept: function(dir, name) {

@@ -134,10 +134,8 @@ Picture.inject({
 			width = info.width;
 			height = info.height;
 		}
-		// TODO: change this. this is hackish. Search for res.data.lastWidth
-		res.data.lastWidth = width;
 		return {
-			src: this.getHref() + '?thumb=' + id,
+			src: this.getUrl() + '?thumb=' + id,
 			width: width,
 			height: height
 		};

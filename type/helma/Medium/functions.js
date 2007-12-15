@@ -25,12 +25,12 @@ Medium.inject({
 				text.split(/[\r\n]/mg).each(function(line) {
 					line = line.split('=');
 					if (line.length == 2) {
-						var key = line[0];
-						if (key == "width") this.width = parseInt(line[1]);
-						else if (key == "height") this.height = parseInt(line[1]);
-						else if (key == "googleId") this.type = "google:" + line[1];
-						else if (key == "youTubeId") this.type = "youtube:" + line[1];
-						// TODO: add more formats
+						switch (line[0]) {
+							case 'width': this.width = parseInt(line[1]); break;
+							case 'height': this.height = parseInt(line[1]); break;
+							case 'googleId': this.type = 'google:' + line[1]; break;
+							case 'youTubeId': this.type = 'youtube:' + line[1]; break;
+						}
 					}
 				}, this);
 			} else {
@@ -78,7 +78,7 @@ Medium.inject({
 				type = match[1];
 				param.id = match[2];
 			} else {
-				param.src = this.getHref();
+				param.src = this.getUrl();
 				type = this.type;
 				// Flash video is a special case.
 				// TODO: consider a different BasicType for it?
