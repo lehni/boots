@@ -226,7 +226,7 @@ Font = Base.extend({
 		}
 		return suffix ? str + suffix : str;
 	},
-	
+
 	renderText: function(text, param, out) {
 		this.setSize(param.size ? parseFloat(param.size) : 16);
 		this.setCharSpacing(param.charSpacing ? parseFloat(param.charSpacing) : 0);
@@ -247,10 +247,10 @@ Font = Base.extend({
 			g2d.fillRect(0, 0, width, height);
 			g2d.setColor(java.awt.Color.decode(color));
 			g2d.setRenderingHints(this.getRenderingHints());
-			
+
 			for (var i = 0; i < lines.length; i++)
 				this.drawGlyphs(g2d, i == 0 ? desc : this.layoutGlyphLine(lines[i]), 0, i * lineHeight);
-			
+
 			image.reduceColors(16, false, true);
 			image.setTransparentPixel(image.getPixel(0, 0));
 			image.saveAs(file.getPath(), 1, true);
@@ -267,7 +267,7 @@ Font = Base.extend({
 		image.width = width;
 		image.height = height;
 		if (!image.alt)
-			image.alt = text;
+			image.alt = text.replace('\n', '');
 		return Html.image(image, out);
 	},
 	
