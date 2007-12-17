@@ -135,7 +135,7 @@ Picture.inject({
 			height = info.height;
 		}
 		return {
-			src: this.getUrl() + '?thumb=' + id,
+			src: this.getUri() + '?thumb=' + id,
 			width: width,
 			height: height
 		};

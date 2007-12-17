@@ -115,7 +115,7 @@ Resource.inject({
 	 * made between requestion the resource (without /) and the html code to
 	 * display it (with /).
 	 */
-	getUrl: function() {
+	getUri: function() {
 		var href = this.href();
 		if (href)
 			return href.substring(0, href.length - 1);
@@ -130,7 +130,7 @@ Resource.inject({
 			param = { content: param };
 		// override default href (this.href())
 		if (!param.href)
-			param.href = this.getUrl();
+			param.href = this.getUri();
 		// Open in blank window if it's not forcing a download
 		if (!this.forceDownload()) {
 			if (!param.attributes)

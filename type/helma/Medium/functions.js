@@ -78,7 +78,7 @@ Medium.inject({
 				type = match[1];
 				param.id = match[2];
 			} else {
-				param.src = this.getUrl();
+				param.src = this.getUri();
 				type = this.type;
 				// Flash video is a special case.
 				// TODO: consider a different BasicType for it?
