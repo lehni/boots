@@ -1,18 +1,18 @@
 /* lineto:
 EditSettings = {
-	objectLink: '<% link id="@link" text="@text" %>\n',
-	unnamedObjectLink: '<% link id="@link" %>\n',
-	mailLink: '<% link mail="@link" text="@text" %>\n',
-	urlLink: '<% link url="@link" text="@text" %>\n',
-	unnamedUrlLink: '<% link url="@link" %>\n'
+	objectLink: '<% link id="@link" text="@text" %>',
+	unnamedObjectLink: '<% link id="@link" %>',
+	mailLink: '<% link mail="@link" text="@text" %>',
+	urlLink: '<% link url="@link" text="@text" %>',
+	unnamedUrlLink: '<% link url="@link" %>'
 };
 */
 EditSettings = {
-	objectLink: '<node @link>@text</node>\n',
-	unnamedObjectLink: '<node>@link</node>\n',
-	mailLink: '<mail @link>@text</mail>\n',
-	urlLink: '<url @link>@text</url>\n',
-	unnamedUrlLink: '<url>@link</url>\n'
+	objectLink: '<node @link>@text</node>',
+	unnamedObjectLink: '<node>@link</node>',
+	mailLink: '<mail @link>@text</mail>',
+	urlLink: '<url @link>@text</url>',
+	unnamedUrlLink: '<url>@link</url>'
 };
 
 EditForm = {
