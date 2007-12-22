@@ -661,45 +661,6 @@ EditForm.register(new function() {
 	};
 });
 
-// reference
-EditForm.register({
-	reference_choose: function(editForm, name) {
-		
-	}
-});
-
-// color
-EditForm.register(new function() {
-	function updateColor(target) {
-		if (!target.color)
-			target.color = $('#' + target.getId() + '-color', target.getParent('form'));
-		var value = ColorChooser.filter(target);
-		if (value.length != 7)
-			value = '#dddddd';
-		target.color.setStyle('background', value);
-		return target;
-	}
-
-	var colorChooser = null;
-
-	return {
-		color_choose: function(editForm, name) {
-			var target = $('#' + name, editForm.form);
-			updateColor(target);
-			target.onUpdate = function() {
-				updateColor(this);
-			};
-			if (!colorChooser)
-				colorChooser = new ColorChooser(168);
-			colorChooser.choose(editForm, name + '-color', target);
-		},
-
-		color_update: function(editForm, name) {
-			updateColor($('input#' + name, editForm.form));
-		}
-	};
-});
-
 // choose
 EditForm.register(new function() {
 	var objectChooser = null;
@@ -730,14 +691,18 @@ EditForm.register(new function() {
 				var match;
 				if (multiple) {
 					var el = $('#' + name + '_left');
-					var selected = el.getSelected().last();
-					var opt = new SelectOption({ text: title, value: id });
-					// TODO: this sets full ids, where we need a proper id list really. fix this
-					if (selected)
-						opt.insertAfter(selected);
-					else
-						opt.insertInside(el);
-					that.multiselect_update(editForm, name);
+					if (el.getElement('option[value="' + id + '"]')) {
+						alert('This element was already added to the list.');
+					} else {
+						var selected = el.getSelected().last();
+						var opt = new SelectOption({ text: title, value: id });
+						// TODO: this sets full ids, where we need a proper id list really. fix this
+						if (selected)
+							opt.insertAfter(selected);
+						else
+							opt.insertInside(el);
+						that.multiselect_update(editForm, name);
+					}
 				} else {
 					$('#' + name + '_reference').setValue(title);
 					$('#' + name).setValue(id);
@@ -782,14 +747,46 @@ EditForm.register(new function() {
 	};
 });
 
-// References:
-
+// references
 EditForm.register({
 	references_remove: function(editForm, name) {
 		var el = $('#' + name + '_left');
 		el.getSelected().remove();
 		this.multiselect_update(editForm, name);
 	}
+});
+
+
+// color
+EditForm.register(new function() {
+	function updateColor(target) {
+		if (!target.color)
+			target.color = $('#' + target.getId() + '-color', target.getParent('form'));
+		var value = ColorChooser.filter(target);
+		if (value.length != 7)
+			value = '#dddddd';
+		target.color.setStyle('background', value);
+		return target;
+	}
+
+	var colorChooser = null;
+
+	return {
+		color_choose: function(editForm, name) {
+			var target = $('#' + name, editForm.form);
+			updateColor(target);
+			target.onUpdate = function() {
+				updateColor(this);
+			};
+			if (!colorChooser)
+				colorChooser = new ColorChooser(168);
+			colorChooser.choose(editForm, name + '-color', target);
+		},
+
+		color_update: function(editForm, name) {
+			updateColor($('input#' + name, editForm.form));
+		}
+	};
 });
 
 // Choosers:
