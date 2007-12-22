@@ -47,6 +47,8 @@ HopObject.inject({
 		 */
 		get: function(id, prototype) {
 			// Support fullId prototype-id notation for string parameters:
+			if (id == null)
+				return null;
 			if (prototype == undefined) {
 				// id is a fullId:
 				var parts = id.split('-');

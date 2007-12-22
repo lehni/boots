@@ -29,7 +29,7 @@ User.inject({
 					longDesc = '[' + session.user.name + '] ' + longDesc;
 				mail.addText(longDesc);
 				mail.send();
-			} catch(e) {
+			} catch (e) {
 			}
 			return shortDesc;
 		}

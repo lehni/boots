@@ -87,7 +87,7 @@ Medium.inject({
 			}
 			try {
 				this.renderTemplate(type, param, res);
-			} catch(e) {
+			} catch (e) {
 				res.write("Unsupported Format: " + type);
 			}
 		}

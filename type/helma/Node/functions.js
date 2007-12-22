@@ -2,9 +2,9 @@ Node.inject({
 	getEditForm: function(param) {
 		var form = new EditForm(this, { removable: true });
 		var parent = this.getEditParent();
-		if (param.children == undefined)
+		if (param.children === undefined)
 			param.children = true;
-		if (param.resources == undefined)
+		if (param.resources === undefined)
 			param.resources = true;
 		form.addTab('node', param.tabLabel || 'Node',
 			{

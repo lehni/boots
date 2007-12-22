@@ -147,7 +147,7 @@ Function.inject(new function() {
 			return function() {
 				try {
 					return that.apply(obj, args.concat(Array.create(arguments)));
-				} catch(e) {
+				} catch (e) {
 					return e;
 				}
 			}
@@ -725,7 +725,7 @@ Json = new function() {
 					(secure && !/^[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]*$/.test(
 						string.replace(/\\./g, '@').replace(/"[^"\\\n\r]*"/g, '')))
 					? null : eval('(' + string + ')');
-			} catch(e) {
+			} catch (e) {
 				return null;
 			}
 		}
