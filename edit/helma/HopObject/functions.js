@@ -89,7 +89,7 @@ HopObject.inject({
 				// this would not work, as editing a node returns the editor for the
 				// first post....
 				if (form.removable/* && form.object == this*/) {
-					User.log("Remove " + this._prototype + ' ' + this._id);
+					User.log("Remove " + this.getFullId());
 					// now check all the form's items to see wether
 					// they define autoRemove:
 					if (form.autoRemove) {
@@ -119,7 +119,7 @@ HopObject.inject({
 					remove = true;
 				}
 			} else {
-				User.log("Remove " + this._prototype + ' ' + this._id);
+				User.log("Remove " + this.getFullId());
 				remove = true;
 			}
 			if (remove) {

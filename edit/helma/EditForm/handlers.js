@@ -204,13 +204,13 @@ EditForm.register({
 					for (var i = 0; i < children.length; i++) {
 						var ch = children[i];
 						var obj = ch.object;
-						User.log('Created ' + obj._prototype + " " + obj._id + " from: " + ch.transientId);
+						User.log('Created ' + obj.getFullId() + " from: " + ch.transientId);
 						if (obj.onAfterCreate)
 							obj.onAfterCreate(ch.transientId);
 					}
 					delete object.cache.createdChildren;
 				}
-				User.log('Created ' + object._prototype + " " + object._id + " from: " + transientId);
+				User.log('Created ' + object.getFullId() + " from: " + transientId);
 				// Call the onAfterCreate handler:
 				if (object.onAfterCreate)
 					object.onAfterCreate(transientId);
@@ -244,7 +244,7 @@ EditForm.register({
 		try {
 			form.applyItems();
 			return EditForm.COMMIT;
-		} catch(e) {
+		} catch (e) {
 			if (e instanceof EditException) {
 				form.addResponse({
 					error: {
@@ -266,8 +266,13 @@ EditForm.register({
 			var item = node.form.getItem(req.data.edit_item, req.data.edit_group);
 			if (item) {
 				if (req.data.edit_object_id != null) {
-					if (item.collection)
-						obj = item.collection.getById(req.data.edit_object_id);
+					if (item.collection) {
+						// Fetch by full id, then see that it is really contained
+						// in the collection:
+						obj = HopObject.get(req.data.edit_object_id);
+						if (item.collection.indexOf(obj) == -1)
+							obj = null;
+					}
 				} else {
 					obj = item.getValue();
 				}
@@ -327,7 +332,7 @@ EditForm.register({
 								// is the obj valid and has it an allowed prototype?
 								if (obj != null) {
 									if (prototypeLookup[obj._prototype] && obj != destObj) {
-										if (destColl.contains(obj) == -1) {
+										if (destColl.indexOf(obj) == -1) {
 											destColl.add(obj);
 											if (obj.index != null) {
 												// see description above on how exactly hidden and visible objects are handeled:
@@ -427,8 +432,10 @@ EditForm.register({
 			var collection = item && item.collection;
 			if (collection) {
 				req.data.edit_object_ids.split(',').each(function(id) {
-					var obj = collection.getById(id);
-					if (obj && obj.removeObject())
+					// Fetch by full id, then see that it is really contained
+					// in the collection:
+					var obj = HopObject.get(id);
+					if (obj && collection.indexOf(obj) != -1 && obj.removeObject())
 						removed = true;
 				});
 			}

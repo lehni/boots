@@ -389,21 +389,19 @@ SelectItem = EditItem.extend({
 	},
 
 	convert: function(value) {
-		return value;
-	},
-
-	apply: function(value) {
-		// Only set if it changed, and if the current value is not the collection
-		// itself, as we cannot override collections (this happens e.g. when
+		// Only convert if the current value is not the collection itself,
+		// as we cannot override collections (this happens e.g. when
 		// using a select item for simply creating a list of objects, not
-		// actually selecting and that is associated with a object mapping
+		// actually selecting and that is associated with a object mapping).
 		if (this.collection && !this.linkedCollection) {
 			if (this.collection == this.getValue())
-				return false;
-			if (value)
-				value = this.collection.getById(value);
+				return EditForm.DONT_APPLY;
+			value = HopObject.get(value);
+			// Make sure the specified object is defined in the collection
+			if (value && this.collection.indexOf(value) == -1)
+				value = null;
 		}
-		return this.base(value);
+		return value;
 	},
 
 	renderEditButtons: function(baseForm, out) {
@@ -438,7 +436,7 @@ SelectItem = EditItem.extend({
 			// it.
 			var prototypes = this.prototypes.map(function(proto) {
 				return {
-					name: proto.uncamelize(' ', false),
+					name: proto.uncamelize(' '),
 					href: baseForm.renderHandle('select_new', name, proto,
 						Hash.merge({ edit_prototype: proto }, editParams))
 				};
@@ -469,14 +467,12 @@ SelectItem = EditItem.extend({
 			} else if (param instanceof HopObject) {
 				options = [];
 				var list = param.list();
-				for (var i = 0; i < list.length; i++) {
+				for (var i = 0, l = list.length; i < l; i++) {
 					var obj = list[i];
-					if (obj != null) {
-						var name = EditForm.getEditName(obj);
+					if (obj) {
 						options.push({
-							name: name ? name :
-								'[' + obj._prototype + ' ' + obj._id + ']',
-							value: obj._id
+							name: EditForm.getEditName(obj),
+							value: obj.getFullId()
 						});
 					}
 				}
@@ -485,8 +481,8 @@ SelectItem = EditItem.extend({
 					if (obj) {
 						var name = EditForm.getEditName(obj);
 						this.push({
-							name: name ? name : '[' + obj._prototype + ' ' + obj._id + ']',
-							value: obj._id
+							name: EditForm.getEditName(obj),
+							value: obj.getFullId()
 						});
 					}
 				}, []);
@@ -494,7 +490,7 @@ SelectItem = EditItem.extend({
 			}
 		}
 		if (options) {
-			for (var i = 0; i < options.length; i++) {
+			for (var i = 0, l = options.length; i < l; i++) {
 				var option = options[i];
 				if (typeof option != 'object') {
 					options[i] = {
@@ -507,6 +503,22 @@ SelectItem = EditItem.extend({
 			options  = [];
 		}
 		return options;
+	},
+
+	toIds: function(ids) {
+		if (ids == null) return [];
+		else if (ids instanceof HopObject) {
+			var objects = ids.list();
+			ids = [];
+			for (var i = 0; i < objects.length; i++) {
+				var obj = objects[i];
+				if (obj) ids.push(obj.getFullId());
+			}
+			return ids;
+		} else if (typeof ids == 'string') {
+			return ids.split(',');
+		}
+		return ids.length != undefined ? ids : [];
 	}
 });
 
@@ -517,13 +529,12 @@ MultiSelectItem = SelectItem.extend({
 	render: function(baseForm, name, value, param, out) {
 		var options = this.toOptions(this.collection || this.linkedCollection || this.options);
 		// convert values to a list of ids.
-		var ids = IdList.toArray(value);
+		var ids = this.toIds(value);
 		// find the chosen ones.
 		// create ids indices lookup table:
 		var indices = {};
-		for (var i = 0; i< ids.length; i++) {
+		for (var i = 0, l = ids.length; i < l; i++)
 			indices[ids[i]] = i;
-		}
 
 		// walk through options and move to value what is selected...
 		var values = [];
@@ -551,28 +562,25 @@ MultiSelectItem = SelectItem.extend({
 				value: 'Remove',
 				onClick: baseForm.renderHandle('references_remove', name)
 			}]);
-			app.log("CHOOSE: " + name + '_choose');
 		} else {
 			param.buttons = this.renderEditButtons(baseForm);
 		}
-		var size = this.size || '6';
+		var size = Base.pick(this.size, '6');
 		// var width = this.width || '120';
 		var left = name + '_left', right = name + '_right';
-		var editParam = param.buttons ? { edit_item: this.name, edit_group: this.form.name } : null;
+		var editParam = param.buttons && { edit_item: this.name, edit_group: this.form.name };
 		param.left = Html.select({
 			size: size, name: left, multiple: true,
 			/* style: 'width: ' + width + 'px;', */ 
 			options: values, className: this.className || 'edit-element',
-			onDblClick: !editParam ? null
-				: baseForm.renderHandle('select_edit', [left], editParam)
+			onDblClick: editParam && baseForm.renderHandle('select_edit', [left], editParam)
 		});
 		if (this.showOptions) {
 			param.right = Html.select({
 				size: size, name: right, multiple: true,
 				/* style: 'width: ' + width + 'px;', */
 				options: options, className: this.className || 'edit-element',
-				onDblClick: !editParam ? null
-					: baseForm.renderHandle('select_edit', [right], editParam)
+				onDblClick: editParam && baseForm.renderHandle('select_edit', [right], editParam)
 			});
 		}
 		baseForm.renderTemplate('multiselectItem', param, out);
@@ -580,46 +588,43 @@ MultiSelectItem = SelectItem.extend({
 
 	convert: function(value) {
 		value = value ? value.split(',') : [];
-		// For references, convert full id lists to id lists by filtering out
+		// Convert full id lists to lists of objects or ids by filtering out
 		// the prototypes that are not allowed, as defined by prototypes.
 		// It is the user's responisibility to make sure they are all in the
 		// same table, so ids alone are enough a reference!
-		if (this.type == 'references') {
-			// Convert string prototype names to constructors
-			var prototypes = this.prototypes && this.prototypes.map(function(proto) {
-				return global[proto];
-			});
-			// Now convert the fullIds in the array to only _id, by filtering
-			// according to prototypes.
-			value = value.each(function(id) {
-				if (/-/.test(id)) { // A full id
-					var obj = HopObject.get(id);
-					// See if the object is an instance of any of the allowed
-					// prototypes, and if so, add its id to the list
-					if (obj && (!prototypes || prototypes.find(function(proto) {
-							return obj instanceof proto
-						})))
-						this.push(obj._id);
-				} else { // Already a simple id, from previous elements
-					this.push(id);
-				}
-			}, []);
-		}
+
+		// Convert string prototype names to constructors
+		var prototypes = this.prototypes && this.prototypes.each(function(name) {
+			var proto = global[name];
+			if (proto) this.push(proto);
+			else app.log("WARNING: Prototype '" + name + "' does not exist!");
+		}, []);
+
+		// Also make sure the objects are contained in collection if that is defined.
+		var collection = this.collection;
+		var stringIds = !!this.linkedCollection;
+
+		// Now convert the fullIds in the array to objects, by filtering
+		// according to prototypes.
+		value = value.each(function(id) {
+			var obj = HopObject.get(id);
+			// See if the object is an instance of any of the allowed
+			// prototypes, and if so, add its id to the list
+			if (obj
+				&& (!collection || collection.indexOf(obj) != -1)
+				&& (!prototypes || prototypes.find(function(proto) {
+					return obj instanceof proto;
+				})))
+				this.push(stringIds ? obj._id : obj);
+		}, []);
+
 		// Create a string for string id lists:
-		if (this.linkedCollection)
-			value = value.join(',');
-		return value;
+		return stringIds ? value.join(',') : value;
 	},
 
 	apply: function(value) {
 		var changed = false;
-		if (this.linkedCollection) {
-			// For string id lists:
-			changed = this.base(value);
-			// Refresh the collection:
-			if (changed)
-				this.linkedCollection.invalidate();
-		} else if (this.type == 'multiselect') {
+		if (this.type == 'multiselect') {
 			// Standard procedure for multiselects assumes
 			// 'position' property that controls the ordering of the objects
 			// 'visible' property that controls their visibility
@@ -628,9 +633,8 @@ MultiSelectItem = SelectItem.extend({
 			if (options) {
 				var used = {};
 				for (var i = 0; i < value.length; i++) {
-					var id = value[i];
-					used[id] = true;
-					var obj = options.getById(id);
+					var obj = value[i];
+					used[obj._id] = true;
 					if (obj && (obj.position != i || !obj.visible)) {
 						obj.position = i;
 						obj.visible = true;
@@ -651,6 +655,9 @@ MultiSelectItem = SelectItem.extend({
 			}
 		} else {
 			changed = this.base(value);
+			// Refresh the linked collection:
+			if (changed && this.linkedCollection)
+				this.linkedCollection.invalidate();
 		}
 		return changed;
 	}
@@ -688,7 +695,7 @@ ReferenceItem = EditItem.extend({
 	},
 
 	convert: function(value) {
-		return value ? HopObject.get(value) : null;
+		return HopObject.get(value);
 	},
 
 	apply: function(value) {
@@ -697,7 +704,7 @@ ReferenceItem = EditItem.extend({
 });
 
 ObjectItem = EditItem.extend({
-	_types: 'edit', // TODO: rename!
+	_types: 'edit', // TODO: rename to 'object'?
 
 	render: function(baseForm, name, value, param, out) {
 		var title = this.title ? ' ' + this.title : '';

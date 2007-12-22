@@ -41,7 +41,7 @@ EditNode = Base.extend({
 		if (!this.form || this.form.dontCache && this.form.version != data.request) {
 			try {
 				if (!this.object.getEditForm)
-					throw "The '" + this.object._prototype + "' prototype does not define 'getEditForm' (" + this.object + ")";
+					throw "The '" + this.object._prototype + "' prototype does not define #getEditForm (" + this.object + ")";
 				// Pass empty param object, default mode
 				this.form = this.object.getEditForm({});
 				this.form.id = this.id;
@@ -81,7 +81,7 @@ EditNode = Base.extend({
 			// generate a default title if it's not set.
 			var obj = this.object;
 			if (obj.isCreating()) {
-				title = 'Create ' + obj._prototype.uncamelize(' ', false);
+				title = 'Create ' + obj._prototype.uncamelize(' ');
 			} else {
 				title = EditForm.getEditName(obj);
 			}

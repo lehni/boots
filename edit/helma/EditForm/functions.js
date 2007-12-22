@@ -477,7 +477,7 @@ EditForm.inject(new function() {
 					name = obj.getEditName();
 				if (!name) {
 					if (obj.name) name = obj.name;
-					else name = '[' + obj._prototype + " " + obj._id + ']';
+					else name = '[' + obj.getFullId() + ']';
 				}
 				return name;
 			},

@@ -158,7 +158,7 @@ EditForm.inject(new function() {
 						if (item.apply(value))
 							return true;
 					}
-				} catch(e) {
+				} catch (e) {
 					if (typeof e != "string")
 						User.logError("applyItem", e);
 		 			throw new EditException(item, e);
