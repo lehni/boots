@@ -237,7 +237,7 @@ EditForm = Base.extend({
 									that.uploadTimer = that.uploadTimer.clear();
 					      	var count = status.current / status.total;
 							uploadStatus.setWidth(status.current / status.total * 100 + '%');
-							// .setHtml(status.current + ' of ' + status.total + " uploaded.");
+							// .setHtml(status.current + ' of ' + status.total + ' uploaded.');
 							current = status.current;
 						}
 					});
@@ -455,7 +455,7 @@ EditForm.inject(new function() {
 				var args = Array.slice(arguments, 1);
 				args.unshift(this);
 				return handler.apply(handlers, args);
-			} else alert("Handler missing: " + action);
+			} else alert('Handler missing: ' + action);
 			return true;
 		},
 
@@ -513,7 +513,7 @@ EditForm.register({
 
 	help_toggle: function(editForm) {
 		var el = $('input.edit-help-button', editForm.container);
-		el.setValue(el.getValue() == "Help" ? "Close Help" : "Help");
+		el.setValue(el.getValue() == 'Help' ? 'Close Help' : 'Help');
 		$$('div.edit-help').toggleClass('hidden');
 		editForm.autoSize();
 	}
@@ -735,7 +735,7 @@ EditForm.register(new function() {
 					if (text || text == '') {
 						var link = text ? EditSettings.urlLink : EditSettings.unnamedUrlLink;
 						if (/^([a-zA-Z0-9\-\.\_]+)(\@)([a-zA-Z0-9\-\.]+)(\.)([a-zA-Z]{2,4})$/.test(url)) {
-							if (!text) text = "Email";
+							if (!text) text = 'Email';
 							link = EditSettings.mailLink;
 						}
 						if (!text) text = url;

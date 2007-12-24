@@ -744,7 +744,7 @@ Json = new function() {
 							this.push(Json.encode(key) + ':' + Json.encode(val));
 					}, []) + '}';
 				default:
-					return obj + "";
+					return obj + '';
 			}
 			return null;
 		},
@@ -2911,7 +2911,7 @@ Cookie = {
 			expires.toGMTString() : '') + ';path=' + (path || '/');
 	},
 	get: function(name) {
-		var res = document.cookie.match('(^|;)\\s*' + name + "=([^;]*)");
+		var res = document.cookie.match('(?:^|;)\\s*' + name + '=([^;]*)');
 		if (res) return decodeURIComponent(res[1]);
 	},
 

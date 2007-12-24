@@ -12,7 +12,7 @@ function json_macro(param, object) {
 	}
 	if (param.singleQuotes == 'true') {
 		// This is a bit of a hack:  Json.encode uses uneval internally, and this
-		// produces code like { key: "value", 'class': "content" }, using single quote
+		// produces code like { key: 'value', 'class': 'content' }, using single quote
 		// for reserved keywords. This means we cannot simply replace like bellow
 		// if an object is passed, since the single quote then gets replaced by \'
 		// The workaround is to allways use .each even when the include filter is
@@ -53,8 +53,8 @@ function link_macro(param) {
 				return renderLink(param.text, "javascript:mailTo('" + createHexString(parts[0]) + "','" + createMailHexString(parts[1]) + "')", null, res);
 		} else if (param.url) {
 			var options = null;
-			if (!param.url.startsWith("/")) // not a local page
-				options = { attributes: { target: "_blank" }};
+			if (!/^\//.test(param.url)) // not a local page
+				options = { attributes: { target: '_blank' }};
 			return renderLink(param.text, param.url, options, res);
 		}
 	}

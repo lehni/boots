@@ -18,17 +18,17 @@ function Template(object, name) {
 			object = new java.io.File(object.getPath());
 		if (object instanceof java.io.File) {
 			if (!object.exists())
-				throw "Cannot find template " + object;
+				throw 'Cannot find template ' + object;
 			this.resource = new Packages.helma.framework.repository.FileResource(object);
 			this.resourceName = this.resource.getShortName();
 			this.pathName = this.resource.getName();
-		} else if (typeof object == "string") {
+		} else if (typeof object == 'string') {
 			this.content = object;
-			this.resourceName = name ? name : "string";
+			this.resourceName = name ? name : 'string';
 			this.pathName = this.resourceName;
 		} else {
 			this.resourceContainer = object;
-			this.resourceName = name + ".jstl";
+			this.resourceName = name + '.jstl';
 			this.findResource();
 		}
 		this.compile();
@@ -51,7 +51,7 @@ Template.prototype = {
 			this.__render__.call(object, param, this, out);
 			if (asString) return out.pop();
 		} catch (e) {
-			if (typeof e != "string") {
+			if (typeof e != 'string') {
 				this.throwError(e);
 			} else {
 				throw e;
@@ -65,7 +65,7 @@ Template.prototype = {
 
 	renderSubTemplate: function(object, name, param, out) {
 		var template = this.subTemplates[name];
-		if (!template) throw "Unknown sub template: " + name;
+		if (!template) throw 'Unknown sub template: ' + name;
 		return template.render(object, param, out);
 	},
 
@@ -77,7 +77,7 @@ Template.prototype = {
 		var templateTag = null;
 		var stack = { control: [], loop: {} };
 		var buffer = [];
-		var code = [ "this.__render__ = function(param, template, out) {" ];
+		var code = [ 'this.__render__ = function(param, template, out) {' ];
 		var lineBreak = java.lang.System.getProperty('line.separator');
 		function append() {
 			if (buffer.length) {
@@ -95,7 +95,7 @@ Template.prototype = {
 				var start = 0, end = 0;
 				while (true) {
 					if (tagCounter == 0) {
-						start = line.indexOf("<%", end);
+						start = line.indexOf('<%', end);
 						if (start != -1) { 
 							if (start > end) 
 								buffer.push(line.substring(end, start));
@@ -111,7 +111,7 @@ Template.prototype = {
 						}
 					} else {
 						while (tagCounter != 0) {
-							end = line.indexOf("%", end + 1); 
+							end = line.indexOf('%', end + 1); 
 							if (end == -1) break;
 							if (line[end - 1] == '<') tagCounter++;
 							if (line[end + 1] == '>') tagCounter--;
@@ -140,10 +140,10 @@ Template.prototype = {
 				}
 			}
 			if (tagCounter) { 
-				throw "Tag is not closed";
+				throw 'Tag is not closed';
 			} else if (stack.control.length) {
 				code.length = stack.control.pop().lineNumber;
-				throw "Control tag is not closed";
+				throw 'Control tag is not closed';
 			} else {
 				append();
 				if (templateTag)
@@ -151,8 +151,8 @@ Template.prototype = {
 			}
 			for (var i = 0; i < this.renderTemplates.length; i++) {
 				var template = this.renderTemplates[i];
-				code.splice(1, 0, "var $" + template.name + " = template.renderSubTemplate(this, '" +
-					template.name + "', param)" + (template.trim ? ".trim()" : ""));
+				code.splice(1, 0, 'var $' + template.name + ' = template.renderSubTemplate(this, "' +
+					template.name + '", param)' + (template.trim ? '.trim()' : ''));
 				this.tags.unshift(null);
 			}
 			code.push('}');
@@ -246,7 +246,7 @@ Template.prototype = {
 		function nextMacro(next) {
 			if (macro) {
 				if (!macro.command)
-					throw "Syntax error";
+					throw 'Syntax error';
 				macro.opcode = macro.opcode.join(' ');
 				if (macro.isControl) {
 					if (macro.opcode[0] == '(') macro.opcode = macro.opcode.substring(1, macro.opcode.length - 1);
@@ -284,8 +284,8 @@ Template.prototype = {
 		function nestedMacro(that, value, code, stack) {
 			if (/^<%/.test(value)) {
 				var nested = value;
-				value = "param_" + (macroParam++) + "";
-				code.push("var " + value + " = " + that.parseMacro(nested, code, stack, false, true) + ";");
+				value = 'param_' + (macroParam++) + '';
+				code.push('var ' + value + ' = ' + that.parseMacro(nested, code, stack, false, true) + ';');
 			}
 			return parseParam(value);
 		}
@@ -347,12 +347,12 @@ Template.prototype = {
 		if (/^<%--/.test(tag) || tag == '<%-%>') return true;
 		var macro = this.parseMacroParts(tag, code, stack, allowControls);
 		if (!macro)
-			throw "Invalid tag";
+			throw 'Invalid tag';
 		var values = macro.values, result;
 		var postProcess = values.prefix || values.suffix || values.filters;
 		var codeIndexBefore = code.length;
 		if (macro.isData) { 
-			result = this.parseLoopVariables(macro.command + " " + macro.opcode, stack);
+			result = this.parseLoopVariables(macro.command + ' ' + macro.opcode, stack);
 		} else if (macro.isControl) {
 			var open = false, close = false;
 			var prevControl = stack.control[stack.control.length - 1];
@@ -360,29 +360,29 @@ Template.prototype = {
 				throw "Syntax error: 'else' requiers 'if' or 'elseif'";
 			} else {
 				switch (macro.command) {
-				case "foreach":
+				case 'foreach':
 					var match = macro.opcode.match(/^\s*(\$[\w_]+)\s*in\s*(.+)$/);
-					if (!match) throw "Syntax error";
+					if (!match) throw 'Syntax error';
 					open = true;
 					var variable = match[1], value = match[2];
 					postProcess = postProcess || values.separator;
 					var suffix = '_' + (this.listId++);
-					var list = "list" + suffix, length = "length" + suffix;
-					var index = "i" + suffix, first = "first" + suffix;
+					var list = 'list' + suffix, length = 'length' + suffix;
+					var index = 'i' + suffix, first = 'first' + suffix;
 					var loopStack = stack.loop[variable] = stack.loop[variable] || [];
 					loopStack.push({ list: list, index: index, length: length, first: first });
 					macro.variable = variable;
-					code.push(						"var " + list + " = " + value + "; ",
-													"if (" + list + ") {",
-						!(/^["'[]/.test(value))	?	"	if (" + list + " instanceof HopObject) " + list + " = " + list + ".list();" : null,
-													"	if (" + list + ".length == undefined) " + list + " = template.toList(" + list + ");",
-													"	var " + length + " = " + list + ".length" + (values.separator ? ", " + first + " = true" : "") + ";",
-													"	for (var " + index + " = 0; " + index + " < " + length + "; " + index + "++) {",
-													"		var " + variable + " = " + list + "[" + index + "];",
-						values.separator		?	"		out.push();" : null);
+					code.push(						'var ' + list + ' = ' + value + '; ',
+													'if (' + list + ') {',
+						!(/^["'[]/.test(value))	?	'	if (' + list + ' instanceof HopObject) ' + list + ' = ' + list + '.list();' : null,
+													'	if (' + list + '.length == undefined) ' + list + ' = template.toList(' + list + ');',
+													'	var ' + length + ' = ' + list + '.length' + (values.separator ? ', ' + first + ' = true' : '') + ';',
+													'	for (var ' + index + ' = 0; ' + index + ' < ' + length + '; ' + index + '++) {',
+													'		var ' + variable + ' = ' + list + '[' + index + '];',
+						values.separator		?	'		out.push();' : null);
 					break;
-				case "end":
-					if (macro.opcode) throw "Syntax error";
+				case 'end':
+					if (macro.opcode) throw 'Syntax error';
 					if (!prevControl || !/^else|^if$|^foreach$/.test(prevControl.macro.command))
 						throw "Syntax error: 'end' requiers 'if', 'else', 'elseif' or 'foreach'";
 					close = true;
@@ -390,28 +390,28 @@ Template.prototype = {
 						var loop = stack.loop[prevControl.macro.variable].pop();
 						var separator = prevControl.postProcess && prevControl.postProcess.separator;
 						if (separator)
-							code.push(				"		var val = out.pop();",
-													"		if (val != null && val !== '') {",
-													"			if (" + loop.first + ") " + loop.first + " = false;",
-													"			else out.write(" + separator + ");",
-													"			out.write(val);",
-													"		}");
-						code.push(					"	}");
+							code.push(				'		var val = out.pop();',
+													'		if (val != null && val !== "") {',
+													'			if (' + loop.first + ') ' + loop.first + ' = false;',
+													'			else out.write(' + separator + ');',
+													'			out.write(val);',
+													'		}');
+						code.push(					'	}');
 					}
-					code.push(						"}");
+					code.push(						'}');
 					break;
-				case "elseif":
+				case 'elseif':
 					close = true;
-				case "if":
-					if (!macro.opcode) throw "Syntax error";
+				case 'if':
+					if (!macro.opcode) throw 'Syntax error';
 					open = true;
-					code.push(						(close ? "} else if (" : "if (") + this.parseLoopVariables(macro.opcode, stack) + ") {");
+					code.push(						(close ? '} else if (' : 'if (') + this.parseLoopVariables(macro.opcode, stack) + ') {');
 					break;
-				case "else":
-					if (macro.opcode) throw "Syntax error";
+				case 'else':
+					if (macro.opcode) throw 'Syntax error';
 					close = true;
 					open = true;
-					code.push(						"} else {");
+					code.push(						'} else {');
 					break;
 				}
 				if (close) {
@@ -419,67 +419,67 @@ Template.prototype = {
 					if (control.postProcess) {
 						values = control.postProcess;
 						postProcess = true;
-						result = "out.pop()";
+						result = 'out.pop()';
 					}
 				}
 				if (open) {
 					stack.control.push({ macro: macro, lineNumber: codeIndexBefore,
 					 		postProcess: postProcess ? values : null });
 					if (postProcess)
-						code.splice(codeIndexBefore, 0,	"out.push();");
+						code.splice(codeIndexBefore, 0,	'out.push();');
 				}
 			}
 		} else { 
 			if (macro.opcode) {
 				if (macro.isSetter)
-					code.push(						"var " + macro.command + " " + this.parseLoopVariables(macro.opcode, stack) + ";");
+					code.push(						'var ' + macro.command + ' ' + this.parseLoopVariables(macro.opcode, stack) + ';');
 				else
-					throw "Syntax error"; 
+					throw 'Syntax error'; 
 			} else {
 				var object = macro.object;
 				if (!/^(global|this|root)$/.test(object))
-					code.push(						"try {",
-													"	var obj = " + object + ";",
-													"} catch (e) {",
-													"	var obj = res.handlers['" + object + "'];",
-													"}");
+					code.push(						'try {',
+													'	var obj = ' + object + ';',
+													'} catch (e) {',
+													'	var obj = res.handlers["' + object + '"];',
+													'}');
 				else
-					code.push(						"var obj = " + object + ";");
-				object = "obj";
-				code.push(		postProcess		?	"out.push();" : null,
-													"var val = template.renderMacro('" + macro.command + "', " + object + ", '" +
-															macro.name + "', param, " + macro.arguments + ", out);",
-								postProcess		?	"template.write(out.pop(), " + values.filters + ", " + values.prefix + ", " +
-															values.suffix + ", null, out);" : null);
-				result = "val";
+					code.push(						'var obj = ' + object + ';');
+				object = 'obj';
+				code.push(		postProcess		?	'out.push();' : null,
+													'var val = template.renderMacro("' + macro.command + '", ' + object + ', "' +
+															macro.name + '", param, ' + macro.arguments + ', out);',
+								postProcess		?	'template.write(out.pop(), ' + values.filters + ', ' + values.prefix + ', ' +
+															values.suffix + ', null, out);' : null);
+				result = 'val';
 			}
 		}
 		if (result) { 
 			result = result.match(/^(.*?);?$/)[1];
 			if (values.encoder)
-				result = values.encoder + "(" + result + ")";
+				result = values.encoder + '(' + result + ')';
 			if (postProcess)
-				code.push(							"template.write(" + result + ", " + values.filters + ", " + values.prefix + ", " +
-															values.suffix + ", " + values['default']  + ", out);");
+				code.push(							'template.write(' + result + ', ' + values.filters + ', ' + values.prefix + ', ' +
+															values.suffix + ', ' + values['default']  + ', out);');
 			else {
 				if (toString) {
 					return result;
 				} else {
 					if (/[.()\s]/.test(result)) {
-						code.push(					"var val = " + result + ";");
-						result = "val";
+						code.push(					'var val = ' + result + ';');
+						result = 'val';
 					}
-					code.push(						"if (" + result + " != null && " + result + " !== '')",
-													"	out.write(" + result + ");");
+					code.push(						'if (' + result + ' != null && ' + result + ' !== "")',
+													'	out.write(' + result + ');');
 					if (values['default'])
-						code.push(					"else",
-													"	out.write(" + values['default'] + ");");
+						code.push(					'else',
+													'	out.write(' + values['default'] + ');');
 				}
 			}
 		}
 		if (toString && postProcess) {
-			code.splice(codeIndexBefore, 0,		"out.push();");
-			return "out.pop()";
+			code.splice(codeIndexBefore, 0,		'out.push();');
+			return 'out.pop()';
 		}
 		if (!toString)
 			return macro.swallow;
@@ -490,12 +490,12 @@ Template.prototype = {
 			var loopStack = stack.loop[variable], loop = loopStack && loopStack[loopStack.length - 1];
 			if (loop) {
 				switch (suffix) {
-				case "index": return loop.index;
-				case "length": return loop.length;
-				case "isFirst": return "(" + loop.index + " == 0)";
-				case "isLast": return "(" + loop.index + " == " + loop.length + " - 1)";
-				case "isEven": return "((" + loop.index + " & 1) == 0)";
-				case "isOdd": return "((" + loop.index + " & 1) == 1)";
+				case 'index': return loop.index;
+				case 'length': return loop.length;
+				case 'isFirst': return '(' + loop.index + ' == 0)';
+				case 'isLast': return '(' + loop.index + ' == ' + loop.length + ' - 1)';
+				case 'isEven': return '((' + loop.index + ' & 1) == 0)';
+				case 'isOdd': return '((' + loop.index + ' & 1) == 1)';
 				}
 			}
 			return part;
@@ -513,7 +513,7 @@ Template.prototype = {
 			if (match[1] == '$')
 				this.renderTemplates.push({ name: name, trim: end == '-' });
 		} else
-			throw "Syntax error in template";
+			throw 'Syntax error in template';
 	},
 
 	write: function(value, filters, prefix, suffix, deflt, out) {
@@ -521,7 +521,7 @@ Template.prototype = {
 			if (filters) {
 				for (var i = 0; i < filters.length; i++) {
 					var filter = filters[i];
-					var func = filter.object && filter.object[filter.name + "_filter"];
+					var func = filter.object && filter.object[filter.name + '_filter'];
 					if (func) {
 						if (func.apply) 
 							value = func.apply(filter.object, [value].concat(filter.arguments));
@@ -543,7 +543,7 @@ Template.prototype = {
 	renderMacro: function(command, object, name, param, args, out) {
 		var unhandled = false, value;
 		if (object) {
-			var macro = object[name + "_macro"];
+			var macro = object[name + '_macro'];
 			if (macro) {
 				try {
 					var prm = args[0];
@@ -593,7 +593,7 @@ Template.prototype = {
 		try {
 			var lines;
 			if  (this.resource) {
-				var charset = getProperty("skinCharset");
+				var charset = getProperty('skinCharset');
 				var reader = new java.io.BufferedReader(
 					charset ? new java.io.InputStreamReader(this.resource.getInputStream(), charset) :
 						new java.io.InputStreamReader(this.resource.getInputStream())
@@ -649,18 +649,18 @@ Template.prototype = {
 
 	throwError: function(error, line) {
 		var tag = line ? this.getTagFromCodeLine(line) : this.getTagFromException(error);
-		var message = "Template error in " + this.pathName;
-		if (typeof error == "string" && error.indexOf(message) == 0)
+		var message = 'Template error in ' + this.pathName;
+		if (typeof error == 'string' && error.indexOf(message) == 0)
 			throw error;
 		if (tag) {
-		 	message += ", line: " + (tag.lineNumber + 1) + ', in ' +
+		 	message += ', line: ' + (tag.lineNumber + 1) + ', in ' +
 		 		encode(tag.content);
 		}
 		if (error) {
 			var details = null;
 			if (error.fileName && error.fileName != this.pathName) {
-				details = "Error in " + error.fileName + ", line " +
-					error.lineNumber + ": " + error;
+				details = 'Error in ' + error.fileName + ', line ' +
+					error.lineNumber + ': ' + error;
 			} else {
 				details = error;
 			}
@@ -670,7 +670,7 @@ Template.prototype = {
 				details += '\nStacktrace:\n' + sw.toString();
 			}
 			if (details)
-				message += ": " + details;
+				message += ': ' + details;
 		}
 		throw message;
 	},

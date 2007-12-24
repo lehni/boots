@@ -196,7 +196,7 @@ Font = Base.extend({
 	},
 
 	/**
-	 * This cuts a string at maxWidth and appends "..." so the string fits into the widht
+	 * This cuts a string at maxWidth and appends '...' so the string fits into the widht
 	 * This can be used to cut client sided strings, if a web TTF file is used for calculation
 	 * of the width of the string.
 	 */

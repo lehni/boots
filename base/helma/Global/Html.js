@@ -16,7 +16,7 @@ Html = new function() {
 				name = properties[name] || name;
 				// Only pre XHTML allows empty attributes
 				if (value != null || !this.XHTML && value !== undefined) {
-					out.write(" ");
+					out.write(' ');
 					out.write(name);
 					if (value != null) {
 						out.write('="');
@@ -28,26 +28,26 @@ Html = new function() {
 		},
 
 		element: function(name, attributes, content, out) {
-			out.write("<");
+			out.write('<');
 			out.write(name);
 			if (attributes != null)
 				this.attributes(attributes, out);
 
 			if (content != null) {
-				out.write(">");
+				out.write('>');
 				out.write(content);
-				out.write("</");
+				out.write('</');
 				out.write(name);
-				out.write(">");
+				out.write('>');
 			} else {
 				// use /> only for empty XHTML tags:
-				out.write(this.XHTML ? " />" : ">");
+				out.write(this.XHTML ? ' />' : '>');
 			}
 		}.toRender(),
 
 		image: function(attributes, out) {
 			if (attributes.title == null) {
-				attributes.title = attributes.alt ? encode(attributes.alt) : "";
+				attributes.title = attributes.alt ? encode(attributes.alt) : '';
 			} else {
 				attributes.title = encode(attributes.title);
 			}
@@ -55,7 +55,7 @@ Html = new function() {
 				attributes.border = 0;
 			if (attributes.alt == null)
 				attributes.alt = attributes.title;
-			return this.element("img", attributes, null, out);
+			return this.element('img', attributes, null, out);
 		},
 
 		textarea: function(attributes, out) {
@@ -63,7 +63,7 @@ Html = new function() {
 			delete attributes.value;
 			// Form elements should have both id and name
 			if (!attributes.id) attributes.id = attributes.name;
-			return this.element('textarea', attributes, value ? encodeForm(value) : "", out);
+			return this.element('textarea', attributes, value ? encodeForm(value) : '', out);
 		},
 
 		select: function(attributes, out) {
@@ -71,16 +71,16 @@ Html = new function() {
 			delete attributes.options;
 			// Form elements should have both id and name
 			if (!attributes.id) attributes.id = attributes.name;
-			out.write("<select");
+			out.write('<select');
 			this.attributes(attributes, out);
-			out.write(">");
+			out.write('>');
 			// TODO: still needed? avoid eval....
-			// if (typeof options == "string")
-			//		eval("options=" + options);
+			// if (typeof options == 'string')
+			//		eval('options=' + options);
 
 			for (var i = 0; i < options.length; i++) {
 				var option = options[i];
-				if (typeof option == "object") {
+				if (typeof option == 'object') {
 					if (option.name == null) {
 						option.name = option.value;
 					} else if (option.value == null) {
@@ -97,17 +97,17 @@ Html = new function() {
 				} else {
 					delete option.selected;
 				}
-				option.name = option.name ? encodeForm(option.name) : "";
+				option.name = option.name ? encodeForm(option.name) : '';
 				this.element('option', option, option.name, out);
 			}
-			out.write("</select>");
+			out.write('</select>');
 		}.toRender(),
 
 		input: function(attributes, out) {
 			switch(attributes.type) {
 				case 'text':
 				case 'password':
-					attributes.value = attributes.value ? encodeForm(attributes.value) : "";
+					attributes.value = attributes.value ? encodeForm(attributes.value) : '';
 					break;
 				case 'radio':
 				case 'checkbox':

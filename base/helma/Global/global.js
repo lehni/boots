@@ -2,7 +2,7 @@
 function getResource(name) {
 	// Get a list of all resource in the Global prototype and scan for the
 	// given resource
-	var resources = app.getPrototype("Global").getResources();
+	var resources = app.getPrototype('Global').getResources();
 	// scan backwards to get newer versions first (does this work?)
 	for (var i = resources.length - 1; i >= 0; i--) {
 	    var r = resources[i];
@@ -17,19 +17,19 @@ function encodeMD5(str) {
 }
 
 function encodeHSA1(str) {
-	var algorithm = java.security.MessageDigest.getInstance("SHA-1");
+	var algorithm = java.security.MessageDigest.getInstance('SHA-1');
 	var digest = algorithm.digest(new java.lang.String(str).getBytes());
 	res.push();
 	for (var i = 0; i < digest.length; i++) {
 		var b = digest[i] & 0xff;
-		if (b < 0x10) res.write("0");
+		if (b < 0x10) res.write('0');
 		res.write(java.lang.Integer.toHexString(b));
 	}
 	return res.pop();
 }
 
 function encodeUrl(str) {
-	return str ? Packages.helma.util.UrlEncoded.encode(str, "UTF-8").replace("%20", "+") : str;
+	return str ? Packages.helma.util.UrlEncoded.encode(str, 'UTF-8').replace('%20', '+') : str;
 }
 
 function encodeJs(str) {
@@ -51,7 +51,7 @@ function encodeHex(str) {
 var encodeSql = encodeJs;
 
 function decodeUrl(str) {
-	return str ? Packages.helma.util.UrlEncoded.decode(str, "UTF-8") : str;
+	return str ? Packages.helma.util.UrlEncoded.decode(str, 'UTF-8') : str;
 }
 
 // the opposite of encode:

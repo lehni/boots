@@ -42,7 +42,7 @@ Function.inject({
 	statics: {
 		compile: function(params, body) {
 			return Packages.org.mozilla.javascript.Context.getCurrentContext().compileFunction(
-				{}, "function (" + params + ") {" + body + "}", 'Function', 0, null);
+				{}, 'function (' + params + ') {' + body + '}', 'Function', 0, null);
 		}
 	}
 });

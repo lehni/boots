@@ -16,7 +16,7 @@ String.inject({
 	},
 
 	urlize: function() {
-		return this.unaccent().replace(/([^a-z0-9\.]+)/gi, "-").trim('-');
+		return this.unaccent().replace(/([^a-z0-9\.]+)/gi, '-').trim('-');
 	},
 
 	truncate: function(length, suffix) {
@@ -37,7 +37,7 @@ String.inject({
 		// words appart with a space. The wrapping is then done by the HTML engine...
 		if (this.length > width) {
 			// See if we can break at special chars. If not, force a break: 
-			var st = new java.util.StringTokenizer(this, " \t\n\r\f!#$%&()*+,-./:;<=>?@[\]^_`{|}~", true);
+			var st = new java.util.StringTokenizer(this, ' \t\n\r\f!#$%&()*+,-./:;<=>?@[\]^_`{|}~', true);
 			res.push();
 			var length = 0;
 			while (st.hasMoreTokens()) {

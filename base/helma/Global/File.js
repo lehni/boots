@@ -90,7 +90,7 @@ File.inject({
 			// Read in mime.types resource and create a lookup table.
 			if (!this.MIME_TYPES) {
 				// read extension to mime type mappings from mime.types:
-				var resource = getResource("mime.types");
+				var resource = getResource('mime.types');
 				var reader = new java.io.BufferedReader(
 					new java.io.InputStreamReader(resource.getInputStream())
 				);
@@ -107,7 +107,7 @@ File.inject({
 					}
 				}
 			}
-			return this.MIME_TYPES[extension] || "application/octetstream";
+			return this.MIME_TYPES[extension] || 'application/octetstream';
 		}
 	}
 });

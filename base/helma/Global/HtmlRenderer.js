@@ -34,9 +34,9 @@ HtmlRenderer = Base.extend({
 				var url = new java.net.URL(src);
 				pane.setPage(url);
 			} catch (e) {
-				pane.setContentType("text/html");
+				pane.setContentType('text/html');
 				// <br/> and so on is not supported:
-				src = src.replaceAll("/>", ">");
+				src = src.replaceAll('/>', '>');
 				pane.setText(src);
 			}
 			// determine width?
@@ -54,10 +54,10 @@ HtmlRenderer = Base.extend({
 			img = new Image(width, height);
 			var g = img.getGraphics();
 			Packages.javax.swing.SwingUtilities.paintComponent(g, pane, new java.awt.Container(), 0, 0, width, height);
-	//		img.saveAs(app.appDir + "/" + encodeMD5(src) + ".gif");
+	//		img.saveAs(app.appDir + '/' + encodeMD5(src) + '.gif');
 			g.dispose();
 		} catch (e) {
-			User.logError("renderHtmlImage()", e);
+			User.logError('renderHtmlImage()', e);
 		}
 		return img; 
 	}

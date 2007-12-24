@@ -7,13 +7,13 @@ Messages = Base.extend({
 		var protoName = prototype.constructor.name;
 		// walk through all the resources of the prototype and find the resource named messages.properites
 		var proto = app.__app__.getPrototypeByName(protoName);
-		var name = "messages.properties";
+		var name = 'messages.properties';
 		if (proto) {
 			var resources = proto.getResources();
 		    for (var i = 0; i < resources.length; i++) {
 		        var resource = resources[i];
 		        if (resource.exists() && resource.getShortName().equals(name)) {
-					app.log("Loading messages for prototype " + protoName + " from " + resource);
+					app.log('Loading messages for prototype ' + protoName + ' from ' + resource);
 					if (!this.messages)
 						this.messages = new Packages.helma.util.ResourceProperties(app.__app__);
 					this.messages.addResource(resource);
@@ -22,7 +22,7 @@ Messages = Base.extend({
 		}
 
 		if (!this.messages)
-			throw "cannot find messages resource named " + name + " in " + protoName;
+			throw 'cannot find messages resource named ' + name + ' in ' + protoName;
 
 		// use a skin cache that is linked to a hash of the message.
 		// in case the message changes while the app is running the skin gets
@@ -52,10 +52,10 @@ Messages = Base.extend({
 			var param = {};
 			// Check if value passed is actually an array
 			if (value) {
-				if (typeof value == "string") param.value1 = value;
+				if (typeof value == 'string') param.value1 = value;
 				else if (value.length) {
 					for (var i = 0; i < value.length; i++) {
-						param["value" + (i + 1)] = value[i];
+						param['value' + (i + 1)] = value[i];
 					}
 				}
 			}
@@ -69,7 +69,7 @@ new function() {
 	function renderMessage(proto, key, value) {
 		// Throw an error if renderMessage / setMessage is called on any normal function
 		if (!(proto instanceof HopObject))
-			throw "Calling renderMessage / setMessage is only supported on HopObject constructors.";
+			throw 'Calling renderMessage / setMessage is only supported on HopObject constructors.';
 		if (!proto.messages)
 			proto.messages = new Messages(proto);
 		return proto.messages.render(key, value);

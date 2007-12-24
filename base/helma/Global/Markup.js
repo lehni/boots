@@ -108,7 +108,7 @@ CodeTag = MarkupTag.extend({
 	_tags: 'code',
 
 	parse: function(name, args, content) {
-		return "<pre><code>" + content.replaceAll('<br />', '') + "</code></pre>";
+		return '<pre><code>' + content.replaceAll('<br />', '') + '</code></pre>';
 	}
 });
 
@@ -202,7 +202,7 @@ UrlTag = MarkupTag.extend({
 		var isLocal = /^\//.test(url);
 		// allways write domain part of url for simple rendering (e.g. in rss feeds)
 		if (param.simple && isLocal)
-			str += getProperty("serverUrl");
+			str += getProperty('serverUrl');
 		str += url;
 		// links to local pages do not need to open blank
 		if (!isLocal)
@@ -218,9 +218,9 @@ QuoteTag = MarkupTag.extend({
 	parse: function(name, args, content) {
 		var title;
 		if (args[0]) {
-			title = args[0] + " wrote:";
+			title = args[0] + ' wrote:';
 		} else {
-			title = "Quote:";
+			title = 'Quote:';
 		}
 		return '<div class="quote-title">' + title + '</div><div class="quote">' + content + '</div>';
 	}
