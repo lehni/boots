@@ -3,8 +3,9 @@ Markup = {
 		if (text) {
 			if (!param)
 				param = {};
-			// Determine encoder to be used, default is encode()
-			var encoder = param.encoding && global['encode' + param.encoding.capitalize()] || encode;
+			// Determine encoder to be used, default is not encoding anything:
+			var encoder = param.encoding && global['encode' + param.encoding.capitalize()]
+				|| function(val) { return val };
 			// Structure for nested tags, each having its own buffer for rendered output
 			var buffer = [], tag = { buffer: buffer };
 			var tags = [tag];
@@ -40,8 +41,7 @@ Markup = {
 							var tagObj = MarkupTag.get(name);
 							tag.buffer.push(tagObj
 								? tagObj.parse(name, args, content, param, encoder) || ''
-								: '&lt;' + name + ' ' + args.join(' ') +
-									(content != null ? '&gt;' + content + '&lt;/' + name + '&gt;' : '&gt;'));
+								: encoder('<' + name + (args ? ' ' + args.join(' ') : '') + '>' + content + '</' + name + '>'));
 							// If the object defines the cleanUp function, 
 							// collect it now:
 							if (tagObj && tagObj.cleanUp)
@@ -176,8 +176,18 @@ ImageTag = ResourceTag.extend({
 	}
 });
 
+HtmlTag = MarkupTag.extend({
+	_tags: 'i,b,strong,s,strike',
+
+	parse: function(name, args, content) {
+		return '<' + name +
+			(args ? ' ' + args.join(' ') : '') +
+			(content != null ? '>' + content + '</' + name + '>' : '>');
+	}
+});
+
 BoldTag = MarkupTag.extend({
-	_tags: 'bold,b',
+	_tags: 'bold',
 
 	parse: function(name, args, content) {
 		return '<b>' + content + '</b>';
