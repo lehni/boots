@@ -41,7 +41,8 @@ Markup = {
 							var tagObj = MarkupTag.get(name);
 							tag.buffer.push(tagObj
 								? tagObj.parse(name, args, content, param, encoder) || ''
-								: encoder('<' + name + (args ? ' ' + args.join(' ') : '') + '>' + content + '</' + name + '>'));
+								: encoder('<' + name + (args ? ' ' + args.join(' ') : '') + '>')
+									+ content + encoder('</' + name + '>'));
 							// If the object defines the cleanUp function, 
 							// collect it now:
 							if (tagObj && tagObj.cleanUp)
