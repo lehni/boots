@@ -16,35 +16,35 @@ EditForm.inject(new function() {
 			switch (name) {
 			case 'notNull':
 				if (req && value == null)
-					throw message || "cannot be empty.";
+					throw message || 'cannot be empty.';
 				break;
 			case 'length':
 				if (value.length != req)
-					throw message || "needs to contain exactly " + 
-						req + " characters.";
+					throw message || 'needs to contain exactly ' + 
+						req + ' characters.';
 				break;
 			case 'minLength':
 				if (value.length < req)
-					throw message || "needs to contain at least " + 
-						req + " characters.";
+					throw message || 'needs to contain at least ' + 
+						req + ' characters.';
 				break;
 			case 'maxLength':
 				if (value.length > req)
-					throw message || "cannot contain more than " + 
-						req + " characters.";
+					throw message || 'cannot contain more than ' + 
+						req + ' characters.';
 				break;
 			case 'match':
 				if (!req.test || !req.test(value))
-					throw message || "is not correctly formated.";
+					throw message || 'is not correctly formated.';
 				break;
 			case 'email':
 				if (req && !/^([a-zA-Z0-9\-\.\_]+)(\@)([a-zA-Z0-9\-\.]+)(\.)([a-zA-Z]{2,4})$/.test(value))
-					throw message || "is not a valid address.";
+					throw message || 'is not a valid address.';
 				break;
 			case 'uniqueIn':
 				var obj = req.get(value);
 				if (obj != null && obj != item.form.object)
-					throw message || "is already in use.";
+					throw message || 'is already in use.';
 				break;
 			case 'callback':
 				// the callback handler can either return an error as
@@ -159,8 +159,8 @@ EditForm.inject(new function() {
 							return true;
 					}
 				} catch (e) {
-					if (typeof e != "string")
-						User.logError("applyItem", e);
+					if (typeof e != 'string')
+						User.logError('applyItem', e);
 		 			throw new EditException(item, e);
 				}
 			}

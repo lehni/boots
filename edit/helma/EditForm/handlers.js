@@ -168,7 +168,7 @@ EditForm.register({
 			var parentItem = node.parentItem;
 			if (parentItem) {
 				if (parentItem.collection) {
-					// add it to the collection:
+					// Add it to the collection:
 					parentItem.collection.add(object);
 					created = true;
 				} else if (parentItem.setValue(object)) {
@@ -181,7 +181,7 @@ EditForm.register({
 			// the above. If there is a change of transient objects, they become
 			// persistent when the parent of them all becomes persistent:
 			if (object.isTransient()) {
-				// walk up the change to the last object that is transient,
+				// Walk up the change to the last object that is transient,
 				// then create an array of all the object that want onAfterCreate
 				// to be called there:
 				var parent = object.getEditParent();

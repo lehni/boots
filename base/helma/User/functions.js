@@ -8,7 +8,7 @@ User.inject({
 
 		logError: function(title, e) {
 			var shortDesc;
-			if (e.fileName) shortDesc = "Error in " + e.fileName + ", Line " + e.lineNumber + ": " + e;
+			if (e.fileName) shortDesc = 'Error in ' + e.fileName + ', Line ' + e.lineNumber + ': ' + e;
 			else shortDesc = e;
 
 			// now generate the stacktrace:
@@ -20,11 +20,12 @@ User.inject({
 			}
 			User.log(title + ':\n' + longDesc);
 			try {
-				// send an error mail:
+				// Send an error mail:
+				// TODO: make these addresses configurable through app.properties
 				var mail = new Mail();
-				mail.setFrom("error@lineto.com");
-				mail.addBCC("juerg@vectorama.org");
-				mail.setSubject('[' + new Date().format("yyyy/MM/dd HH:mm:ss") + '] ' + title); 
+				mail.setFrom('error@lineto.com');
+				mail.setTo('juerg@vectorama.org');
+				mail.setSubject('[' + new Date().format('yyyy/MM/dd HH:mm:ss') + '] ' + title); 
 				if (session.user != null)
 					longDesc = '[' + session.user.name + '] ' + longDesc;
 				mail.addText(longDesc);

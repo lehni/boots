@@ -47,7 +47,7 @@ new function() {
 	}
 
 	function visible(obj, name) {
-		return obj[name] !== obj.__proto__[name]&& name.indexOf('__') != 0;
+		return obj[name] !== obj.__proto__[name];
 	}
 
 	inject(Function.prototype, {
@@ -153,15 +153,12 @@ Function.inject(new function() {
 });
 
 Enumerable = new function() {
-	Base.iterate = function(fn, name) {
+	Base.iterate = function(fn) {
 		return function(iter, bind) {
 			if (!iter) iter = function(val) { return val };
 			else if (typeof iter != 'function') iter = function(val) { return val == iter };
 			if (!bind) bind = this;
-			var prev = bind[name];
-			bind[name] = iter;
-			try { return fn.call(this, iter, bind, this); }
-			finally { prev ? bind[name] = prev : delete bind[name] }
+			return fn.call(this, iter, bind, this);
 		};
 	};
 
@@ -169,14 +166,14 @@ Enumerable = new function() {
 
 	var each_Array = Array.prototype.forEach || function(iter, bind) {
 		for (var i = 0, l = this.length; i < l; ++i)
-			bind.__each(this[i], i, this);
+			iter.call(bind, this[i], i, this);
 	};
 
 	var each_Object = function(iter, bind) {
 		for (var i in this) {
 			var val = this[i];
-			if (val !== this.__proto__[i]&& i.indexOf('__') != 0)
-				bind.__each(val, i, this);
+			if (val !== this.__proto__[i])
+				iter.call(bind, val, i, this);
 		}
 	};
 
@@ -187,18 +184,18 @@ Enumerable = new function() {
 			try { (this.length != null ? each_Array : each_Object).call(this, iter, bind); }
 			catch (e) { if (e !== Base.stop) throw e; }
 			return bind;
-		}, '__each'),
+		}),
 
 		findEntry: Base.iterate(function(iter, bind, that) {
 			return this.each(function(val, key) {
-				this.result = bind.__findEntry(val, key, that);
+				this.result = iter.call(bind, val, key, that);
 				if (this.result) {
 					this.key = key;
 					this.value = val;
 					throw Base.stop;
 				}
 			}, {});
-		}, '__findEntry'),
+		}),
 
 		find: function(iter, bind) {
 			return this.findEntry(iter, bind).result;
@@ -216,36 +213,36 @@ Enumerable = new function() {
 
 		every: Base.iterate(function(iter, bind, that) {
 			return this.find(function(val, i) {
-				return !this.__every(val, i, that);
+				return !iter.call(this, val, i, that);
 			}, bind) == null;
-		}, '__every'),
+		}),
 
 		map: Base.iterate(function(iter, bind, that) {
 			return this.each(function(val, i) {
-				this[this.length] = bind.__map(val, i, that);
+				this[this.length] = iter.call(bind, val, i, that);
 			}, []);
-		}, '__map'),
+		}),
 
 		filter: Base.iterate(function(iter, bind, that) {
 			return this.each(function(val, i) {
-				if (bind.__filter(val, i, that))
+				if (iter.call(bind, val, i, that))
 					this[this.length] = val;
 			}, []);
-		}, '__filter'),
+		}),
 
 		max: Base.iterate(function(iter, bind, that) {
 			return this.each(function(val, i) {
-				val = bind.__max(val, i, that);
+				val = iter.call(bind, val, i, that);
 				if (val >= (this.max || val)) this.max = val;
 			}, {}).max;
-		}, '__max'),
+		}),
 
 		min: Base.iterate(function(iter, bind, that) {
 			return this.each(function(val, i) {
-				val = bind.__min(val, i, that);
+				val = iter.call(bind, val, i, that);
 				if (val <= (this.min || val)) this.min = val;
 			}, {}).min;
-		}, '__min'),
+		}),
 
 		pluck: function(prop) {
 			return this.map(function(val) {
@@ -255,12 +252,12 @@ Enumerable = new function() {
 
 		sortBy: Base.iterate(function(iter, bind, that) {
 			return this.map(function(val, i) {
-				return { value: val, compare: bind.__sortBy(val, i, that) };
+				return { value: val, compare: iter.call(bind, val, i, that) };
 			}, bind).sort(function(left, right) {
 				var a = left.compare, b = right.compare;
 				return a < b ? -1 : a > b ? 1 : 0;
 			}).pluck('value');
-		}, '__sortBy'),
+		}),
 
 		toArray: function() {
 			return this.map();
@@ -384,31 +381,31 @@ Array.inject(new function() {
 		filter: Base.iterate(proto.filter || function(iter, bind, that) {
 			var res = [];
 			for (var i = 0, j = this.length; i < j; ++i)
-				if (bind.__filter(this[i], i, that))
+				if (iter.call(bind, this[i], i, that))
 					res[res.length] = this[i];
 			return res;
-		}, '__filter'),
+		}),
 
 		map: Base.iterate(proto.map || function(iter, bind, that) {
 			var res = new Array(this.length);
 			for (var i = 0, j = this.length; i < j; ++i)
-				res[i] = bind.__map(this[i], i, that);
+				res[i] = iter.call(bind, this[i], i, that);
 			return res;
-		}, '__map'),
+		}),
 
 		every: Base.iterate(proto.every || function(iter, bind, that) {
 			for (var i = 0, j = this.length; i < j; ++i)
-				if (!bind.__every(this[i], i, that))
+				if (!iter.call(bind, this[i], i, that))
 					return false;
 			return true;
-		}, '__every'),
+		}),
 
 		some: Base.iterate(proto.some || function(iter, bind, that) {
 			for (var i = 0, j = this.length; i < j; ++i)
-				if (bind.__some(this[i], i, that))
+				if (iter.call(bind, this[i], i, that))
 					return true;
 			return false;
-		}, '__some'),
+		}),
 
 		reduce: proto.reduce || function(fn, value) {
 			var i = 0;
@@ -811,19 +808,24 @@ DomElements = Array.extend(new function() {
 
 		statics: {
 			inject: function(src) {
+				var proto = this.prototype;
 				return this.base(Base.each(src || {}, function(val, key) {
-					this[key] = typeof val != 'function' ? val : function() {
-						var args = arguments, values;
-						this.each(function(obj) {
-							var ret = (obj[key] || val).apply(obj, args);
-							if (ret !== undefined && ret != obj) {
-								values = values || (Base.type(ret) == 'element'
-									? new obj._elements() : []);
-								values.push(ret);
-							}
-						});
-						return values || this;
+					if (typeof val == 'function') {
+						var func = val, prev = proto[key];
+						val = function() {
+							var args = arguments, values;
+							this.each(function(obj) {
+								var ret = (obj[key] || func).apply(obj, args);
+								if (ret !== undefined && ret != obj) {
+									values = values || (Base.type(ret) == 'element'
+										? new obj._elements() : []);
+									values.push(ret);
+								}
+							});
+							return values || this;
+						}
 					}
+					this[key] = val; 
 				}, {}));
 			}
 		}
@@ -2197,6 +2199,7 @@ HtmlElement.inject(new function() {
 			}
 			switch (name) {
 				case 'visibility':
+					if (!isNaN(value)) value = !!value.toInt() + '';
 				 	value = value == 'true' && 'visible' || value == 'false' && 'hidden' || value;
 					break;
 				case 'opacity':

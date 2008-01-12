@@ -25,8 +25,8 @@ Node.inject({
 				collection: this.all, value: this,
 				prototypes: Base.pick(param.children.prototypes, 'Node'),
 				movable: Base.pick(param.children.movable, true),
-				editable: true, // always
-				size: Base.pick(param.children.size, 6), autoRemove: true,
+				editable: true, autoRemove: true, // Always
+				size: Base.pick(param.children.size, 6)
 			} : null,
 			param.resources ? {
 				type: 'multiselect', name: 'resources',
@@ -36,8 +36,8 @@ Node.inject({
 				collection: this.allResources, value: this.resources,
 				prototypes: Base.pick(param.resources.prototypes, 'Resource,Medium,Picture'),
 				movable: Base.pick(param.resources.movable, true),
-				editable: true, // always
-				size: Base.pick(param.resources.size, 6), autoRemove: true
+				editable: true, autoRemove: true, // Always
+				size: Base.pick(param.resources.size, 6)
 			} : null
 		);
 		return form;
