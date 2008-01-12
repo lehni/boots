@@ -362,7 +362,6 @@ SelectItem = EditItem.extend({
 		// convert to id
 		if (value != null && value instanceof HopObject)
 			value = value._id;
-		
 		// mark the selected
 		options.each(function(option) {
 			if (option.value == value)
@@ -503,22 +502,6 @@ SelectItem = EditItem.extend({
 			options  = [];
 		}
 		return options;
-	},
-
-	toIds: function(ids) {
-		if (ids == null) return [];
-		else if (ids instanceof HopObject) {
-			var objects = ids.list();
-			ids = [];
-			for (var i = 0; i < objects.length; i++) {
-				var obj = objects[i];
-				if (obj) ids.push(obj.getFullId());
-			}
-			return ids;
-		} else if (typeof ids == 'string') {
-			return ids.split(',');
-		}
-		return ids.length != undefined ? ids : [];
 	}
 });
 
@@ -528,10 +511,30 @@ MultiSelectItem = SelectItem.extend({
 
 	render: function(baseForm, name, value, param, out) {
 		var options = this.toOptions(this.collection || this.linkedCollection || this.options);
-		// convert values to a list of ids.
-		var ids = this.toIds(value);
-		// find the chosen ones.
-		// create ids indices lookup table:
+		// Convert values to a list of full ids.
+		var ids = [];
+		if (value != null) {
+			if (value instanceof HopObject) {
+				var list = value.list();
+				for (var i = 0; i < list.length; i++) {
+					var obj = list[i];
+					if (obj) ids.push(obj.getFullId());
+				}
+			} else if (typeof value == 'string') {
+				var shortIds = value.split(',');
+				if (this.linkedCollection) {
+					// Convert short ids as used by string lists to full ids:
+					for (var i = 0; i < shortIds.length; i++) {
+						var obj = this.linkedCollection.getById(shortIds[i]);
+						if (obj) ids.push(obj.getFullId());
+					}
+				} else {
+					EditForm.alert('Unable to get full ids from string list.\nPlease make sure linkedCollection is set.');
+				}
+			}
+		}
+		// Find the chosen ones.
+		// Create ids indices lookup table:
 		var indices = {};
 		for (var i = 0, l = ids.length; i < l; i++)
 			indices[ids[i]] = i;
@@ -677,7 +680,7 @@ ReferenceItem = EditItem.extend({
 		out.write(' ');
 		var buttons = [{
 			name: name + '_choose', value: 'Choose',
-			// TODO: allow display of current selection in object choosers!
+			// TODO: Allow display of current selection in object choosers!
 			onClick: baseForm.renderHandle('choose_reference', name, false /*, value ? value.getFullId() : ''*/)
 		}];
 		if (this.editable) {
