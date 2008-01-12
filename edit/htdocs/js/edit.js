@@ -138,13 +138,21 @@ EditForm = Base.extend({
 						name = match[1];
 						var multi = multis[name] = multis[name] || {
 							ids: backup.values[name].value.split(','),
-							values: [], options: []
+							values: [], options: [], lookup: {}
 						};
-						// Store reference to the object itself
-						multi[match[2]] = el;
+						var options = el.getOptions();
 						// Collect backed-up values and current options
 						multi.values.append(val.options);
-						multi.options.append(el.getOptions());
+						multi.options.append(options);
+						// Store reference to the object, its options and
+						// a lookup table using the option's values
+						var lookup = options.each(function(opt) {
+							var val = opt.getValue();
+							this[val] = multi.lookup[val] = opt;
+						}, {});
+						multi[match[2]] = {
+							element: el, options: options, lookup: lookup
+						};
 					} else {
 						// Only take over the selection from the previous
 						// select input.
@@ -161,34 +169,39 @@ EditForm = Base.extend({
 			// Ids is the activated ids of this multi select.
 			// use this for the ordering
 			// create lookups
-			var lookupId = multi.ids.each(function(id) {
+			var lookupIds = multi.ids.each(function(id) {
 				this[id] = true;
 			}, {});
-			var lookupValue = multi.values.each(function(opt) {
+			var lookupValues = multi.values.each(function(opt) {
 				this[opt.value] = opt;
-			}, {});
-			var lookupOption = multi.options.each(function(opt) {
-				this[opt.getValue()] = opt;
 			}, {});
 			// Now sync them:
 			// Scan stored options and sync with the new values
 			// (what was deleted? what added?), but keep the backed-up order:
 			multi.options.each(function(opt) {
-				var val = lookupValue[opt.getValue()];
+				var val = lookupValues[opt.getValue()];
 				if (val) val.text = opt.getText(); // Update changed titles 
-				else multi.values.push({ text: opt.getText(), value: opt.getValue() }); // not found -> add
+				else {
+					// Not found -> add
+					val = { text: opt.getText(), value: opt.getValue() };
+					multi.values.push(val);
+					// If the option is in the selected list, add it to lookupIds,
+					// so it gets selected again:
+					if (multi.left.lookup[val.value])
+						lookupIds[val.value] = true;
+				}
 			});
 			multi.values.each(function(opt, i) {
-				if (!lookupOption[opt.value])
-					this[i] = null; // not found -> erase
+				if (!multi.lookup[opt.value])
+					this[i] = null; // Not found in new sets -> Erase
 			});
 			// Empty the lists and fill them again:
-			multi.left.removeChildren();
+			multi.left.element.removeChildren();
 			if (multi.right)
-				multi.right.removeChildren();
+				multi.right.element.removeChildren();
 			multi.values.each(function(opt) {
 				if (opt) {
-					var options = lookupId[opt.value] ? multi.left :  multi.right;
+					var options = lookupIds[opt.value] ? multi.left.element :  multi.right.element;
 					if (options)
 						options.appendChild(new SelectOption(opt));
 				}

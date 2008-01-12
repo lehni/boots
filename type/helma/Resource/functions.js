@@ -71,18 +71,25 @@ Resource.inject({
 		return form;
 	},
 
+	onCreate: function() {
+		this.visible = 1;
+	},
+
 	onRemove: function() {
 		this.removeResource();
 	},
 
 	onAfterCreate: function(transId) {
-		// when the resources is created, rename the file
+		// When the resources is created, rename the file
 		// from transient to persistend id
 		if (transId) {
 			var file = this.getFile(transId);
 			if (file.exists())
 				file.renameTo(this.getFile())
 		}
+		// Make sure it appears at the end of the resource list.
+		if (this._parent)
+			this.position = this._parent.count();
 	},
 
 	setFile: function(mimeObj) {

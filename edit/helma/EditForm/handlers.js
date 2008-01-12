@@ -148,9 +148,9 @@ EditForm.register({
 		if (this.apply(base, node)) {
 			// If onCreate returns an object, this object is added instead of our temporary one.
 			if (object.onCreate) {
-				var res = object.onCreate();
-				if (res !== undefined && res != object) {
-					object = res;
+				var ret = object.onCreate();
+				if (ret !== undefined && ret != object) {
+					object = ret;
 					// Call this.apply() again on the new object, as it differs from object.
 					if (!this.apply(object))
 						return;
