@@ -25,7 +25,7 @@ Resource.inject({
 				return 'text';
 		},
 
-		create: function(imeObj) {
+		create: function(mimeObj) {
 			if (mimeObj && mimeObj.name) {
 				var type = Resource.getBasicType(File.getContentType(mimeObj.name));
 				if (type) {
