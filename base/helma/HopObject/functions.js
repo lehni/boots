@@ -22,7 +22,7 @@ HopObject.inject({
 	},
 
 	/**
-	 * Render HTML is the method in baseLib apps that's supposed to render the
+	 * Render HTML is the method in base lib apps that's supposed to render the
 	 * final result. This here is just a scafold, apps should provide their own.
 	 * But since core parts rely on it to be there, here it is, along with a
 	 * simple template.

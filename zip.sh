@@ -1,24 +1,24 @@
 zipLib() {
-	mkdir bootLib/$1
+	mkdir Boots/$1
 	cd $1
 	if [ -d htdocs ]
 	then
-		cp -pfRL htdocs ../bootLib/$1/
+		cp -pfRL htdocs ../Boots/$1/
 	fi
 	cd helma
-	zip -9 -r ../../bootLib/$1/$1.zip * -x "*/.DS_Store" "*/.svn/*"
+	zip -9 -r ../../Boots/$1/$1.zip * -x "*/.DS_Store" "*/.svn/*"
 	cd ../..
 }
 
-mkdir bootLib
+mkdir Boots
 
-zipLib "baseLib"
-zipLib "editLib"
-zipLib "typeLib"
-zipLib "postLib"
-zipLib "wikiLib"
-zipLib "feedLib"
+zipLib "base"
+zipLib "edit"
+zipLib "type"
+zipLib "post"
+zipLib "wiki"
+zipLib "feed"
 
-zip -9 -r bootLib.zip bootLib/* -x "*/.DS_Store" "*/.svn/*"
+zip -9 -r Boots.zip Boots/* -x "*/.DS_Store" "*/.svn/*"
 
-rm -fr bootLib
+rm -fr Boots
