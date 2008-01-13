@@ -1,5 +1,5 @@
-// Install UrlRouting, so other modules can install routes for Root without having to define 
-// getChildElement again.
+// Install UrlRouting in the root object, so other modules can install routes
+// for Root without having to define getChildElement again.
 
 UrlRouting.draw(this, {});
 

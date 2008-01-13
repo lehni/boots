@@ -39,9 +39,23 @@ HopObject.inject({
 	/**
 	 * getDisplayName can be used to define the way a object's name should be
 	 * on the page displayed.
-	 * TODO: Consider finding a better name?
 	 */
 	getDisplayName: function() {
 		return this.name;
+	},
+
+	getChildElement: function(name, secondTry) {
+		var obj = this.get(name);
+		if (!obj) {
+			if (!secondTry) {
+				// if the object is not found, it could be because of umlaute in the url:
+				// try with converted names:
+				// either to UTF-8 or MacRoman
+				var bytes = new java.lang.String(name).getBytes("ISO-8859-1");
+				obj = this.getChildElement(new java.lang.String(bytes, "UTF-8").toString(), true);
+				if (obj == null) obj = this.getChildElement(new java.lang.String(bytes, "MacRoman").toString(), true);
+			}
+		}
+		return obj;
 	}
 });
