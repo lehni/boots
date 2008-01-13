@@ -127,7 +127,6 @@ EditForm.inject(new function() {
 	}
 	
 	// These functions can reference "this", as they are set to properties bellow:
-		
 	function addToGroup(name /*, ... */) {
 		var form = this.getGroupForm(name);
 		if (form) {
@@ -140,7 +139,28 @@ EditForm.inject(new function() {
 		var group = this.root.groups ? this.root.groups[name] : null;
 		return group ? group.groupForm : null;
 	}
-	
+
+	function insertBefore(nameOrIndex /*, ... */) {
+		var row = this.getRow(nameOrIndex);
+		if (row) {
+			var index = row.index;
+			if (index < 0) index = 0;
+			return insertRows(row.form, index, arguments, 1);
+		}
+		return false;
+	}
+
+	function insertAfter(nameOrIndex /*, ... */) {
+		var row = this.getRow(nameOrIndex);
+		if (row) {
+			var index = row.index;
+			if (index >= 0) index++;
+			else index = this.rows.length;
+			return insertRows(row.form, index, arguments, 1);
+		}
+		return false;
+	}
+
 	/**
 	 * Public functions
 	 */
@@ -222,30 +242,14 @@ EditForm.inject(new function() {
 		 * inserts rows before an existing row,
 		 * that can be either specified by name or index
 		 */
-		insertBefore: function(nameOrIndex /*, ... */) {
-			var row = this.getRow(nameOrIndex);
-			if (row) {
-				var index = row.index;
-				if (index < 0) index = 0;
-				return insertRows(row.form, index, arguments, 1);
-			}
-			return false;
-		},
+		insertBefore: insertBefore,
+		insertAt: insertBefore,
 
 		/**
 		 * inserts rows after an existing row,
 		 * that can be either specified by name or index
 		 */
-		insertAfter: function(nameOrIndex /*, ... */) {
-			var row = this.getRow(nameOrIndex);
-			if (row) {
-				var index = row.index;
-				if (index >= 0) index++;
-				else index = this.rows.length;
-				return insertRows(row.form, index, arguments, 1);
-			}
-			return false;
-		},
+		insertAfter: insertAfter,
 
 		/**
 		 * Removes a row that can be either specified by a item name or index
@@ -475,6 +479,8 @@ EditForm.inject(new function() {
 				var name;
 				if (obj.getEditName)
 					name = obj.getEditName();
+				else if (obj.getDisplayName)
+					name = obj.getDisplayName();
 				if (!name) {
 					if (obj.name) name = obj.name;
 					else name = '[' + obj.getFullId() + ']';
