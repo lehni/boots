@@ -1,8 +1,0 @@
-		<td width="75%"><% this.link <%= this.title | trim | truncate 16 '...' %> %></td>
-<% if (!param.dontShowUser) %>
-		<td nowrap><%= this.renderUser() %></td>
-<% end %>
-		<td nowrap align="right"><%= this.modificationDate | format properties.dateShort %></td>
-	</tr>
-	<tr class="blocks-row-<%= param.style %>">
-		<td colspan="3"><%= this.text | stripTags | truncate 128 '...' %></td>
