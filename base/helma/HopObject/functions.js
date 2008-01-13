@@ -13,7 +13,11 @@ HopObject.inject({
 		if (text) {
 			var skin = createSkin(format(text));
 			if (out == res)	this.renderSkin(skin);
-			else out.write(this.renderSkinAsString(skin));
+			else {
+				var str = this.renderSkinAsString(skin);
+				if (out) out.write(str);
+				else return str;
+			}
 		}
 	},
 
