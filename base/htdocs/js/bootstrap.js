@@ -47,7 +47,7 @@ new function() {
 	}
 
 	function visible(obj, name) {
-		return obj[name] !== obj.__proto__[name];
+		return (!obj.__proto__ || obj[name] !== obj.__proto__[name]) && name.indexOf('__') != 0;
 	}
 
 	inject(Function.prototype, {
@@ -55,7 +55,7 @@ new function() {
 			var proto = this.prototype, base = proto.__proto__ && proto.__proto__.constructor;
 			inject(proto, src, base && base.prototype, src && src._generics && this);
 			inject(this, src && src.statics, base);
-			for (var i = 1, j = arguments.length; i < j; i++)
+			for (var i = 1, l = arguments.length; i < l; i++)
 				this.inject(arguments[i]);
 			return this;
 		},
@@ -84,7 +84,7 @@ new function() {
 		},
 
 		inject: function() {
-			for (var i = 0, j = arguments.length; i < j; i++)
+			for (var i = 0, l = arguments.length; i < l; i++)
 				inject(this, arguments[i]);
 			return this;
 		},
@@ -153,12 +153,15 @@ Function.inject(new function() {
 });
 
 Enumerable = new function() {
-	Base.iterate = function(fn) {
+	Base.iterate = function(fn, name) {
 		return function(iter, bind) {
 			if (!iter) iter = function(val) { return val };
 			else if (typeof iter != 'function') iter = function(val) { return val == iter };
 			if (!bind) bind = this;
-			return fn.call(this, iter, bind, this);
+			var prev = bind[name];
+			bind[name] = iter;
+			try { return fn.call(this, iter, bind, this); }
+			finally { prev ? bind[name] = prev : delete bind[name] }
 		};
 	};
 
@@ -166,14 +169,19 @@ Enumerable = new function() {
 
 	var each_Array = Array.prototype.forEach || function(iter, bind) {
 		for (var i = 0, l = this.length; i < l; ++i)
-			iter.call(bind, this[i], i, this);
+			bind.__each(this[i], i, this);
 	};
 
 	var each_Object = function(iter, bind) {
-		for (var i in this) {
-			var val = this[i];
-			if (val !== this.__proto__[i])
-				iter.call(bind, val, i, this);
+		if (!this.__proto__) {
+			for (var i in this)
+				if (i.indexOf('__') != 0) bind.__each(this[i], i, this);
+		} else {
+			for (var i in this) {
+				var val = this[i];
+				if (val !== this.__proto__[i] && i.indexOf('__') != 0)
+					bind.__each(val, i, this);
+			}
 		}
 	};
 
@@ -184,18 +192,18 @@ Enumerable = new function() {
 			try { (this.length != null ? each_Array : each_Object).call(this, iter, bind); }
 			catch (e) { if (e !== Base.stop) throw e; }
 			return bind;
-		}),
+		}, '__each'),
 
 		findEntry: Base.iterate(function(iter, bind, that) {
 			return this.each(function(val, key) {
-				this.result = iter.call(bind, val, key, that);
+				this.result = bind.__findEntry(val, key, that);
 				if (this.result) {
 					this.key = key;
 					this.value = val;
 					throw Base.stop;
 				}
 			}, {});
-		}),
+		}, '__findEntry'),
 
 		find: function(iter, bind) {
 			return this.findEntry(iter, bind).result;
@@ -213,36 +221,36 @@ Enumerable = new function() {
 
 		every: Base.iterate(function(iter, bind, that) {
 			return this.find(function(val, i) {
-				return !iter.call(this, val, i, that);
+				return !this.__every(val, i, that);
 			}, bind) == null;
-		}),
+		}, '__every'),
 
 		map: Base.iterate(function(iter, bind, that) {
 			return this.each(function(val, i) {
-				this[this.length] = iter.call(bind, val, i, that);
+				this[this.length] = bind.__map(val, i, that);
 			}, []);
-		}),
+		}, '__map'),
 
 		filter: Base.iterate(function(iter, bind, that) {
 			return this.each(function(val, i) {
-				if (iter.call(bind, val, i, that))
+				if (bind.__filter(val, i, that))
 					this[this.length] = val;
 			}, []);
-		}),
+		}, '__filter'),
 
 		max: Base.iterate(function(iter, bind, that) {
 			return this.each(function(val, i) {
-				val = iter.call(bind, val, i, that);
+				val = bind.__max(val, i, that);
 				if (val >= (this.max || val)) this.max = val;
 			}, {}).max;
-		}),
+		}, '__max'),
 
 		min: Base.iterate(function(iter, bind, that) {
 			return this.each(function(val, i) {
-				val = iter.call(bind, val, i, that);
+				val = bind.__min(val, i, that);
 				if (val <= (this.min || val)) this.min = val;
 			}, {}).min;
-		}),
+		}, '__min'),
 
 		pluck: function(prop) {
 			return this.map(function(val) {
@@ -252,12 +260,12 @@ Enumerable = new function() {
 
 		sortBy: Base.iterate(function(iter, bind, that) {
 			return this.map(function(val, i) {
-				return { value: val, compare: iter.call(bind, val, i, that) };
+				return { value: val, compare: bind.__sortBy(val, i, that) };
 			}, bind).sort(function(left, right) {
 				var a = left.compare, b = right.compare;
 				return a < b ? -1 : a > b ? 1 : 0;
 			}).pluck('value');
-		}),
+		}, '__sortBy'),
 
 		toArray: function() {
 			return this.map();
@@ -365,7 +373,7 @@ Array.inject(new function() {
 		indexOf: proto.indexOf || function(obj, i) {
 			i = i || 0;
 			if (i < 0) i = Math.max(0, this.length + i);
-			for (var j = this.length; i < j; ++i)
+			for (var l = this.length; i < l; ++i)
 				if (this[i] == obj) return i;
 			return -1;
 		},
@@ -380,32 +388,32 @@ Array.inject(new function() {
 
 		filter: Base.iterate(proto.filter || function(iter, bind, that) {
 			var res = [];
-			for (var i = 0, j = this.length; i < j; ++i)
-				if (iter.call(bind, this[i], i, that))
+			for (var i = 0, l = this.length; i < l; ++i)
+				if (bind.__filter(this[i], i, that))
 					res[res.length] = this[i];
 			return res;
-		}),
+		}, '__filter'),
 
 		map: Base.iterate(proto.map || function(iter, bind, that) {
 			var res = new Array(this.length);
-			for (var i = 0, j = this.length; i < j; ++i)
-				res[i] = iter.call(bind, this[i], i, that);
+			for (var i = 0, l = this.length; i < l; ++i)
+				res[i] = bind.__map(this[i], i, that);
 			return res;
-		}),
+		}, '__map'),
 
 		every: Base.iterate(proto.every || function(iter, bind, that) {
-			for (var i = 0, j = this.length; i < j; ++i)
-				if (!iter.call(bind, this[i], i, that))
+			for (var i = 0, l = this.length; i < l; ++i)
+				if (!bind.__every(this[i], i, that))
 					return false;
 			return true;
-		}),
+		}, '__every'),
 
 		some: Base.iterate(proto.some || function(iter, bind, that) {
-			for (var i = 0, j = this.length; i < j; ++i)
-				if (iter.call(bind, this[i], i, that))
+			for (var i = 0, l = this.length; i < l; ++i)
+				if (bind.__some(this[i], i, that))
 					return true;
 			return false;
-		}),
+		}, '__some'),
 
 		reduce: proto.reduce || function(fn, value) {
 			var i = 0;
@@ -458,13 +466,13 @@ Array.inject(new function() {
 		},
 
 		append: function(items) {
-			for (var i = 0, j = items.length; i < j; ++i)
+			for (var i = 0, l = items.length; i < l; ++i)
 				this.push(items[i]);
 			return this;
 		},
 
 		subtract: function(items) {
-			for (var i = 0, j = items.length; i < j; ++i)
+			for (var i = 0, l = items.length; i < l; ++i)
 				Array.remove(this, items[i]);
 			return this;
 		},
@@ -527,7 +535,7 @@ Array.inject(new function() {
 					return list.toArray();
 				if (list.length != null) {
 					var res = [];
-					for (var i = 0, j = list.length; i < j; ++i)
+					for (var i = 0, l = list.length; i < l; ++i)
 						res[i] = list[i];
 				} else {
 					res = [list];
@@ -812,6 +820,7 @@ DomElements = Array.extend(new function() {
 				return this.base(Base.each(src || {}, function(val, key) {
 					if (typeof val == 'function') {
 						var func = val, prev = proto[key];
+
 						val = function() {
 							var args = arguments, values;
 							this.each(function(obj) {
@@ -1144,7 +1153,7 @@ DomElement.inject(new function() {
 		create: function(arg) {
 			var items = Base.type(arg) == 'array' ? arg : arguments;
 			var elements = new this._elements();
-			for (var i = 0, j = items.length; i < j; i ++) {
+			for (var i = 0, l = items.length; i < l; i ++) {
 				var item = items[i];
 				var props = item[1], content = item[2];
 				if (!content && Base.type(props) != 'object') {
@@ -1592,7 +1601,7 @@ DomElement.inject(new function() {
 			}
 			var res = document.evaluate('.//' + items.join(''), context,
 				resolver, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-			for (var i = 0, j = res.snapshotLength; i < j; ++i)
+			for (var i = 0, l = res.snapshotLength; i < l; ++i)
 				elements.push(res.snapshotItem(i));
 		}
 	}, { 

@@ -73,7 +73,7 @@ new function() {
 				if (proto.initialize)
 					proto.constructor = proto.initialize;
 			}
-			for (var i = 1, j = arguments.length; i < j; i++)
+			for (var i = 1, l = arguments.length; i < l; i++)
 				this.inject(arguments[i]);
 			return this;
 		},
@@ -104,7 +104,7 @@ new function() {
 		},
 
 		inject: function() {
-			for (var i = 0, j = arguments.length; i < j; i++)
+			for (var i = 0, l = arguments.length; i < l; i++)
 				inject(this, arguments[i]);
 			return this;
 		},
@@ -355,7 +355,7 @@ Array.inject(new function() {
 		indexOf: proto.indexOf || function(obj, i) {
 			i = i || 0;
 			if (i < 0) i = Math.max(0, this.length + i);
-			for (var j = this.length; i < j; ++i)
+			for (var l = this.length; i < l; ++i)
 				if (this[i] == obj) return i;
 			return -1;
 		},
@@ -370,7 +370,7 @@ Array.inject(new function() {
 
 		filter: Base.iterate(proto.filter || function(iter, bind, that) {
 			var res = [];
-			for (var i = 0, j = this.length; i < j; ++i)
+			for (var i = 0, l = this.length; i < l; ++i)
 				if (bind.__filter(this[i], i, that))
 					res[res.length] = this[i];
 			return res;
@@ -378,20 +378,20 @@ Array.inject(new function() {
 
 		map: Base.iterate(proto.map || function(iter, bind, that) {
 			var res = new Array(this.length);
-			for (var i = 0, j = this.length; i < j; ++i)
+			for (var i = 0, l = this.length; i < l; ++i)
 				res[i] = bind.__map(this[i], i, that);
 			return res;
 		}, '__map'),
 
 		every: Base.iterate(proto.every || function(iter, bind, that) {
-			for (var i = 0, j = this.length; i < j; ++i)
+			for (var i = 0, l = this.length; i < l; ++i)
 				if (!bind.__every(this[i], i, that))
 					return false;
 			return true;
 		}, '__every'),
 
 		some: Base.iterate(proto.some || function(iter, bind, that) {
-			for (var i = 0, j = this.length; i < j; ++i)
+			for (var i = 0, l = this.length; i < l; ++i)
 				if (bind.__some(this[i], i, that))
 					return true;
 			return false;
@@ -447,13 +447,13 @@ Array.inject(new function() {
 		},
 
 		append: function(items) {
-			for (var i = 0, j = items.length; i < j; ++i)
+			for (var i = 0, l = items.length; i < l; ++i)
 				this.push(items[i]);
 			return this;
 		},
 
 		subtract: function(items) {
-			for (var i = 0, j = items.length; i < j; ++i)
+			for (var i = 0, l = items.length; i < l; ++i)
 				Array.remove(this, items[i]);
 			return this;
 		},
@@ -516,7 +516,7 @@ Array.inject(new function() {
 					return list.toArray();
 				if (list.length != null) {
 					var res = [];
-					for (var i = 0, j = list.length; i < j; ++i)
+					for (var i = 0, l = list.length; i < l; ++i)
 						res[i] = list[i];
 				} else {
 					res = [list];
