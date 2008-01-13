@@ -267,7 +267,7 @@ Font = Base.extend({
 		image.width = width;
 		image.height = height;
 		if (!image.alt)
-			image.alt = text.replace('\n', '');
+			image.alt = text.replace('\n', ' ');
 		return Html.image(image, out);
 	},
 	
