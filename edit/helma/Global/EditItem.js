@@ -361,7 +361,7 @@ SelectItem = EditItem.extend({
 		
 		// convert to id
 		if (value != null && value instanceof HopObject)
-			value = value._id;
+			value = value.getFullId();
 		// mark the selected
 		options.each(function(option) {
 			if (option.value == value)
@@ -622,7 +622,7 @@ MultiSelectItem = SelectItem.extend({
 		}, []);
 
 		// Create a string for string id lists:
-		return stringIds ? value.join(',') : value;
+		return stringIds ? (value.length ? value.join(',') : null) : value;
 	},
 
 	apply: function(value) {
