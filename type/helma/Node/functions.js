@@ -1,22 +1,11 @@
 Node.inject({
 	getEditForm: function(param) {
 		var form = new EditForm(this, { removable: true });
-		var parent = this.getEditParent();
 		if (param.children === undefined)
 			param.children = true;
 		if (param.resources === undefined)
 			param.resources = true;
 		form.addTab('node', param.tabLabel || 'Node',
-			{
-				label: 'Name', name: 'name', type: 'string',
-				requirements: {
-					notNull: true, maxLength: 32,
-					uniqueIn: parent && {
-						value: parent.all,
-						message: 'This name is already in use. Choose a different name.'
-					}
-				}
-			},
 			param.children ? {
 				type: 'multiselect', name: 'children',
 				label: param.children.label || 'Sub Pages',
