@@ -820,9 +820,11 @@ DomElements = Array.extend(new function() {
 				return this.base(Base.each(src || {}, function(val, key) {
 					if (typeof val == 'function') {
 						var func = val, prev = proto[key];
-
+						var count = func.parameters().length, prevCount = prev && prev.parameters().length;
 						val = function() {
 							var args = arguments, values;
+							if (prev && args.length > count && args.length <= prevCount)
+								return prev.apply(this, args);
 							this.each(function(obj) {
 								var ret = (obj[key] || func).apply(obj, args);
 								if (ret !== undefined && ret != obj) {
