@@ -143,6 +143,9 @@ Picture.inject({
 
 	renderImage: function(param, out) {
 		var image = this.processImage(param);
-		return Html.image(Hash.merge(image, param), out);
+		// Merge attributes into it before rendering
+		if (param.attributes)
+			image = Hash.merge(image, param.attributes);
+		return Html.image(image, out);
 	}
 });
