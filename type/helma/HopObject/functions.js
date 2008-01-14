@@ -4,6 +4,9 @@ HopObject.inject({
 		if (!obj) {
 			obj = new prototype();
 			obj.name = name;
+			// Make visible and set position if they are defined.
+			if (obj.visible !== undefined)
+				obj.visible = true;
 			if (obj.position !== undefined)
 				obj.position = this.count();
 			this.add(obj);
@@ -44,15 +47,14 @@ HopObject.inject({
 		return this.name;
 	},
 
-	getChildElement: function(name, secondTry) {
-		var obj = this.get(name);
-		if (!obj && !secondTry) {
-			// If the object is not found, it could be because of Umlauts in the URL:
-			// Try with converted names: Either UTF-8 or MacRoman
-			var bytes = new java.lang.String(name).getBytes('ISO-8859-1');
-			obj = this.getChildElement(new java.lang.String(bytes, 'UTF-8').toString(), true) ||
-				this.getChildElement(new java.lang.String(bytes, 'MacRoman').toString(), true);
-		}
-		return obj;
+	/**
+	 * Checks if the  object and all its parents have the visible property set.
+	 * Returns true if that applies, false otherwise.
+	 */
+	isVisible: function() {
+		var obj = this;
+		while (obj && obj != root && obj.visible)
+			obj = obj.getEditParent();
+		return obj == root;
 	}
 });

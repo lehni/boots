@@ -36,13 +36,6 @@ Node.inject({
 		return user && this.creator == user;
 	},
 
-	isVisible: function() {
-		var obj = this;
-		while (obj && obj != root && obj.position != null)
-			obj = obj.parent;
-		return obj == root;
-	},
-
 	getUniqueChildName: function(object, name, maxLength) {
 		name = name.trim().urlize();
 		if (name.length > maxLength)
