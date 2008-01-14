@@ -12,7 +12,7 @@ if (!global.encodeHtml)
 if (!global.encodeAll)
 	encodeAll = encode;
 
-function Template(object, name) {
+function Template(object, name, parent) {
 	if (object) {
 		if (object instanceof File)
 			object = new java.io.File(object.getPath());
@@ -30,6 +30,10 @@ function Template(object, name) {
 			this.resourceContainer = object;
 			this.resourceName = name + '.jstl';
 			this.findResource();
+		}
+		if (parent) {
+			parent.subTemplates[name] = this;
+			this.parent = parent;
 		}
 		this.compile();
 	}
@@ -282,10 +286,18 @@ Template.prototype = {
 
 		var macroParam = 0;
 		function nestedMacro(that, value, code, stack) {
-			if (/^<%/.test(value)) {
+			if (/<%/.test(value)) {
 				var nested = value;
-				value = 'param_' + (macroParam++) + '';
-				code.push('var ' + value + ' = ' + that.parseMacro(nested, code, stack, false, true) + ';');
+				value = 'param_' + (macroParam++);
+				if (/^<%/.test(nested)) {
+					code.push('var ' + value + ' = ' + that.parseMacro(nested, code, stack, false, true) + ';');
+				} else if (/^['"]/.test(nested)) {
+					eval('nested = ' + nested);
+					new Template(nested, value, that);
+					code.push('var ' + value + ' = template.renderSubTemplate(this, "' + value + '", param);');
+				} else {
+					throw 'Syntax error: ' + nested;
+				}
 			}
 			return parseParam(value);
 		}
@@ -486,7 +498,7 @@ Template.prototype = {
 	},
 
 	parseLoopVariables: function(str, stack) {
-		return str.replace(/(\$[\w_]+)\#(\w+)/, function(part, variable, suffix) {
+		return str.replace(/(\$[\w_]+)\#(\w+)/g, function(part, variable, suffix) {
 			var loopStack = stack.loop[variable], loop = loopStack && loopStack[loopStack.length - 1];
 			if (loop) {
 				switch (suffix) {
@@ -508,8 +520,7 @@ Template.prototype = {
 			var name = match[2], content = tag.buffer.join(''), end = match[3];
 			if (!end) content = content.match(/^\s*[\n\r]?([\s\S]*)[\n\r]?\s*$/)[1];
 			else if (end == '-') content = content.trim();
-			var template = this.subTemplates[name] = new Template(content, name);
-			template.parent = this;
+			new Template(content, name, this);
 			if (match[1] == '$')
 				this.renderTemplates.push({ name: name, trim: end == '-' });
 		} else
