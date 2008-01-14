@@ -448,7 +448,7 @@ Template.prototype = {
 				object = 'obj';
 				code.push(		postProcess		?	'out.push();' : null,
 													'var val = template.renderMacro("' + macro.command + '", ' + object + ', "' +
-															macro.name + '", param, ' + macro.arguments + ', out);',
+															macro.name + '", param, ' + this.parseLoopVariables(macro.arguments, stack) + ', out);',
 								postProcess		?	'template.write(out.pop(), ' + values.filters + ', ' + values.prefix + ', ' +
 															values.suffix + ', null, out);' : null);
 				result = 'val';

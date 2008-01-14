@@ -186,7 +186,7 @@ Enumerable = new function() {
 		_generics: true,
 
 		each: Base.iterate(function(iter, bind) {
-			try { (this.length != null ? each_Array : each_Object).call(this, iter, bind); }
+			try { (typeof this.length == 'number' ? each_Array : each_Object).call(this, iter, bind); }
 			catch (e) { if (e !== Base.stop) throw e; }
 			return bind;
 		}, '__each'),
@@ -331,6 +331,12 @@ Hash = Base.extend(Enumerable, {
 		return this.map(function(val, key) {
 			return key;
 		});
+	},
+
+	length: function() {
+		return this.each(function() {
+			this.length++;
+		}, { length: 0 }).length;
 	},
 
 	values: Enumerable.toArray,
