@@ -73,6 +73,8 @@ EditForm = Base.extend({
 		// inline interface
 		if (this.parent && this.parent.empty)
 			return this.parent.close();
+		if (!EditForm.forms.length())
+			Document.fireEvent('endedit');
 		return this.parent;
 	},
 
@@ -323,6 +325,8 @@ EditForm = Base.extend({
 		get: function(id, target, parent) {
 			var form = this.forms[id];
 			if (target) { // If target is passed, we're asked to create a form
+				if (!this.forms.length())
+					Document.fireEvent('beginedit');
 				if (!form)
 					form = this.forms[id] = new EditForm(id, target, parent);
 				var targetId = target.getId();
@@ -424,7 +428,7 @@ EditForm = Base.extend({
 				chooser.element.remove();
 			});
 			// Replace the content of the body only...
-			Document.fireEvent('updating');
+			Document.fireEvent('beforeupdate');
 			var body = $('body');
 			body.setHtml(html);
 			// now insert forms again
@@ -444,7 +448,7 @@ EditForm = Base.extend({
 			// Fire event on document so website can react to html update
 			// and do some JS magic with it if needed before the ditors are
 			// injected again.
-			Document.fireEvent('updated');
+			Document.fireEvent('afterupdate');
 			this.choosers.each(function(chooser) {
 				chooser.element.insertInside(body);
 			});
