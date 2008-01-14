@@ -43,7 +43,7 @@ Node.inject({
 		return obj == root;
 	},
 
-	getUniqueNameFor: function(object, name, maxLength) {
+	getUniqueChildName: function(object, name, maxLength) {
 		name = name.trim().urlize();
 		if (name.length > maxLength)
 			name = name.substring(0, maxLength).trim('-');

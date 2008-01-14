@@ -10,7 +10,7 @@ HopObject.inject({
 		}
 		return obj;
 	},
-	
+
 	/**
 	 * Renders a link to the HopObject.
 	 * Param can either be a string, or a hash containing these values:
@@ -35,7 +35,7 @@ HopObject.inject({
 			content || encode(this.getDisplayName()),
 			href || this.href(), param, out);
 	},
-	
+
 	/**
 	 * getDisplayName can be used to define the way a object's name should be
 	 * on the page displayed.
@@ -46,15 +46,12 @@ HopObject.inject({
 
 	getChildElement: function(name, secondTry) {
 		var obj = this.get(name);
-		if (!obj) {
-			if (!secondTry) {
-				// if the object is not found, it could be because of umlaute in the url:
-				// try with converted names:
-				// either to UTF-8 or MacRoman
-				var bytes = new java.lang.String(name).getBytes("ISO-8859-1");
-				obj = this.getChildElement(new java.lang.String(bytes, "UTF-8").toString(), true);
-				if (obj == null) obj = this.getChildElement(new java.lang.String(bytes, "MacRoman").toString(), true);
-			}
+		if (!obj && !secondTry) {
+			// If the object is not found, it could be because of Umlauts in the URL:
+			// Try with converted names: Either UTF-8 or MacRoman
+			var bytes = new java.lang.String(name).getBytes('ISO-8859-1');
+			obj = this.getChildElement(new java.lang.String(bytes, 'UTF-8').toString(), true) ||
+				this.getChildElement(new java.lang.String(bytes, 'MacRoman').toString(), true);
 		}
 		return obj;
 	}
