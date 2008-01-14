@@ -6,7 +6,7 @@ Medium.inject({
 
 	getEditForm: function(param) {
 		// Force name field through param:
-		param = Hash.merge({ hasName: true, hasDimensions: true }, param);
+		param = Hash.merge({ hasName: false, hasDimensions: true }, param);
 		var form = this.base(param);
 		if (param.hasDimensions) {
 			form.insertAfter('file', [
