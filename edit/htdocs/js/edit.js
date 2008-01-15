@@ -408,7 +408,7 @@ EditForm = Base.extend({
 				form.autoSize();
 			}
 			if (values.page) {
-				var page = (/<body[^>]*>([\s\S]*)<\/body>/i).exec(values.page);
+				var page = values.page.match(/<body[^>]*>([\u0000-\uffff]*)<\/body>/i);
 				if (page) this.updateBody(page[1]);
 			}
 			if (values.alert)
