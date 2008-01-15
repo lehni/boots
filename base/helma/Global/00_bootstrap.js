@@ -188,7 +188,7 @@ Enumerable = new function() {
 		}),
 
 		findEntry: Base.iterate(function(iter, bind, that) {
-			return this.each(function(val, key) {
+			return Base.each(this, function(val, key) {
 				this.result = iter.call(bind, val, key, that);
 				if (this.result) {
 					this.key = key;
@@ -219,27 +219,34 @@ Enumerable = new function() {
 		}),
 
 		map: Base.iterate(function(iter, bind, that) {
-			return this.each(function(val, i) {
+			return Base.each(this, function(val, i) {
 				this[this.length] = iter.call(bind, val, i, that);
 			}, []);
 		}),
 
+		collect: Base.iterate(function(iter, bind, that) {
+			return Base.each(this, function(val, i) {
+			 	val = iter.call(bind, val, i, that);
+				if (val != null) this[this.length] = val;
+			}, []);
+		}),
+
 		filter: Base.iterate(function(iter, bind, that) {
-			return this.each(function(val, i) {
+			return Base.each(this, function(val, i) {
 				if (iter.call(bind, val, i, that))
 					this[this.length] = val;
 			}, []);
 		}),
 
 		max: Base.iterate(function(iter, bind, that) {
-			return this.each(function(val, i) {
+			return Base.each(this, function(val, i) {
 				val = iter.call(bind, val, i, that);
 				if (val >= (this.max || val)) this.max = val;
 			}, {}).max;
 		}),
 
 		min: Base.iterate(function(iter, bind, that) {
-			return this.each(function(val, i) {
+			return Base.each(this, function(val, i) {
 				val = iter.call(bind, val, i, that);
 				if (val <= (this.min || val)) this.min = val;
 			}, {}).min;
@@ -284,6 +291,7 @@ Base.inject({
 	},
 
 	statics: {
+
 		check: function(obj) {
 			return !!(obj || obj === 0);
 		},
@@ -726,12 +734,13 @@ Json = new function() {
 				case 'string':
 					return '"' + obj.replace(/[\x00-\x1f\\"]/g, replace) + '"';
 				case 'array':
-					return '[' + obj.map(this.encode).compact().join(',') + ']';
+					return '[' + obj.collect(Json.encode) + ']';
+				case 'hash':
 				case 'object':
-					return '{' + Base.each(obj, function(val, key) {
-						if (val != undefined)
-							this.push(Json.encode(key) + ':' + Json.encode(val));
-					}, []) + '}';
+					return '{' + Hash.collect(obj, function(val, key) {
+						val = Json.encode(val);
+						if (val) return Json.encode(key) + ':' + val;
+					}) + '}';
 				default:
 					return obj + '';
 			}
