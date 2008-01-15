@@ -44,6 +44,17 @@ HopObject.inject({
 		return this._prototype + '-' + (this.cache.id || this._id);
 	},
 
+	/**
+	 * Retrieves an object in the collection by a given fullId. The prototype
+	 * is checked to make sure it's really that object:
+	 */
+	getByFullId: function(fullId) {
+		var parts = fullId.split('-');
+		var prototype = parts[0], id = parts[1];
+		var obj = this.getById(id);
+		return obj && obj._prototype == prototype ? obj : null;
+	},
+
 	statics: {
 		/**
 		 * Takes either an id / prototype pair of a full id ("prototype-id")
