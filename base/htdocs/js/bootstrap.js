@@ -121,7 +121,7 @@ Function.inject(new function() {
 		},
 
 		body: function() {
-			return this.toString().match(/^\s*function[^\{]*\{([\s\S]*)\}\s*$/)[1];
+			return this.toString().match(/^\s*function[^\{]*\{([\u0000-\uffff]*)\}\s*$/)[1];
 		},
 
 		delay: function(ms) {
@@ -2818,7 +2818,7 @@ Ajax = HttpRequest.extend({
 			scripts = this.response.text;
 		} else {
 			scripts = [];
-			var exp = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+			var exp = /<script[^>]*>([\u0000-\uffff]*?)<\/script>/gi;
 			while ((script = exp.exec(this.response.text)))
 				scripts.push(script[1]);
 			scripts = scripts.join('\n');

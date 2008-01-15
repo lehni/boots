@@ -518,7 +518,7 @@ Template.prototype = {
 		var match = tag.tag.match(/^<%\s*([$#])(\S*)\s*([+-]?)%>$/);
 		if (match) {
 			var name = match[2], content = tag.buffer.join(''), end = match[3];
-			if (!end) content = content.match(/^\s*[\n\r]?([\s\S]*)[\n\r]?\s*$/)[1];
+			if (!end) content = content.match(/^\s*[\n\r]?([\u0000-\uffff]*)[\n\r]?\s*$/)[1];
 			else if (end == '-') content = content.trim();
 			new Template(content, name, this);
 			if (match[1] == '$')

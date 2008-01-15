@@ -132,7 +132,7 @@ Function.inject(new function() {
 		},
 
 		body: function() {
-			return this.toString().match(/^\s*function[^\{]*\{([\s\S]*)\}\s*$/)[1];
+			return this.toString().match(/^\s*function[^\{]*\{([\u0000-\uffff]*)\}\s*$/)[1];
 		},
 
 		bind: function(obj) {
@@ -714,11 +714,28 @@ String.inject({
 });
 
 Json = new function() {
+	var special = { '\b': '\\b', '\t': '\\t', '\n': '\\n', '\f': '\\f', '\r': '\\r', '"' : '\\"', '\\': '\\\\' };
+
+	function replace(chr) {
+		return special[chr] || '\\u00' + Math.floor(chr.charCodeAt() / 16).toString(16) + (chr.charCodeAt() % 16).toString(16);
+	}
 
 	return {
 		encode: function(obj) {
-			var str = uneval(obj);
-			return str[0] == '(' ? str.substring(1, str.length - 1) : str;
+			switch (Base.type(obj)) {
+				case 'string':
+					return '"' + obj.replace(/[\x00-\x1f\\"]/g, replace) + '"';
+				case 'array':
+					return '[' + obj.map(this.encode).compact().join(',') + ']';
+				case 'object':
+					return '{' + Base.each(obj, function(val, key) {
+						if (val != undefined)
+							this.push(Json.encode(key) + ':' + Json.encode(val));
+					}, []) + '}';
+				default:
+					return obj + '';
+			}
+			return null;
 		},
 
 		decode: function(string, secure) {
