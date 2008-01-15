@@ -161,22 +161,12 @@ EditForm.register({
 			if (object.creationDate !== undefined) // modificationDate was set in apply
 				object.creationDate = object.modificationDate || new Date();
 			// Create it:
-			var created = false;
 			// The new obj has to be added to the object it belongs to:
 			// Find the parent's item through which it is created
 			var transientId = object._id;
 			var parentItem = node.parentItem;
-			if (parentItem) {
-				if (parentItem.collection) {
-					// Add it to the collection:
-					parentItem.collection.add(object);
-					created = true;
-				} else if (parentItem.setValue(object)) {
-					created = true;
-				}
-				if (!created)
-					throw "Cannot store the object.";
-			}
+			if (!parentItem || !parentItem.store(object))
+				EditForm.alert("Cannot store the object.");
 			// Only call onAfterCreate if the object stoped being transient through
 			// the above. If there is a change of transient objects, they become
 			// persistent when the parent of them all becomes persistent:

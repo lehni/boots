@@ -85,6 +85,10 @@ EditItem = Base.extend(new function() {
 			return false;
 		},
 
+		store: function(object) {
+			return this.setValue(object);
+		},
+
 		getOptions: function() {
 			return { scaleToFit: this._scale };
 		},
@@ -387,6 +391,24 @@ SelectItem = EditItem.extend({
 		}
 	},
 
+	store: function(object) {
+		// This is called by handlers.js when a new object is created in the list
+		// Just add it to the collection and handle position and visible:
+		if (this.collection) {
+			// Add it to the collection:
+			// Support for visible lists and hidden (all) lists:
+			var list = object.visible && this.value instanceof HopObject ?
+				this.value : this.collection;
+			list.add(object);
+			// Support for position:
+			if (object.position !== undefined)
+				object.position = list.count() - 1;
+			return true;
+		} else {
+			return this.setValue(object);
+		}
+	},
+
 	convert: function(value) {
 		// Only convert if the current value is not the collection itself,
 		// as we cannot override collections (this happens e.g. when
@@ -446,7 +468,7 @@ SelectItem = EditItem.extend({
 				onClick: prototypes.length == 1
 					? prototypes[0].href
 					: baseForm.renderHandle('select_new', name, prototypes, editParams)
-			},{
+			}, {
 				value: 'Delete',
 				onClick: baseForm.renderHandle('select_remove', selParams, editParams)
 			});
