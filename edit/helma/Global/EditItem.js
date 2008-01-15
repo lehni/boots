@@ -395,11 +395,19 @@ SelectItem = EditItem.extend({
 		// This is called by handlers.js when a new object is created in the list
 		// Just add it to the collection and handle position and visible:
 		if (this.collection) {
-			// Add it to the collection:
-			// Support for visible lists and hidden (all) lists:
-			var list = object.visible && this.value instanceof HopObject ?
-				this.value : this.collection;
+			// Add it to the collection(s):
+			// Support for visible lists and hidden (all) lists. Since the 
+			// object might remain transient for a while, simulate the proper
+			// result of collection filtering here: A visible object appears both
+			// in value and collection, and hidden one only in collection:
+			var list = this.collection;
 			list.add(object);
+			if (object.visible && this.value instanceof HopObject) {
+				// If visible, add it to this.value as well, and use that for
+				// position bellow
+				list = this.value;
+				list.add(object);
+			}
 			// Support for position:
 			if (object.position !== undefined)
 				object.position = list.count() - 1;
@@ -632,11 +640,12 @@ MultiSelectItem = SelectItem.extend({
 		// Now convert the fullIds in the array to objects, by filtering
 		// according to prototypes.
 		value = value.each(function(id) {
-			var obj = HopObject.get(id);
+			var obj = null;
+			if (collection) obj = collection.getByFullId(id);
+			else obj = HopObject.get(id);
 			// See if the object is an instance of any of the allowed
 			// prototypes, and if so, add its id to the list
 			if (obj
-				&& (!collection || collection.indexOf(obj) != -1)
 				&& (!prototypes || prototypes.find(function(proto) {
 					return obj instanceof proto;
 				})))

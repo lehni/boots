@@ -24,8 +24,9 @@ HopObject.inject({
 	},
 
 	setCreating: function(creating) {
-		if (creating) this.cache.creating = true;
-		else {
+		if (creating) {
+			this.cache.creating = true;
+		} else {
 			delete this.cache.creating;
 			delete this.cache.id;
 		}

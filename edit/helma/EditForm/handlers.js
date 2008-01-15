@@ -167,12 +167,12 @@ EditForm.register({
 			var parentItem = node.parentItem;
 			if (!parentItem || !parentItem.store(object))
 				EditForm.alert("Cannot store the object.");
-			// Only call onAfterCreate if the object stoped being transient through
+			// Only call onStore if the object stoped being transient through
 			// the above. If there is a change of transient objects, they become
 			// persistent when the parent of them all becomes persistent:
 			if (object.isTransient()) {
 				// Walk up the change to the last object that is transient,
-				// then create an array of all the object that want onAfterCreate
+				// then create an array of all the object that want onStore
 				// to be called there:
 				var parent = object.getEditParent();
 				while (true) {
@@ -188,22 +188,22 @@ EditForm.register({
 					transientId: object._id
 				});
 			} else {
-				// First call children's onAfterCreate handlers:
+				// First call children's onStore handlers:
 				var children = object.cache.createdChildren;
 				if (children) {
 					for (var i = 0; i < children.length; i++) {
 						var ch = children[i];
 						var obj = ch.object;
 						User.log('Created ' + obj.getFullId() + " from: " + ch.transientId);
-						if (obj.onAfterCreate)
-							obj.onAfterCreate(ch.transientId);
+						if (obj.onStore)
+							obj.onStore(ch.transientId);
 					}
 					delete object.cache.createdChildren;
 				}
 				User.log('Created ' + object.getFullId() + " from: " + transientId);
-				// Call the onAfterCreate handler:
-				if (object.onAfterCreate)
-					object.onAfterCreate(transientId);
+				// Call the onStore handler:
+				if (object.onStore)
+					object.onStore(transientId);
 			}
 			// If the parent's edit form defines an onAfterCreate handler, call it now:
 			if (parentItem && parentItem.onAfterCreate)
@@ -256,13 +256,8 @@ EditForm.register({
 			var item = node.form.getItem(req.data.edit_item, req.data.edit_group);
 			if (item) {
 				if (req.data.edit_object_id != null) {
-					if (item.collection) {
-						// Fetch by full id, then see that it is really contained
-						// in the collection:
-						obj = HopObject.get(req.data.edit_object_id);
-						if (item.collection.indexOf(obj) == -1)
-							obj = null;
-					}
+					if (item.collection)
+						obj = item.collection.getByFullId(req.data.edit_object_id);
 				} else {
 					obj = item.getValue();
 				}
@@ -422,10 +417,8 @@ EditForm.register({
 			var collection = item && item.collection;
 			if (collection) {
 				req.data.edit_object_ids.split(',').each(function(id) {
-					// Fetch by full id, then see that it is really contained
-					// in the collection:
-					var obj = HopObject.get(id);
-					if (obj && collection.indexOf(obj) != -1 && obj.removeObject())
+					var obj = collection.getByFullId(id);
+					if (obj && obj.removeObject())
 						removed = true;
 				});
 			}

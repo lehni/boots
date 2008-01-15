@@ -79,8 +79,8 @@ Resource.inject({
 		this.removeResource();
 	},
 
-	onAfterCreate: function(transId) {
-		// When the resources is created, rename the file
+	onStore: function(transId) {
+		// When the resources is stored, rename the file
 		// from transient to persistend id
 		if (transId) {
 			var file = this.getFile(transId);
