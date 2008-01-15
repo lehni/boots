@@ -87,9 +87,6 @@ Resource.inject({
 			if (file.exists())
 				file.renameTo(this.getFile())
 		}
-		// Make sure it appears at the end of the resource list.
-		if (this._parent)
-			this.position = this._parent.count();
 	},
 
 	setFile: function(mimeObj) {
