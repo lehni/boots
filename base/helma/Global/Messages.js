@@ -75,17 +75,6 @@ new function() {
 		return proto.messages.render(key, value);
 	}
 
-	// Add renderMessage & setMessage to HopObject instances
-	HopObject.inject({
-		renderMessage: function(key, value) {
-			return renderMessage(this.__proto__, key, value);
-		},
-
-		setMessage: function(key, value) {
-			res.message = this.renderMessage(key, value);
-		}
-	});
-
 	// Add renderMessage & setMessage to HopObject constructors. 
 	// The only place to put this and make it available to all HopObject
 	// constructors at once is Function.prototype...
@@ -96,7 +85,31 @@ new function() {
 
 		setMessage: function(key, value) {
 			res.message = this.renderMessage(key, value);
+		},
+
+		addMessage: function(key, value) {
+			if (res.message == null)
+				res.message = '';
+			else
+				res.message += '\n\n\n';
+			res.message += this.renderMessage(key, value);
 		}
+	});
+
+	// Add renderMessage & setMessage to HopObject instances.
+	// Just forward to the static methods.
+	HopObject.inject({
+		renderMessage: function(key, value) {
+			return this.constructor.renderMessage(key, value);
+		},
+
+		setMessage: function(key, value) {
+			this.constructor.setMessage(key, value);
+		},
+
+		addMessage: function(key, value) {
+			this.constructor.addMessage(key, value);
+		},
 	});
 };
 
