@@ -133,13 +133,14 @@ Resource.inject({
 		if (!param || typeof param == 'string')
 			param = { content: param };
 		// override default href (this.href())
-		if (!param.href)
+		if (!param.href) {
 			param.href = this.getUri();
-		// Open in blank window if it's not forcing a download
-		if (!this.forceDownload()) {
-			if (!param.attributes)
-				param.attributes = {};
-			param.attributes.target = '_blank';
+			// Open in blank window if it's not forcing a download
+			if (!this.forceDownload()) {
+				if (!param.attributes)
+					param.attributes = {};
+				param.attributes.target = '_blank';
+			}
 		}
 		return this.base(param, out);
 	},

@@ -1,11 +1,4 @@
 Post.inject({
-	// turn off for systems without users
-	HAS_USER: true,
-
-	initialize: function(topic) {
-		this.topic = topic;
-	},
-
 	isEditableBy: function(user) {
 		// remain editable from the same session for 15 minutes
 		return user != null && this.creator == user ||
@@ -15,7 +8,7 @@ Post.inject({
 
 	getEditName: function() {
 		if (this.title)
-			return this.title.truncate(28, '...') + " [" + this._id + "]";
+			return this.title.truncate(28, '...') + ' [' + this._id + ']';
 	},
 
 	getDisplayName: function() {
@@ -23,52 +16,61 @@ Post.inject({
 	},
 
 	getTitle: function() {
-		// for the recent code in root, that deals with both topics and posts
+		// for the recent code in root, that deals with both nodes and posts
 		return this.title;
 	},
 
+	getNode: function() {
+		return this.getEditParent(this.node);
+	},
+
 	getEditForm: function() {
-		var form = new EditForm(this, { removable: true });
+		var form = new EditForm(this, {
+			removable: true, showTitle: false, titles: { create: 'Post' }
+		});
 		var notifyItem = {
-			type: "boolean", name: "notify",
-			suffix: "Notify on subsequent posts"
+			type: 'boolean', name: 'notify', value: !!this.getNotification(),
+			suffix: 'Notify on subsequent posts',
+			onAfterApply: function(value) {
+				this.getNode().setNotification(value, this.creator, this.getUserEmail(), this.getUserName());
+			}
 		};
-		// TODO: add POSTER, and cosinder renaming from name to role (EDITOR -> EDIT...)
+		// TODO: add POSTER, and cosider renaming from name to role (EDITOR -> EDIT...)
 		if (User.hasRole(User.EDITOR)) {
 			form.add([
 				{
-					suffix: "<b>Posting as: </b>" +
-						session.user.renderLink({ attributes: { target: "_top" }})
+					suffix: '<b>Posting as: </b>' +
+						session.user.renderLink({ attributes: { target: '_top' }})
 				},
 				notifyItem
 			]);
 		} else {
 			form.add([ 
 				{
-					label: "Name", type: "string", name: "username", trim: true,
+					label: 'Name', type: 'string', name: 'username', trim: true,
 					requirements: {
 						notNull: true, maxLength: 32,
 						uniqueIn: { 
 							value: root.users, message:
-							"\nThis user already exists.\n" +
-							"Choose a different name."
+							'\nThis user already exists.\nChoose a different name.'
 						}
 					}
 				}, 	{
-					label: "Website", type: "string", name: "website"
+					label: 'Website', type: 'string', name: 'website',
+					requirements: {
+						uri: true
+					}
 				}
 			], [			
 				{
-					label: "Email", type: "string", name: "email",  trim: true,
+					label: 'Email', type: 'string', name: 'email',  trim: true,
 					requirements: {
 						notNull: {
-							value: true, message: "Needs to be specified." + 
-							"Your address will not be published."
+							value: true, message: 'Needs to be specified.\nYour address will not be published.'
 						},
 						uniqueIn: {
 							value: root.usersByEmail, message:
-							"\nThis address is already in use.\n" +
-							"Choose a different address."
+							'\nThis address is already in use.\nChoose a different address.'
 						},
 						email: true
 					}
@@ -77,299 +79,146 @@ Post.inject({
 			]);
 		}
 		form.add({
-			label: "Subject", type: "string", name: "title", trim: true,
+			label: 'Subject', type: 'string', name: 'title', trim: true,
 			requirements: {
-				notNull: { value: true, message: "Needs to be specified." },
+				notNull: { value: true, message: 'Please specify a title.' },
 				maxLength: 64
 			}
 		});
 		form.add({
-			label: "Text", type: "text", name: "text", cols: "40", rows: "20",
+			label: 'Text', type: 'text', name: 'text', cols: '40', rows: '20',
 			trim: true, hasLinks: true,
 			requirements: {
-				notNull: true
+				notNull: { value: true, message: 'Please write a text.' }
 			}
 		}, {
-			label: "Resources", type: "multiselect", name: "resources",
+			label: 'Resources', type: 'multiselect', name: 'resources',
 			showOptions: true, collection: this.allResources, value: this.resources,
-			prototypes: "Resource,Medium,Picture", movable: true,
-			size: 6, autoRemove: true
+			prototypes: 'Resource,Medium,Picture', movable: true,
+			size: 6, autoRemove: true, ordered: true
 		});
-		if (true && User.hasRole(User.ADMINISTRATOR)) {
+		if (User.hasRole(User.ADMINISTRATOR) && !this.isCreating()) {
 			form.add({
-				type: "ruler"
+				type: 'ruler'
 			}, { 
-				label: "Date", type: "date", name: "creationDate", year: true,
+				label: 'Date', type: 'date', name: 'creationDate', year: true,
 				month: true, day: true, hours: true, minutes: true
 			}, {
-				label: "Creator", type: "select", name: "creator",
+				label: 'Creator', type: 'select', name: 'creator',
 				options: root.users, allowNull: true
-			}, 	{
-				type: "ruler"
 			});
 		}
 
-		if (this.isFirst && this.topic.addEditFields)
-			this.topic.addEditFields(form);
+		if (this.isFirst && this.node.addEditFields)
+			this.node.addEditFields(form);
 
 		form.add({
-			type: "help", text: this.renderTemplate("help")
+			type: 'help', text: this.renderTemplate('help')
 		});
 		return form;
 	},
 
-	onApply: function(changedItems) {
+	onAfterApply: function(changedItems) {
+		var node = this.getNode();
 		if (changedItems && this.isFirst) {
-			if (changedItems.title)
-				this.topic.setTitle(this.title);
-			if (changedItems.creationDate)
-				this.topic.creationDate = this.creationDate;
+			if (node.onUpdateFirstPost)
+				node.onUpdateFirstPost(this, changedItems);
 			// store remote host
 			this.host = Net.getHost();
 		}
 	},
 
+	onAfterInitialize: function() {
+		var node = this.getNode();
+		var count = node.posts.count();
+		if (node.AUTO_POST_TITLE && count > 0 || !node.AUTO_POST_TITLE && count > 1) {
+			var lastTitle = node.posts.get(count - 1).title;
+			if (lastTitle)
+				this.title = /^Re: /.test(lastTitle) ? lastTitle : 'Re: ' + lastTitle;
+		}
+	},
+
+	onCreate: function() {
+		var node = this.getNode();
+
+		this.isFirst = node.posts.count() == 0;
+
+		if (node.onAddPost)
+			node.onAddPost(this);
+	},
+
+	onBeforeRemove: function() {
+		// Check if this is a first post, and if so only allow removal
+		// if there are no others
+		var node = this.getNode();
+		if (this.isFirst && node.posts.count() > 1) {
+			throw 'There are other posts reacting to this one.\nTherefore it cannot be removed any longer.'
+		}
+	},
+
 	onRemove: function() {
-		var parent = this.getEditParent();
-		if (!parent.isRemoving() && parent.count() == 1)
-			parent.removeObject();
+		var node = this.getNode();
+		// If it's the last post, let the node know.
+		if (node.onRemoveLastPost && !node.isRemoving() && node.posts.count() == 1)
+			node.onRemoveLastPost();
 	},
 
-	getPostKey: function() {
-		if (!session.data.key)
-			session.data.key = encodeMD5(session._id + new Date());
-		return session.data.key;
-	},
-
-	renderEdit: function(error, newPost, out) {
-		function getValue(obj, name) {
-			if (error) {
-				var value = req.data[name];
-				if (value) return value;
-				else return obj[name];
-			} else {
-				var value = obj[name];
-				if (value) return value;
-				else return req.data["post_" + name];
-			}
-		}
-
-		var resources = this.resources.list();
-		// concat pending resources in the cache as well, in case the objects are still transient!
-		if (this.cache.resources)
-			resources = resources.concat(this.cache.resources);
-		var param = {
-			id: this.getEditId(),
-			text: encodeForm(getValue(this, 'text')),
-			notify: Html.input({
-				name: "notify", type: "checkbox", value: "1",
-				current: this.hasNotification()
-			}),
-			key: this.getPostKey(),
-			newPost: newPost,
-			error: error,
-			resources: resources,
-			url: newPost ? this.topic.getHref("createPost") : this.href('savePost'),
-			title: encodeForm(getValue(this, 'title')),
-			titleLabel: "Subject",
-			resourceLabel: "<b>Attachments:</b>"
-		};
-
-		if (this.HAS_USER && !this.username && session.user) {
-			param.user = this.creator != null ? this.creator : session.user;
-		} else {
-			param.username = encodeForm(getValue(this, 'username'));
-			param.email = encodeForm(getValue(this, 'email'));
-			param.website = encodeForm(getValue(this, 'website'));
-		}
-
-		// first posts in topics also can edit the topic (e.g. for scripts, gallery)
-		if (this.isFirst && this.topic.renderEditFields)
-			param.topicFields = this.topic.renderEditFields(param);
-
-		return this.renderTemplate("edit", param, out);
-	},
-
-	// used by feedLib:
+	// Used by feed lib:
 	renderSimple: function(out) {
 		var resources = this.resources.list();
-		return this.renderTemplate("simple", {
-			text: Markup.parse(this.text, { resources: resources, simple: true, inline: true }),
+		return this.renderTemplate('simple', {
+			text: Markup.parse(this.text, { resources: resources, simple: true, inline: true, encoding: 'all' }),
 			resources: resources,
 		}, out);
 	},
+
+	renderUser: function(out) {
+		var node = this.getNode();
+		if (node.POST_USERS && !this.username && this.creator) {
+			return this.creator.renderLink(null, out);
+		} else if (node.POST_ANONYMOUS) {
+			var name = encode(this.username);
+			out.write(this.website ? '<a href="' + this.website + '" target="_blank">' + name + '</a>' : name);
+		}
+	}.toRender(),
 
 	render: function(withLink, asFirst, out) {
 		var resources = this.resources.list();
 		var title = encode(this.title);
 		var param = {
 			id: this.getEditId(),
-		//	text: Markup.parse(this.text, { resources: resources, inline: true }),
-			title: withLink ? this.topic.renderLink(title) : title,
+		//	text: Markup.parse(this.text, { resources: resources, inline: true, encoding: 'all' }),
+			title: withLink ? this.node.renderLink(title) : title,
 			isEditable: User.canEdit(this),
 			resources: resources,
-			styleClass: asFirst ? this.topic.STYLE_FIRST : this.topic.STYLE_OTHERS
+			postClass: this.node.POST_CLASS,
+			styleClass: asFirst ? this.node.POST_CLASS_FIRST : this.node.POST_CLASS_OTHERS
 		};
-		// first posts in topics also can show fields of the topic (e.g. for scripts, gallery)
+		// first posts in nodes also can show fields of the node (e.g. for scripts, gallery)
 		if (this.isFirst) {
-			if (this.topic.renderFields)
-				param.topicFields = this.topic.renderFields(param, resources);
-			if (this.topic.renderFooter)
-				param.topicFooter = this.topic.renderFooter(param, resources);
-			if (this.topic.renderOuter)
-				param.outer = this.topic.renderOuter(param, resources);
+			if (this.node.renderFields)
+				param.nodeFields = this.node.renderFields(param, resources);
+			if (this.node.renderFooter)
+				param.nodeFooter = this.node.renderFooter(param, resources);
+			if (this.node.renderOuter)
+				param.outer = this.node.renderOuter(param, resources);
 		}
-		return this.renderTemplate("main", param, out);
+		return this.renderTemplate('main', param, out);
 	},
 
-	submit: function() {
-		var isGuest = !this.HAS_USER || session.user == null || this.username != null;
-
-		// first process resources, only allow logged in users to upload files
-		var resources = null;
-		var errors = [];
-		if (!isGuest) {
-			var groups = RequestHelper.getDataGroups(req.data);
-			if (!this.cache.resources)
-				this.cache.resources = [];
-			resources = this.cache.resources; // don't use this.resources directly, as the object may still be transient... see bug #456
-			for (var name in groups) {
-				var group = groups[name];
-				if (name.startsWith("file_")) {
-					var file = group.file;
-					if (file && file.name) {
-						var resource = Resource.create(file);
-						if (resource) {
-							resources.push(resource);
-						} else {
-							errors.push(file.name + " is not of a supported file type.");
-						}
-					}
-				} else if (name.startsWith("resource_")) {
-					var resource = Resource.getById(name.substring(9));
-					if (resource) {
-						if (group.remove) {
-							for (var i in resources) {
-								if (resources[i] == resource)
-									resources.splice(i, 1);
-							}
-							resource.removeObject();
-						} else if (group.file && group.file.name) {
-							resource.setFile(group.file);
-						}
-					}
-				}
-			}
-		} 
-
-		if (this.isFirst && this.topic.submitFields)
-			this.topic.submitFields(isGuest, errors);
-
-		if (errors.length > 0) {
-			return errors.join("<br />");
-		}
-
-		if (isGuest) {
-			if (req.data.username)
-				req.data.username = req.data.username.trim();
-			if (req.data.email)
-				req.data.email = req.data.email.trim();
-			if (!req.data.username) {
-				return "Please specify a name:";
-			} else if (req.data.username.length > 32) {
-				return "The name cannot be longer than 32 characters:";
-			} else if (root.users.get(req.data.username) != null) {
-				return "A user with this name already exists. Please choose a different name.";
-			} else if (!req.data.email) {
-				return "Please specify an email address. Your address will not be published.";
-			} else if (!app.data.emailPattern.test(req.data.email)) {
-				return "Your email address seems not to be valid.";
-			} else if (root.usersByEmail.get(req.data.email) != null) {
-				return "A user with this email address already exists.<br />Please use a different email address.";
-			} else {
-				res.setCookie("post_username", req.data.username, 90);
-				res.setCookie("post_email", req.data.email, 90);
-				res.setCookie("post_website", req.data.website, 90);
-			}
-		}
-		if (req.data.title != null) {
-			req.data.title = req.data.title.trim();
-			if (req.data.title == "") {
-				return "Please specify a title:";
-			} else if (req.data.title.length > 64) {
-				return "The title cannot be longer than 64 characters:";
-			}
-		}
-		req.data.text = req.data.text.trim();
-		if (req.data.text == "") {
-			return "The text field is empty";
-		}
-
-		// now change the values:
-
-		if (isGuest) {
-			this.username = req.data.username;
-			this.email = req.data.email;
-			var website = req.data.website;
-			if (website && !website.startsWith("http://"))
-				website = "http://" + website;
-			this.website = website;
-		}
-		this.title = req.data.title;
-		this.text = req.data.text;
-
-		if (this.isFirst)
-			this.topic.setTitle(this.title);
-
-		if (this.HAS_USER)
-			this.modifier = session.user;
-		this.modificationDate = new Date();
-		if (this.isTransient()) {
-			if (this.HAS_USER)
-				this.creator = this.modifier;
-			// this.creationDate = this.modificationDate;
-		}
-		// store remote host
-		this.host = Net.getHost();
-		// handle notification
-		this.topic.setNotification(req.data.notify, this.creator, this.getUserEmail(), this.getUserName());
-		// store resources for good:
-		// if the topic is the temporary transient topic, we're creating both a new topic and a new post
-		// set topic to null here, as we're adding persisted resources to the post, which would automatically
-		// persists the post and then the topic too! to prevent this, we need to set it to null now.
-		// it will be set to the persisted topic in Node.addPost
-
-		if (this.topic.isTransient())
-			this.topic = null;
-
-		if (resources) {
-			for (var i in resources)
-				this.resources.add(resources[i]);
-			delete this.cache.resources;
-		}
-	},
-
-	hasNotification: function() {
-		// let the temporary post display notification state correctly for logged in users:
+	getNotification: function() {
+		// Let the temporary post display notification state correctly for logged in users:
+		var node = this.getNode();
 		if (this.isTransient()) {
 			var email;
-			if (this.HAS_USER && session.user != null) email = session.user.email;
-			else email = req.data.post_email;
-			return this.topic.getNotification(email) != null;		
-		} else {
-			return (this.topic.getNotification(this.getUserEmail()) != null);
-		}
-	},
-
-	renderUser: function() {
-		if (this.HAS_USER && this.username == null && this.creator != null) {
-			return this.creator.renderLink();
-		} else {
-			var name = encode(this.username);
-			if (this.website) {
-				name = '<a href="' + this.website + '" target="_blank">' + name + '</a>';
+			if (node.POST_USERS && session.user) {
+				email = session.user.email;
+			} else if (node.POST_ANONYMOUS) {
+				email = req.data.post_email;
 			}
-			return name;
+			return node.getNotification(email);		
+		} else {
+			return node.getNotification(this.getUserEmail());
 		}
 	},
 
@@ -382,18 +231,18 @@ Post.inject({
 	},
 
 	redirect: function() {
-		// calculate the pagination position from the index of the post within the topic, to be used 
+		// Calculate the pagination position from the index of the post within the node, to be used 
 		// in the redirect url bellow:
 		var query = '';
-		if (!this.isFirst || !this.topic.KEEP_FIRST) {
-			var pos = this.topic.contains(this);
-			if (this.topic.KEEP_FIRST)
+		if (!this.isFirst || !this.node.POST_FIRST_STICKY) {
+			var pos = this.node.indexOf(this);
+			if (this.node.POST_FIRST_STICKY)
 				pos--;
-			pos = Math.floor(pos / this.topic.MAX_PER_PAGE);
+			pos = Math.floor(pos / this.node.POST_PER_PAGE);
 			if (pos >= 0)
 				query = '?pos=' + pos;
 			query += '#post-' + this.getEditId();
 		}
-		res.redirect(this.topic.getHref(this.topic.REDIRECT_ACTION) + query);
+		res.redirect(this.node.href(this.node.POST_REDIRECT_ACTION) + query);
 	}
 });

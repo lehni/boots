@@ -14,7 +14,7 @@ Root.inject({
 				var numTopics = 0;
 				for (var j = 0; j < notifications.length; j++) {
 					var notification = notifications[j];
-					if (notification.topic) {
+					if (notification.node) {
 						this.renderTemplate("emailTopic", {
 							notification: notification, 
 							serverUrl: serverUrl
@@ -23,12 +23,12 @@ Root.inject({
 					}
 					notification.counter = 0;
 				}
-				var topics = res.pop();
+				var nodes = res.pop();
 				if (numTopics > 0) {
 					var text = this.renderTemplate("emailNotification", {
 						username: username,
 						serverUrl: serverUrl,
-						topics: topics
+						nodes: nodes
 					});
 					try {
 						var mail = new Mail();
@@ -37,7 +37,7 @@ Root.inject({
 						mail.setSubject("// Scriptographer.com: Discussion Notification //");
 						mail.addPart(text);
 						mail.send();
-					} catch(e) {
+					} catch (e) {
 						logError("checkNotifications" , e);
 					}
 				}

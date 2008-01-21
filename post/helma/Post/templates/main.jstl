@@ -1,31 +1,31 @@
-<div class="<%= param.styleClass %>">
+<div class="<%= param.postClass %> <%= param.styleClass %>">
 <div id="<%= param.id %>">
 <a name="<%= param.id %>"></a>
-<div class="block-header">
-	<div class="block-title">
-<% if (param.topicFields) %>
-<%= param.topicFields -%>
+<div class="header">
+	<div class="title">
+<% if (param.nodeFields) %>
+<%= param.nodeFields -%>
 <% else %>
 		<% param.title prefix="<b>" suffix="</b><br />" %>
-		<b>From:</b>&nbsp;&nbsp;<%= this.renderUser() %><br />
+		<b>From:</b>&nbsp;&nbsp;<% this.user %><br />
 		<b>Date:</b>&nbsp;&nbsp;<%= this.creationDate | format properties.dateLong %><br />
 <% end %>
 	</div>
 	<% this.editButtons buttons="edit,remove" %>
 	<div class="clear"></div>
 </div>
-<div class="block-text">
-<%= this.text | markup resources=param.resources %>
+<div class="text">
+<%= this.text | markup resources=param.resources encoding="all" %>
 </div>
 <% if (param.resources.length > 0) %>
-<div class="block-resources">
+<div class="resources">
 <% foreach ($resource in param.resources) %>
 <% $resource.thumbnail %>
 <% end %>
 </div>
 <div class="clear"></div>
 <% end %>
-<%= param.topicFooter -%>
+<%= param.nodeFooter -%>
 </div>
 </div>
 <%= param.outer -%>

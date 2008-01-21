@@ -52,10 +52,10 @@ Root.inject({
 				var desc = forums.getColumnItem("forum_desc");
 
 				var forum = forumsPage.getOrCreate(name, Forum);
-				// remove topics
-				var topics = forum.list();
-				for (var i in topics)
-					topics[i].removeObject();
+				// remove nodes
+				var nodes = forum.list();
+				for (var i in nodes)
+					nodes[i].removeObject();
 				res.commit();
 				forum.text = desc;
 
@@ -72,14 +72,14 @@ Root.inject({
 						post.title = posts.getColumnItem("post_subject").trim();
 						var text = posts.getColumnItem("post_text");
 						text = Packages.org.htmlparser.util.Translate.decode(text); // decode html entities
-						text = text.replace(/\[code.*?\]([\s\S]*?)\[\/code.*?\]/gmi, '<code>$1</code>');
-						text = text.replace(/\[quote.*?="(.*?)"\]([\s\S]*?)\[\/quote.*?\]/gmi, '<quote $1>$2</quote>'); // quote with name
-						text = text.replace(/\[quote.*?\]([\s\S]*?)\[\/quote.*?\]/gmi, '<quote>$1</quote>'); // quote without name
-						text = text.replace(/\[img.*?\]([\s\S]*?)\[\/img.*?\]/gmi, '<img>$1</img>');
-						text = text.replace(/\[url.*?=(.*?)\]([\s\S]*?)\[\/url.*?\]/gmi, '<url $1>$2</url>'); // url with title
-						text = text.replace(/\[url.*?\]([\s\S]*?)\[\/url.*?\]/gmi, '<url>$1</url>'); // url without title
-						text = text.replace(/\[b.*?\]([\s\S]*?)\[\/b.*?\]/gmi, '<b>$1</b>');
-						text = text.replace(/\[list.*?\]([\s\S]*?)\[\/list.*?\]/gmi, '<list>$1</list>');
+						text = text.replace(/\[code.*?\]([\u0000-\uffff]*?)\[\/code.*?\]/gmi, '<code>$1</code>');
+						text = text.replace(/\[quote.*?="(.*?)"\]([\u0000-\uffff]*?)\[\/quote.*?\]/gmi, '<quote $1>$2</quote>'); // quote with name
+						text = text.replace(/\[quote.*?\]([\u0000-\uffff]*?)\[\/quote.*?\]/gmi, '<quote>$1</quote>'); // quote without name
+						text = text.replace(/\[img.*?\]([\u0000-\uffff]*?)\[\/img.*?\]/gmi, '<img>$1</img>');
+						text = text.replace(/\[url.*?=(.*?)\]([\u0000-\uffff]*?)\[\/url.*?\]/gmi, '<url $1>$2</url>'); // url with title
+						text = text.replace(/\[url.*?\]([\u0000-\uffff]*?)\[\/url.*?\]/gmi, '<url>$1</url>'); // url without title
+						text = text.replace(/\[b.*?\]([\u0000-\uffff]*?)\[\/b.*?\]/gmi, '<b>$1</b>');
+						text = text.replace(/\[list.*?\]([\u0000-\uffff]*?)\[\/list.*?\]/gmi, '<list>$1</list>');
 						post.text = text;
 						post.host = posts.getColumnItem("poster_ip");
 						var username = posts.getColumnItem("post_username");
@@ -98,14 +98,14 @@ Root.inject({
 								}
 							}
 						}
-						if (!topic) {
-							topic = forum.addPost(post);
+						if (!node) {
+							node = forum.addPost(post);
 						} else {
 							if (!post.title) {
-								var title = topic.getTitle();
+								var title = node.getTitle();
 								post.title = title.startsWith("Re: ") ? title : "Re: " + title;
 							}
-							topic.addPost(post);
+							node.addPost(post);
 						}
 						res.commit();
 						res.write("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + post.creationDate + " " + post.title + " " + post.text + "<br/>");

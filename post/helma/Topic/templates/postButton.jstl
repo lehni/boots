@@ -1,7 +1,0 @@
-<div id="post-<%= param.id %>" class="block-interact">
-<a name="post-<%= param.id %>"></a>
-<div id="new" class="block-padded">
-<% this.editButtons buttons="create:Hey there" item="posts" target="new" allow="all" %>
-<div class="clear"></div>
-</div>
-</div>
