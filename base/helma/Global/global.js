@@ -110,9 +110,8 @@ renderLink = function(content, urlOptions, htmlOptions, out) {
 			// Convert single quotes to double quotes, as we're using single quotes
 			// for the HTML attribute here (due to the use of uneval bellow)
 			onClick = htmlOptions.onClick.replace(/'/mgi, '"');
-		} else if (htmlOptions.destination) {
-			// TODO: This is not a general solution. Use Bootstrap Ajax?
-			onClick = 'loadContent("' + url + '", "' + htmlOptions.destination + '", "GET"); return false;';
+		} else if (htmlOptions.update) {
+			onClick = 'DomElement.get("' + htmlOptions.update + '").load("' + url + '"); return false;';
 			url = '#';
 		} else if (htmlOptions.popup) {
 			var params = htmlOptions.popup.clone();
