@@ -3,29 +3,38 @@ new function() {
 		function field(name, generics) {
 			var val = src[name], res = val, prev = dest[name];
 			if (val !== Object.prototype[name]) {
-				if (typeof val == 'function') {
-					var match;
-					if (match = name.match(/(.*)_(g|s)et$/)) {
-						dest['__define' + match[2].toUpperCase() + 'etter__'](match[1], val);
-						return;
-					}
-					if (generics) generics[name] = function(bind) {
-						return bind && dest[name].apply(bind,
-							Array.prototype.slice.call(arguments, 1));
-					}
-					if (/\[native code/.test(val))
-						return;
-					if (prev && /\bthis\.base\b/.test(val)) {
-						if (val.valueOf() === prev.valueOf()) return;
-						var fromBase = base && base[name] == prev || prev._version && prev._version != version;
-						res = (function() {
-							var tmp = this.base;
-							this.base = fromBase ? base[name] : prev;
-							try { return val.apply(this, arguments); }
-							finally { this.base = tmp; }
-						}).pretend(val);
-						if (version) res._version = version;
-					}
+				switch (typeof val) {
+					case 'function':
+						var match;
+						if (match = name.match(/(.*)_(g|s)et$/)) {
+							dest['__define' + match[2].toUpperCase() + 'etter__'](match[1], val);
+							return;
+						}
+						if (generics) generics[name] = function(bind) {
+							return bind && dest[name].apply(bind,
+								Array.prototype.slice.call(arguments, 1));
+						}
+						if (/\[native code/.test(val))
+							return;
+						if (prev && /\bthis\.base\b/.test(val)) {
+							if (val.valueOf() === prev.valueOf()) return;
+							var fromBase = base && base[name] == prev || prev._version && prev._version != version;
+							res = (function() {
+								var tmp = this.base;
+								this.base = fromBase ? base[name] : prev;
+								try { return val.apply(this, arguments); }
+								finally { this.base = tmp; }
+							}).pretend(val);
+							if (version) res._version = version;
+						}
+						break;
+					case 'hash':
+					case 'object':
+						if (prev && prev != val)
+							app.log(name + ' ' + prev + ' ' + val + ' ' + (val instanceof Object));
+						if (prev && prev != val && val instanceof Object)
+							res = Hash.merge({}, prev, val);
+						break;
 				}
 				dest[name] = res;
 				if (src._hide && dest.dontEnum)
@@ -81,7 +90,7 @@ new function() {
 		extend: function(src) {
 			var proto = new this(this.dont), ctor = proto.constructor = extend(proto);
 			proto.dontEnum('constructor');
-			ctor.dont = {};
+			ctor.dont = '';
 			inject(ctor, this);
 			return this.inject.apply(ctor, arguments);
 		},
@@ -135,18 +144,18 @@ Function.inject(new function() {
 			return this.toString().match(/^\s*function[^\{]*\{([\u0000-\uffff]*)\}\s*$/)[1];
 		},
 
-		bind: function(obj) {
-			var that = this, args = Array.slice(arguments, 1);
+		bind: function(bind, args) {
+			var that = this;
 			return function() {
-				return that.apply(obj, args.concat(Array.create(arguments)));
+				return that.apply(bind, args && args.concat(Array.create(arguments)) || arguments);
 			}
 		},
 
-		attempt: function(obj) {
-			var that = this, args = Array.slice(arguments, 1);
+		attempt: function(bind, args) {
+			var that = this;
 			return function() {
 				try {
-					return that.apply(obj, args.concat(Array.create(arguments)));
+					return that.apply(bind, args && args.concat(Array.create(arguments)) || arguments);
 				} catch (e) {
 					return e;
 				}
@@ -288,6 +297,12 @@ Base.inject({
 		return Base.each(this, function(val, i) {
 			this[i] = val;
 		}, new this.constructor());
+	},
+
+	toQueryString: function() {
+		return Base.each(this, function(val, key) {
+			this.push(key + '=' + escape(val));
+		}, []).join('&');
 	},
 
 	statics: {
@@ -498,7 +513,7 @@ Array.inject(new function() {
 		},
 
 		flatten: function() {
-			return this.each(function(val) {
+			return Array.each(function(val) {
 				if (val != null && val.flatten) this.append(val.flatten());
 				else this.push(val);
 			}, []);

@@ -9,20 +9,27 @@ new function() {
 		function field(name, generics) {
 			var val = src[name], res = val, prev = dest[name];
 			if (val !== Object.prototype[name]) {
-				if (typeof val == 'function') {
-					if (generics) generics[name] = function(bind) {
-						return bind && dest[name].apply(bind,
-							Array.prototype.slice.call(arguments, 1));
-					}
-					if (prev && /\bthis\.base\b/.test(val)) {
-						var fromBase = base && base[name] == prev;
-						res = (function() {
-							var tmp = this.base;
-							this.base = fromBase ? base[name] : prev;
-							try { return val.apply(this, arguments); }
-							finally { this.base = tmp; }
-						}).pretend(val);
-					}
+				switch (typeof val) {
+					case 'function':
+						if (generics) generics[name] = function(bind) {
+							return bind && dest[name].apply(bind,
+								Array.prototype.slice.call(arguments, 1));
+						}
+						if (prev && /\bthis\.base\b/.test(val)) {
+							var fromBase = base && base[name] == prev;
+							res = (function() {
+								var tmp = this.base;
+								this.base = fromBase ? base[name] : prev;
+								try { return val.apply(this, arguments); }
+								finally { this.base = tmp; }
+							}).pretend(val);
+						}
+						break;
+					case 'hash':
+					case 'object':
+						if (prev && prev != val && val instanceof Object)
+							res = Hash.merge({}, prev, val);
+						break;
 				}
 				dest[name] = res;
 			}
@@ -62,7 +69,7 @@ new function() {
 
 		extend: function(src) {
 			var proto = new this(this.dont), ctor = proto.constructor = extend(proto);
-			ctor.dont = {};
+			ctor.dont = '';
 			inject(ctor, this);
 			return this.inject.apply(ctor, arguments);
 		},
@@ -97,9 +104,11 @@ new function() {
 }
 
 Function.inject(new function() {
-	function timer(that, type, args, ms) {
-		var fn = that.bind.apply(that, Array.slice(args, 1));
-		var timer = window['set' + type](fn, ms);
+	function timer(that, type, delay, bind, args) {
+		if (delay == undefined)
+			return that.apply(bind, args);
+		var fn = that.bind(bind, args);
+		var timer = window['set' + type](fn, delay);
 		fn.clear = function() {
 			clearTimeout(timer);
 			clearInterval(timer);
@@ -124,26 +133,26 @@ Function.inject(new function() {
 			return this.toString().match(/^\s*function[^\{]*\{([\u0000-\uffff]*)\}\s*$/)[1];
 		},
 
-		delay: function(ms) {
-			return timer(this, 'Timeout', arguments, ms);
+		delay: function(delay, bind, args) {
+			return timer(this, 'Timeout', delay, bind, args);
 		},
 
-		periodic: function(ms) {
-			return timer(this, 'Interval', arguments, ms);
+		periodic: function(delay, bind, args) {
+			return timer(this, 'Interval', delay, bind, args);
 		},
 
-		bind: function(obj) {
-			var that = this, args = Array.slice(arguments, 1);
+		bind: function(bind, args) {
+			var that = this;
 			return function() {
-				return that.apply(obj, args.concat(Array.create(arguments)));
+				return that.apply(bind, args && args.concat(Array.create(arguments)) || arguments);
 			}
 		},
 
-		attempt: function(obj) {
-			var that = this, args = Array.slice(arguments, 1);
+		attempt: function(bind, args) {
+			var that = this;
 			return function() {
 				try {
-					return that.apply(obj, args.concat(Array.create(arguments)));
+					return that.apply(bind, args && args.concat(Array.create(arguments)) || arguments);
 				} catch (e) {
 					return e;
 				}
@@ -293,6 +302,12 @@ Base.inject({
 		}, new this.constructor());
 	},
 
+	toQueryString: function() {
+		return Base.each(this, function(val, key) {
+			this.push(key + '=' + encodeURIComponent(val));
+		}, []).join('&');
+	},
+
 	statics: {
 		inject: function() {
 			var args = arguments;
@@ -315,7 +330,11 @@ Base.inject({
 		},
 
 		type: function(obj) {
-			return (obj || obj === 0) && ((obj._type || obj.nodeName && obj.nodeType == 1 && 'element') || typeof obj) || null;
+			return (obj || obj === 0) && (
+				(obj._type || obj.nodeName && (
+					obj.nodeType == 1 && 'element' ||
+					obj.nodeType == 3 && ((/\S/).test(obj.nodeValue) ? 'textnode' : 'whitespace')
+				)) || typeof obj) || null;
 		},
 
 		pick: function() {
@@ -517,7 +536,7 @@ Array.inject(new function() {
 		},
 
 		flatten: function() {
-			return this.each(function(val) {
+			return Array.each(function(val) {
 				if (val != null && val.flatten) this.append(val.flatten());
 				else this.push(val);
 			}, []);
@@ -1125,6 +1144,12 @@ DomElement.inject(new function() {
 			return this;
 		},
 
+		appendChildren: function() {
+			return Array.flatten(arguments).each(function(el) {
+				this.appendChild($(DomElement.get(el)));
+			}, this);
+		},
+
 		insertBefore: function(el) {
 			if (el = DomElement.get(el)) {
 				var text = Browser.IE && el.text;
@@ -1283,7 +1308,7 @@ DomEvent = Base.extend(new function() {
 			type: type,
 			listener: function(event) {
 				if (event.relatedTarget != this && !this.hasChild(event.relatedTarget))
-					this.fireEvent(name, event);
+					this.fireEvent(name, [event]);
 			}
 		}
 	}
@@ -1461,12 +1486,14 @@ DomElement.inject({
 		return this;
 	},
 
-	fireEvent: function(type, event) {
+	fireEvent: function(type, args, delay) {
 		var entries = (this.events || {})[type];
 		if (entries) {
-			if (event) event = event.event ? event : new DomEvent(event);
+			var event = args && args[0];
+			if (event)
+				args[0] = event.event ? event : new DomEvent(event);
 			entries.each(function(entry) {
-				entry.func.call(this, event);
+				entry.func.delay(delay, this, args);
 			}, this);
 		}
 		return !!entries;
@@ -1536,7 +1563,7 @@ DomEvent.add(new function() {
 		if (object != this) {
 			event.type = 'dragstart';
 			last = event.page;
-			this.fireEvent('dragstart', event);
+			this.fireEvent('dragstart', [event]);
 			if (!event.stopped) {
 				event.stop();
 				Document.addEvent('mousemove', drag);
@@ -1553,14 +1580,14 @@ DomEvent.add(new function() {
 			y: event.page.y - last.y
 		}
 		last = event.page;
-		object.fireEvent('drag', event);
+		object.fireEvent('drag', [event]);
 		event.preventDefault();
 	}
 
 	function dragEnd(event) {
 		if (object) {
 			event.type = 'dragend';
-			object.fireEvent('dragend', event);
+			object.fireEvent('dragend', [event]);
 			event.preventDefault();
 			Document.removeEvent('mousemove', drag);
 			Document.removeEvent('mouseup', dragEnd);
@@ -2421,6 +2448,10 @@ HtmlElement.inject({
 		return Base.each(values, function(val, name) {
 			this.setValue(name, val);
 		}, this);
+	},
+
+	toQueryString: function() {
+		return Base.toQueryString(this.getValues());
 	}
 });
 
@@ -2557,17 +2588,19 @@ FormElement.inject({
 
 Chain = {
 	chain: function(fn) {
-		(this.chains = this.chains || []).push(fn);
+		(this._chain = this._chain || []).push(fn);
 		return this;
 	},
 
 	callChain: function() {
-		if (this.chains && this.chains.length)
-			this.chains.shift().delay(0.01, this);
+		if (this._chain && this._chain.length)
+			this._chain.shift().apply(this, arguments);
+		return this;
 	},
 
 	clearChain: function() {
-		this.chains = [];
+		this._chain = [];
+		return this;
 	}
 };
 
@@ -2585,10 +2618,9 @@ Callback = {
 		}, this);
 	},
 
-	fireEvent: function(type) {
-		var args = Array.slice(arguments, 1);
+	fireEvent: function(type, args, delay) {
 		return (this.events && this.events[type] || []).each(function(fn) {
-			fn.apply(this, args);
+			fn.delay(delay, this, args);
 		}, this);
 	},
 
@@ -2606,7 +2638,7 @@ Callback = {
 	}
 };
 
-HttpRequest = Base.extend(Chain, Callback, new function() {
+Request = Base.extend(Chain, Callback, new function() {
 	var unique = 0;
 
 	function createRequest(that) {
@@ -2635,23 +2667,33 @@ HttpRequest = Base.extend(Chain, Callback, new function() {
 			method: 'post',
 			async: true,
 			urlEncoded: true,
-			encoding: 'utf-8'
+			encoding: 'utf-8',
+			emulation: true,
+			headers: {},
+			secure: true
 		},
 
 		initialize: function() {
 			var params = Array.associate(arguments, { url: 'string', options: 'object', handler: 'function' });
-			this.url = params.url;
 			this.setOptions(params.options);
+			this.url = params.url || this.options.url;
 			if (params.handler)
 				this.addEvents({ success: params.handler, failure: params.handler });
-			this.options.isSuccess = this.options.isSuccess || this.isSuccess;
-			this.headers = new Hash();
+			this.headers = new Hash({
+				'X-Requested-With': 'XMLHttpRequest',
+				'Accept': 'text/javascript, text/html, application/xml, text/xml, */*'
+			});
+			if (this.options.json) {
+				this.setHeader('Accept', 'application/json');
+				this.setHeader('X-Request', 'JSON');
+			}
 			if (this.options.urlEncoded && this.options.method == 'post') {
 				this.setHeader('Content-Type', 'application/x-www-form-urlencoded' +
 					(this.options.encoding ? '; charset=' + this.options.encoding : ''));
 			}
-			this.setHeader('X-Requested-With', 'XMLHttpRequest');
-			this.setHeader('Accept', 'text/javascript, text/html, application/xml, text/xml, */*');
+			if (this.options.update)
+				this.options.html = true;
+			this.headers.merge(this.options.headers);
 		},
 
 		onStateChange: function() {
@@ -2662,33 +2704,12 @@ HttpRequest = Base.extend(Chain, Callback, new function() {
 					this.status = this.transport.status;
 					delete this.transport.onreadystatechange;
 				} catch (e) {}
-				if (this.options.isSuccess.call(this, this.status)) {
-					this.response = {
-						text: this.transport.responseText,
-						xml: this.transport.responseXML
-					};
-					this.fireEvent('success', this.response.text, this.response.xml);
-					this.callChain();
+				if (!this.status || this.status >= 200 && this.status < 300) {
+					this.success(this.transport.responseText, this.transport.responseXML);
 				} else {
-					this.fireEvent('failure');
+					this.fireEvent('complete').fireEvent('failure');
 				}
 			}
-		},
-
-		isSuccess: function() {
-			return !this.status || this.status >= 200 && this.status < 300;
-		},
-
-		setHeader: function(name, value) {
-			this.headers[name] = value;
-			return this;
-		},
-
-		getHeader: function(name) {
-			try {
-				if (this.transport) return this.transport.getResponseHeader(name);
-			} catch (e) {}
-			return null;
 		},
 
 		onFrameLoad: function() {
@@ -2699,30 +2720,118 @@ HttpRequest = Base.extend(Chain, Callback, new function() {
 				var text = doc && doc.body && (doc.body.textContent || doc.body.innerText || doc.body.innerHTML) || '';
 				var head = Browser.IE && doc.getElementsByTagName('head')[0];
 				text = (head && head.innerHTML || '') + text;
-				this.response = { text: text };
-				this.fireEvent('success', text);
-				this.callChain();
-				this.frame.div.remove.bind(this.frame.div).delay(1000);
+				this.success(text);
+				this.frame.div.remove.delay(1000, this.frame.div);
 				this.frame = null;
 			}
 		},
 
-		send: function(url, data) {
-			if (this.options.autoCancel) this.cancel();
-			else if (this.running) return this;
-			if (data === undefined) {
-				data = url || '';
-				url = this.url;
+		success: function(text, xml) {
+			var args;
+			if (this.options.html) {
+				var match = text.match(/<body[^>]*>([\u0000-\uffff]*?)<\/body>/i);
+				var stripped = this.stripScripts(match ? match[1] : text);
+				if (this.options.update)
+					DomElement.get(this.options.update).setHtml(stripped.html);
+				if (this.options.evalScripts)
+					this.executeScript(stripped.javascript);
+				args = [ stripped.html, text ];
+			} else if (this.options.json) {
+				args = [ Json.decode(text, this.options.secure), text ];
+			} else {
+				args = [ this.processScripts(text), xml ]
 			}
-			data = data || this.options.data;
+			this.fireEvent('complete', args)
+				.fireEvent('success', args)
+				.callChain();
+		},
+
+		stripScripts: function(html) {
+			var script = '';
+			html = html.replace(/<script[^>]*>([\u0000-\uffff]*?)<\/script>/gi, function(){
+				script += arguments[1] + '\n';
+				return '';
+			});
+			return { html: html, javascript: script };
+		},
+
+		processScripts: function(text) {
+			if (this.options.evalResponse || (/(ecma|java)script/).test(this.getHeader('Content-type'))) {
+				this.executeScript(text);
+				return text;
+			} else {
+				var stripped = this.stripScripts(text);
+				if (this.options.evalScripts)
+					this.executeScript(stripped.javascript);
+				return stripped.html;
+			}
+		},
+
+		executeScript: function(script) {
+			if (window.execScript) {
+				window.execScript(script);
+			} else {
+				new HtmlElement('script')
+					.setProperty('type', 'text/javascript')
+					.setProperty('text', script)
+					.insertInside(Document.getElement('head'))
+					.remove();
+			}
+		},
+
+		setHeader: function(name, value) {
+			this.headers[name] = value;
+			return this;
+		},
+
+		getHeader: function(name) {
+			try {
+				if (this.transport)
+					return this.transport.getResponseHeader(name);
+			} catch (e) {}
+			return null;
+		},
+
+		send: function(params) {
+			var opts = this.options;
+			switch (opts.link) {
+				case 'cancel':
+					this.cancel();
+					break;
+				case 'chain':
+					this.chain(this.send.bind(this, arguments));
+					return this;
+			}
+			if (this.running)
+				return this;
+			if (!params) params = {};
+			var data = params.data || opts.data || '';
+			var url = params.url || opts.url;
+			var method = params.method || opts.method;
+			switch (Base.type(data)) {
+				case 'element':
+					var el = DomElement.get(data);
+					if (el.getTag() != 'form' || !el.hasElement('input[type=file]'))
+						data = el.toQueryString();
+					break;
+				case 'object':
+					data = Base.toQueryString(data);
+					break;
+				default:
+					data = data.toString();
+			}
 			this.running = true;
-			var method = this.options.method;
+			if (opts.emulation && /^(put|delete)$/.test(method)) {
+				if (typeof data == 'string') data += '&_method=' + method;
+				else data.setValue('_method', method); 
+				method = 'post';
+			}
 			if (Base.type(data) == 'element') { 
 		 		createFrame(this, DomElement.get(data));
 			} else {
 				createRequest(this);
 				if (!this.transport) {
-					createFrame(that);
+					createFrame(this);
 					method = 'get';
 				}
 				if (data && method == 'get') {
@@ -2734,18 +2843,20 @@ HttpRequest = Base.extend(Chain, Callback, new function() {
 				if (this.frame.form)
 					this.frame.form.set({
 						target: this.frame.id, action: url, method: method,
-						enctype: method == 'get' ? 'application/x-www-form-urlencoded' : 'multipart/form-data',
-						'accept-charset': this.options.encoding || ''
+						enctype:  method == 'get'
+							? 'application/x-www-form-urlencoded'
+							: 'multipart/form-data',
+						'accept-charset': opts.encoding || ''
 					}).submit();
 				else
 					this.frame.element.setProperty('src', url);
 			} else if (this.transport) {
 				try {
-					this.transport.open(method.toUpperCase(), url, this.options.async);
+					this.transport.open(method.toUpperCase(), url, opts.async);
 					this.transport.onreadystatechange = this.onStateChange.bind(this);
 					if (method == 'post' && this.transport.overrideMimeType)
 						this.setHeader('Connection', 'close');
-					this.headers.merge(this.options.headers).each(function(header, name) {
+					this.headers.merge(opts.headers).each(function(header, name) {
 						try{
 							this.transport.setRequestHeader(name, header);
 						} catch (e) {
@@ -2754,10 +2865,10 @@ HttpRequest = Base.extend(Chain, Callback, new function() {
 					}, this);
 					this.fireEvent('request');
 					this.transport.send(data);
-					if (!this.options.async)
+					if (!opts.async)
 						this.onStateChange();
 				} catch (e) {
-					this.fireEvent('failure', e);
+					this.fireEvent('failure', [e]);
 				}
 			}
 			return this;
@@ -2781,82 +2892,23 @@ HttpRequest = Base.extend(Chain, Callback, new function() {
 	};
 });
 
-Ajax = HttpRequest.extend({
-	initialize: function() {
-		var params = Array.associate(arguments, { url: 'string', options: 'object', handler: 'function' });
-		this.addEvent('success', this.onSuccess);
-		if (!/^(post|get)$/.test(this.options.method)) {
-			this._method = this.options.method;
-			this.options.method = 'post';
-		}
-		this.base(params.url, params.options, params.handler);
-	},
-
-	onSuccess: function() {
-		if (this.options.update) Document.getElements(this.options.update).setHtml(this.response.text);
-		if (this.options.evalScripts || this.options.evalResponse) this.evalScripts();
-	},
-
-	send: function(url, data) {
-		if (data === undefined) {
-			data = url || '';
-			url = this.url;
-		}
-		data = data || this.options.data || '';
-		switch (Base.type(data)) {
-			case 'element':
-				var el = DomElement.get(data);
-				if (el.getTag() != 'form' || !el.hasElement('input[type=file]'))
-					data = el.toQueryString();
-				break;
-			case 'object': data = Base.toQueryString(data);
-			default:
-				data = data.toString();
-		}
-		if (this._method) {
-			if (typeof data == 'string') data += '&_method=' + this._method;
-			else data.setValue('_method', this._method); 
-		}
-		return this.base(url, data);
-	},
-
-	evalScripts: function() {
-		var script, scripts;
-		if (this.options.evalResponse || (/(ecma|java)script/).test(this.getHeader('Content-Type'))) {
-			scripts = this.response.text;
-		} else {
-			scripts = [];
-			var exp = /<script[^>]*>([\u0000-\uffff]*?)<\/script>/gi;
-			while ((script = exp.exec(this.response.text)))
-				scripts.push(script[1]);
-			scripts = scripts.join('\n');
-		}
-		if (scripts) window.execScript ? window.execScript(scripts) : window.setTimeout(scripts, 0);
-	}
-});
-
-Base.inject({
-	_generics: true,
-
-	toQueryString: function() {
-		return Base.each(this, function(val, key) {
-			this.push(encodeURIComponent(key) + '=' + encodeURIComponent(val));
-		}, []).join('&');
+Form.inject({
+	send: function(url) {
+		if (!this.sender)
+			this.sender = new Request({ link: 'cancel' });
+		this.sender.send({
+			url: url || this.getProperty('action'),
+			data: this, method: this.getProperty('method') || 'post'
+		});
 	}
 });
 
 HtmlElement.inject({
-	toQueryString: function() {
-		return Base.toQueryString(this.getValues());
-	},
-
-	send: function(options) {
-		return new Ajax(this.getProperty('action'), Hash.create({ method: 'post' }, options)).send(this);
-	},
-
-	update: function() {
-		var params = Array.associate(arguments, { url: 'string', options: 'object', handler: 'function', data: 'any' });
-		return new Ajax(params.url, Hash.create({ update: this }, params.options), params.handler).send(params.data);
+	load: function() {
+		if (!this.loader)
+			this.loader = new Request({ link: 'cancel', update: this, method: 'get' });
+		this.loader.send(Array.associate(arguments, { data: 'object', url: 'string' }));
+		return this;
 	}
 });
 
@@ -2893,8 +2945,8 @@ Asset = new function() {
 				})
 				.insertInside(Document.getElement('head'));
 			if (Browser.WEBKIT2)
-				new HttpRequest(src, { method: 'get' }).addEvent('success', function() {
-					script.fireEvent.bind(script, 'load').delay(1);
+				new Request({ url: src, method: 'get' }).addEvent('success', function() {
+					script.fireEvent.delay(1, script, ['load']);
 				}).send();
 			return script;
 		},
@@ -2918,7 +2970,7 @@ Asset = new function() {
 				});
 			});
 			if (image.width && image.height)
-				element.fireEvent.bind(element, 'load').delay(1);
+				element.fireEvent.delay(1, element, ['load']);
 			return element.setProperties(getProperties(props));
 		},
 
@@ -2975,14 +3027,14 @@ Fx = Base.extend(Chain, Callback, {
 		} else {
 			this.stop(true);
 			this.update(this.to);
-			this.fireEvent('complete', this.element);
+			this.fireEvent('complete', [this.element]);
 			this.callChain();
 		}
 	},
 
 	set: function(to) {
 		this.update(to);
-		this.fireEvent('set', this.element);
+		this.fireEvent('set', [this.element]);
 		return this;
 	},
 
@@ -3002,7 +3054,7 @@ Fx = Base.extend(Chain, Callback, {
 		this.time = new Date().getTime();
 		if (!this.slave) {
 			this.timer = this.step.periodic(Math.round(1000 / this.options.fps), this);
-			this.fireEvent('start', this.element);
+			this.fireEvent('start', [this.element]);
 		}
 		this.step();
 		return this;
@@ -3011,7 +3063,7 @@ Fx = Base.extend(Chain, Callback, {
 	stop: function(end) {
 		if (this.timer) {
 			this.timer = this.timer.clear();
-			if (!end) this.fireEvent('cancel', this.element);
+			if (!end) this.fireEvent('cancel', [this.element]);
 		}
 		return this;
 	}
