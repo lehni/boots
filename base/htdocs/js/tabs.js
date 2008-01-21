@@ -15,13 +15,15 @@ TabPane = Base.extend({
 	},
 	
 	setSelectedIndex: function(n) {
-		var on = this.selectedIndex;
-		if (on != n) {
-			if (on != null && this.pages[on] != null)
-				this.pages[on].show(false);
-			this.selectedIndex = n;
-			this.pages[n].show(true);
-			return true;
+		var current = this.selectedIndex;
+		if (current != n) {
+			if (current != null && this.pages[current])
+				this.pages[current].show(false);
+			if (this.pages[n]) {
+				this.selectedIndex = n;
+				this.pages[n].show(true);
+				return true;
+			}
 		}
 		return false;
 	},
