@@ -204,15 +204,16 @@ Font = Base.extend({
 		// Cache the results of this process for speed improvements
 		var key = encodeMD5(text + '_' + maxWidth + '_' + this.getUniqueString());
 		var cache = Font.truncateCache;
-		var str = cache.lookup[key];
-		if (str == null) {
+		var value = cache.lookup[key];
+		if (!value) {
 			var glyphs = this.layoutGlyphLine(text, maxWidth);
-			if (glyphs && glyphs.text.length < text.length) {
-				str = glyphs.text.trim();
-			} else {
-				str = text;
-			}
-			cache.lookup[key] = str;
+			var truncate = glyphs && glyphs.text.length < text.length;
+			if (truncate)
+				text = glyphs.text.trim();
+			value = cache.lookup[key] = {
+				text: text,
+				truncated: truncate
+			};
 			cache.keys.push(key);
 			// Clean cache if growing too much
 			var del = cache.keys.length - 1024;
@@ -224,7 +225,7 @@ Font = Base.extend({
 				cache.keys.splice(0, del);
 			}
 		}
-		return suffix ? str + suffix : str;
+		return suffix && value.truncated ? value.text + suffix : value.text;
 	},
 
 	renderText: function(text, param, out) {
