@@ -1,0 +1,13 @@
+<div class="pagination">
+<%= param.prefix prefix="<span class=\"float-left\">" suffix="</span>" -%>
+<span class="float-left">
+<% if (param.count > 0) %>
+	<% if (param.first == param.last) %>
+<%= param.singular %> <%= param.first %> / <%= param.count %>
+	<% else %>
+<%= param.plural %> <%= param.first %> &mdash; <%= param.last %> / <%= param.count %>
+	<% end %>
+<% end %>
+</span><span class="float-right"><%= param.pages %></span>
+<span class="pagination-clear"></span>
+</div>
