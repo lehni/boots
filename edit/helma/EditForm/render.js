@@ -25,7 +25,7 @@ EditForm.inject({
 					showProgress: EditForm.SHOW_PROGRESS
 				};
 
-				if (EditForm.SHOW_TITLE)
+				if (EditForm.SHOW_TITLE && !this.showTitle === false)
 					itemsParam.title = this.renderPath(node, mode);
 
 				param.items = this.renderItems(this, itemsParam);
@@ -34,7 +34,7 @@ EditForm.inject({
 
 				var buttons = [];
 				buttons.push({
-					value: hasBack ? EditForm.TITLE_CANCEL : EditForm.TITLE_CLOSE,
+					value: hasBack ? this.titles.cancel || EditForm.TITLE_CANCEL : this.titles.close || EditForm.TITLE_CLOSE,
 					onClick: this.renderHandle('back', 1)
 				});
 
@@ -45,13 +45,13 @@ EditForm.inject({
 							&& (hasBack || !EditForm.HAS_BACK)
 						if (hasCreateBack)
 							 buttons.push({
-								value: !EditForm.HAS_BACK ? EditForm.TITLE_CREATE :
-									EditForm.TITLE_CREATE_BACK,
+								value: !EditForm.HAS_BACK ? this.titles.create || EditForm.TITLE_CREATE :
+									this.titles.createBack || EditForm.TITLE_CREATE_BACK,
 								onClick: this.renderHandle('execute', 'create', { post: true, edit_back: 1 })
 							});
 						if (EditForm.HAS_BACK || !hasCreateBack)
 							buttons.push({
-								value: EditForm.TITLE_CREATE,
+								value: this.titles.create || EditForm.TITLE_CREATE,
 								onClick: this.renderHandle('execute', mode, { post: true })
 							});
 						break;
@@ -64,13 +64,13 @@ EditForm.inject({
 							});
 						if (hasBack || !EditForm.HAS_BACK)
 							buttons.push({
-								value: !EditForm.HAS_BACK ? EditForm.TITLE_APPLY :
-									EditForm.TITLE_APPLY_BACK,
+								value: !EditForm.HAS_BACK ? this.titles.apply || EditForm.TITLE_APPLY :
+									this.titles.apply || EditForm.TITLE_APPLY_BACK,
 								onClick: this.renderHandle('execute', 'apply', { post: true, edit_back: 1 })
 							});
 						if (EditForm.HAS_BACK)
 							buttons.push({
-								value: EditForm.TITLE_APPLY,
+								value: this.titles.apply || EditForm.TITLE_APPLY,
 								onClick: this.renderHandle('execute', 'apply', { post: true })
 							});
 						break;
@@ -120,8 +120,8 @@ EditForm.inject({
 		var last = nodes.length - 1, lastForm = nodes.last().form;
 		return nodes.each(function(node, index) {
 			if (node.visible) {
-				var title = node.getTitle();
-				if (EditForm.SHOW_PROTOTYPE && !node.form.title
+				var title = node.getTitle(), form = node.getForm();
+				if (EditForm.SHOW_PROTOTYPE && form && !form.title
 					&& mode == 'edit' && this.object != root)
 						title += ' (' + this.object._prototype.uncamelize(' ') + ')';
 				if (index < last)

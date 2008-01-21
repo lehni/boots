@@ -41,6 +41,10 @@ EditForm.inject(new function() {
 				if (req && !/^([a-zA-Z0-9\-\.\_]+)(\@)([a-zA-Z0-9\-\.]+)(\.)([a-zA-Z]{2,4})$/.test(value))
 					throw message || 'is not a valid address.';
 				break;
+			case 'uri':
+				if (req && !/(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/.test(value))
+					throw message || 'is not a valid URI.';
+				break;
 			case 'uniqueIn':
 				var obj = req.get(value);
 				if (obj != null && obj != item.form.object)
@@ -63,20 +67,36 @@ EditForm.inject(new function() {
 				this.object.onBeforeApply();
 		},
 
-		afterApply: function(changedItems) {
+		afterApply: function(itemsChanged, changedItems) {
 			var obj = this.object;
+
 			if (obj.modifier !== undefined)
 				obj.modifier = session.user;
 
 			if (obj.modificationDate !== undefined)
 				obj.modificationDate = new Date();
 
-			// Set creation date if it was not set yet.
+			// Set creator and creation date if it was not set yet.
+			if (obj.creator === null)
+				obj.creator = session.user;
+
 			if (obj.creationDate === null)
 				obj.creationDate = obj.modificationDate;
 
-			if (obj.onApply != null)
-				obj.onApply(changedItems);
+			// Now call onAfterApply on each item, if defined:
+			if (itemsChanged) {
+				changedItems.each(function(item) {
+					if (item.onAfterApply) {
+						item.onAfterApply.call(item.form.object, item.appliedValue, item);
+						delete item.appliedValue;
+					}
+				});
+			}
+
+			// The same on the form / object
+			var onAfterApply = obj.onAfterApply || this.onAfterApply;
+			if (onAfterApply)
+				onAfterApply.call(obj, itemsChanged ? changedItems : null);
 		},
 
 		applyItems: function() {
@@ -86,14 +106,11 @@ EditForm.inject(new function() {
 			if (this == root || !root.changedItems) {
 				root.beforeApply();
 				root.itemsChanged = false;
-				root.changedItems = {};
+				root.changedItems = new Hash();
 				// afterApply is only called when applyItems is finished on the
 				// changeObserver. This might be different from root for group items
 				root.changeObserver = this;
 			}
-			var obj = this.object;
-			var changed = false;
-			var changedItems = {};
 			var rows = this.rows;
 			for (var i = 0; i < rows.length; i++) {
 				var row = rows[i];
@@ -103,13 +120,13 @@ EditForm.inject(new function() {
 						var value = req.data[this.variablePrefix + item.name];
 						if (value !== undefined && this.applyItem(item, value)) {
 							root.itemsChanged = true;
-							root.changedItems[item.name] = true;
+							root.changedItems[item.name] = item;
 						}
 					}
 				}
 			}
 			if (this == root.changeObserver) {
-				this.afterApply(root.itemsChanged ? root.changedItems : null);
+				this.afterApply(root.itemsChanged, root.changedItems);
 				delete root.changedItems;
 				delete root.itemsChanged;
 			}
@@ -147,21 +164,26 @@ EditForm.inject(new function() {
 					// if onApply is set, execute it even if convert returned DONT_APPLY
 					// DONT_APPLY is just ot prevent item.apply being called.
 					/// TODO: find out why this was added!
+					var dontApply = value == EditForm.DONT_APPLY;
+					if (dontApply)
+						value = null;
+					// Set the newly applied value, so onAfterApply can pass it
+					// too. This is cleared again in #afterApply.
+					item.appliedValue = value;
 					if (item.onApply && item.onApply != EditForm.DO_NOTHING) {
-						// call the handler, prevent passing DONT_APPLY 
-						if (item.onApply.call(item.form.object,
-							value == EditForm.DONT_APPLY ? null : value, item))
+						// Call the handler, prevent passing DONT_APPLY 
+						if (item.onApply.call(item.form.object, value, item))
 							return true;
 					}
-					// otherwise use the default behavior for applying values
-					if (!item.onApply && value != EditForm.DONT_APPLY) {
+					// Otherwise use the default behavior for applying values
+					if (!item.onApply && !dontApply) {
 						if (item.apply(value))
 							return true;
 					}
 				} catch (e) {
 					if (typeof e != 'string')
 						User.logError('applyItem', e);
-		 			throw new EditException(item, e);
+		 			throw new EditException(item, e, value);
 				}
 			}
 			return false;

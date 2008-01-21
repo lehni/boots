@@ -37,7 +37,10 @@ EditForm = Base.extend({
 				$('#edit-error-' + values.error.name, this.form).setHtml(values.error.message).removeClass('hidden');
 				this.setSelectedTab(values.error.tab);
 				var field = $('#' + values.error.name, this.form);
-				if (field && field.focus) field.focus();
+				if (field && field.focus) {
+					field.focus();
+					field.setValue(values.error.value);
+				}
 			}
 		}
 	},
@@ -244,8 +247,9 @@ EditForm = Base.extend({
 				var startTime = new Date().getTime(), current;
 				var uploadStatus = $('div.edit-upload', that.container);
 				if (uploadStatus) {
-					var request = new Ajax(url, { method: 'get' }, function(status) {
-						status = Json.decode(status);
+					var request = new Request({
+						url: url, method: 'get', json: true, data: this.getData('upload_status')
+					}, function(status) {
 						if (that.uploadTimer && status && status.total) {
 							if (status.current == status.total ||
 								current == status.current && new Date().getTime() - startTime > 6000)
@@ -256,11 +260,10 @@ EditForm = Base.extend({
 							current = status.current;
 						}
 					});
-					var data = this.getData('upload_status');
 					this.uploadTimer = (function() {
-						request.send(data);
+						request.send();
 						that.uploadTimer = (function() {
-							request.send(data);
+							request.send();
 						}).periodic(500);
 					}).delay(50);
 				}
@@ -268,7 +271,9 @@ EditForm = Base.extend({
 			// Set / add fields to form as elements and use the form as params.
 			params = this.form.setValues(params);
 		}
-		this.request = new Ajax(url, { method: method }, function(values) {
+		this.request = new Request({
+			url: url, method: method, json: true, secure: false, data: params
+		}, function(values) {
 			if (progress) progress.addClass('hidden');
 			if (values) {
 				if (EditForm.mode == 'inline')
@@ -279,9 +284,9 @@ EditForm = Base.extend({
 					that.back(back);
 			} else {
 				that.close();
-				alert('Error: ' + this.status);
+				alert('Error: ' + values + ' ' + this.status);
 			}
-		}).send(params);
+		}).send();
 	},
 
 	getData: function(mode, params, request) {
@@ -357,7 +362,10 @@ EditForm = Base.extend({
 				form.enable(false);
 				this.mode = 'inline';
 				var editForm = this.get(param.id, target);
-				editForm.request = new Ajax(url, { method: 'get' }, function(values) {
+				editForm.request = new Request({
+					url: url, method: 'get', json: true, secure: false,
+					data: editForm.getData(param.mode, param)
+				}, function(values) {
 					if (progress) {
 						progress.addClass('hidden');
 						if (hideButtons) buttons.removeClass('hidden');
@@ -372,15 +380,14 @@ EditForm = Base.extend({
 							editForm.container.addClass(param['class']);
 					} else {
 						EditForm.close(param.id);
-						alert('Error: ' + this.status);
+						alert('Error: ' + values + ' ' + this.status);
 					}
-				}).send(editForm.getData(param.mode, param));
+				}).send();
 			}
 			return false;
 		},
 
 		set: function(values) {
-			values = Json.decode(values);
 			if (values.id) {
 				var form = this.get(values.id);
 				var backup = null;
@@ -410,6 +417,10 @@ EditForm = Base.extend({
 			if (values.page) {
 				var page = values.page.match(/<body[^>]*>([\u0000-\uffff]*)<\/body>/i);
 				if (page) this.updateBody(page[1]);
+			} else if (values.redirect) {
+				// Redirect one level up, since the href object itself was removed
+				// TODO: find a way to implement this in lineto.
+				window.location.href = values.redirect;
 			}
 			if (values.alert)
 				alert(values.alert);
@@ -881,12 +892,15 @@ ObjectChooser = EditChooser.extend({
 		var children = $('#edit-choose-children-' + id, this.element) || this.element;
 		var show = children == this.element || children.hasClass('hidden');
 		if (show) {
-			new Ajax(this.editForm.url, { method: 'get' }, (function(result) {
+			new Request({
+				url: this.editForm.url, method: 'get',
+				data: this.editForm.getData('choose', {
+					edit_base_id: id || ''
+				})
+			}, (function(result) {
 				children.setHtml(result);
 				this.setArrow(id, true);
-			}).bind(this)).send(this.editForm.getData('choose', {
-				edit_base_id: id || ''
-			}));
+			}).bind(this)).send();
 		} else {
 			this.setArrow(id, false);
 		}

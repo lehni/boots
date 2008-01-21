@@ -91,7 +91,7 @@ EditForm.inject(new function() {
 		// parameter 'label' can be skipped in the functiosn addTab, createGroupItem
 		// bellow! In this case, name is assumed to be the label and then converted
 		// to lowerCase for the real name
-		if (typeof label != "string") {
+		if (typeof label != 'string') {
 			startIndex = 1;
 			label = name;
 			name = name.hyphenate().replace(/\s+/gi, '-');
@@ -181,12 +181,16 @@ EditForm.inject(new function() {
 			// the object that's edited by this form:
 			this.object = object;
 			// the default variablePrefix for root edit forms.
-			this.variablePrefix = param.variablePrefix || "value_";
+			this.variablePrefix = param.variablePrefix || 'value_';
+
+			for (var i in param)
+				this[i] = param[i];
+			// The titles object for button titles
+			if (!this.titles)
+				this.titles = {};
 
 			// for group items, only to be used internally here:
-			if (param.parent) {
-		 		// sets the parent form and walks up the tree to determine the root
-				this.parent = param.parent;
+			if (this.parent) {
 				// determine root:
 				var root = this.parent;
 				while (root.parent)
@@ -203,17 +207,15 @@ EditForm.inject(new function() {
 				this.allItems = {};
 				// the width of the table, defaults to 100 percent, but can
 				// be specified in pixels too
-				var width = param.width || EditForm.WIDTH;
+				var width = this.width || EditForm.WIDTH;
 				this.width = parseFloat(width);
-				this.widthInPercent = typeof width == "string" && /%$/.test(width);
-				if (param.spacerWidth) {
-					this.spacerWidth = parseFloat(param.spacerWidth);
+				this.widthInPercent = typeof width == 'string' && /%$/.test(width);
+				if (this.spacerWidth) {
+					this.spacerWidth = parseFloat(this.spacerWidth);
 				} else {
 					// defaults, maybe define in config switches
 					this.spacerWidth = this.widthInPercent ? 2 : 8;
 				}
-				// dont cache
-				this.dontCache = param.dontCache;
 			}
 		},
 
@@ -379,7 +381,7 @@ EditForm.inject(new function() {
 		 * Creates and adds a group to the form. parameter label is optional
 		 */
 		addGroup: function(name, label /*, ... */) {
-			var group = createGroupItem(this, "group", name, label, arguments);
+			var group = createGroupItem(this, 'group', name, label, arguments);
 			this.add(group);
 			return group.groupForm;
 		},
@@ -388,7 +390,7 @@ EditForm.inject(new function() {
 		 * Creates and adds a tab to the form. parameter label is optional
 		 */
 		addTab: function(name, label /*, ... */) {
-			var tab = createGroupItem(this, "tab", name, label, arguments);
+			var tab = createGroupItem(this, 'tab', name, label, arguments);
 			// all tabs are added in one row, that is referenced from this.tabs
 			if (this.tabs == null) {
 				this.tabs = [];
@@ -489,14 +491,18 @@ EditForm.inject(new function() {
 			},
 
 			alert: function(str) {
-				EditForm.setMessage("editMessage", str);
+				EditForm.addMessage('editMessage', str);
 			},
 
 			reportError: function(e) {
-				EditForm.setMessage("editError", [
-					new Date().format("yyyy/MM/dd HH:mm:ss"), 
-					User.logError("Error During Edit", e) 
-				]);
+				if (typeof e == 'string') {
+					EditForm.alert(e);
+				} else {
+					EditForm.addMessage('editError', [
+						new Date().format('yyyy/MM/dd HH:mm:ss'), 
+						User.logError('Error During Edit', e) 
+					]);
+				}
 			},
 
 			// Constants

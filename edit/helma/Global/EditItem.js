@@ -54,7 +54,7 @@ EditItem = Base.extend(new function() {
 			if (this.value != null) {
 				return this.value;
 			} else if (this.variable) {
-				// evaluates the content of item.variable in the object and returns it.
+				// Evaluates the content of item.variable in the object and returns it.
 				// Use a function instead of eval, as only in this way, in "this.variable"
 				// "this" will point to the right object.
 				try {
@@ -63,7 +63,7 @@ EditItem = Base.extend(new function() {
 					User.logError('EditItem#getValue(): ' + this.variable, e);
 				}
 			} else if (this.name) {
-				 // read the property with given name
+				 // Read the property with given name
 				return this.form.object[this.name];
 			}
 			return null;
@@ -394,6 +394,9 @@ SelectItem = EditItem.extend({
 	store: function(object) {
 		// This is called by handlers.js when a new object is created in the list
 		// Just add it to the collection and handle position and visible:
+		// Don't count on this.value to be set, use getValue instead, since it
+		// resolves this.name on the object as well.
+		var value = this.getValue();
 		if (this.collection) {
 			// Add it to the collection(s):
 			// Support for visible lists and hidden (all) lists. Since the 
@@ -402,22 +405,25 @@ SelectItem = EditItem.extend({
 			// in value and collection, and hidden one only in collection:
 			var list = this.collection;
 			list.add(object);
-			if (object.visible && this.value instanceof HopObject) {
+			if (object.visible && value instanceof HopObject && value != list) {
 				// If visible, add it to this.value as well, and use that for
 				// position bellow
-				list = this.value;
-				list.add(object);
+				value.add(object);
+				list = value;
 			}
 			// Support for position:
 			if (object.position !== undefined)
 				object.position = list.count() - 1;
-			return true;
+		} else if (value instanceof HopObject) {
+			value.add(object);
 		} else {
-			return this.setValue(object);
+			return fale;
 		}
+		return true;
 	},
 
 	convert: function(value) {
+		value = HopObject.get(value);
 		// Only convert if the current value is not the collection itself,
 		// as we cannot override collections (this happens e.g. when
 		// using a select item for simply creating a list of objects, not
@@ -425,7 +431,6 @@ SelectItem = EditItem.extend({
 		if (this.collection && !this.linkedCollection) {
 			if (this.collection == this.getValue())
 				return EditForm.DONT_APPLY;
-			value = HopObject.get(value);
 			// Make sure the specified object is defined in the collection
 			if (value && this.collection.indexOf(value) == -1)
 				value = null;
@@ -630,7 +635,7 @@ MultiSelectItem = SelectItem.extend({
 		var prototypes = this.prototypes && this.prototypes.each(function(name) {
 			var proto = global[name];
 			if (proto) this.push(proto);
-			else app.log("WARNING: Prototype '" + name + "' does not exist!");
+			else User.log("WARNING: Prototype '" + name + "' does not exist!");
 		}, []);
 
 		// Also make sure the objects are contained in collection if that is defined.

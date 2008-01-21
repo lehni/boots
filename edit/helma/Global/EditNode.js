@@ -26,19 +26,16 @@ EditNode = Base.extend({
 		this.visible = false;
 	},
 
-	update: function(parentItem) {
+	/** 
+	 * Instead of directly storing the form in EditNode.get, use getForms to
+	 * retrieve it late. Like this, we have time to call onAfterInitialize
+	 * before getEditForm is called. 
+	 */
+	getForm: function(force) {
 		// Use versioning so even when dontCache is true, the form is only created
 		// once every request.
 		var data = EditNode.getEditData();
-		// Update parent first, since it might be requried in getEditForm(),
-		// e.g. getEditParent()
-		if (parentItem) {
-			this.parentItem = parentItem;
-			// Allways access the root form to get the node,
-			// as parenItem.form might be a group
-			this.parent = parentItem.form.root.node;
-		}
-		if (!this.form || this.form.dontCache && this.form.version != data.request) {
+		if (!this.form || force || this.form.dontCache && this.form.version != data.request) {
 			try {
 				if (!this.object.getEditForm)
 					throw "The '" + this.object._prototype + "' prototype does not define #getEditForm (" + this.object + ")";
@@ -55,6 +52,11 @@ EditNode = Base.extend({
 				EditForm.reportError(e);
 			}
 		}
+		return this.form;
+	},
+
+	getItem: function(name, group) {
+		return this.getForm().getItem(name, group);
 	},
 
 	render: function(base, mode) {
@@ -64,7 +66,7 @@ EditNode = Base.extend({
 			if (this.parentItem && this.parentItem.type == 'group') {
 				form = this.parentItem.groupForm;
 			} else {
-				form = this.form;
+				form = this.getForm();
 			}
 		}
 		if (!form)
@@ -76,7 +78,8 @@ EditNode = Base.extend({
 	getTitle: function() {
 		// use node as a cache for title. This is also used
 		// in StackEntry.renderPath
-		var title = this.title || this.form.title;
+		var form = this.getForm();
+		var title = this.title || form.title;
 		if (!title) {
 			// generate a default title if it's not set.
 			var obj = this.object;
@@ -92,8 +95,9 @@ EditNode = Base.extend({
 
 	log: function(mode) {
 		var str = mode.capitalize() + ': ' + this.id + ' (' + this.object;
-		if (this.form && this.form.object != this.object)
-			str += ', ' + this.form.object;
+		var form = this.getForm();
+		if (form && form.object != this.object)
+			str += ', ' + form.object;
 		str += '); Parameters: ';
 		for (var name in req.data) {
 			var val = req.data[name];
@@ -104,7 +108,7 @@ EditNode = Base.extend({
 	},
 
 	statics: {
-		get: function(fullIdOrObject, parentItem, fetchForm, cached) {
+		get: function(fullIdOrObject, parentItem, cached) {
 			var data = EditNode.getEditData(cached);
 			var node = null;
 			if (data) {
@@ -116,13 +120,15 @@ EditNode = Base.extend({
 					fullId = fullIdOrObject;
 				}
 				node = data.nodes[fullId];
-				if (!cached) {
-					if (!node)
-						node = data.nodes[fullId] = new EditNode(fullId, object);
-					// Remove any old forms if the fetching of a new form is required.
-					if (fetchForm)
-						delete node.form;
-					node.update(parentItem);
+				if (!cached && !node)
+					node = data.nodes[fullId] = new EditNode(fullId, object);
+				// Update parent.
+				// It might be requried in getEditForm(), e.g. getEditParent()
+				if (node && parentItem) {
+					node.parentItem = parentItem;
+					// Allways access the root form to get the node,
+					// as parenItem.form might be a group
+					node.parent = parentItem.form.root.node;
 				}
 			}
 			return node;
@@ -132,7 +138,7 @@ EditNode = Base.extend({
 		 * Same as get(), but does not create nodes if they do not exist.
 		 */
 		getCached: function(fullIdOrObject, parentItem) {
-			return this.get(fullIdOrObject, parentItem, false, true);
+			return this.get(fullIdOrObject, parentItem, true);
 		},
 
 		getEditData: function(cached) {
@@ -179,7 +185,7 @@ EditNode = Base.extend({
 				// Now make sure all client nodes exist, and create if necessary
 				clientData.nodes.each(function(clientNode, fullId) {
 					var parent = clientNode.parent;
-					var node = EditNode.get(fullId, parent && EditNode.get(parent.id).form.getItem(parent.item, parent.group));
+					var node = EditNode.get(fullId, parent && EditNode.get(parent.id).getItem(parent.item, parent.group));
 					node.visible = clientNode.visible;
 				});
 				editData.version = clientData.version;

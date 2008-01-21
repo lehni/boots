@@ -107,7 +107,7 @@ User.inject({
 	},
 
 	logout: function() {
-		if (this == session.user) {
+		if (session.user == this) {
 			User.setMessage("loggedOut", session.user.name);
 			this.setAutoLogin(false);
 			session.logout();
@@ -192,7 +192,8 @@ User.inject({
 					User.setMessage("loginDisabled");
 					user.logout(false);
 				}
-			} else if (session.data.createdObjects) {
+			} 
+			if (session.data.createdObjects) {
 				// If in anonymous mode, see if the object or its parent(s) where added
 				// to session.data.createdObjects. Allow editing if they were.
 				// TODO: add timeout for session.data. e.g. 15 minutes.

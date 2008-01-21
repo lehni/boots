@@ -35,11 +35,11 @@ HopObject.inject({
 	isRemoving: function() {
 		return !!this.cache.removing;
 	},
-
+/* This is native now:
 	isTransient: function() {
 		return this._id[0] == 't';
 	},
-
+*/
 	/** 
 	 * Returns the target id to be used for inline editing forms.
 	 * By default this is just the object's full id.
@@ -74,10 +74,13 @@ HopObject.inject({
 	removeObject: function() {
 		// this removes an editable object after having called it's onRemove handler:
 		if (User.canEdit(this) && !this.isRemoving()) {
-			// the onBeforeRemove handler can return false to prevent removal,
-			// or throw a string exception if called from the EditForm framework
-			if (this.onBeforeRemove && this.onBeforeRemove() === false)
-				return false;
+			if (this.onBeforeRemove) {
+				// The onBeforeRemove handler can return false to prevent removal,
+				// or throw a string exception if called from the EditForm framework
+				var ret = this.onBeforeRemove();
+				if (ret != undefined && !ret)
+					return false;
+			}
 			var remove = false;
 			if (this.getEditForm) {
 				this.cache.removing = true;
@@ -123,6 +126,7 @@ HopObject.inject({
 				User.log("Remove " + this.getFullId());
 				remove = true;
 			}
+			// Allow onRemove to stop removal
 			if (remove) {
 				if (this.onRemove)
 					this.onRemove();
@@ -168,7 +172,7 @@ HopObject.inject({
 	},
 
 	renderEditButtons: function(param, out) {
-		if (param.allow == 'all' || User.canEdit(this)) {
+		if (!session.user && param.allowAnonymous || User.canEdit(this)) {
 			var buttons = param.buttons ? param.buttons.split(',') : [];
 			var items = [];
 			for (var i = 0; i < buttons.length; i++) {
@@ -198,11 +202,12 @@ HopObject.inject({
 				}
 			}
 			param.buttons = items;
-			param.id = this.getFullId();
-			param.url = path.href('edit');
-			param.popup = param.popup == 'true';
+			if (!param.id)
+				param.id = this.getFullId();
 			if (!param.target)
 				param.target = this.getEditId();
+			param.url = path.href('edit');
+			param.popup = param.popup == 'true';
 			if (param.popup) {
 				if (!param.width) param.width = 400;
 				if (!param.height) param.height = 400;

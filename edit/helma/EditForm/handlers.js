@@ -44,20 +44,40 @@ EditForm.inject(new function() {
 				} else if (handler) {
 					res.push();
 					try {
-						// Make sure a new form is produced each time when editing
-						var node = EditNode.get(fullId, null, mode == 'edit');
+						var node = EditNode.get(fullId);
 						// check again that we have the rights to edit:
 						if (node) {
 							// call the handler and commit changes if there are any
 							// use handlers as the object, so the handler can other handlers by using "this".
-							var result = handler.call(handlers, base, node);
+							node.log(mode);
+							// Make sure a new form is produced each time when editing
+							var form = node.getForm(mode == 'edit');
+							var result = handler.call(handlers, base, node.object, node, form);
 							if (result == EditForm.COMMIT) {
 								res.commit();
 								if (base.main_action) {
-									// Render the page into res.data.editResponse.page:
-									res.push();
-									base.main_action();
-									res.data.editResponse.page = res.pop();
+									if (base.isTransient()) {
+										// The object has been removed in the meantime
+										// Redirect to its parent.
+										var parent = base._parent;
+										if (!parent) {
+											// Find parent in path:
+											for (var i = path.length - 1; i > 0; i--) {
+												var obj = path[i];
+												if (obj == base) {
+													parent = path[i - 1];
+													break;
+												}
+											}
+										}
+										if (parent)
+											res.data.editResponse.redirect = parent.href();
+									} else {
+										// Render the page into res.data.editResponse.page:
+										res.push();
+										base.main_action();
+										res.data.editResponse.page = res.pop();
+									}
 								}
 							} else if (result == EditForm.NOT_ALLOWED) {
 								EditForm.setMessage("editNotAllowed");
@@ -77,7 +97,9 @@ EditForm.inject(new function() {
 							if (node && !node.visible)
 								node = null;
 						}
-						if (node) {
+						// Only render node if no error has happened in the
+						// meantime.
+						if (node && !res.message) {
 							try {
 								node.render(base, 'edit');
 							} catch (e) {
@@ -102,11 +124,10 @@ EditForm.inject(new function() {
 // handlers
 
 EditForm.register({
-	'new': function(base, node) {
-		node.log('new');
+	'new': function(base, object, node, form) {
 		// req.data.value_item and req.data.value_group are set
 		// if a prototype chooser is used bellow:
-		var item = node.form.getItem(req.data.edit_item, req.data.edit_group);
+		var item = form.getItem(req.data.edit_item, req.data.edit_group);
 		if (item) {
 			// Make sure the passed prototype is in the list of prototypes allowed
 			var prototype = null, prototypes = item.prototypes;
@@ -118,7 +139,7 @@ EditForm.register({
 				prototype = prototypes[0];
 			}
 			// Creation can be allowed to anonymous users, by setting item.allow to true:
-			if (prototype && (User.canEdit(node.form.object) || item.allow == 'all')) {
+			if (prototype && (User.canEdit(form.object) || !session.user && item.allowAnonymous)) {
 				// get the prototype constructor and create an instance:
 				var ctor = typeof prototype == 'string' ? global[prototype] : prototype;
 				if (ctor) {
@@ -127,25 +148,34 @@ EditForm.register({
 					// Make sure the object is editable even in anonymous mode.
 					User.makeEditable(object);
 					node = EditNode.get(object, item);
-					if (node.form.hasItems()) {
+					// Call onAfterInitialize between EditNode.get that creates the edit node
+					// structure and getForm that fills in the form, since only then
+					// getEditParent will work, and we rely on it.
+					// This is the reason why onAfterInitialize was introduced, since
+					// getEditParent will not work in initialize
+					// TODO: Find a better name!
+					if (object.onAfterInitialize)
+						object.onAfterInitialize();
+					form = node.getForm();
+					if (!form) {
+						EditForm.alert('Unable to retrieve edit form from object:\n' + EditForm.getEditName(object));
+					} else if (form.hasItems()) {
 						node.render(base, 'create');
 					} else {
-						return this.create(base, node);
+						return this.create(base, object, node, form);
 					}
 				} else {
-					EditForm.alert("Unknown Prototype: " + prototype);
+					EditForm.alert('Unknown Prototype: ' + prototype);
 				}
 			} else return EditForm.NOT_ALLOWED;
 		}
 	},
 
-	create: function(base, node) {
-		node.log('create');
+	create: function(base, object, node, form) {
 		// Apply all changes first, add it to the db only at the end
-		var object = node.object;
 		if (!User.canEdit(object))
 			return EditForm.NOT_ALLOWED;
-		if (this.apply(base, node)) {
+		if (this.apply(base, object, node, form)) {
 			// If onCreate returns an object, this object is added instead of our temporary one.
 			if (object.onCreate) {
 				var ret = object.onCreate();
@@ -156,17 +186,13 @@ EditForm.register({
 						return;
 				}
 			}
-			if (object.creator !== undefined)
-				object.creator = session.user;
-			if (object.creationDate !== undefined) // modificationDate was set in apply
-				object.creationDate = object.modificationDate || new Date();
 			// Create it:
 			// The new obj has to be added to the object it belongs to:
 			// Find the parent's item through which it is created
 			var transientId = object._id;
 			var parentItem = node.parentItem;
 			if (!parentItem || !parentItem.store(object))
-				EditForm.alert("Cannot store the object.");
+				EditForm.alert('Cannot store the object.');
 			// Only call onStore if the object stoped being transient through
 			// the above. If there is a change of transient objects, they become
 			// persistent when the parent of them all becomes persistent:
@@ -194,13 +220,13 @@ EditForm.register({
 					for (var i = 0; i < children.length; i++) {
 						var ch = children[i];
 						var obj = ch.object;
-						User.log('Created ' + obj.getFullId() + " from: " + ch.transientId);
+						User.log('Created ' + obj.getFullId() + ' from: ' + ch.transientId);
 						if (obj.onStore)
 							obj.onStore(ch.transientId);
 					}
 					delete object.cache.createdChildren;
 				}
-				User.log('Created ' + object.getFullId() + " from: " + transientId);
+				User.log('Created ' + object.getFullId() + ' from: ' + transientId);
 				// Call the onStore handler:
 				if (object.onStore)
 					object.onStore(transientId);
@@ -211,15 +237,13 @@ EditForm.register({
 			// Clear the creating flag both the node object and the form object,
 			// As they might be two different ones! (e.g. Topic / Post)
 			object.setCreating(false);
-			node.form.object.setCreating(false);
+			form.object.setCreating(false);
 			return EditForm.COMMIT;
 		}
 	},
 
-	apply: function(base, node) {
-		node.log('apply');
+	apply: function(base, object, node, form) {
 		// Get the form description and save the values of all items:
-		var form = node.form;
 		// Use the object from form, which might differ from the one in node!
 		// e.g. in Topic / Post, where editing a Topic actually returns the
 		// editForm for the first post.
@@ -239,21 +263,21 @@ EditForm.register({
 				form.addResponse({
 					error: {
 						name: e.item.form.variablePrefix + e.item.name,
-						tab: e.item.form.tabIndex,
+						value: e.value, tab: e.item.form.tabIndex,
 						message: format(e.message)
 					}
 				});
 				req.data.edit_back = 0;
-				User.log(e.message);
-			} else throw e;
+			} else {
+				throw e;
+			}
 		}
 	},
 
-	edit: function(base, node) {
-		node.log('edit');
+	edit: function(base, object, node, form) {
 		if (req.data.edit_item) {
 			var obj = null;
-			var item = node.form.getItem(req.data.edit_item, req.data.edit_group);
+			var item = form.getItem(req.data.edit_item, req.data.edit_group);
 			if (item) {
 				if (req.data.edit_object_id != null) {
 					if (item.collection)
@@ -267,9 +291,7 @@ EditForm.register({
 			if (!User.canEdit(obj))
 				return EditForm.NOT_ALLOWED;
 			if (obj) {
-				// Do not use cached forms when editing, force creation of new
-				// form each time, by passing true:
-				EditNode.get(obj, item, true).render(base, 'edit');
+				EditNode.get(obj, item).render(base, 'edit');
 			} else {
 				EditForm.alert('Unable to edit object');
 			}
@@ -277,7 +299,6 @@ EditForm.register({
 	},
 
 	move: function(object) {
-		node.log('move');
 		// TODO: canEdit()!
 		if (req.data.edit_object_ids && req.data.edit_object_id && req.data.edit_item) {
 			// first determine sourceItem:
@@ -345,9 +366,9 @@ EditForm.register({
 								form.applyItem(item, ids);
 								// update the colleciton so that visibilities don't get mixed up
 								item.value.invalidate();
-								var changed = {};
-								changed[item.name] = true;
-								form.afterApply(changed);
+								var changed = new Hash();
+								changed[item.name] = item;
+								form.afterApply(true, changed);
 							}
 							EditStack.remember(true);
 							return EditForm.COMMIT;
@@ -383,37 +404,34 @@ EditForm.register({
 		}
 	},
 
-	group: function(base, node) {
+	group: function(base, object, node, form) {
 		// TODO: canEdit!
-		node.log('group');
 		if (req.data.edit_item) {
-			var group = node.form.getItem(req.data.edit_item, req.data.edit_group);
+			var group = form.getItem(req.data.edit_item, req.data.edit_group);
 			if (group != null && group.groupForm != null) {
 				node.render(base, 'edit', group);
 			}
 		}
 	},
 
-	click: function(base, node) {
+	click: function(base, object, node, form) {
 		// TODO: canEdit!
-		node.log('click');
 		if (req.data.edit_item) {
-			var item = node.form.getItem(req.data.edit_item, req.data.edit_group);
+			var item = form.getItem(req.data.edit_item, req.data.edit_group);
 			if (item && item.onClick) {
-				if (item.onClick.call(node.object, item))
+				if (item.onClick.call(object, item))
 					return EditForm.COMMIT
 			}
 		}
 	},
 
-	remove: function(base, node) {
-		node.log('remove');
+	remove: function(base, object, node, form) {
 		// If ids and collection are set, delete the objects of the collection with these ids.
 		// Otherwise remove the object itself:
 		var removed = false;
 		// Do not check for canEdit, as removeObject() does so.
 		if (req.data.edit_object_ids) {
-			var item = node.form.getItem(req.data.edit_item, req.data.edit_group);
+			var item = form.getItem(req.data.edit_item, req.data.edit_group);
 			var collection = item && item.collection;
 			if (collection) {
 				req.data.edit_object_ids.split(',').each(function(id) {
@@ -424,7 +442,7 @@ EditForm.register({
 			}
 		} else {
 			// The object itself is to be removed.
-			removed = node.object.removeObject();
+			removed = object.removeObject();
 		}
 		if (removed) {
 			return EditForm.COMMIT;
@@ -433,7 +451,7 @@ EditForm.register({
 		}
 	},
 
-	choose: function(base, node) {
+	choose: function(base, object, node, form) {
 		// TODO: canEdit?!
 //		if (User.canEdit()) {
 			var obj = HopObject.get(req.data.edit_base_id) || root;
@@ -449,20 +467,20 @@ EditForm.register({
 					var id = child.getFullId();
 					res.write('<li>');
 					if (child.count()) {
-						res.write('<a href="javascript:' + node.form.renderHandle('choose_toggle', id) + '">' +
+						res.write('<a href="javascript:' + form.renderHandle('choose_toggle', id) + '">' +
 							'<img id="edit-choose-arrow-' +  id + '" src="/static/edit/media/arrow-close.gif" width="8" height="8" border="0"></a>' + 
 							'<img src="/static/media/spacer.gif" width="6" height="1">');
 					} else {
 						res.write('<img src="/static/media/spacer.gif" width="14" height="1">');
 					}
-					res.write('<a href="javascript:' + node.form.renderHandle('choose_select', id, name) + '">' + name + '</a><ul id="edit-choose-children-' + id + '" class="hidden"></ul></li>');
+					res.write('<a href="javascript:' + form.renderHandle('choose_select', id, name) + '">' + name + '</a><ul id="edit-choose-children-' + id + '" class="hidden"></ul></li>');
 				}
 			}
 			res.write('</ul>');
 //		}
 	},
 
-	upload_status: function(base, node) {
+	upload_status: function(base, object, node, form) {
 		res.write(session.getUploadStatus(req.data.upload_id) || '{}');
 	}
 });
