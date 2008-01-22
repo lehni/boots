@@ -33,10 +33,12 @@ EditForm.inject({
 				var hasBack = node.parent != null && node.parent.visible;
 
 				var leftButtons = [], rightButtons = [];
-				leftButtons.push({
-					value: this.titles.preview || EditForm.TITLE_PREVIEW,
-					onClick: this.renderHandle('execute', 'preview', { post: true })
-				});
+				if (this.previewable) {
+					leftButtons.push({
+						value: this.titles.preview || EditForm.TITLE_PREVIEW,
+						onClick: this.renderHandle('execute', 'preview', { post: true })
+					});
+				}
 				rightButtons.push({
 					value: hasBack ? this.titles.cancel || EditForm.TITLE_CANCEL : this.titles.close || EditForm.TITLE_CLOSE,
 					onClick: this.renderHandle('back', 1)
@@ -79,10 +81,16 @@ EditForm.inject({
 							});
 						break;
 				}
-				// render buttons after items, so items can add buttons in render
-				// render added buttons. renderItem can handle arrays
-				// directly:
-				param.leftButtons = this.renderItem(this, this.buttons) + '&nbsp' + this.renderButtons(leftButtons);
+				// Render buttons after items, so items can add buttons in render.
+				// renderItem can handle arrays directly:
+				var buttons = [];
+				// Left
+				var str = this.renderItem(this, this.buttons);
+				if (str) buttons.push(str);
+				str = this.renderButtons(leftButtons);
+				if (str) buttons.push(str);
+				param.leftButtons = buttons.join('&nbsp;');
+				// Right
 				param.rightButtons = this.renderButtons(rightButtons);
 				html = this.renderTemplate('form', param);
 			}

@@ -1,6 +1,6 @@
 Node.inject({
 	getEditForm: function(param) {
-		var form = new EditForm(this, { removable: true });
+		var form = new EditForm(this, { removable: true, previewable: true });
 		if (param.children === undefined)
 			param.children = true;
 		if (param.resources === undefined)
