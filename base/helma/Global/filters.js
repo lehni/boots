@@ -74,7 +74,15 @@ function substring_filter(input, param, from, to) {
  * supported too.
  */
 function format_filter(input, param, format, locale) {
-	return input != null && input.format(param.format || format, param.locale || locale);
+	locale = param.locale || locale;
+	if (typeof locale == 'string') {
+		try {
+			locale = java.util.Locale[locale.toUpperCase()];
+		} catch (e) {
+			app.log('Unsupported Locale: ' + locale);
+		}
+	}
+	return input != null && input.format(param.format || format, locale);
 }
 
 function markup_filter(input, param) {
