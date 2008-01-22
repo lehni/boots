@@ -441,7 +441,7 @@ EditForm = Base.extend({
 				}
 			} else if (values.redirect) {
 				// Redirect one level up, since the href object itself was removed
-				// TODO: find a way to implement this in lineto.
+				// TODO: Find a way to implement this in lineto.
 				window.location.href = values.redirect;
 			}
 			if (values.alert)
@@ -753,7 +753,6 @@ EditForm.register(new function() {
 					} else {
 						var selected = el.getSelected().last();
 						var opt = new SelectOption({ text: title, value: id });
-						// TODO: this sets full ids, where we need a proper id list really. fix this
 						if (selected)
 							opt.insertAfter(selected);
 						else

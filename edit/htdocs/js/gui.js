@@ -18,7 +18,6 @@ Edit.inject({
 			this.win.zoom(true);
 			this.win.moveBy(4000, 4000);
 		}
-		TabPane.dispose();
 
 		this.win.setHtml(html, null, true);
 		this.base(name, remember);

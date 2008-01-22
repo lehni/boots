@@ -96,13 +96,19 @@
 	position: fixed;
 	background: #f00;
 	border: 1px solid #000;
-	padding: 8px;
 	left: 32px;
 	top: 32px;
 }
 
 .edit-preview a {
+	display: block;
+	padding: 4px 8px 4px 8px;
 	color: #fff;
+}
+
+.edit-preview a:hover {
+	background: #fff;
+	color: #f00;
 }
 
 /* TODO: remove edit-spacer and handle like item spacer */
