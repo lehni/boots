@@ -1,5 +1,4 @@
 HopObject.inject({
-	FEED_DATE_FORMAT: new java.text.SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss ZZZZ", java.util.Locale.US),
 	HAS_FEED: false,
 
 	rss_action: function() {
@@ -26,7 +25,7 @@ HopObject.inject({
 				language: getProperty("feedLanguage"),
 				generator: getProperty("feedGenerator"),
 				link: this.absoluteHref(),
-				date: this.FEED_DATE_FORMAT.format(items[0].modificationDate),
+				date: items[0].modificationDate,
 				items: items
 			}, res);
 		}

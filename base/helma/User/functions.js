@@ -11,7 +11,7 @@ User.inject({
 			if (e.fileName) shortDesc = 'Error in ' + e.fileName + ', Line ' + e.lineNumber + ': ' + e;
 			else shortDesc = e;
 
-			// now generate the stacktrace:
+			// Generate the stacktrace:
 			var longDesc = shortDesc;
 			if (e.javaException) {
 				var sw = new java.io.StringWriter();
@@ -19,18 +19,22 @@ User.inject({
 				longDesc += '\nStacktrace:\n' + sw.toString();
 			}
 			User.log(title + ':\n' + longDesc);
-			try {
-				// Send an error mail:
-				// TODO: make these addresses configurable through app.properties
-				var mail = new Mail();
-				mail.setFrom('error@lineto.com');
-				mail.setTo('juerg@vectorama.org');
-				mail.setSubject('[' + new Date().format('yyyy/MM/dd HH:mm:ss') + '] ' + title); 
-				if (session.user != null)
-					longDesc = '[' + session.user.name + '] ' + longDesc;
-				mail.addText(longDesc);
-				mail.send();
-			} catch (e) {
+			var from = getProperty('errorFromAddress') || getProperty('serverAddress');
+			var to = getProperty('errorToAddress');
+			if (from && to) {
+				try {
+					// Send an error mail:
+					// TODO: make these addresses configurable through app.properties
+					var mail = new Mail();
+					mail.setFrom(from);
+					mail.setTo(to);
+					mail.setSubject('[' + new Date().format('yyyy/MM/dd HH:mm:ss') + '] ' + title); 
+					if (session.user != null)
+						longDesc = '[' + session.user.name + '] ' + longDesc;
+					mail.addText(longDesc);
+					mail.send();
+				} catch (e) {
+				}
 			}
 			return shortDesc;
 		}

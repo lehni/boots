@@ -1,8 +1,6 @@
 HopObject.inject({
-	// TODO: this is only used in the feed part of legacy wiki code, 
-	// consider removal
-	absoluteHref: function() {
-		return getProperty("serverUrl") + this.href();
+	absoluteHref: function(action) {
+		return getProperty("serverUri") + this.href(action);
 	},
 
 	/**

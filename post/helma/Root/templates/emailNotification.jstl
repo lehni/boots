@@ -1,6 +1,6 @@
 Hello <%= param.username %>,
 
-You are following one or more topics on <%= param.serverUrl %>
+You are following one or more topics on <%= properties.serverUri %>
 Since your last post, the following topics have received replies:
 
 <%= param.nodes %>

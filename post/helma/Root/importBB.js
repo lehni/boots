@@ -139,7 +139,6 @@ Root.inject({
 					mail.addPart(this.renderTemplate("emailPassword", {
 						username: user.name,
 						password: password,
-						serverUrl:  getProperty("serverUrl")
 					}));
 					mail.send();
 				}

@@ -213,7 +213,7 @@ UrlTag = MarkupTag.extend({
 		var isLocal = /^\//.test(url);
 		// allways write domain part of url for simple rendering (e.g. in rss feeds)
 		if (param.simple && isLocal)
-			str += getProperty('serverUrl');
+			str += getProperty('serverUri');
 		str += url;
 		// links to local pages do not need to open blank
 		if (!isLocal)

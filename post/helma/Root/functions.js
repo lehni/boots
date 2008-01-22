@@ -1,7 +1,6 @@
 Root.inject({
 	checkNotifications: function() {
 		var notifications = this.notifications.list();
-		var serverUrl = getProperty("serverUrl");
 		for (var i = 0; i < notifications.length; i++) {
 			// notifications are grouped, so walk through the subgroup and find the topics
 			var notifications = notifications[i].list();
@@ -17,7 +16,6 @@ Root.inject({
 					if (notification.node) {
 						this.renderTemplate("emailTopic", {
 							notification: notification, 
-							serverUrl: serverUrl
 						}, res);
 						numTopics++;
 					}
@@ -27,7 +25,6 @@ Root.inject({
 				if (numTopics > 0) {
 					var text = this.renderTemplate("emailNotification", {
 						username: username,
-						serverUrl: serverUrl,
 						nodes: nodes
 					});
 					try {

@@ -4,7 +4,7 @@
 		<title><%= param.title %></title> 
 		<link><%= param.link %></link>
 		<description><%= param.description %></description>
-		<lastBuildDate><%= param.date %></lastBuildDate>
+		<lastBuildDate><%= param.date | format "EEE, dd MMM yyyy HH:mm:ss ZZZZ" "US" %></lastBuildDate>
 		<generator><%= param.generator %></generator>
 		<language><% param.language %></language>
 <% foreach (item in param.items) %>
@@ -13,7 +13,7 @@
 			<title><%= item.getTitle() %></title> 
 			<link><%= link %></link>
 			<guid isPermaLink="true"><%= link %></guid>
-			<pubDate><%= this.FEED_DATE_FORMAT.format(item.modificationDate) %></pubDate>
+			<pubDate><%= item.modificationDate | format "EEE, dd MMM yyyy HH:mm:ss ZZZZ" "US" %></pubDate>
 			<dc:creator><%= item.renderUser() %></dc:creator>
 			<description><%= encodeXml(item.renderSimple()) %></description>
 		</item>
