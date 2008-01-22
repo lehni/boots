@@ -10,7 +10,11 @@ Page.inject({
 			onApply: function(value) {
 				this.title = value;
 				// Generate a url friendly and unique name based on title:
-				this.name = this.getEditParent().getUniqueChildName(this, value, 32);
+				if (this == root) {
+					this.name = 'root';
+				} else {
+					this.name = this.getEditParent().getUniqueChildName(this, value, 32);
+				}
 			}
 		});
 		return form;
