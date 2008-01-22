@@ -513,7 +513,7 @@ Array.inject(new function() {
 		},
 
 		flatten: function() {
-			return Array.each(function(val) {
+			return Array.each(this, function(val) {
 				if (val != null && val.flatten) this.append(val.flatten());
 				else this.push(val);
 			}, []);

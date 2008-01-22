@@ -536,7 +536,7 @@ Array.inject(new function() {
 		},
 
 		flatten: function() {
-			return Array.each(function(val) {
+			return Array.each(this, function(val) {
 				if (val != null && val.flatten) this.append(val.flatten());
 				else this.push(val);
 			}, []);
@@ -2190,7 +2190,7 @@ HtmlElement.inject(new function() {
 
 	var fields = {
 		getStyle: function(name) {
-			if (name == undefined) return this.getStyles();
+			if (name === undefined) return this.getStyles();
 			if (name == 'opacity') {
 				var op = this.opacity;
 				return op || op == 0 ? op : this.getVisibility() ? 1 : 0;
@@ -2230,7 +2230,7 @@ HtmlElement.inject(new function() {
 		},
 
 		setStyle: function(name, value) {
-			if (value == undefined) return this.setStyles(name);
+			if (value === undefined) return this.setStyles(name);
 			var el = this.$;
 			switch (name) {
 				case 'float':
@@ -2382,8 +2382,8 @@ HtmlElement.inject(new function() {
 		},
 
 		scrollTo: function(x, y) {
-			this.scrollLeft = x;
-			this.scrollTop = y;
+			this.$.scrollLeft = x;
+			this.$.scrollTop = y;
 		},
 		statics: {
 			getAt: function(pos, exclude) {
@@ -2771,11 +2771,9 @@ Request = Base.extend(Chain, Callback, new function() {
 			if (window.execScript) {
 				window.execScript(script);
 			} else {
-				new HtmlElement('script')
-					.setProperty('type', 'text/javascript')
-					.setProperty('text', script)
-					.insertInside(Document.getElement('head'))
-					.remove();
+				Document.getElement('head').createInside('script', {
+					type: 'text/javascript', text: script
+				}).remove();
 			}
 		},
 
