@@ -25,7 +25,7 @@ EditForm.inject({
 					showProgress: EditForm.SHOW_PROGRESS
 				};
 
-				if (EditForm.SHOW_TITLE && !this.showTitle === false)
+				if (EditForm.SHOW_TITLE && this.showTitle !== false)
 					itemsParam.title = this.renderPath(node, mode);
 
 				param.items = this.renderItems(this, itemsParam);
