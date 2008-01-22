@@ -437,7 +437,6 @@ EditForm.inject(new function() {
 			// labels of tabs can be changed at a later point. see renderItems
 			tab.groupForm.label = tab.label;
 			insertItems(this, this.tabs.index, this.tabs.length, [tab], 0);
-			app.log('Tab ' + tab.name + ' ' + this.root.allItems[tab.name]);
 			return tab.groupForm;
 		},
 

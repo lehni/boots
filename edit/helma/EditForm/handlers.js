@@ -55,7 +55,8 @@ EditForm.inject(new function() {
 							var result = handler.call(handlers, base, node.object, node, form);
 							if (result == EditForm.COMMIT) {
 								res.commit();
-								if (base.main_action) {
+								// Only render page if it was not set already, e.g. through preview
+								if (!res.data.editResponse.page && base.main_action) {
 									if (base.isTransient()) {
 										// The object has been removed in the meantime
 										// Redirect to its parent.
