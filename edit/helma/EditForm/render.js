@@ -32,8 +32,12 @@ EditForm.inject({
 
 				var hasBack = node.parent != null && node.parent.visible;
 
-				var buttons = [];
-				buttons.push({
+				var leftButtons = [], rightButtons = [];
+				leftButtons.push({
+					value: this.titles.preview || EditForm.TITLE_PREVIEW,
+					onClick: this.renderHandle('execute', 'preview', { post: true })
+				});
+				rightButtons.push({
 					value: hasBack ? this.titles.cancel || EditForm.TITLE_CANCEL : this.titles.close || EditForm.TITLE_CLOSE,
 					onClick: this.renderHandle('back', 1)
 				});
@@ -44,13 +48,13 @@ EditForm.inject({
 						var hasCreateBack = mode == 'create' && node.parent != null
 							&& (hasBack || !EditForm.HAS_BACK)
 						if (hasCreateBack)
-							 buttons.push({
+							 rightButtons.push({
 								value: !EditForm.HAS_BACK ? this.titles.create || EditForm.TITLE_CREATE :
 									this.titles.createBack || EditForm.TITLE_CREATE_BACK,
 								onClick: this.renderHandle('execute', 'create', { post: true, edit_back: 1 })
 							});
 						if (EditForm.HAS_BACK || !hasCreateBack)
-							buttons.push({
+							rightButtons.push({
 								value: this.titles.create || EditForm.TITLE_CREATE,
 								onClick: this.renderHandle('execute', mode, { post: true })
 							});
@@ -58,18 +62,18 @@ EditForm.inject({
 					case 'edit':
 						// render default buttons
 						if (this.removable && EditForm.HAS_DELETE)
-							buttons.push({
+							rightButtons.push({
 								value: 'Delete',
 								onClick: this.renderHandle('remove', title)
 							});
 						if (hasBack || !EditForm.HAS_BACK)
-							buttons.push({
+							rightButtons.push({
 								value: !EditForm.HAS_BACK ? this.titles.apply || EditForm.TITLE_APPLY :
 									this.titles.apply || EditForm.TITLE_APPLY_BACK,
 								onClick: this.renderHandle('execute', 'apply', { post: true, edit_back: 1 })
 							});
 						if (EditForm.HAS_BACK)
-							buttons.push({
+							rightButtons.push({
 								value: this.titles.apply || EditForm.TITLE_APPLY,
 								onClick: this.renderHandle('execute', 'apply', { post: true })
 							});
@@ -78,8 +82,8 @@ EditForm.inject({
 				// render buttons after items, so items can add buttons in render
 				// render added buttons. renderItem can handle arrays
 				// directly:
-				param.leftButtons = this.renderItem(this, this.buttons);
-				param.rightButtons = this.renderButtons(buttons);
+				param.leftButtons = this.renderItem(this, this.buttons) + '&nbsp' + this.renderButtons(leftButtons);
+				param.rightButtons = this.renderButtons(rightButtons);
 				html = this.renderTemplate('form', param);
 			}
 		} catch (e) {

@@ -92,6 +92,19 @@
 	background: #f7f7f7;
 }
 
+.edit-preview {
+	position: fixed;
+	background: #f00;
+	border: 1px solid #000;
+	padding: 8px;
+	left: 32px;
+	top: 32px;
+}
+
+.edit-preview a {
+	color: #fff;
+}
+
 /* TODO: remove edit-spacer and handle like item spacer */
 
 #edit .edit-spacer {

@@ -12,6 +12,7 @@ EditForm.TITLE_CANCEL = 'Back';
 EditForm.TITLE_CLOSE = 'Close';
 EditForm.TITLE_CREATE = 'Create';
 EditForm.TITLE_APPLY = 'Save';
+EditForm.TITLE_PREVIEW = 'Save & Preview';
 EditForm.TITLE_APPLY_BACK = 'Save & Back';
 EditForm.TITLE_CREATE_BACK = 'Create & Back';
 

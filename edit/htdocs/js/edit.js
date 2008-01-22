@@ -31,7 +31,6 @@ EditForm = Base.extend({
 			var tab = $('div.tab-pane', this.form);
 			TabPane.setup();
 			this.tab = tab && tab.tabPane;
-			this.target.addClass('hidden');
 			this.show(true);
 			if (values.error) {
 				$('#edit-error-' + values.error.name, this.form).setHtml(values.error.message).removeClass('hidden');
@@ -47,16 +46,17 @@ EditForm = Base.extend({
 
 	show: function(show) {
 		this.container.modifyClass('hidden', !show);
+		if (this.target)
+			this.target.modifyClass('hidden', show);
 		if (!show) this.closeChoosers();
 		else if (this.form) this.form.enable(true);
+		this.visible = show;
 	},
 
 	close: function(stopAt) {
-		if (this.parent) {
+		this.show(false);
+		if (this.parent)
 			this.parent.show(true);
-		} else if (this.target) {
-			this.target.removeClass('hidden');
-		}
 		if (this.request)
 			this.request.cancel();
 		this.closeChoosers();
@@ -79,6 +79,24 @@ EditForm = Base.extend({
 		if (!EditForm.forms.length())
 			Document.fireEvent('endedit');
 		return this.parent;
+	},
+
+	preview: function(previousHtml) {
+		this.show(false);
+		var that = this;
+		var button = $('body').createInside('div', { className: 'edit-preview' }, [
+			'a', {
+				html: 'Exit Preview', href: '#',
+				events: {
+					click: function(event) {
+						that.show(true);
+						EditForm.updateBody(previousHtml);
+						button.remove();
+						event.stop();
+					}
+				}
+			}
+		]);
 	},
 
 	back: function(count) {
@@ -415,8 +433,12 @@ EditForm = Base.extend({
 				form.autoSize();
 			}
 			if (values.page) {
-				var page = values.page.match(/<body[^>]*>([\u0000-\uffff]*)<\/body>/i);
-				if (page) this.updateBody(page[1]);
+				var html = values.page.match(/<body[^>]*>([\u0000-\uffff]*)<\/body>/i);
+				if (html) {
+					var previous = this.updateBody(html[1]);
+					if (values.preview)
+						this.preview(values.id, previous);
+				}
 			} else if (values.redirect) {
 				// Redirect one level up, since the href object itself was removed
 				// TODO: find a way to implement this in lineto.
@@ -441,13 +463,14 @@ EditForm = Base.extend({
 			// Replace the content of the body only...
 			Document.fireEvent('beforeupdate');
 			var body = $('body');
+			var previousHtml = body.getHtml();
 			body.setHtml(html);
 			// now insert forms again
 			this.forms.each(function(form, id) {
 				form.target = $('#' + form.targetId);
 				if (form.target) {
-					form.target.addClass('hidden');
 					form.container.insertAfter(form.target);
+					form.show(form.visible);
 				} else {
 					// if the target has disappeared after the update,
 					// close the form.
@@ -463,11 +486,17 @@ EditForm = Base.extend({
 			this.choosers.each(function(chooser) {
 				chooser.element.insertInside(body);
 			});
+			return previousHtml;
 		},
 
 		close: function(id) {
 			var form = this.get(id);
 			return form ? form.close() : null;
+		},
+
+		preview: function(id, previousHtml) {
+			var form = this.get(id);
+			if (form) form.preview(previousHtml);
 		}
 	}
 });

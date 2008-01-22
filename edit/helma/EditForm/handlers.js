@@ -274,6 +274,29 @@ EditForm.register({
 		}
 	},
 
+	preview: function(base, object, node, form) {
+		// Apply changes first:
+		var ret = this.apply(base, object, node, form);
+		if (ret == EditForm.COMMIT) {
+			res.push();
+			// For objects that do a redirect in main_action, allow them
+			// to implement a different view for preview, through
+			// preview_action:
+			if (object.preview_action) {
+				object.preview_action();
+			} else if (object.main_action) {
+				object.main_action();
+			} else if (base.main_action) {
+				base.main_action();
+			}
+			form.addResponse({
+				page: res.pop(),
+				preview: true
+			});
+		}
+		return ret;
+	},
+
 	edit: function(base, object, node, form) {
 		if (req.data.edit_item) {
 			var obj = null;
