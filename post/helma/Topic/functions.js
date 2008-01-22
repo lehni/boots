@@ -17,17 +17,12 @@ Topic.inject({
 	},
 
 	getEditForm: function(param) {
-		// Only edit the node with admin rights. The default user can only
-		// edit posts. Also, when creating a new post, even the admin only edits the post
-		// Except when removing, we need the full information about children and all that
-		/*
-		if (!param.removing && (this.isCreating() || !User.hasRole(User.ADMINISTRATOR))) {
-			return this.getFirstPost().getEditForm(param);
-		} else {
-		*/
-			param.posts = true;
-			return this.base(param);
-		// }
+		param.children = false;
+		param.resources = false;
+		param.posts = true;
+		var form = this.base(param);
+		form.removeTab('node');
+		return form;
 	},
 
 	/**

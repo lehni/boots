@@ -6,26 +6,31 @@ EditForm.inject(new function() {
 	 * Private functions, taking a reference to the form in "that"
 	 */
 	function initializeItem(that, item, row, index) {
-		// every item knows about it's form.
+		// Every item knows about it's form.
 		// the sub form of group items is called groupForm, not form!
 		if (item instanceof Array) {
 			// init items that are to be merged into one cell
 			for (var i = 0; i < item.length; i++)
 				initializeItem(that, item[i], row, index);
 		} else {
-			// convert the item now by setting its __proto__ to the right
+			// Convert the item now by setting its __proto__ to the right
 			// prototype:
 			item = EditItem.initialize(item);
 			// init single item
 			item.form = that;
 			item.row = row;
 			item.index = index;
-			// only store real items in the global
+			// Only store real items in the global
 			// items, not tabs or groups, as they
 			// often have the same id as a item within them
-			if (item.name && !item.groupForm) {
-				that.items[item.name] = item;
-				that.root.allItems[item.name] = item;
+			if (item.name) {
+				if (item.groupForm) {
+					that.groups[item.name] = item;
+					that.root.allGroups[item.name] = item;
+				} else {
+					that.items[item.name] = item;
+					that.root.allItems[item.name] = item;
+				}
 			}
 			// collect the autoRemove items:
 			if (item.autoRemove) {
@@ -34,6 +39,37 @@ EditForm.inject(new function() {
 				that.root.autoRemove.push(item);
 			}
 		}
+	}
+
+	function clearItem(item) {
+		if (item.name) {
+			if (item.groupForm) {
+				delete item.form.groups[item.name];
+				delete item.form.root.allGroups[item.name];
+			} else {
+				delete item.form.items[item.name];
+				delete item.form.root.allItems[item.name];
+			}
+		}
+	}
+
+	function removeItem(item) {
+		if (item) {
+			// Remove item
+			// Carefull: The item might be part of a sub form,
+			// so dont use 'this' for the form
+			item.row.splice(item.index, 1);
+			clearItem(item);
+			if (item.row.length > 0) {
+				// adjust indices:
+				for (var i = item.index; i < item.row.length; i++)
+					item.row[i].index = i;
+			} else {
+				// row empty: remove it as well:
+				item.form.removeRow(item.row.index);
+			}
+		}
+		return !!item;
 	}
 
 	/**
@@ -88,7 +124,7 @@ EditForm.inject(new function() {
 	function createGroupItem(that, type, name, label, args) {
 		var form = null;
 		var startIndex = 2;
-		// parameter 'label' can be skipped in the functiosn addTab, createGroupItem
+		// Parameter 'label' can be skipped in the functiosn addTab, createGroupItem
 		// bellow! In this case, name is assumed to be the label and then converted
 		// to lowerCase for the real name
 		if (typeof label != 'string') {
@@ -96,7 +132,7 @@ EditForm.inject(new function() {
 			label = name;
 			name = name.hyphenate().replace(/\s+/gi, '-');
 		}
-		// see if the parameter was a previously created form already,
+		// See if the parameter was a previously created form already,
 		// or a HopObject that creates its own:
 		var addRows = false;
 		if (args.length == startIndex + 1 && args[startIndex]) {
@@ -107,18 +143,18 @@ EditForm.inject(new function() {
 				form = EditForm.get(obj);
 			}
 		}
-		if (form == null) { // otherwise create a new one and insert the items:
+		if (!form) { // Otherwise create a new one and insert the items:
 			form = new EditForm(that.object, { parent: that, title: label });
 			addRows = true;
 		}
 		form.name = name;
 		if (addRows)
 			insertRows(form, 0, args, startIndex);
-		// use a different variable prefix for the values of this tab:
+		// Use a different variable prefix for the values of this tab:
 		// append name + '_':
 		form.variablePrefix = that.variablePrefix + name + '_';
 		var group = { name: name, label: label, type: type, groupForm: form };
-		// keep all groups in root, so things can be nested endlessly.
+		// Keep all groups in root, so things can be nested endlessly.
 		// but only unique group names in nested structures work
 		if (!that.root.groups)
 			that.root.groups = {};
@@ -138,6 +174,23 @@ EditForm.inject(new function() {
 	function getGroupForm(name /*, ... */) {
 		var group = this.root.groups ? this.root.groups[name] : null;
 		return group ? group.groupForm : null;
+	}
+
+	function getGroup(name, group) {
+		var form = this;
+		if (group)
+			form = this.getGroupForm(group);
+		if (form) {
+			// Only try allGroups after it was not found in form.groups,
+			// as some items in different groups could have the same name
+			// in which case only one would be found through allItems.
+			return form.root.groups[name] || form.root.allGroups[name];
+		}
+		return null;
+	}
+
+	function removeGroup(name) {
+		return removeItem(this.getGroup(name));
 	}
 
 	function insertBefore(nameOrIndex /*, ... */) {
@@ -175,6 +228,7 @@ EditForm.inject(new function() {
 			this.rows = [];
 			this.buttons = [];
 			this.items = {};
+			this.groups = {};
 			this.parent = null;
 			this.tabs = null;
 			this.name = ''; // empty, only set for groups
@@ -205,6 +259,7 @@ EditForm.inject(new function() {
 			} else {
 				this.root = this;
 				this.allItems = {};
+				this.allGroups = {};
 				// the width of the table, defaults to 100 percent, but can
 				// be specified in pixels too
 				var width = this.width || EditForm.WIDTH;
@@ -263,13 +318,8 @@ EditForm.inject(new function() {
 				// remove all row items:
 				// Carefull: The row might be part of a sub form,
 				// so dont use 'this' for the form
-				for (var i = 0, l = row.length; i < l; ++i) {
-					var item = row[i];
-					if (item.name) {
-						delete item.form.items[item.name];
-						delete this.root.allItems[item.name];
-					}
-				}
+				for (var i = 0, l = row.length; i < l; ++i)
+					clearItem(row[i]);
 				var rows = row.form.rows;
 				rows.splice(index, 1);
 				// adjust indices:
@@ -284,48 +334,30 @@ EditForm.inject(new function() {
 		 * removes item with given name
 		 */
 		removeItem: function(name) {
-			var item = this.getItem(name);
-			if (item) {
-				// remove item
-				// Carefull: The item might be part of a sub form,
-				// so dont use 'this' for the form
-				item.row.splice(item.index, 1);
-				if (item.name) {
-					delete item.form.items[item.name];
-					delete this.root.allItems[item.name];
-				}
-				if (item.row.length > 0) {
-					// adjust indices:
-					for (var i = index; i < item.row.length; i++)
-						item.row[i].index = i;
-				} else {
-					// row empty: remove it as well:
-					item.form.removeRow(item.row.index);
-				}
-				return true;
-			}
-			return false;
+			return removeItem(this.getItem(name));
 		},
 
 		/**
 		 * returns the item with given name, group is optional
 		 */
 		getItem: function(name, group) {
-			var item = null;
 			var form = this;
 			if (group)
 				form = this.getGroupForm(group);
 			if (form) {
-				item = form.items[name];
-				// only try allItems after it was not found form.items,
+				// Only try allItems after it was not found in form.items,
 				// as some items in different groups could have the same name
-				// in which case only one would be found through allItems
-				// TODO: think about forcing unique names in edit forms
-				if (!item)
-					item = form.root.allItems[name];
+				// in which case only one would be found through allItems.
+				return form.items[name] || form.root.allItems[name];
 			}
-			return item;
+			return null;
 		},
+
+		getGroup: getGroup, 
+		getTab: getGroup,
+
+		removeGroup: removeGroup,
+		removeTab: removeGroup,
 
 		rowIndexOf: function(name) {
 			var item = this.items[name];
@@ -392,7 +424,7 @@ EditForm.inject(new function() {
 		addTab: function(name, label /*, ... */) {
 			var tab = createGroupItem(this, 'tab', name, label, arguments);
 			// all tabs are added in one row, that is referenced from this.tabs
-			if (this.tabs == null) {
+			if (!this.tabs) {
 				this.tabs = [];
 				// add one empty row that's going to be the tab row:
 				this.add(this.tabs);
@@ -405,6 +437,7 @@ EditForm.inject(new function() {
 			// labels of tabs can be changed at a later point. see renderItems
 			tab.groupForm.label = tab.label;
 			insertItems(this, this.tabs.index, this.tabs.length, [tab], 0);
+			app.log('Tab ' + tab.name + ' ' + this.root.allItems[tab.name]);
 			return tab.groupForm;
 		},
 
