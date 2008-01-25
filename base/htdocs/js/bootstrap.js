@@ -333,7 +333,8 @@ Base.inject({
 			return (obj || obj === 0) && (
 				(obj._type || obj.nodeName && (
 					obj.nodeType == 1 && 'element' ||
-					obj.nodeType == 3 && ((/\S/).test(obj.nodeValue) ? 'textnode' : 'whitespace')
+					obj.nodeType == 3 && ((/\S/).test(obj.nodeValue) ? 'textnode' : 'whitespace') ||
+					obj.nodeType == 9 && 'document'
 				)) || typeof obj) || null;
 		},
 
@@ -632,7 +633,7 @@ String.inject({
 		});
 	},
 
-	escapeRegExp: function(){
+	escapeRegExp: function() {
 		return this.replace(/([-.*+?^${}()|[\]\/\\])/g, '\\$1');
 	},
 
@@ -823,7 +824,7 @@ Browser = new function() {
 DomElements = Array.extend(new function() {
 	var unique = 0;
 	return {
-		initialize: function(elements, doc) {
+		initialize: function(elements) {
 			this._unique = unique++;
 			this.append(elements && elements.length != null && !elements.nodeType
 				? elements : arguments);
@@ -880,7 +881,7 @@ DomElements = Array.extend(new function() {
 
 DomElement = Base.extend(new function() {
 	var elements = [];
-	var tags = {}, classes = {}, classCheck, unique = 0;
+	var names = {}, classes = {}, classCheck, unique = 0;
 
 	function dispose(force) {
 		for (var i = elements.length - 1; i >= 0; i--) {
@@ -923,8 +924,10 @@ DomElement = Base.extend(new function() {
 	function getConstructor(el) {
 		var match;
 		return classCheck && el.className && (match = el.className.match(classCheck)) && match[2] && classes[match[2]] ||
-			el.tagName && tags[el.tagName] ||
-			(el.className === undefined ? DomElement : HtmlElement)
+			el.nodeName && names[el.nodeName] ||
+			el.location && el.frames && el.history && DomDocumentView ||
+			el.className !== undefined && HtmlElement ||
+			DomElement;
 	}
 
 	var dont = '';
@@ -934,9 +937,9 @@ DomElement = Base.extend(new function() {
 		_elements: DomElements,
 
 		initialize: function(el, props, doc) {
-			if (this._tag && Base.type(el) == 'object') {
+			if (this._name && Base.type(el) == 'object') {
 				props = el;
-				el = this._tag;
+				el = this._name;
 			}
 			if (typeof(el) == 'string') {
 				el = DomElement.create(el, props, doc);
@@ -990,13 +993,14 @@ DomElement = Base.extend(new function() {
 				inject.call(ret, src);
 				ret.inject = inject;
 				if (src) {
-					if (src._tag) tags[src._tag.toLowerCase()] = tags[src._tag.toUpperCase()] = ret;
+					if (src._name)
+						names[src._name.toLowerCase()] = names[src._name.toUpperCase()] = ret;
 					if (src._class) {
 						classes[src._class] = ret;
 						classCheck = new RegExp('(^|\\s)(' + Base.each(classes, function(val, name) {
 							this.push(name);
 						}, []).join('|') + ')(\\s|$)');
-						if (src.initialize) Window.addEvent('domready', function() {
+						if (src.initialize) Document.addEvent('domready', function() {
 							Document.getElements('.' + src._class);
 						});
 					}
@@ -1107,6 +1111,14 @@ DomElement.inject(new function() {
 
 		getId: function() {
 			return this.$.id;
+		},
+
+		getDocument: function() {
+			return DomElement.get(this.ownerDocument);
+		},
+
+		getView: function() {
+			return this.getDocument().getView();
 		},
 
 		getPrevious: function() {
@@ -1231,7 +1243,8 @@ DomElement.inject(new function() {
 		},
 
 		toString: function() {
-			return this.$.nodeName.toLowerCase() + (this.$.id ? '#' + this.$.id : '');
+			return (this.$.nodeName || this._type).toLowerCase() +
+				(this.$.id ? '#' + this.$.id : '');
 		},
 
 		toElement: function() {
@@ -1392,30 +1405,43 @@ DomEvent = Base.extend(new function() {
 
 				mousewheel: { type: Browser.GECKO ? 'DOMMouseScroll' : 'mousewheel' },
 
-				domready: function(func) { 
-					if (this.loaded) func.call(this);
+				domready: function(func) {
+					if (Browser.loaded) func.call(this);
 					else if (!this.domReady) {
 						this.domReady = true;
 						var domReady = function() {
-							if (this.loaded) return;
-							this.loaded = true;
-							if (this.timer) this.timer = this.timer.clear();
-							this.fireEvent('domready');
+							if (!Browser.loaded) {
+								Browser.loaded = true;
+								this.fireEvent('domready');
+							}
 						}.bind(this);
-						if (document.readyState && (Browser.WEBKIT || Browser.MACIE)) { 
-							this.timer = (function() {
-								if (/^(loaded|complete)$/.test(document.readyState)) domReady();
-							}).periodic(50);
-						} else if (document.readyState && Browser.IE) { 
-							document.write('<script id=ie_domready defer src="'
-								+ (window.location.protocol == 'https:' ? '://0' : 'javascript:void(0)')
-								+ '"><\/script>');
-							$('ie_domready').addEvent('readystatechange', function() {
-								if (this.$.readyState == 'complete') domReady();
-							});
+
+						var view = this.getView(), doc = this.getDocument();
+
+						function check(obj) {
+							if (/^(loaded|complete)$/.test(obj.$.readyState)) {
+								domReady();
+								return true;
+							}
+						}
+						if (doc.$.readyState && (Browser.WEBKIT || Browser.MACIE)) { 
+							(function() {
+								if (!check(doc))
+									arguments.callee.delay(50);
+							})();
+						} else if (doc.$.readyState && Browser.IE) { 
+							var script = doc.getElement('#ie_domready');
+							if (!script) {
+								doc.write('<script id=ie_domready defer src="'
+									+ (view.$.location.protocol == 'https:' ? '://0' : 'javascript:void(0)')
+									+ '"><\/script>');
+								script = doc.getElement('#ie_domready');
+							}
+							if (!check(script))
+								script.addEvent('readystatechange', check.bind(null, script));
 						} else { 
-							Window.addEvent('load', domReady);
-							Document.addEvent('DOMContentLoaded', domReady);
+							view.addEvent('load', domReady);
+							doc.addEvent('DOMContentLoaded', domReady);
 						}
 					}
 				}
@@ -1517,70 +1543,6 @@ DomElement.inject({
 	}
 });
 
-Document = DomElement.get(document).inject({
-	createElement: function(tag, props) {
-		return DomElement.get(DomElement.create(tag, props, this.$)).set(props);
-	},
-
-	createTextNode: function(text) {
-		return this.$.createTextNode(text);
-	},
-
-	getDocument: function() {
-		return this;
-	},
-
-	getWindow: function() {
-		return DomElement.get(this.defaultView || this.parentWindow);
-	}
-});
-
-function $(selector, root) {
-	return (DomElement.get(root) || Document).getElement(selector);
-}
-
-function $$(selector, root) {
-	return (DomElement.get(root) || Document).getElements(selector);
-}
-
-/*@cc_on
-try { document.execCommand('BackgroundImageCache', false, true); }
-catch (e) {}
-@*/
-
-Window = DomElement.get(window).inject({
-	toString: function() {
-		return 'window';
-	},
-
-	open: function(url, title, params) {
-		var focus;
-		if (params && typeof params != 'string') {
-			if (params.confirm && !confirm(params.confirm))
-				return null;
-			(['toolbar','menubar','location','status','resizable','scrollbars']).each(function(d) {
-				if (!params[d]) params[d] = 0;
-			});
-			if (params.width && params.height) {
-				if (params.left == null) params.left = Math.round(
-					Math.max(0, (screen.width - params.width) / 2));
-				if (params.top == null) params.top = Math.round(
-					Math.max(0, (screen.height - params.height) / 2 - 40));
-			}
-			focus = params.focus;
-			params = Base.each(params, function(p, n) {
-				if (!/^(focus|confirm)$/.test(n))
-					this.push(n + '=' + p);
-			}, []).join(',');
-		}
-		var win = window.open(url, title.replace(/\s+|\.+|-+/gi, ''), params);
-		if (win && focus) win.focus();
-		return win;
-	}
-});
-
-Window.addEvent('unload', DomElement.dispose);
-
 DomEvent.add(new function() {
 	var object, last;
 
@@ -1591,8 +1553,9 @@ DomEvent.add(new function() {
 			this.fireEvent('dragstart', [event]);
 			if (!event.stopped) {
 				event.stop();
-				Document.addEvent('mousemove', drag);
-				Document.addEvent('mouseup', dragEnd);
+				var doc = this.getDocument();
+				doc.addEvent('mousemove', drag);
+				doc.addEvent('mouseup', dragEnd);
 				object = this;
 			}
 		}
@@ -1614,8 +1577,9 @@ DomEvent.add(new function() {
 			event.type = 'dragend';
 			object.fireEvent('dragend', [event]);
 			event.preventDefault();
-			Document.removeEvent('mousemove', drag);
-			Document.removeEvent('mouseup', dragEnd);
+			var doc = object.getDocument();
+			doc.removeEvent('mousemove', drag);
+			doc.removeEvent('mouseup', dragEnd);
 			object = null;
 		}
 	}
@@ -1664,7 +1628,7 @@ DomElement.inject(new function() {
 			function resolver(prefix) {
 				return prefix == 'xhtml' ? 'http://www.w3.org/1999/xhtml' : false;
 			}
-			var res = document.evaluate('.//' + items.join(''), context,
+			var res = (context.ownerDocument || context).evaluate('.//' + items.join(''), context,
 				resolver, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
 			for (var i = 0, l = res.snapshotLength; i < l; ++i)
 				elements.push(res.snapshotItem(i));
@@ -1692,7 +1656,7 @@ DomElement.inject(new function() {
 				return found;
 			}
 			if (params.id) {
-				var el = document.getElementById(params.id);
+				var el = (context.ownerDocument || context).getElementById(params.id);
 				params.id = null;
 				return el && DomElement.isAncestor(el, context)
 					&& match(el, params, data) ? [el] : null;
@@ -1973,7 +1937,7 @@ DomElement.pseudos = new function() {
 					data.indices = data.indices || {};
 					if (!data.indices[el._unique]) {
 						var children = el.parentNode.childNodes;
-						for (var i = 0, l = children.length; i < l; i++){
+						for (var i = 0, l = children.length; i < l; i++) {
 							var child = children[i];
 							if (child.nodeType == 1) {
 								if (!child._unique)
@@ -2108,7 +2072,7 @@ DomElement.pseudos = new function() {
 	};
 };
 
-HtmlElements = Document._elements = DomElements.extend();
+HtmlElements = DomElements.extend();
 
 HtmlElement = DomElement.extend({
 	_elements: HtmlElements
@@ -2291,6 +2255,13 @@ HtmlElement.inject(new function() {
 	});
 
 	var fields = {
+		getComputedStyle: function(name) {
+			var computed;
+			return this.$.currentStyle && this.$.currentStyle[name.camelize()]
+				|| (computed = this.getView().$.getComputedStyle(el, null)) && computed.getPropertyValue(name.hyphenate())
+				|| null;
+		},
+
 		getStyle: function(name) {
 			if (name === undefined) return this.getStyles();
 			if (name == 'opacity') {
@@ -2310,8 +2281,7 @@ HtmlElement.inject(new function() {
 						return val == style[0];
 					}) ? style[0] : style.join(' ');
 				}
-				style = document.defaultView && document.defaultView.getComputedStyle(el, null).getPropertyValue(name.hyphenate())
-					|| el.currentStyle && el.currentStyle[name];
+				style = this.getComputedStyle(name);
 			}
 			if (name == 'visibility')
 				return /^(visible|inherit(|ed))$/.test(style);
@@ -2559,7 +2529,7 @@ HtmlElement.inject({
 });
 
 Form = HtmlElement.extend({
-	_tag: 'form',
+	_name: 'form',
 	_properties: ['action', 'method', 'target'],
 	_methods: ['submit'],
 
@@ -2589,7 +2559,7 @@ FormElement = HtmlElement.extend({
 });
 
 Input = FormElement.extend({
-	_tag: 'input',
+	_name: 'input',
 	_properties: ['type', 'checked', 'defaultChecked', 'readOnly', 'maxLength'],
 	_methods: ['click'],
 
@@ -2607,12 +2577,12 @@ Input = FormElement.extend({
 });
 
 TextArea = FormElement.extend({
-	_tag: 'textarea',
+	_name: 'textarea',
 	_properties: ['value']
 });
 
 Select = FormElement.extend({
-	_tag: 'select',
+	_name: 'select',
 	_properties: ['type', 'selectedIndex'],
 
 	getOptions: function() {
@@ -2637,7 +2607,7 @@ Select = FormElement.extend({
 });
 
 SelectOption = FormElement.extend({
-	_tag: 'option',
+	_name: 'option',
 	_properties: ['text', 'value', 'selected', 'defaultSelected', 'index']
 });
 
@@ -2688,6 +2658,100 @@ FormElement.inject({
 		return this.setSelection(pos, pos);
 	}
 });
+
+DomDocument = DomElement.extend({
+	_name: '#document',
+	_type: 'document',
+	_elements: HtmlElements,
+
+	initialize: function() {
+		if(Browser.IE)
+			try {
+				this.$.execCommand('BackgroundImageCache', false, true);
+			} catch (e) {}
+	},
+
+	createElement: function(tag, props) {
+		return DomElement.get(DomElement.create(tag, props, this.$)).set(props);
+	},
+
+	createTextNode: function(text) {
+		return this.$.createTextNode(text);
+	},
+
+	getDocument: function() {
+		return this;
+	},
+
+	getView: function() {
+		return DomElement.get(this.$.defaultView || this.$.parentWindow);
+	},
+
+	open: function() {
+		this.$.open();
+	},
+
+	close: function() {
+		this.$.close();
+	},
+
+	write: function(markup) {
+		this.$.write(markup);
+	},
+
+	writeln: function(markup) {
+		this.$.writeln(markup);
+	}
+});
+
+DomDocumentView = DomElement.extend({
+	_type: 'view',
+
+	getDocument: function() {
+		return DomElement.get(this.document);
+	},
+	getView: function() {
+		return this;
+	},
+
+	open: function(url, title, params) {
+		var focus;
+		if (params && typeof params != 'string') {
+			if (params.confirm && !confirm(params.confirm))
+				return null;
+			(['toolbar','menubar','location','status','resizable','scrollbars']).each(function(d) {
+				if (!params[d]) params[d] = 0;
+			});
+			if (params.width && params.height) {
+				if (params.left == null) params.left = Math.round(
+					Math.max(0, (screen.width - params.width) / 2));
+				if (params.top == null) params.top = Math.round(
+					Math.max(0, (screen.height - params.height) / 2 - 40));
+			}
+			focus = params.focus;
+			params = Base.each(params, function(p, n) {
+				if (!/^(focus|confirm)$/.test(n))
+					this.push(n + '=' + p);
+			}, []).join(',');
+		}
+		var win = this.$.open(url, title.replace(/\s+|\.+|-+/gi, ''), params);
+		if (win && focus) win.focus();
+		return win;
+	}
+});
+
+Document = DomElement.get(document);
+Window = DomElement.get(window);
+
+Window.addEvent('unload', DomElement.dispose);
+
+function $(selector, root) {
+	return (DomElement.get(root) || Document).getElement(selector);
+}
+
+function $$(selector, root) {
+	return (DomElement.get(root) || Document).getElements(selector);
+}
 
 Chain = {
 	chain: function(fn) {
@@ -2856,7 +2920,7 @@ Request = Base.extend(Chain, Callback, new function() {
 
 		stripScripts: function(html) {
 			var script = '';
-			html = html.replace(/<script[^>]*>([\u0000-\uffff]*?)<\/script>/gi, function(){
+			html = html.replace(/<script[^>]*>([\u0000-\uffff]*?)<\/script>/gi, function() {
 				script += arguments[1] + '\n';
 				return '';
 			});
@@ -3049,7 +3113,7 @@ Asset = new function() {
 							this.fireEvent('load');
 					}
 				},
-				src: src,
+				src: src
 			}, getProperties(props)));
 			if (Browser.WEBKIT2)
 				new Request({ url: src, method: 'get' }).addEvent('success', function() {

@@ -609,7 +609,7 @@ String.inject({
 		});
 	},
 
-	escapeRegExp: function(){
+	escapeRegExp: function() {
 		return this.replace(/([-.*+?^${}()|[\]\/\\])/g, '\\$1');
 	},
 
