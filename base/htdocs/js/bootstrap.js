@@ -2210,7 +2210,7 @@ Array.inject({
 String.inject({
 	toElement: function(doc) {
 		doc = doc || Document;
-		var match = /^[^<]*(<(.|\s)+>)[^>]*$/.exec(this);
+		var match = /^[^<]*(<(.|\s)+>)[^>]*$/.exec(this), elements;
 		if (match) {
 			var str = this.trim().toLowerCase();
 			var div = DomElement.unwrap(doc.createElement('div'));
@@ -2246,11 +2246,11 @@ String.inject({
 						el.parentNode.removeChild(el);
 				}
 			}
-			var elements = new HtmlElements(div.childNodes);
-			return elements.length == 1 ? elements[0] : elements;
+			elements = new HtmlElements(div.childNodes);
 		} else {
-			return DomElement.get(doc).getElement(this);
+			elements = DomElement.get(doc).getElements(this);
 		}
+		return elements.length == 1 ? elements[0] : elements;
 	}
 });
 
