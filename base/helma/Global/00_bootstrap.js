@@ -473,7 +473,7 @@ Array.inject(new function() {
 
 		append: function(items) {
 			for (var i = 0, l = items.length; i < l; ++i)
-				this.push(items[i]);
+				this[this.length++] = items[i];
 			return this;
 		},
 
@@ -559,9 +559,16 @@ Array.inject(new function() {
 	['push','pop','shift','unshift','sort','reverse','join','slice','splice','concat'].each(function(name) {
 		fields[name] = proto[name];
 	});
-	var extend = Base.clone(fields);
+	var extend = Hash.merge({}, fields, {
+		clear: function() {
+			for (var i = 0, l = this.length; i < l; i++)
+				delete this[i];
+			this.length = 0;
+		},
+
+		toString: proto.join
+	});
 	extend.length = 0;
-	extend.toString = proto.join;
 	return fields;
 });
 
@@ -627,6 +634,10 @@ String.inject({
 
 	times: function(count) {
 		return count < 1 ? '' : new Array(count + 1).join(this);
+	},
+
+	isHtml: function() {
+		return /^[^<]*(<(.|\s)+>)[^>]*$/.test(this);
 	}
 });
 

@@ -45,7 +45,7 @@ new function() {
 
 	function extend(obj) {
 		function ctor(dont) {
-			if (!this.__proto__) this.__proto__ = obj;
+			this.__proto__ = obj;
 			if (this.initialize && dont !== ctor.dont)
 				return this.initialize.apply(this, arguments);
 		}
@@ -106,7 +106,7 @@ new function() {
 Function.inject(new function() {
 	function timer(that, type, delay, bind, args) {
 		if (delay == undefined)
-			return that.apply(bind, args);
+			return that.apply(bind, args ? args : []);
 		var fn = that.bind(bind, args);
 		var timer = window['set' + type](fn, delay);
 		fn.clear = function() {
@@ -179,13 +179,13 @@ Enumerable = new function() {
 	};
 
 	var each_Object = function(iter, bind) {
-		if (!this.__proto__) {
+		if (this.__proto__ == null) {
 			for (var i in this)
 				iter.call(bind, this[i], i, this);
 		} else {
 			for (var i in this) {
 				var val = this[i];
-				if (val !== this.__proto__[i])
+				if (val !== this.__proto__ && val !== this.__proto__[i])
 					iter.call(bind, val, i, this);
 			}
 		}
@@ -497,7 +497,7 @@ Array.inject(new function() {
 
 		append: function(items) {
 			for (var i = 0, l = items.length; i < l; ++i)
-				this.push(items[i]);
+				this[this.length++] = items[i];
 			return this;
 		},
 
@@ -583,9 +583,22 @@ Array.inject(new function() {
 	['push','pop','shift','unshift','sort','reverse','join','slice','splice','concat'].each(function(name) {
 		fields[name] = proto[name];
 	});
-	var extend = Base.clone(fields);
+	var extend = Hash.merge({}, fields, {
+		clear: function() {
+			for (var i = 0, l = this.length; i < l; i++)
+				delete this[i];
+			this.length = 0;
+		},
+
+		conact: function(list) {
+			return Browser.WEBKIT
+				? new Array(this.length + list.length).append(this).append(list)
+				: Array.concat(this, list);
+		},
+
+		toString: proto.join
+	});
 	extend.length = 0;
-	extend.toString = proto.join;
 	return fields;
 });
 
@@ -651,6 +664,10 @@ String.inject({
 
 	times: function(count) {
 		return count < 1 ? '' : new Array(count + 1).join(this);
+	},
+
+	isHtml: function() {
+		return /^[^<]*(<(.|\s)+>)[^>]*$/.test(this);
 	}
 });
 
@@ -925,7 +942,7 @@ DomElement = Base.extend(new function() {
 		var match;
 		return classCheck && el.className && (match = el.className.match(classCheck)) && match[2] && classes[match[2]] ||
 			el.nodeName && names[el.nodeName] ||
-			el.location && el.frames && el.history && DomDocumentView ||
+			el.location && el.frames && el.history && DomView ||
 			el.className !== undefined && HtmlElement ||
 			DomElement;
 	}
@@ -954,8 +971,10 @@ DomElement = Base.extend(new function() {
 					return new ctor(el, props);
 			}
 			this.$ = el;
-			el._wrapper = this;
-			elements[elements.length] = el;
+			try {
+				el._wrapper = this;
+				elements[elements.length] = el;
+			} catch (e) {} 
 			if (props) this.set(props);
 		},
 
@@ -1114,7 +1133,7 @@ DomElement.inject(new function() {
 		},
 
 		getDocument: function() {
-			return DomElement.get(this.ownerDocument);
+			return DomElement.get(this.$.ownerDocument);
 		},
 
 		getView: function() {
@@ -1171,7 +1190,7 @@ DomElement.inject(new function() {
 		},
 
 		appendText: function(text) {
-			this.$.appendChild(document.createTextNode(text));
+			this.$.appendChild(this.getDocument().createTextNode(text));
 			return this;
 		},
 
@@ -1286,7 +1305,7 @@ DomElement.inject(new function() {
 	function toElements(element) {
 		if (arguments.length > 0)
 			element = Array.create(arguments);
-		var result = element && (element.toElement && element.toElement() || DomElement.get(element)) || null;
+		var result = element && (element.toElement && element.toElement(this.getDocument()) || DomElement.get(element)) || null;
 		return {
 			result: result,
 			array: result ? (Base.type(result) == 'array' ? result : [result]) : [],
@@ -1438,7 +1457,7 @@ DomEvent = Base.extend(new function() {
 								script = doc.getElement('#ie_domready');
 							}
 							if (!check(script))
-								script.addEvent('readystatechange', check.bind(null, script));
+								script.addEvent('readystatechange', check.bind(null, [script]));
 						} else { 
 							view.addEvent('load', domReady);
 							doc.addEvent('DOMContentLoaded', domReady);
@@ -2144,28 +2163,33 @@ HtmlElement.inject({
 
 Array.inject({
 	toElement: function(doc) {
-		doc = DomElement.get(doc) || Document;
+		doc = DomElement.get(doc || document);
 
-		var tag = this[0];
-		if (typeof tag == 'string') {
-			var next = this[1], props = null, index = 1;
-			if (/^(object|hash)$/.test(Base.type(next))) {
-				props = next;
-				index++;
+		var value = this[0];
+		if (typeof value == 'string') {
+			var element, index = 1;
+			if (value.isHtml()) {
+				element = value.toElement(doc);
+			} else {
+				var next = this[1], props = null;
+				if (/^(object|hash)$/.test(Base.type(next))) {
+					props = next;
+					index++;
+				}
+				element = doc.createElement(value, props);
 			}
-			var element = doc.createElement(tag, props);
 			var content = this[index];
 			if (content) {
-				var children = typeof content[0] == 'array' ?
+				var children = Base.type(content) == 'array' && Base.type(content[0]) == 'array' ?
 					content : this.slice(index, this.length);
 				for (var i = 0, l = children.length; i < l; i++)
-					children[i].toElement().insertBottom(element);
+					children[i].toElement(doc).insertBottom(element);
 			}
 			return element;
 		} else {
 			var elements = new HtmlElements();
 			for (var i = 0, l = this.length; i < l; i++)
-				elements.push(this[i].toElement());
+				elements.push(this[i].toElement(doc));
 			return elements;
 		}
 	}
@@ -2173,11 +2197,10 @@ Array.inject({
 
 String.inject({
 	toElement: function(doc) {
-		doc = doc || Document;
-		var match = /^[^<]*(<(.|\s)+>)[^>]*$/.exec(this), elements;
-		if (match) {
+		var doc = doc || document, elements;
+		if (this.isHtml()) {
 			var str = this.trim().toLowerCase();
-			var div = DomElement.unwrap(doc.createElement('div'));
+			var div = DomElement.unwrap(doc).createElement('div');
 
 			var wrap =
 				!str.indexOf('<opt') &&
@@ -2256,9 +2279,9 @@ HtmlElement.inject(new function() {
 
 	var fields = {
 		getComputedStyle: function(name) {
-			var computed;
+			var style;
 			return this.$.currentStyle && this.$.currentStyle[name.camelize()]
-				|| (computed = this.getView().$.getComputedStyle(el, null)) && computed.getPropertyValue(name.hyphenate())
+				|| (style = this.getView().$.getComputedStyle(this.$, null)) && style.getPropertyValue(name.hyphenate())
 				|| null;
 		},
 
@@ -2272,7 +2295,6 @@ HtmlElement.inject(new function() {
 			name = name.camelize();
 			var style = el.style[name];
 			if (!Base.check(style)) {
-
 				if (styles.part[name]) {
 					style = Hash.map(styles.part[name], function(val, key) {
 						return this.getStyle(key);
@@ -2704,11 +2726,11 @@ DomDocument = DomElement.extend({
 	}
 });
 
-DomDocumentView = DomElement.extend({
+DomView = DomElement.extend({
 	_type: 'view',
 
 	getDocument: function() {
-		return DomElement.get(this.document);
+		return DomElement.get(this.$.document);
 	},
 	getView: function() {
 		return this;
