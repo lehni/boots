@@ -161,7 +161,10 @@ StringItem = EditItem.extend(new function() {
 			baseForm.renderButtons([{
 				name: name + '_link',
 				value: 'Internal Link',
-				onClick: baseForm.renderHandle('choose_link', name)
+				onClick: baseForm.renderHandle('choose_link', name, {
+					root: this.root ? this.root.getFullId() : '',
+					multiple: false
+				})
 			}, {
 				name: name + '_url',
 				value: 'External Link',
@@ -596,8 +599,8 @@ MultiSelectItem = SelectItem.extend({
 			param.buttons = baseForm.renderButtons([{
 				name: name + '_choose', value: 'Add',
 				onClick: baseForm.renderHandle('choose_reference', name, {
-					multiple: true,
-					rootId: this.root ? this.root.getFullId() : ''
+					root: this.root ? this.root.getFullId() : '',
+					multiple: true
 				})
 			}, {
 				value: 'Remove',
@@ -720,9 +723,9 @@ ReferenceItem = EditItem.extend({
 		var buttons = [{
 			name: name + '_choose', value: 'Choose',
 			onClick: baseForm.renderHandle('choose_reference', name, {
-				multiple: false,
 				root: this.root ? this.root.getFullId() : '',
-				selected: value ? value.getFullId() : ''
+				selected: value ? value.getFullId() : '',
+				multiple: false
 			})
 		}];
 		if (this.editable) {

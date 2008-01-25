@@ -304,7 +304,7 @@ EditForm = Base.extend({
 					that.back(back);
 			} else {
 				that.close();
-				alert('Error: ' + values + ' ' + this.status);
+				alert('Error: ' + values + ' Status: ' + this.status);
 			}
 		}).send();
 	},
@@ -314,7 +314,7 @@ EditForm = Base.extend({
 		return Hash.merge({
 			edit_mode: mode,
 			edit_id: this.id,
-			edit_data: Json.encode(EditForm.data),
+			edit_data: Json.encode(EditForm.data)
 		}, params);
 	},
 
@@ -400,7 +400,7 @@ EditForm = Base.extend({
 							editForm.container.addClass(param['class']);
 					} else {
 						EditForm.close(param.id);
-						alert('Error: ' + values + ' ' + this.status);
+						alert('Error: ' + values + ' Status: ' + this.status);
 					}
 				}).send();
 			}
@@ -480,7 +480,7 @@ EditForm = Base.extend({
 				}
 			});
 			// Retrigger domready event since things have completely changed.
-			Window.fireEvent('domready');
+			Document.fireEvent('domready');
 			// Fire event on document so website can react to html update
 			// and do some JS magic with it if needed before the ditors are
 			// injected again.
@@ -864,6 +864,11 @@ EditChooser = Base.extend({
 			padding: 2,
 			html: '<div class="float-right"><input type="button" value="Cancel">&nbsp;<input type="button" value="OK"></div><div class="clear"></div>'
 		});
+		this.test = this.element.injectBottom('div', {
+			padding: 2
+		}, 
+			'<div class="float-right"><input type="button" value="Cancel">&nbsp;<input type="button" value="OK"></div><div class="clear"></div>'
+		);
 		*/
 		this.show(false);
 		EditForm.choosers.push(this);
