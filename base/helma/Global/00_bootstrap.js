@@ -28,8 +28,8 @@ new function() {
 							if (version) res._version = version;
 						}
 						break;
-					case 'hash':
 					case 'object':
+					case 'hash':
 						if (prev && prev != val)
 							app.log(name + ' ' + prev + ' ' + val + ' ' + (val instanceof Object));
 						if (prev && prev != val && val instanceof Object)
@@ -750,8 +750,8 @@ Json = new function() {
 					return '"' + obj.replace(/[\x00-\x1f\\"]/g, replace) + '"';
 				case 'array':
 					return '[' + obj.collect(Json.encode) + ']';
-				case 'hash':
 				case 'object':
+				case 'hash':
 					return '{' + Hash.collect(obj, function(val, key) {
 						val = Json.encode(val);
 						if (val) return Json.encode(key) + ':' + val;

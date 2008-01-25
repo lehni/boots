@@ -12,7 +12,7 @@ EditForm = Base.extend({
 		// in close()
 		this.empty = true;
 		if (EditForm.mode == 'inline') {
-			this.container = target.createAfter('div', { id: 'edit-container-' + id });
+			this.container = target.injectAfter('div', { id: 'edit-container-' + id });
 			// Pass on style and class settings
 			if (parent) {
 				this.container.setStyle(parent.container.getStyle());
@@ -84,8 +84,10 @@ EditForm = Base.extend({
 	preview: function(previousHtml) {
 		this.show(false);
 		var that = this;
-		var button = $('body').createInside('div', { className: 'edit-preview' }, [
-			'a', {
+		var button = $('body').injectBottom('div', {
+				className: 'edit-preview'
+			},
+			['a', {
 				html: 'Exit Preview', href: '#',
 				events: {
 					click: function(event) {
@@ -95,8 +97,8 @@ EditForm = Base.extend({
 						event.stop();
 					}
 				}
-			}
-		]);
+			}]
+		);
 	},
 
 	back: function(count) {
@@ -722,16 +724,16 @@ EditForm.register(new function() {
 EditForm.register(new function() {
 	var objectChooser = null;
 
-	function choose(editForm, name, baseId, onChoose) {
+	function choose(editForm, name, params, onChoose) {
 		if (!objectChooser)
 			objectChooser = new ObjectChooser();
-		objectChooser.choose(editForm, name, baseId);
+		objectChooser.choose(editForm, name, params);
 		editForm.onChoose = onChoose;
 	}
 
 	return {
-		choose_link: function(editForm, name, baseId) {
-			choose(editForm, name + '_link', baseId, function(id, title) {
+		choose_link: function(editForm, name, params) {
+			choose(editForm, name + '_link', params, function(id, title) {
 				var field = $('#' + name, editForm.form);
 				if (field) {
 					var text = field.getSelectedText();
@@ -742,11 +744,11 @@ EditForm.register(new function() {
 			});
 		},
 
-		choose_reference: function(editForm, name, multiple, baseId) {
+		choose_reference: function(editForm, name, params) {
 			var that = this;
-			choose(editForm, name + '_choose', baseId, function(id, title) {
+			choose(editForm, name + '_choose', params, function(id, title) {
 				var match;
-				if (multiple) {
+				if (params.multiple) {
 					var el = $('#' + name + '_left');
 					if (el.getElement('option[value="' + id + '"]')) {
 						alert('This element was already added to the list.');
@@ -766,8 +768,8 @@ EditForm.register(new function() {
 			});
 		},
 
-		choose_move: function(editForm, name, baseId) {
-			choose(editForm, name, baseId, function(id, title) {
+		choose_move: function(editForm, name, params) {
+			choose(editForm, name, params, function(id, title) {
 			});
 		},
 
@@ -846,14 +848,23 @@ EditForm.register(new function() {
 });
 
 // Choosers:
-
 EditChooser = Base.extend({
 	initialize: function(name, options, html) {
-		this.element = $('body').createInside('div', {
-			html: html || '', id: name,
-			style: 'background:white;position:absolute;border:1px solid black;padding:' + (options.padding || 0) + 'px;z-index:1000;',
+		this.element = $('body').injectBottom('div', {
+			id: name,
+			style: 'background:white;position:absolute;border:1px solid black;z-index:1000;'
+		});
+		this.content = this.element.injectBottom('div', {
+			html: html || '',
+			padding: options.padding || 0,
 			className: options.className || ''
 		});
+		/*
+		this.test = this.element.injectBottom('div', {
+			padding: 2,
+			html: '<div class="float-right"><input type="button" value="Cancel">&nbsp;<input type="button" value="OK"></div><div class="clear"></div>'
+		});
+		*/
 		this.show(false);
 		EditForm.choosers.push(this);
 	},
@@ -866,16 +877,15 @@ EditChooser = Base.extend({
 	},
 
 	show: function(show) {
-		this.element.setVisibility(show);
+		this.element.modifyClass('hidden', !show);
 	},
 
 	close: function() {
 		this.show(false);
 	},
 
-	renderButton: function(value, action, id) {
-		var str = '<input type="button" value="' + value +
-			'" onmouseup="' + action + '"';
+	renderButton: function(value, id) {
+		var str = '<input type="button" value="' + value + '"';
 		if (id) str += ' id="' + id + '"';
 		str += '>';
 		return str;
@@ -888,7 +898,7 @@ PrototypeChooser = EditChooser.extend({
 	},
 
 	choose: function(editForm, name, prototypes) {
-		this.element.setHtml('<ul>' + prototypes.map(function(proto) {
+		this.content.setHtml('<ul>' + prototypes.map(function(proto) {
 			return '<li><a href="javascript:' + proto.href + '">' + proto.name + '</a></li>';
 		}).join('') + '</ul>');
 		this.editForm = editForm;
@@ -901,15 +911,16 @@ ObjectChooser = EditChooser.extend({
 		this.base('edit-choose', { padding: 4, className: 'edit-chooser' });
 	},
 
-	choose: function(editForm, name, baseId) {
+	choose: function(editForm, name, params) {
 		this.editForm = editForm;
 		this.base(editForm, name);
-		// open the main list
-		this.toggle(baseId);
+		this.show(false);
+		// Open the root list
+		this.toggle(params.root);
 	},
 
 	setArrow: function(id, open) {
-		var arrow = $('#edit-choose-arrow-' + id, this.element);
+		var arrow = $('#edit-choose-arrow-' + id, this.content);
 		if (arrow) {
 			var src = arrow.getProperty('src').match(/^(.*?)(?:close|open)(.*)$/);
 			arrow.setProperty('src', src[1] + (open ? 'open' : 'close') + src[2]);
@@ -917,22 +928,27 @@ ObjectChooser = EditChooser.extend({
 	},
 
 	toggle: function(id) {
-		var children = $('#edit-choose-children-' + id, this.element) || this.element;
-		var show = children == this.element || children.hasClass('hidden');
+		var children = $('#edit-choose-children-' + id, this.content) || this.content;
+		var show = children == this.content || children.hasClass('hidden');
 		if (show) {
 			new Request({
 				url: this.editForm.url, method: 'get',
 				data: this.editForm.getData('choose', {
-					edit_base_id: id || ''
+					edit_root_id: id || ''
 				})
 			}, (function(result) {
 				children.setHtml(result);
 				this.setArrow(id, true);
+				if (show) {
+					children.removeClass('hidden');
+					this.show(true);
+				}
 			}).bind(this)).send();
 		} else {
 			this.setArrow(id, false);
 		}
-		children.modifyClass('hidden', !show);
+		if (!show)
+			children.addClass('hidden');
 	}
 });
 
@@ -970,9 +986,9 @@ ColorChooser = EditChooser.extend({
 					<table border="0" cellpadding="0" cellspacing="0" width="100%">\
 						<tr>\
 							<td class="edit-dont-click" width="100%"></td>\
-							<td class="edit-chooser-element">' + this.renderButton('Cancel', null, 'edit-color-cancel') + '</td>\
+							<td class="edit-chooser-element">' + this.renderButton('Cancel', 'edit-color-cancel') + '</td>\
 							<td><img src="/static/edit/media/spacer.gif" width="4" height="1" border="0" alt=""></td>\
-							<td class="edit-chooser-element">' + this.renderButton('OK', null, 'edit-color-ok') + '</td>\
+							<td class="edit-chooser-element">' + this.renderButton('OK', 'edit-color-ok') + '</td>\
 						</tr>\
 					</table>\
 				</td></tr>\
@@ -981,7 +997,7 @@ ColorChooser = EditChooser.extend({
 		this.size = size;
 		this.hsb = [0, 0, 0];
 		this.target = null;
-		this.form = $('#edit-color-form', this.element);
+		this.form = $('#edit-color-form', this.content);
 
 		var that = this;
 		this.form.addEvent('submit', function(event) {

@@ -595,7 +595,10 @@ MultiSelectItem = SelectItem.extend({
 			// different edit buttons
 			param.buttons = baseForm.renderButtons([{
 				name: name + '_choose', value: 'Add',
-				onClick: baseForm.renderHandle('choose_reference', name, true)
+				onClick: baseForm.renderHandle('choose_reference', name, {
+					multiple: true,
+					rootId: this.root ? this.root.getFullId() : ''
+				})
 			}, {
 				value: 'Remove',
 				onClick: baseForm.renderHandle('references_remove', name)
@@ -716,14 +719,19 @@ ReferenceItem = EditItem.extend({
 		out.write(' ');
 		var buttons = [{
 			name: name + '_choose', value: 'Choose',
-			// TODO: Allow display of current selection in object choosers!
-			onClick: baseForm.renderHandle('choose_reference', name, false /*, value ? value.getFullId() : ''*/)
+			onClick: baseForm.renderHandle('choose_reference', name, {
+				multiple: false,
+				root: this.root ? this.root.getFullId() : '',
+				selected: value ? value.getFullId() : ''
+			})
 		}];
 		if (this.editable) {
 			buttons.push({
 				name: name + '_edit', value: 'Edit', 
-				onClick: baseForm.renderHandle('execute', 'edit',
-					{ edit_item: this.name, edit_group: this.form.name })
+				onClick: baseForm.renderHandle('execute', 'edit', {
+					edit_item: this.name,
+					edit_group: this.form.name
+				})
 			});
 		}
 		baseForm.renderButtons(buttons, out);

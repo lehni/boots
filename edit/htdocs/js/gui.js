@@ -78,9 +78,8 @@ EditWindow.inject({
 		return document;
 	},
 	
-	renderButton: function(value, action, id) {
+	renderButton: function(value, id) {
 		var str = '<a href="#" onclick="return false;"';
-		if (action) str += ' onmouseup"' + action + '"';
 		if (id) str += ' id="' + id + '"';
 		str += ' class="button" style="display:block"';
 		str += '>' + value + '</a>';

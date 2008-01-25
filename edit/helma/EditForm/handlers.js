@@ -478,10 +478,11 @@ EditForm.register({
 	choose: function(base, object, node, form) {
 		// TODO: canEdit?!
 //		if (User.canEdit()) {
-			var obj = HopObject.get(req.data.edit_base_id) || root;
+			var obj = HopObject.get(req.data.edit_root_id) || root;
 			var objId = obj.getFullId();
 			var isRoot = obj == root;
 
+			res.contentType = 'text/html';
 			res.write('<ul id="edit-choose-children-' + objId + '">');
 			var children = obj.list();
 			for (var i = 0; i < children.length; i++) {

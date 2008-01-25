@@ -25,8 +25,8 @@ new function() {
 							}).pretend(val);
 						}
 						break;
-					case 'hash':
 					case 'object':
+					case 'hash':
 						if (prev && prev != val && val instanceof Object)
 							res = Hash.merge({}, prev, val);
 						break;
@@ -772,8 +772,8 @@ Json = new function() {
 					return '"' + obj.replace(/[\x00-\x1f\\"]/g, replace) + '"';
 				case 'array':
 					return '[' + obj.collect(Json.encode) + ']';
-				case 'hash':
 				case 'object':
+				case 'hash':
 					return '{' + Hash.collect(obj, function(val, key) {
 						val = Json.encode(val);
 						if (val) return Json.encode(key) + ':' + val;
@@ -823,9 +823,10 @@ Browser = new function() {
 DomElements = Array.extend(new function() {
 	var unique = 0;
 	return {
-		initialize: function(els) {
+		initialize: function(elements, doc) {
 			this._unique = unique++;
-			this.append(els && els.length != null && !els.nodeType ? els : arguments);
+			this.append(elements && elements.length != null && !elements.nodeType
+				? elements : arguments);
 		},
 
 		push: function() {
@@ -841,6 +842,10 @@ DomElements = Array.extend(new function() {
 					this[this.length++] = el;
 				}
 			}
+			return this;
+		},
+
+		toElement: function() {
 			return this;
 		},
 
@@ -922,28 +927,25 @@ DomElement = Base.extend(new function() {
 			(el.className === undefined ? DomElement : HtmlElement)
 	}
 
-	var dont = {};
+	var dont = '';
 
 	return {
 		_type: 'element',
 		_elements: DomElements,
 
-		initialize: function(el, props) {
+		initialize: function(el, props, doc) {
 			if (this._tag && Base.type(el) == 'object') {
 				props = el;
 				el = this._tag;
 			}
 			if (typeof(el) == 'string') {
-				if (Browser.IE && props && (props.name || props.type))
-					el = '<' + el
-						+ (props.name ? ' name="' + props.name + '"' : '')
-						+ (props.type ? ' type="' + props.type + '"' : '') + '>';
-				el = document.createElement(el);
-			} else {
-				if (el._wrapper) return el._wrapper;
+				el = DomElement.create(el, props, doc);
+			} else if (el._wrapper) {
+				return el._wrapper;
 			}
-			if (props == dont) props = null;
-			else {
+			if (props === dont) {
+				props = null;
+			} else {
 				var ctor = getConstructor(el);
 				if (ctor != this.constructor)
 					return new ctor(el, props);
@@ -1009,6 +1011,20 @@ DomElement = Base.extend(new function() {
 						: null;
 			},
 
+			create: function(name, props, doc) {
+				if (Browser.IE && props) {
+					['name', 'type', 'checked'].each(function(key) {
+						if (props[key]) {
+							name += ' ' + key + '="' + props[key] + '"';
+							if (key != 'checked')
+								delete props[key];
+						}
+					});
+					name = '<' + name + '>';
+				}
+				return (DomElement.unwrap(doc) || document).createElement(name);
+			},
+
 			unwrap: function(el) {
 				return el && el.$ || el;
 			},
@@ -1053,13 +1069,13 @@ DomElement.inject(new function() {
 
 	var handlers = { get: {}, set: {} };
 
-	function handle(that, prefix, name, val) {
+	function handle(that, prefix, name, value) {
 		var list = handlers[prefix];
 		var fn = name == 'events' && prefix == 'set' ? that.addEvents : list[name];
 		if (fn === undefined)
 			fn = list[name] = that[prefix + name.capitalize()] || null;
-		if (fn) return fn[val && val.push ? 'apply' : 'call'](that, val);
-		else return that[prefix + 'Property'](name, val);
+		if (fn) return fn[value && value.push ? 'apply' : 'call'](that, value);
+		else return that[prefix + 'Property'](name, value);
 	}
 
 	function walk(el, name, start) {
@@ -1068,20 +1084,14 @@ DomElement.inject(new function() {
 		return DomElement.get(el);
 	}
 
-	function create(where) {
-		return function() {
-			return this.create(arguments)['insert' + where](this);
-		}
-	}
-
-	return {
+	var fields = {
 		set: function(name, value) {
 			switch (Base.type(name)) {
 				case 'string':
 					return handle(this, 'set', name, value);
 				case 'object':
-					return Base.each(name, function(val, key) {
-						handle(this, 'set', key, val);
+					return Base.each(name, function(value, key) {
+						handle(this, 'set', key, value);
 					}, this);
 			}
 			return this;
@@ -1137,9 +1147,7 @@ DomElement.inject(new function() {
 
 		appendChild: function(el) {
 			if (el = DomElement.get(el)) {
-				var text = Browser.IE && el.$.text;
-		 		this.$.appendChild(el.$);
-				if (text) el.$.text = text;
+				this.$.appendChild(el.$);
 			}
 			return this;
 		},
@@ -1150,72 +1158,10 @@ DomElement.inject(new function() {
 			}, this);
 		},
 
-		insertBefore: function(el) {
-			if (el = DomElement.get(el)) {
-				var text = Browser.IE && el.text;
-				el.$.parentNode.insertBefore(this.$, el.$);
-				if (text) this.$.text = text;
-			}
-			return this;
-		},
-
-		insertAfter: function(el) {
-			if (el = DomElement.get(el)) {
-				var next = el.getNext();
-				if (next) this.insertBefore(next);
-				else el.getParent().appendChild(this);
-			}
-			return this;
-		},
-
-		insertFirst: function(el) {
-			if (el = DomElement.get(el)) {
-				var first = el.getFirst();
-				if (first) this.insertBefore(first);
-				else el.appendChild(this);
-			}
-			return this;
-		},
-
-		insertInside: function(el) {
-			if (el = DomElement.get(el))
-				el.appendChild(this);
-			return this;
-		},
-
 		appendText: function(text) {
 			this.$.appendChild(document.createTextNode(text));
 			return this;
 		},
-
-		create: function(arg) {
-			var items = Base.type(arg) == 'array' ? arg : arguments;
-			var elements = new this._elements();
-			for (var i = 0, l = items.length; i < l; i ++) {
-				var item = items[i];
-				var props = item[1], content = item[2];
-				if (!content && Base.type(props) != 'object') {
-					content = props;
-					props = null;
-				}
-				var el = new DomElement(item[0], props);
-				if (content) {
-					if (content.push) this.create(Base.type(content[0]) == 'string'
-						? [content] : content).insertInside(el);
-					else el.appendText(content);
-				}
-				elements.push(el);
-			}
-			return elements.length > 1 ? elements : elements[0];
-		},
-
-		createBefore: create('Before'),
-
-		createAfter: create('After'),
-
-		createFirst: create('First'),
-
-		createInside: create('Inside'),
 
 		wrap: function() {
 			var el = this.create(arguments), last;
@@ -1279,15 +1225,82 @@ DomElement.inject(new function() {
 		},
 
 		setProperties: function(src) {
-			return Base.each(src, function(val, name) {
-				this.setProperty(name, val);
+			return Base.each(src, function(value, name) {
+				this.setProperty(name, value);
 			}, this);
 		},
 
 		toString: function() {
-			return this.getTag() + (this.$.id ? '#' + this.$.id : '');
+			return this.$.nodeName.toLowerCase() + (this.$.id ? '#' + this.$.id : '');
+		},
+
+		toElement: function() {
+			return this;
 		}
+	};
+
+	var inserters = {
+		before: function(source, dest) {
+			if (source && dest && dest.$.parentNode) {
+				dest.$.parentNode.insertBefore(source.$, dest.$);
+			}
+		},
+
+		after: function(source, dest) {
+			if (source && dest && dest.$.parentNode) {
+				var next = dest.getNext();
+				if (next) source.insertBefore(next);
+				else dest.getParent().appendChild(source);
+			}
+		},
+
+		bottom: function(source, dest) {
+			if (source && dest)
+				dest.appendChild(source);
+		},
+
+		top: function(source, dest) {
+			if (source && dest) {
+				var first = dest.getFirst();
+				if (first) source.insertBefore(first);
+				else dest.appendChild(source);
+			}
+		}
+	};
+
+	inserters.inside = inserters.bottom;
+
+	function toElements(element) {
+		if (arguments.length > 0)
+			element = Array.create(arguments);
+		var result = element && (element.toElement && element.toElement() || DomElement.get(element)) || null;
+		return {
+			result: result,
+			array: result ? (Base.type(result) == 'array' ? result : [result]) : [],
+			created: result && Base.type(element) != 'element'
+		};
 	}
+
+	Base.each(inserters, function(inserter, name) {
+		var part = name.capitalize();
+		fields['insert' + part] = function(el) {
+			el = toElements.apply(this, arguments);
+			var dests = el.array;
+			for (var i = 0, l = dests.length; i < l; i++)
+				inserter(i == 0 ? this : this.clone(true), dests[i]);
+			return el.created ? el.result : this;
+		}
+
+		fields['inject' + part] = function(el) {
+			el = toElements.apply(this, arguments);
+			var sources = el.array;
+			for (var i = 0, l = sources.length; i < l; i++)
+				inserter(sources[i], this);
+			return el.created ? el.result : this;
+		}
+	});
+
+	return fields;
 });
 
 DomEvent = Base.extend(new function() {
@@ -1505,8 +1518,20 @@ DomElement.inject({
 });
 
 Document = DomElement.get(document).inject({
-	getTag: function() {
-		return 'document';
+	createElement: function(tag, props) {
+		return DomElement.get(DomElement.create(tag, props, this.$)).set(props);
+	},
+
+	createTextNode: function(text) {
+		return this.$.createTextNode(text);
+	},
+
+	getDocument: function() {
+		return this;
+	},
+
+	getWindow: function() {
+		return DomElement.get(this.defaultView || this.parentWindow);
 	}
 });
 
@@ -1524,7 +1549,7 @@ catch (e) {}
 @*/
 
 Window = DomElement.get(window).inject({
-	getTag: function() {
+	toString: function() {
 		return 'window';
 	},
 
@@ -2086,11 +2111,7 @@ DomElement.pseudos = new function() {
 HtmlElements = Document._elements = DomElements.extend();
 
 HtmlElement = DomElement.extend({
-	_elements: HtmlElements,
-
-	initialize: function() {
-		this.style = this.$.style;
-	}
+	_elements: HtmlElements
 });
 
 HtmlElement.inject = DomElement.inject;
@@ -2147,11 +2168,89 @@ HtmlElement.inject({
 			if (Browser.IE) {
 				if (tag == 'style') this.$.styleSheet.cssText = text;
 				else this.setProperty('text', text);
-			} else
+			} else {
 				this.$.innerHTML = text;
-		} else
+			}
+		} else {
 			this.$[this.$.innerText !== undefined ? 'innerText' : 'textContent'] = text;
+		}
 		return this;
+	}
+});
+
+Array.inject({
+	toElement: function(doc) {
+		doc = DomElement.get(doc) || Document;
+
+		var tag = this[0];
+		if (typeof tag == 'string') {
+			var next = this[1], props = null, index = 1;
+			if (/^(object|hash)$/.test(Base.type(next))) {
+				props = next;
+				index++;
+			}
+			var element = doc.createElement(tag, props);
+			var content = this[index];
+			if (content) {
+				var children = typeof content[0] == 'array' ?
+					content : this.slice(index, this.length);
+				for (var i = 0, l = children.length; i < l; i++)
+					children[i].toElement().insertBottom(element);
+			}
+			return element;
+		} else {
+			var elements = new HtmlElements();
+			for (var i = 0, l = this.length; i < l; i++)
+				elements.push(this[i].toElement());
+			return elements;
+		}
+	}
+});
+
+String.inject({
+	toElement: function(doc) {
+		doc = doc || Document;
+		var match = /^[^<]*(<(.|\s)+>)[^>]*$/.exec(this);
+		if (match) {
+			var str = this.trim().toLowerCase();
+			var div = DomElement.unwrap(doc.createElement('div'));
+
+			var wrap =
+				!str.indexOf('<opt') &&
+				[1, '<select>', '</select>'] ||
+				!str.indexOf('<leg') &&
+				[1, '<fieldset>', '</fieldset>'] ||
+				(!str.indexOf('<thead') || !str.indexOf('<tbody') || !str.indexOf('<tfoot') || !str.indexOf('<colg')) &&
+				[1, '<table>', '</table>'] ||
+				!str.indexOf('<tr') &&
+				[2, '<table><tbody>', '</tbody></table>'] ||
+				(!str.indexOf('<td') || !str.indexOf('<th')) &&
+				[3, '<table><tbody><tr>', '</tr></tbody></table>'] ||
+				!str.indexOf('<col') &&
+				[2, '<table><colgroup>', '</colgroup></table>'] ||
+				[0,'',''];
+
+			div.innerHTML = wrap[1] + this + wrap[2];
+			while (wrap[0]--)
+				div = div.firstChild;
+			if (Browser.IE) {
+				var els = [];
+				if (!str.indexOf('<table') && str.indexOf('<tbody') < 0) {
+					els = div.firstChild && div.firstChild.childNodes;
+				} else if (wrap[1] == '<table>' && str.indexOf('<tbody') < 0) {
+					els = div.childNodes;
+				}
+				for (var i = els.length - 1; i >= 0 ; --i) {
+					var el = els[i];
+					if (el.nodeName.toLowerCase() == 'tbody' && !el.childNodes.length)
+						el.parentNode.removeChild(el);
+				}
+			}
+			var elements = new HtmlElements(div.childNodes);
+			return elements.length == 1 ? elements[0] : elements;
+		} else {
+			return DomElement.get(doc).getElement(this);
+		}
 	}
 });
 
@@ -2161,12 +2260,15 @@ HtmlElement.inject(new function() {
 			width: '@px', height: '@px', left: '@px', top: '@px', right: '@px', bottom: '@px',
 			color: 'rgb(@, @, @)', backgroundColor: 'rgb(@, @, @)', backgroundPosition: '@px @px',
 			fontSize: '@px', letterSpacing: '@px', lineHeight: '@px', textIndent: '@px',
-			margin: '@px @px @px @px', padding: '@px @px @px @px', border: '@px @ rgb(@, @, @) @px @ rgb(@, @, @) @px @ rgb(@, @, @) @px @ rgb(@, @, @)',
-			borderWidth: '@px @px @px @px', borderStyle: '@ @ @ @', borderColor: 'rgb(@, @, @) rgb(@, @, @) rgb(@, @, @) rgb(@, @, @)',
+			margin: '@px @px @px @px', padding: '@px @px @px @px',
+			border: '@px @ rgb(@, @, @) @px @ rgb(@, @, @) @px @ rgb(@, @, @) @px @ rgb(@, @, @)',
+			borderWidth: '@px @px @px @px', borderStyle: '@ @ @ @',
+			borderColor: 'rgb(@, @, @) rgb(@, @, @) rgb(@, @, @) rgb(@, @, @)',
 			clip: 'rect(@px, @px, @px, @px)', opacity: '@'
 		},
 		part: {
-			'margin': {}, 'padding': {}, 'border': {}, 'borderWidth': {}, 'borderStyle': {}, 'borderColor': {}
+			'border': {}, 'borderWidth': {}, 'borderStyle': {}, 'borderColor': {},
+			'margin': {}, 'padding': {}
 		}
 	};
 
@@ -2291,7 +2393,8 @@ HtmlElement.inject(new function() {
 		}
 	};
 
-	['opacity', 'color', 'background', 'visibility', 'clip', 'zIndex'].each(function(name) {
+	['opacity', 'color', 'background', 'visibility', 'clip', 'zIndex',
+		'border', 'margin', 'padding', 'display'].each(function(name) {
 		var part = name.capitalize();
 		fields['get' + part] = function() {
 			return this.getStyle(name);
@@ -2433,7 +2536,7 @@ HtmlElement.inject({
 
 	setValue: function(name, val) {
 		var el = this.getElement(name);
-		if (!el) el = this.createInside('input', { type: 'hidden', id: name, name: name });
+		if (!el) el = this.injectBottom('input', { type: 'hidden', id: name, name: name });
 		return el.setValue(val);
 	},
 
@@ -2649,11 +2752,16 @@ Request = Base.extend(Chain, Callback, new function() {
 
 	function createFrame(that, form) {
 		var id = 'request_' + unique++, onLoad = that.onFrameLoad.bind(that);
-		var div = Document.getElement('body').createInside(
-			'div', { styles: { position: 'absolute', top: '0', marginLeft: '-10000px' }}, [
-				'iframe', { name: id, id: id, events: { load: onLoad }, onreadystatechange: onLoad }
-			]
+		var div = Document.getElement('body').injectBottom('div', {
+				styles: {
+					position: 'absolute', top: '0', marginLeft: '-10000px'
+				}
+			},
+			['iframe', {
+				name: id, id: id, events: { load: onLoad }, onreadystatechange: onLoad
+			}]
 		);
+
 		that.frame = {
 			id: id, div: div, form: form,
 			iframe: window.frames[id] || document.getElementById(id),
@@ -2771,7 +2879,7 @@ Request = Base.extend(Chain, Callback, new function() {
 			if (window.execScript) {
 				window.execScript(script);
 			} else {
-				Document.getElement('head').createInside('script', {
+				Document.getElement('head').injectBottom('script', {
 					type: 'text/javascript', text: script
 				}).remove();
 			}
@@ -2933,15 +3041,16 @@ Asset = new function() {
 
 	return {
 		script: function(src, props) {
-			var script = new HtmlElement('script')
-				.addEvent('load', props.onLoad)
-				.setProperty('src', src)
-				.setProperties(getProperties(props))
-				.addEvent('readystatechange', function() {
-					if (/loaded|complete/.test(this.$.readyState))
-						this.fireEvent('load');
-				})
-				.insertInside(Document.getElement('head'));
+			var script = Document.getElement('head').injectBottom('script', Hash.merge({
+				events: {
+					load: props.onLoad,
+					readystatechange: function() {
+						if (/loaded|complete/.test(this.$.readyState))
+							this.fireEvent('load');
+					}
+				},
+				src: src,
+			}, getProperties(props)));
 			if (Browser.WEBKIT2)
 				new Request({ url: src, method: 'get' }).addEvent('success', function() {
 					script.fireEvent.delay(1, script, ['load']);
