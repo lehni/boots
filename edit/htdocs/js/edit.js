@@ -86,18 +86,19 @@ EditForm = Base.extend({
 		var that = this;
 		var button = $('body').injectBottom('div', {
 				className: 'edit-preview'
-			},
-			['a', {
-				html: 'Exit Preview', href: '#',
-				events: {
-					click: function(event) {
-						that.show(true);
-						EditForm.updateBody(previousHtml);
-						button.remove();
-						event.stop();
+			}, [
+				'a', {
+					html: 'Exit Preview', href: '#',
+					events: {
+						click: function(event) {
+							that.show(true);
+							EditForm.updateBody(previousHtml);
+							button.remove();
+							event.stop();
+						}
 					}
 				}
-			}]
+			]
 		);
 	},
 
