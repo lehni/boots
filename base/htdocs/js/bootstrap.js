@@ -898,7 +898,7 @@ DomElements = Array.extend(new function() {
 
 DomElement = Base.extend(new function() {
 	var elements = [];
-	var names = {}, classes = {}, classCheck, unique = 0;
+	var tags = {}, classes = {}, classCheck, unique = 0;
 
 	function dispose(force) {
 		for (var i = elements.length - 1; i >= 0; i--) {
@@ -941,9 +941,10 @@ DomElement = Base.extend(new function() {
 	function getConstructor(el) {
 		var match;
 		return classCheck && el.className && (match = el.className.match(classCheck)) && match[2] && classes[match[2]] ||
-			el.nodeName && names[el.nodeName] ||
-			el.location && el.frames && el.history && DomView ||
+			el.tagName && tags[el.tagName] ||
 			el.className !== undefined && HtmlElement ||
+			el.location && el.frames && el.history && DomView ||
+			el.nodeName == '#document' && (document.documentElement.nodeName.toLowerCase() == 'html' && HtmlDocument || DomDocument) ||
 			DomElement;
 	}
 
@@ -954,9 +955,9 @@ DomElement = Base.extend(new function() {
 		_elements: DomElements,
 
 		initialize: function(el, props, doc) {
-			if (this._name && Base.type(el) == 'object') {
+			if (this._tag && Base.type(el) == 'object') {
 				props = el;
-				el = this._name;
+				el = this._tag;
 			}
 			if (typeof(el) == 'string') {
 				el = DomElement.create(el, props, doc);
@@ -1012,8 +1013,8 @@ DomElement = Base.extend(new function() {
 				inject.call(ret, src);
 				ret.inject = inject;
 				if (src) {
-					if (src._name)
-						names[src._name.toLowerCase()] = names[src._name.toUpperCase()] = ret;
+					if (src._tag)
+						tags[src._tag.toLowerCase()] = tags[src._tag.toUpperCase()] = ret;
 					if (src._class) {
 						classes[src._class] = ret;
 						classCheck = new RegExp('(^|\\s)(' + Base.each(classes, function(val, name) {
@@ -1034,18 +1035,18 @@ DomElement = Base.extend(new function() {
 						: null;
 			},
 
-			create: function(name, props, doc) {
+			create: function(tag, props, doc) {
 				if (Browser.IE && props) {
 					['name', 'type', 'checked'].each(function(key) {
 						if (props[key]) {
-							name += ' ' + key + '="' + props[key] + '"';
+							tag += ' ' + key + '="' + props[key] + '"';
 							if (key != 'checked')
 								delete props[key];
 						}
 					});
-					name = '<' + name + '>';
+					tag = '<' + tag + '>';
 				}
-				return (DomElement.unwrap(doc) || document).createElement(name);
+				return (DomElement.unwrap(doc) || document).createElement(tag);
 			},
 
 			unwrap: function(el) {
@@ -1090,9 +1091,9 @@ DomElement.inject(new function() {
 		href: 2, src: 2
 	};
 
-	var handlers = { get: {}, set: {} };
-
 	function handle(that, prefix, name, value) {
+		var ctor = that.__proto__.constructor;
+		var handlers = ctor.handlers = ctor.handlers || { get: {}, set: {} };
 		var list = handlers[prefix];
 		var fn = name == 'events' && prefix == 'set' ? that.addEvents : list[name];
 		if (fn === undefined)
@@ -1261,7 +1262,7 @@ DomElement.inject(new function() {
 		},
 
 		toString: function() {
-			return (this.$.nodeName || this._type).toLowerCase() +
+			return (this.$.tagName || this._type).toLowerCase() +
 				(this.$.id ? '#' + this.$.id : '');
 		},
 
@@ -1332,6 +1333,86 @@ DomElement.inject(new function() {
 	});
 
 	return fields;
+});
+
+DomDocument = DomElement.extend({
+	_type: 'document',
+	_elements: DomElements,
+
+	initialize: function() {
+		if(Browser.IE)
+			try {
+				this.$.execCommand('BackgroundImageCache', false, true);
+			} catch (e) {}
+	},
+
+	createElement: function(tag, props) {
+		return DomElement.get(DomElement.create(tag, props, this.$)).set(props);
+	},
+
+	createTextNode: function(text) {
+		return this.$.createTextNode(text);
+	},
+
+	getDocument: function() {
+		return this;
+	},
+
+	getView: function() {
+		return DomElement.get(this.$.defaultView || this.$.parentWindow);
+	},
+
+	open: function() {
+		this.$.open();
+	},
+
+	close: function() {
+		this.$.close();
+	},
+
+	write: function(markup) {
+		this.$.write(markup);
+	},
+
+	writeln: function(markup) {
+		this.$.writeln(markup);
+	}
+});
+
+DomView = DomElement.extend({
+	_type: 'view',
+
+	getDocument: function() {
+		return DomElement.get(this.$.document);
+	},
+	getView: function() {
+		return this;
+	},
+
+	open: function(url, title, params) {
+		var focus;
+		if (params && typeof params != 'string') {
+			if (params.confirm && !confirm(params.confirm))
+				return null;
+			(['toolbar','menubar','location','status','resizable','scrollbars']).each(function(d) {
+				if (!params[d]) params[d] = 0;
+			});
+			if (params.width && params.height) {
+				if (params.left == null) params.left = Math.round(
+					Math.max(0, (screen.width - params.width) / 2));
+				if (params.top == null) params.top = Math.round(
+					Math.max(0, (screen.height - params.height) / 2 - 40));
+			}
+			focus = params.focus;
+			params = Base.each(params, function(p, n) {
+				if (!/^(focus|confirm)$/.test(n))
+					this.push(n + '=' + p);
+			}, []).join(',');
+		}
+		var win = this.$.open(url, title.replace(/\s+|\.+|-+/gi, ''), params);
+		if (win && focus) win.focus();
+		return win;
+	}
 });
 
 DomEvent = Base.extend(new function() {
@@ -2167,16 +2248,17 @@ Array.inject({
 		for (var i = 0; i < this.length;) {
 			var value = this[i++], element = null;
 			if (typeof value == 'string') {
+				var props = /^(object|hash)$/.test(Base.type(this[i])) && this[i++];
 				element = value.isHtml()
-					? value.toElement(doc)
-					: doc.createElement(value, /^(object|hash)$/.test(Base.type(this[i])) && this[i++]);
+					? value.toElement(doc).set(props)
+					: doc.createElement(value, props);
 				if (Base.type(this[i]) == 'array')
 					element.injectBottom(this[i++].toElement(doc));
 			} else if (value && value.toElement) {
 				element = value.toElement(doc);
 			}
 			if (element)
-				elements.push(element);
+				elements[Base.type(element) == 'array' ? 'append' : 'push'](element);
 		}
 		return elements.length == 1 ? elements[0] : elements;
 	}
@@ -2226,6 +2308,10 @@ String.inject({
 		}
 		return elements.length == 1 ? elements[0] : elements;
 	}
+});
+
+HtmlDocument = DomDocument.extend({
+	_elements: HtmlElements
 });
 
 HtmlElement.inject(new function() {
@@ -2538,7 +2624,7 @@ HtmlElement.inject({
 });
 
 Form = HtmlElement.extend({
-	_name: 'form',
+	_tag: 'form',
 	_properties: ['action', 'method', 'target'],
 	_methods: ['submit'],
 
@@ -2568,7 +2654,7 @@ FormElement = HtmlElement.extend({
 });
 
 Input = FormElement.extend({
-	_name: 'input',
+	_tag: 'input',
 	_properties: ['type', 'checked', 'defaultChecked', 'readOnly', 'maxLength'],
 	_methods: ['click'],
 
@@ -2586,12 +2672,12 @@ Input = FormElement.extend({
 });
 
 TextArea = FormElement.extend({
-	_name: 'textarea',
+	_tag: 'textarea',
 	_properties: ['value']
 });
 
 Select = FormElement.extend({
-	_name: 'select',
+	_tag: 'select',
 	_properties: ['type', 'selectedIndex'],
 
 	getOptions: function() {
@@ -2616,7 +2702,7 @@ Select = FormElement.extend({
 });
 
 SelectOption = FormElement.extend({
-	_name: 'option',
+	_tag: 'option',
 	_properties: ['text', 'value', 'selected', 'defaultSelected', 'index']
 });
 
@@ -2665,87 +2751,6 @@ FormElement.inject({
 		if(pos == -1)
 			pos = this.getValue().length;
 		return this.setSelection(pos, pos);
-	}
-});
-
-DomDocument = DomElement.extend({
-	_name: '#document',
-	_type: 'document',
-	_elements: HtmlElements,
-
-	initialize: function() {
-		if(Browser.IE)
-			try {
-				this.$.execCommand('BackgroundImageCache', false, true);
-			} catch (e) {}
-	},
-
-	createElement: function(tag, props) {
-		return DomElement.get(DomElement.create(tag, props, this.$)).set(props);
-	},
-
-	createTextNode: function(text) {
-		return this.$.createTextNode(text);
-	},
-
-	getDocument: function() {
-		return this;
-	},
-
-	getView: function() {
-		return DomElement.get(this.$.defaultView || this.$.parentWindow);
-	},
-
-	open: function() {
-		this.$.open();
-	},
-
-	close: function() {
-		this.$.close();
-	},
-
-	write: function(markup) {
-		this.$.write(markup);
-	},
-
-	writeln: function(markup) {
-		this.$.writeln(markup);
-	}
-});
-
-DomView = DomElement.extend({
-	_type: 'view',
-
-	getDocument: function() {
-		return DomElement.get(this.$.document);
-	},
-	getView: function() {
-		return this;
-	},
-
-	open: function(url, title, params) {
-		var focus;
-		if (params && typeof params != 'string') {
-			if (params.confirm && !confirm(params.confirm))
-				return null;
-			(['toolbar','menubar','location','status','resizable','scrollbars']).each(function(d) {
-				if (!params[d]) params[d] = 0;
-			});
-			if (params.width && params.height) {
-				if (params.left == null) params.left = Math.round(
-					Math.max(0, (screen.width - params.width) / 2));
-				if (params.top == null) params.top = Math.round(
-					Math.max(0, (screen.height - params.height) / 2 - 40));
-			}
-			focus = params.focus;
-			params = Base.each(params, function(p, n) {
-				if (!/^(focus|confirm)$/.test(n))
-					this.push(n + '=' + p);
-			}, []).join(',');
-		}
-		var win = this.$.open(url, title.replace(/\s+|\.+|-+/gi, ''), params);
-		if (win && focus) win.focus();
-		return win;
 	}
 });
 
