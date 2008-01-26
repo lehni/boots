@@ -426,7 +426,9 @@ SelectItem = EditItem.extend({
 	},
 
 	convert: function(value) {
-		value = HopObject.get(value);
+		// Only convert back to HopObject if the options are a HopObject collection
+		if ((this.collection || this.options) instanceof HopObject)
+			value = HopObject.get(value);
 		// Only convert if the current value is not the collection itself,
 		// as we cannot override collections (this happens e.g. when
 		// using a select item for simply creating a list of objects, not
