@@ -2163,34 +2163,22 @@ HtmlElement.inject({
 Array.inject({
 	toElement: function(doc) {
 		doc = DomElement.get(doc || document);
-
-		var value = this[0];
-		if (typeof value == 'string') {
-			var element, index = 1;
-			if (value.isHtml()) {
+		var elements = new HtmlElements();
+		for (var i = 0; i < this.length;) {
+			var value = this[i++], element = null;
+			if (typeof value == 'string') {
+				element = value.isHtml()
+					? value.toElement(doc)
+					: doc.createElement(value, /^(object|hash)$/.test(Base.type(this[i])) && this[i++]);
+				if (Base.type(this[i]) == 'array')
+					element.injectBottom(this[i++].toElement(doc));
+			} else if (value && value.toElement) {
 				element = value.toElement(doc);
-			} else {
-				var next = this[1], props = null;
-				if (/^(object|hash)$/.test(Base.type(next))) {
-					props = next;
-					index++;
-				}
-				element = doc.createElement(value, props);
 			}
-			var content = this[index];
-			if (content) {
-				var children = Base.type(content) == 'array' && Base.type(content[0]) == 'array' ?
-					content : this.slice(index, this.length);
-				for (var i = 0, l = children.length; i < l; i++)
-					children[i].toElement(doc).insertBottom(element);
-			}
-			return element;
-		} else {
-			var elements = new HtmlElements();
-			for (var i = 0, l = this.length; i < l; i++)
-				elements.push(this[i].toElement(doc));
-			return elements;
+			if (element)
+				elements.push(element);
 		}
+		return elements.length == 1 ? elements[0] : elements;
 	}
 });
 
@@ -2841,10 +2829,12 @@ Request = Base.extend(Chain, Callback, new function() {
 				styles: {
 					position: 'absolute', top: '0', marginLeft: '-10000px'
 				}
-			},
-			['iframe', {
-				name: id, id: id, events: { load: onLoad }, onreadystatechange: onLoad
-			}]
+			}, [
+				'iframe', {
+					name: id, id: id, events: { load: onLoad },
+					onreadystatechange: onLoad
+				}
+			]
 		);
 
 		that.frame = {
