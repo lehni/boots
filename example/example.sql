@@ -62,4 +62,4 @@ CREATE TABLE users (
   KEY name (name)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
-INSERT INTO users VALUES (0,'admin','Administrator','3f1d3578303c4cff3872a40345a00225f2c8192b',15,'juerg@scratchdisk.com','2005-01-21 11:01:55','2007-11-08 00:28:45','Sys Admins Do It Better','http://www.scratchdisk.com');
+INSERT INTO users VALUES (0,'admin','Administrator','3f1d3578303c4cff3872a40345a00225f2c8192b',12295,'juerg@scratchdisk.com','2005-01-21 11:01:55','2007-11-08 00:28:45','Sys Admins Do It Better','http://www.scratchdisk.com');

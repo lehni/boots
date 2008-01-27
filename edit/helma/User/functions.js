@@ -4,13 +4,22 @@
 // Flags to check single attributes. A role consists of more of one of these
 // e.g. the superuser has all the flags set.
 
-User.NONE= 0;
-User.READER = 1;
-User.EDITOR = 2;
-User.ADMINISTRATOR = 4;
-User.SUPERUSER = 8;
-User.DISABLED = 16;
-User.UNVERIFIED = 32;
+User.NONE = 			0x0000;
+User.READER =			0x0001;
+User.POSTER =			0x0002;
+User.EDITOR =			0x0004;
+// Define your own, e.g.:
+//User.ROLE1 = 			0x0008;
+//User.ROLE2 = 			0x0010;
+//User.ROLE3 = 			0x0020;
+//User.ROLE4 = 			0x0040;
+//User.ROLE5 = 			0x0080;
+
+User.DISABLED =			0x0100;
+User.UNVERIFIED =		0x0200;
+
+User.ADMINISTRATOR =	0x1000;
+User.SUPERUSER =		0x2000;
 
 ////////////////////////////////////////////////////////////////////////
 // Needed for EditForm:
