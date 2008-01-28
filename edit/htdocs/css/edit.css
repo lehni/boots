@@ -46,30 +46,42 @@
 	padding: 0px;
 }
 
+.edit-chooser {
+	position: absolute;
+	background: #fff;
+	border: 1px solid black;
+	z-index: 1000;
+}
+
+.edit-chooser .edit-buttons-right {
+	text-align: right;
+}
+
+.edit-chooser .edit-buttons-right .edit-button {
+	padding-left: 4px;
+}
+
 /* Not nested in #edit, as it is used for color choosers and such */ 
-.edit-chooser-element, .edit-chooser-element select, .edit-chooser-element input {
+.edit-chooser .edit-element, .edit-chooser .edit-element select, .edit-chooser .edit-element input {
 	font-family: "Lucida Grande", Verdana, sans-serif;
 	font-size: 9px;
 	line-height: 10px;
 	margin: 1px;
 }
 
-.edit-chooser-element input[type=text] {
+.edit-chooser .edit-element input[type=text] {
 	height: 10px;
 }
 
-.edit-chooser {
+.edit-object-chooser {
 	font-size: 10px;
 	line-height: 14px;
-}
-
-.edit-chooser {
-	max-width: 300px;
-	max-height: 400px;
+	max-width: 200px;
+	max-height: 200px;
 	overflow: auto;
 }
 
-.edit-chooser li {
+.edit-object-chooser li {
 	list-style: none;
 	padding: 0;
 	margin-left: -14px;
@@ -77,18 +89,18 @@
 	white-space: nowrap;
 }
 
-.edit-chooser ul {
+.edit-object-chooser ul {
 	padding: 0;
 	margin: 0 0 0 14px;
 }
 
-.edit-chooser a {
+.edit-object-chooser a {
 	color: #000;
 	padding: 0;
 	margin: 0;
 }
 
-.edit-chooser a:hover {
+.edit-object-chooser a:hover {
 	background: #f7f7f7;
 }
 

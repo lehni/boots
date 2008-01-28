@@ -7,7 +7,6 @@ EditForm = Base.extend({
 		this.target = target;
 		this.targetId = target.getId();
 		this.parent = parent;
-		this.choosers = [];
 		// Mark as empty until it gets set, so empty editforms can be skipped
 		// in close()
 		this.empty = true;
@@ -48,8 +47,9 @@ EditForm = Base.extend({
 		this.container.modifyClass('hidden', !show);
 		if (this.target)
 			this.target.modifyClass('hidden', show);
-		if (!show) this.closeChoosers();
-		else if (this.form) this.form.enable(true);
+		EditChooser.closeAll();
+		if (show && this.form)
+			this.form.enable(true);
 		this.visible = show;
 	},
 
@@ -59,7 +59,7 @@ EditForm = Base.extend({
 			this.parent.show(true);
 		if (this.request)
 			this.request.cancel();
-		this.closeChoosers();
+		EditChooser.closeAll();
 		this.container.remove();
 		delete EditForm.data.nodes[this.id];
 		delete EditForm.forms[this.id];
@@ -109,12 +109,6 @@ EditForm = Base.extend({
 	},
 
 	autoSize: function() {
-	},
-
-	closeChoosers: function() {
-		this.choosers.each(function(chooser) {
-			chooser.close();
-		});
 	},
 
 	setSelectedTab: function(index) {
@@ -345,7 +339,6 @@ EditForm = Base.extend({
 			nodes: new Hash()
 		},
 		targets: new Hash(),
-		choosers: [],
 		mode: 'inline',
 
 		get: function(id, target, parent) {
@@ -460,7 +453,7 @@ EditForm = Base.extend({
 			this.forms.each(function(form, id) {
 				form.container.remove();
 			});
-			this.choosers.each(function(chooser) {
+			EditChooser.choosers.each(function(chooser) {
 				chooser.element.remove();
 			});
 			// Replace the content of the body only...
@@ -486,7 +479,7 @@ EditForm = Base.extend({
 			// and do some JS magic with it if needed before the ditors are
 			// injected again.
 			Document.fireEvent('afterupdate');
-			this.choosers.each(function(chooser) {
+			EditChooser.choosers.each(function(chooser) {
 				chooser.element.insertInside(body);
 			});
 			return previousHtml;
@@ -725,11 +718,16 @@ EditForm.register(new function() {
 EditForm.register(new function() {
 	var objectChooser = null;
 
-	function choose(editForm, name, params, onChoose) {
+	function getChooser() {
 		if (!objectChooser)
 			objectChooser = new ObjectChooser();
-		objectChooser.choose(editForm, name, params);
+		return objectChooser;
+	}
+
+	function choose(editForm, name, params, onChoose) {
+		var chooser = getChooser();
 		editForm.onChoose = onChoose;
+		chooser.choose(editForm, name, params);
 	}
 
 	return {
@@ -742,35 +740,52 @@ EditForm.register(new function() {
 						(text ? EditSettings.objectLink : EditSettings.unnamedObjectLink).replace('@link', id).replace('@text', text)
 					);
 				}
+				return true; // close
 			});
 		},
 
 		choose_reference: function(editForm, name, params) {
-			var that = this;
+			var that = this, element = null, backup = null;
+			// make sure the chooser is there:
+			var chooser = getChooser();
+			if (params.multiple) {
+				element = $('#' + name + '_left');
+				backup = element.getChildren();
+				chooser.onCancel = function() {
+					element.removeChildren();
+					element.appendChildren(backup);
+					that.multiselect_update(editForm, name);
+					this.onCancel = this.onOK;
+					this.close();
+				}
+			}
 			choose(editForm, name + '_choose', params, function(id, title) {
 				var match;
 				if (params.multiple) {
-					var el = $('#' + name + '_left');
-					if (el.getElement('option[value="' + id + '"]')) {
+					if (element.getElement('option[value="' + id + '"]')) {
 						alert('This element was already added to the list.');
 					} else {
-						var selected = el.getSelected().last();
+						var selected = element.getSelected().last();
 						var opt = new SelectOption({ text: title, value: id });
 						if (selected)
 							opt.insertAfter(selected);
 						else
-							opt.insertInside(el);
+							opt.insertInside(element);
 						that.multiselect_update(editForm, name);
 					}
+					// Don't close yet, since we add multiples
+					return false;
 				} else {
 					$('#' + name + '_reference').setValue(title);
 					$('#' + name).setValue(id);
+					return true;
 				}
 			});
 		},
 
 		choose_move: function(editForm, name, params) {
 			choose(editForm, name, params, function(id, title) {
+				return true;
 			});
 		},
 
@@ -779,9 +794,9 @@ EditForm.register(new function() {
 		},
 
 		choose_select: function(editForm, id, title) {
-			if (editForm.onChoose)
-				editForm.onChoose(id, title);
-			editForm.closeChoosers();
+			// only close if onChoose returns true.
+			if (editForm.onChoose && editForm.onChoose(id, title))
+				EditChooser.closeAll();
 		},
 
 		choose_url: function(editForm, name) {
@@ -850,33 +865,67 @@ EditForm.register(new function() {
 
 // Choosers:
 EditChooser = Base.extend({
-	initialize: function(name, options, html) {
+	initialize: function(params) {
 		this.element = $('body').injectBottom('div', {
-			id: name,
-			style: 'background:white;position:absolute;border:1px solid black;z-index:1000;'
+			id: params.name,
+			className: 'edit-chooser',
 		});
+
 		this.content = this.element.injectBottom('div', {
-			html: html || '',
-			padding: options.padding || 0,
-			className: options.className || ''
+			html: params.html || '',
+			padding: params.padding || 0,
+			className: params.className || ''
 		});
-		/*
-		this.test = this.element.injectBottom('div', {
-			padding: 2,
-			html: '<div class="float-right"><input type="button" value="Cancel">&nbsp;<input type="button" value="OK"></div><div class="clear"></div>'
-		});
-		this.test = this.element.injectBottom('div', {
-			padding: 2
-		}, 
-			'<div class="float-right"><input type="button" value="Cancel">&nbsp;<input type="button" value="OK"></div><div class="clear"></div>'
-		);
-		*/
+		var that = this;
+
+		if (params.buttons == undefined)
+			params.buttons = true;
+
+		if (params.buttons) {
+			var ok = this.createButton('OK', function() {
+				if (that.onOK)
+					that.onOK();
+			});
+
+			var cancel = this.createButton('Cancel', function() {
+				if (that.onCancel)
+					that.onCancel();
+			});
+
+			this.buttons = this.element.injectBottom('div', { className: 'edit-element edit-buttons-right' }, [
+				cancel,
+				ok,
+			]);
+		}
+
 		this.show(false);
-		EditForm.choosers.push(this);
+
+		if (!EditChooser.choosers.length) {
+			// The first. Install catch-all mousedown....
+			Document.addEvent('mousedown', function(event) {
+				var close = true;
+				var chooser = EditChooser.current;
+				if (chooser && chooser.buttons && !chooser.buttons.hasClass('hidden'))
+					close = false;
+				if (close)
+					EditChooser.closeAll();
+			});
+		}
+		this.element.addEvent('mousedown', function(event) {
+			// Allow activation of input fields still
+			if (!event.target || !event.target.match('input'))
+				event.stop();
+		});
+		EditChooser.choosers.push(this);
+	},
+
+	createButton: function(title, handler) {
+		return new Input({ type: 'button', value: title, className: 'edit-button' }).addEvent('mouseup', handler);
 	},
 
 	choose: function(editForm, name) {
-		editForm.choosers.push(this);
+		EditChooser.closeAll();
+		EditChooser.current = this;
 		var bounds = $('#' + name, editForm.container).getBounds();
 		this.element.setOffset({ x: bounds.left, y: bounds.bottom });
 		this.show(true);
@@ -890,17 +939,22 @@ EditChooser = Base.extend({
 		this.show(false);
 	},
 
-	renderButton: function(value, id) {
-		var str = '<input type="button" value="' + value + '"';
-		if (id) str += ' id="' + id + '"';
-		str += '>';
-		return str;
+	statics: {
+		choosers: [],
+		current: null,
+
+		closeAll: function() {
+			this.choosers.each(function(chooser) {
+				chooser.close();
+			});
+			this.current = null;
+		}
 	}
 });
 
 PrototypeChooser = EditChooser.extend({
 	initialize: function() {
-		this.base('edit-prototype', { padding: 4, className: 'edit-chooser' });
+		this.base({ name: 'edit-prototype', padding: 4, className: 'edit-object-chooser', buttons: false });
 	},
 
 	choose: function(editForm, name, prototypes) {
@@ -914,15 +968,20 @@ PrototypeChooser = EditChooser.extend({
 
 ObjectChooser = EditChooser.extend({
 	initialize: function() {
-		this.base('edit-choose', { padding: 4, className: 'edit-chooser' });
+		this.base({ name: 'edit-choose', padding: 4, className: 'edit-object-chooser' });
 	},
 
 	choose: function(editForm, name, params) {
 		this.editForm = editForm;
 		this.base(editForm, name);
+		this.buttons.modifyClass('hidden', !params.multiple);
 		this.show(false);
 		// Open the root list
 		this.toggle(params.root);
+	},
+
+	onOK: function() {
+		this.close();
 	},
 
 	setArrow: function(id, open) {
@@ -960,46 +1019,36 @@ ObjectChooser = EditChooser.extend({
 
 ColorChooser = EditChooser.extend({
 	initialize: function(size) {
-		this.base('edit-color', { padding: 1 }, '<form id="edit-color-form" target="" method="post" autocomplete="off">\
+		this.base({ name: 'edit-color', padding: 1, html: '<form id="edit-color-form" target="" method="post" autocomplete="off">\
 			<table border="0" cellpadding="0" cellspacing="0">\
 				<tr>\
 					<td rowspan="8">\
-						<div class="edit-chooser-element edit-dont-click">\
+						<div class="edit-element">\
 							<div style="position:absolute;clip:rect(0px,' + size + 'px,' + size + 'px,0px)"><div id="edit-color-cross" style="position:relative; width:12px; height:12px; background-image:url(/static/edit/media/color-cross.gif);"></div></div>\
 							<img id="edit-color-overlay" class="edit-color" src="/static/edit/media/color-overlay.png" width="' + size + '" height="' + size + '" border="0" alt="">\
 						</div>\
 					</td>\
 					<td rowspan="8">\
-						<div class="edit-chooser-element edit-dont-click">\
+						<div class="edit-element">\
 							<div style="position:absolute;clip:rect(0px,' + Math.round(size / 10 + 5) + 'px,' + size + 'px,-4px)"><div id="edit-color-slider" style="position:relative; left:-4px; width:25px; height:7px; background-image:url(/static/edit/media/color-slider.gif);"></div></div>\
 							<img id="edit-color-rainbow" class="edit-color" src="/static/edit/media/color-rainbow.png" width="' + Math.round(size / 10) + '" height="' + size + '" border="0" alt="">\
 						</div>\
 					</td>\
 					<td colspan="2">\
-						<div class="edit-chooser-element edit-dont-click">\
+						<div class="edit-element">\
 							<img id="edit-color-preview" class="edit-color" src="/static/edit/media/spacer.gif" width="100%" height="' + Math.round(size / 4) + '" border="0" alt="">\
 						</div>\
 					</td>\
 				</tr>\
-				<tr><td class="edit-chooser-element edit-dont-click">&nbsp;R:</td><td align="right" class="edit-chooser-element"><input type="text" id="edit-color-red" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-chooser-element edit-dont-click">&nbsp;G:</td><td align="right" class="edit-chooser-element"><input type="text" id="edit-color-green" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-chooser-element edit-dont-click">&nbsp;B:</td><td align="right" class="edit-chooser-element"><input type="text" id="edit-color-blue" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-chooser-element edit-dont-click">&nbsp;H:</td><td align="right" class="edit-chooser-element"><input type="text" id="edit-color-hue" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-chooser-element edit-dont-click">&nbsp;S:</td><td align="right" class="edit-chooser-element"><input type="text" id="edit-color-saturation" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-chooser-element edit-dont-click">&nbsp;B:</td><td align="right" class="edit-chooser-element"><input type="text" id="edit-color-brightness" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-chooser-element" colspan="2"><input type="text" id="edit-color-hex" size="7" maxlength="7" class="edit-chooser-element"></td></tr>\
-				<tr><td colspan="6">\
-					<table border="0" cellpadding="0" cellspacing="0" width="100%">\
-						<tr>\
-							<td class="edit-dont-click" width="100%"></td>\
-							<td class="edit-chooser-element">' + this.renderButton('Cancel', 'edit-color-cancel') + '</td>\
-							<td><img src="/static/edit/media/spacer.gif" width="4" height="1" border="0" alt=""></td>\
-							<td class="edit-chooser-element">' + this.renderButton('OK', 'edit-color-ok') + '</td>\
-						</tr>\
-					</table>\
-				</td></tr>\
+				<tr><td class="edit-element">&nbsp;R:</td><td align="right" class="edit-element"><input type="text" id="edit-color-red" size="3" maxlength="3"></td></tr>\
+				<tr><td class="edit-element">&nbsp;G:</td><td align="right" class="edit-element"><input type="text" id="edit-color-green" size="3" maxlength="3"></td></tr>\
+				<tr><td class="edit-element">&nbsp;B:</td><td align="right" class="edit-element"><input type="text" id="edit-color-blue" size="3" maxlength="3"></td></tr>\
+				<tr><td class="edit-element">&nbsp;H:</td><td align="right" class="edit-element"><input type="text" id="edit-color-hue" size="3" maxlength="3"></td></tr>\
+				<tr><td class="edit-element">&nbsp;S:</td><td align="right" class="edit-element"><input type="text" id="edit-color-saturation" size="3" maxlength="3"></td></tr>\
+				<tr><td class="edit-element">&nbsp;B:</td><td align="right" class="edit-element"><input type="text" id="edit-color-brightness" size="3" maxlength="3"></td></tr>\
+				<tr><td class="edit-element" colspan="2"><input type="text" id="edit-color-hex" size="7" maxlength="7" class="edit-element"></td></tr>\
 			</table>\
-		</form>');
+		</form>' });
 		this.size = size;
 		this.hsb = [0, 0, 0];
 		this.target = null;
@@ -1008,9 +1057,6 @@ ColorChooser = EditChooser.extend({
 		var that = this;
 		this.form.addEvent('submit', function(event) {
 			that.close();
-			event.stop();
-		});
-		$$('*.edit-dont-click', this.form).addEvent('mousedown', function(event) {
 			event.stop();
 		});
 
@@ -1039,17 +1085,17 @@ ColorChooser = EditChooser.extend({
 				});
 			}
 		}, this);
+	},
 
-		$('edit-color-cancel').addEvent('mouseup', function() {
-			that.target.setValue(that.target.backup);
-			if (that.target.onUpdate)
-				that.target.onUpdate();
-			that.close();
-		});
+	onOK: function() {
+		this.close();
+	},
 
-		$('edit-color-ok').addEvent('mouseup', function() {
-			that.close();
-		});
+	onCancel: function() {
+		this.target.setValue(this.target.backup);
+		if (this.target.onUpdate)
+			this.target.onUpdate();
+		this.close();
 	},
 
 	choose: function(editForm, name, target) {
