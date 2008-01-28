@@ -1218,7 +1218,9 @@ DomElement.inject(new function() {
 		},
 
 		removeChildren: function() {
-			this.getChildren().remove();
+			var children = this.getChildren();
+			children.remove();
+			return children;
 		},
 
 		replaceWith: function(el) {
@@ -2737,8 +2739,11 @@ FormElement.inject({
 	},
 
 	replaceSelectedText: function(value, select) {
-		var range = this.getSelection(), curr = this.getValue();
-		this.setValue(curr.substring(0, range.start) + value + curr.substring(range.end, curr.length));
+		var range = this.getSelection(), current = this.getValue();
+		var top = this.$.scrollTop, height = this.$.scrollHeight;
+		this.setValue(current.substring(0, range.start) + value + current.substring(range.end, current.length));
+		if(top != null)
+			this.$.scrollTop = top + this.$.scrollHeight - height;
 		return select || select == undefined
 			? this.setSelection(range.start, range.start + value.length)
 			: this.setCaretPosition(range.start + value.length);
