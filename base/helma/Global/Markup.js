@@ -19,6 +19,11 @@ Markup = {
 					tag.buffer.push(encoder(text.substring(end, start)));
 				if (start >= 0) {
 					end = text.indexOf('>', start) + 1;
+					if (end <= start) {
+						// Non-closed tag:
+						tag.buffer.push(encoder(text.substring(start)));
+						break;
+					}
 					var open = text.charAt(start + 1) != '/';
 					if (open) {
 						// Opening tag
@@ -51,7 +56,8 @@ Markup = {
 					}
 				}
 			}
-			buffer.push(encoder(text.substring(end)));
+			if (end > start)
+				buffer.push(encoder(text.substring(end)));
 			text = buffer.join('');
 			// See if we need to do some clean up now:
 			for (var name in cleanUps)
