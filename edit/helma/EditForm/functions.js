@@ -531,6 +531,7 @@ EditForm.inject(new function() {
 			},
 
 			reportError: function(e) {
+				User.log(e);
 				if (typeof e == 'string') {
 					EditForm.alert(e);
 				} else {
