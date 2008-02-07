@@ -306,7 +306,11 @@ EditForm.inject({
 			onmouseup: button.onClick
 		}, out);
 	}.toRender(),
-
+/*
+	renderButton: function(button, out) {
+		return this.renderTemplate('button', button, out);
+	},
+*/
 	renderButtons: function(buttons, out) {
 		var first = true;
 		for (var i = 0; i < buttons.length; i++) {
