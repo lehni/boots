@@ -26,8 +26,17 @@ HopObject.inject({
 	 * simple template.
 	 */
 	renderHtml: function(param) {
-		param.title = param.title || this.name;
+		param.title = param.title || this.getDisplayName && this.getDisplayName() || this.name;
 		this.renderTemplate('html', param, res);
+	},
+
+	/**
+	 * Renders html for a popup window by using the popup.jstl instead of html.jst
+	 * TODO: Maybe merge both templates using switches?
+	 */
+	renderPopup: function(param, out) {
+		param.title = param.title || this.getDisplayName && this.getDisplayName() || this.name;
+		return this.renderTemplate('popup', param, out);
 	},
 
 	/**
