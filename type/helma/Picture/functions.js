@@ -88,7 +88,7 @@ Picture.inject({
 					var g2d = gray.createGraphics();
 					g2d.setColor(java.awt.Color.WHITE);
 					g2d.fillRect(0, 0, width, height);
-					g2d["drawImage(java.awt.Image,int,int,java.awt.image.ImageObserver)"](image.getImage(), 0, 0, null);
+					g2d['drawImage(java.awt.Image,int,int,java.awt.image.ImageObserver)'](image.getImage(), 0, 0, null);
 
 					var r = tint.getRed();
 					var g = tint.getGreen();
@@ -119,7 +119,7 @@ Picture.inject({
 					// and then tint with color:
 					image = new Image(col);
 				}
-				var quality = parseFloat(getProperty("thumbnailQuality"));
+				var quality = parseFloat(getProperty('thumbnailQuality'));
 				if (!quality) quality = 0.8;
 			
 				var numColors = Image.getInfo(file).getNumColors();

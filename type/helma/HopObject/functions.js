@@ -26,7 +26,7 @@ HopObject.inject({
 	renderLink: function(param, out) {
 		var content, href;
 		if (param) {
-			if (typeof param == "string") {
+			if (typeof param == 'string') {
 				content = param;
 				param = null;
 			} else {
