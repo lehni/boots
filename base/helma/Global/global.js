@@ -118,7 +118,7 @@ renderLink = function(content, urlOptions, htmlOptions, out) {
 			delete params.title;
 			if (htmlOptions.confirm)
 				params.confirm = htmlOptions.confirm;
-			onClick = 'Window.open("' + url + '", "' + htmlOptions.popup.title + '", ' + Json.encode(params) + '); return false;';
+			onClick = 'Window.open("' + url + '", "' + (htmlOptions.popup.title || content.urlize()) + '", ' + Json.encode(params) + '); return false;';
 			url = '#';
 		} else if (htmlOptions.confirm) {
 			onClick = 'return confirm("' + encodeJs(htmlOptions.confirm) + '")';
