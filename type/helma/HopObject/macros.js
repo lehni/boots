@@ -1,5 +1,7 @@
 HopObject.inject({
 	link_macro: function(param, content) {
-		this.renderLink(param.content || content, res);
+		if (content != null)
+			param.content = content;
+		this.renderLink(param, res);
 	}
 });
