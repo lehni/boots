@@ -1,6 +1,10 @@
 function urlize_action() {
-	this.allNodes.list().each(function(node) {
-		if (node.title && node instanceof Page)
-			node.name = node.title.urlize();
-	});
+	if (User.hasRole(User.SUPERUSER)) {
+		this.allNodes.list().each(function(node) {
+			if (node.title && node instanceof Page)
+				node.name = node.title.urlize();
+		});
+	} else {
+		res.write('Not allowed.');
+	}
 }
