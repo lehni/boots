@@ -84,6 +84,8 @@ EditForm = Base.extend({
 	preview: function(previousHtml) {
 		this.show(false);
 		var that = this;
+		var offset = Window.getScrollOffset();
+		Window.scrollTo(0, 0);
 		var button = $('body').injectBottom('div', {
 				className: 'edit-preview'
 			}, [
@@ -93,6 +95,7 @@ EditForm = Base.extend({
 						click: function(event) {
 							that.show(true);
 							EditForm.updateBody(previousHtml);
+							Window.scrollTo(offset);
 							button.remove();
 							event.stop();
 						}
@@ -431,7 +434,9 @@ EditForm = Base.extend({
 			if (values.page) {
 				var html = values.page.match(/<body[^>]*>([\u0000-\uffff]*)<\/body>/i);
 				if (html) {
+					var offset = Window.getScrollOffset();
 					var previous = this.updateBody(html[1]);
+					Window.scrollTo(offset);
 					if (values.preview)
 						this.preview(values.id, previous);
 				}
@@ -868,7 +873,7 @@ EditChooser = Base.extend({
 	initialize: function(params) {
 		this.element = $('body').injectBottom('div', {
 			id: params.name,
-			className: 'edit-chooser',
+			className: 'edit-chooser'
 		});
 
 		this.content = this.element.injectBottom('div', {
