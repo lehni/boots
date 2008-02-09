@@ -11,10 +11,9 @@ EditNode = Base.extend({
 			if (id[0] == 't') {
 				User.log('WARNING: Lost transient object, producing new one (' + prototype + ', ' + id + ')');
 				object = new global[prototype]();
-				// Store previously associated id in cache.id, so this object's node can
+				// Pass previously associated id, so this object's node can
 				// still be found in EditNode.get. See HopObject#getFullId
-				object.cache.id = id;
-				object.setCreating(true);
+				object.setCreating(true, id);
 			} else {
 				object = HopObject.get(id, prototype);
 			}
