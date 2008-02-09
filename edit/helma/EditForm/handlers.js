@@ -277,8 +277,9 @@ EditForm.register({
 
 	preview: function(base, object, node, form) {
 		// Apply changes first:
-		var ret = this.apply(base, object, node, form);
-		if (ret == EditForm.COMMIT) {
+		var result = this.apply(base, object, node, form);
+		if (result == EditForm.COMMIT) {
+			res.commit();
 			res.push();
 			// For objects that do a redirect in main_action, allow them
 			// to implement a different view for preview, through
@@ -295,7 +296,6 @@ EditForm.register({
 				preview: true
 			});
 		}
-		return ret;
 	},
 
 	edit: function(base, object, node, form) {
