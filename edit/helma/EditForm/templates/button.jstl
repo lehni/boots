@@ -1,0 +1,2 @@
+<%-- ATTN: onMouseUp event is needed for some scripts, for the event object! --%>
+<span><a href="#" onClick="return false;" onMouseUp="<%= param.onClick %>" class="button"><%= param.value %></a></span>
