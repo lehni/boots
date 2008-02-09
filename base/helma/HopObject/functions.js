@@ -111,10 +111,13 @@ HopObject.inject({
 	 * is checked to make sure it's really that object:
 	 */
 	getByFullId: function(fullId) {
-		var parts = fullId.split('-');
-		var prototype = parts[0], id = parts[1];
-		var obj = this.getById(id);
-		return obj && obj._prototype == prototype ? obj : null;
+		if (fullId) {
+			var parts = fullId.split('-');
+			var prototype = parts[0], id = parts[1];
+			var obj = this.getById(id);
+			return obj && obj._prototype == prototype ? obj : null;
+		}
+		return null;
 	},
 
 	statics: {
