@@ -112,6 +112,7 @@ EditForm = Base.extend({
 	},
 
 	autoSize: function() {
+		// To be overridden if size changes require repositioning of things.
 	},
 
 	setSelectedTab: function(index) {
@@ -906,7 +907,7 @@ EditChooser = Base.extend({
 		this.show(false);
 
 		if (!EditChooser.choosers.length) {
-			// The first. Install catch-all mousedown....
+			// The first chooser. Install catch-all mousedown....
 			Document.addEvent('mousedown', function(event) {
 				var close = true;
 				var chooser = EditChooser.current;
@@ -949,10 +950,10 @@ EditChooser = Base.extend({
 		current: null,
 
 		closeAll: function() {
+			this.current = null;
 			this.choosers.each(function(chooser) {
 				chooser.close();
 			});
-			this.current = null;
 		}
 	}
 });
@@ -983,6 +984,12 @@ ObjectChooser = EditChooser.extend({
 		this.show(false);
 		// Open the root list
 		this.toggle(params.root);
+	},
+
+	close: function() {
+		this.base();
+		// Clean up, so things get refetched the next time the chooser is opened
+		this.content.removeChildren();
 	},
 
 	onOK: function() {
