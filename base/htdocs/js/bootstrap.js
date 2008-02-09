@@ -650,9 +650,9 @@ String.inject({
 		return this.replace(/([-.*+?^${}()|[\]\/\\])/g, '\\$1');
 	},
 
-	trim: function(str) {
-		str = str ? '[' + str.escapeRegExp() + ']' : '\\s';
-		return this.replace(new RegExp('^' + str + '+|' + str + '+$', 'g'), '');
+	trim: function(exp) {
+		exp = exp ? '[' + exp + ']' : '\\s';
+		return this.replace(new RegExp('^' + exp + '+|' + exp + '+$', 'g'), '');
 	},
 
 	clean: function() {
