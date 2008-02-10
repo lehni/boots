@@ -311,6 +311,7 @@ EditForm.inject({
 		return this.renderTemplate('button', button, out);
 	},
 */
+
 	renderButtons: function(buttons, out) {
 		var first = true;
 		for (var i = 0; i < buttons.length; i++) {
