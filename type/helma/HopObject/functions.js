@@ -15,6 +15,32 @@ HopObject.inject({
 	},
 
 	/**
+	 * Define getChildElement for HopObject other than Nodes. This is used in
+	 * collections of Nodes, such as resources, where hidden elements needs to
+	 * be returned during editing too. It does so by checking wether the object
+	 * has a corresponding 'all' collection and fetches from there.
+	 * Node defines it's own getChildElement that does not call this one here,
+	 * so all is fine.
+	 * User overriding getChildElement anyhwere should make sure to use bootstrap
+	 * and call this.base() within it.
+	 */
+	getChildElement: function(name) {
+		var obj = this.get(name);
+		if (!obj) {
+			var parent = this._parent;
+			if (parent instanceof Node && User.canEdit(parent)) {
+				// For collection HopObjects, this._id points to the collection's
+				// name. 'all' + this._id.capitalize() therefore should return the
+				// corresponding 'all' collection. Try to fetch from there:
+				var all = this._parent['all' + this._id.capitalize()];
+				if (all)
+					obj = all.get(name);
+			}
+		}
+		return obj;
+	},
+
+	/**
 	 * Renders a link to the HopObject.
 	 * Param can either be a string, or a hash containing these values:
 	 * - content: the content of the link
