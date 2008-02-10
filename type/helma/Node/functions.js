@@ -1,6 +1,9 @@
 Node.inject({
 	getEditForm: function(param) {
-		var form = new EditForm(this, { removable: true, previewable: true });
+		var form = new EditForm(this, {
+			removable: Base.pick(param.removable, true),
+			previewable: Base.pick(param.previewable, true)
+		});
 		if (param.children === undefined)
 			param.children = true;
 		if (param.resources === undefined)
@@ -34,6 +37,14 @@ Node.inject({
 
 	isEditableBy: function(user) {
 		return user && this.creator == user;
+	},
+
+	getChildElement: function(name) {
+		var obj = this.get(name);
+		// Return hidden elements as well if we're editing
+		if (!obj && User.canEdit(this))
+			obj = this.all.get(name);
+		return obj;
 	},
 
 	getUniqueChildName: function(object, name, maxLength) {
