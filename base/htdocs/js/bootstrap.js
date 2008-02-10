@@ -2986,8 +2986,13 @@ Request = Base.extend(Chain, Callback, new function() {
 				var text = doc && doc.body && (doc.body.textContent || doc.body.innerText || doc.body.innerHTML) || '';
 				var head = Browser.IE && doc.getElementsByTagName('head')[0];
 				text = (head && head.innerHTML || '') + text;
+				var div = this.frame.div;
+				div.remove();
 				this.success(text);
-				this.frame.div.remove.delay(1000, this.frame.div);
+				if (Browser.GECKO) {
+					div.insertBottom(Document.getElement('body'));
+					div.remove.delay(1, div);
+				}
 				this.frame = null;
 			}
 		},
