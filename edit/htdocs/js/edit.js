@@ -20,10 +20,34 @@ EditForm = Base.extend({
 		}
 	},
 
+	fixButtons: function() {
+		if (Browser.WEBKIT) {
+			// On Safari, there is a very odd bug that very rarely mixes all the
+			// buttons on one page, as if they were all thrown into one container,
+			// and redistributed by picking blindy. This code here checks that this
+			// does not happen, by parsing the html for buttons, storing references
+			// to them and comparing that with the result of setHtml.
+			var buttons = [];
+			this.html.replace(/<input[^>]*?type="button"[^>]*>/gi, function(tag) {
+				buttons.push(tag.toElement());
+			});
+			this.container.getElements('input[type=button]').each(function(el, index) {
+				var button = buttons[index];
+				if (el.get('value') != button.get('value')
+					|| el.get('onmouseup') != button.get('onmouseup')
+					|| el.get('onclick') != button.get('onclick')) {
+					alert('Safari bug encountered! Button: ' + el.get('value') + ': ' + el.get('onmouseup'));
+					el.replaceWith(button);
+				}
+			});
+		}
+	},
+
 	set: function(values) {
-		this.container.setHtml(values.html);
+		this.html = values.html;
+		this.container.setHtml(this.html);
+		this.fixButtons();
 		this.form = $('form', this.container);
-		this.fixSelects();
 		if (this.form) {
 			this.empty = false;
 			this.url = this.form.getAction();
@@ -51,6 +75,8 @@ EditForm = Base.extend({
 		if (show && this.form)
 			this.form.enable(true);
 		this.visible = show;
+		if (show)
+			this.fixButtons();
 	},
 
 	close: function(stopAt) {
@@ -232,16 +258,6 @@ EditForm = Base.extend({
 			});
 			this.handle('multiselect_update', name);
 		}, this);
-		this.fixSelects();
-	},
-
-	fixSelects: function() {
-		if (Browser.GECKO) {
-			// Fix a bug on Firefox, where 'XX' is displayed in empty selects.
-			$$('select', this.form).each(function(select) {
-				select.setStyle('color', select.hasChildren() ? '' : '#ffffff');
-			});
-		}
 	},
 
 	// To be overridden by different implementations!
@@ -264,7 +280,7 @@ EditForm = Base.extend({
 				if (this.uploadTimer)
 					this.uploadTimer.clear();
 				var startTime = new Date().getTime(), current;
-				var uploadStatus = $('div.edit-upload', that.container);
+				var uploadStatus = $('div.edit-upload', this.container);
 				if (uploadStatus) {
 					var request = new Request({
 						url: url, method: 'get', json: true, data: this.getData('upload_status')
@@ -273,7 +289,6 @@ EditForm = Base.extend({
 							if (status.current == status.total ||
 								current == status.current && new Date().getTime() - startTime > 6000)
 									that.uploadTimer = that.uploadTimer.clear();
-					      	var count = status.current / status.total;
 							uploadStatus.setWidth(status.current / status.total * 100 + '%');
 							// .setHtml(status.current + ' of ' + status.total + ' uploaded.');
 							current = status.current;
@@ -291,7 +306,7 @@ EditForm = Base.extend({
 			params = this.form.setValues(params);
 		}
 		this.request = new Request({
-			url: url, method: method, json: true, secure: false, data: params
+			url: url, method: method, json: true, data: params
 		}, function(values) {
 			if (progress) progress.addClass('hidden');
 			if (values) {
@@ -381,7 +396,7 @@ EditForm = Base.extend({
 				this.mode = 'inline';
 				var editForm = this.get(param.id, target);
 				editForm.request = new Request({
-					url: url, method: 'get', json: true, secure: false,
+					url: url, method: 'get', json: true,
 					data: editForm.getData(param.mode, param)
 				}, function(values) {
 					if (progress) {
