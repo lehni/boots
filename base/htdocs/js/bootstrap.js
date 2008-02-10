@@ -803,12 +803,12 @@ Json = new function() {
 			return null;
 		},
 
-		decode: function(string, secure) {
+		decode: function(str, secure) {
 			try {
-				return (Base.type(string) != 'string' || !string.length) ||
+				return (Base.type(str) != 'string' || !str.length) ||
 					(secure && !/^[,:{}\[\]0-9.\-+Eaeflnr-u \n\r\t]*$/.test(
-						string.replace(/\\./g, '@').replace(/"[^"\\\n\r]*"/g, '')))
-					? null : eval('(' + string + ')');
+						str.replace(/\\./g, '@').replace(/"[^"\\\n\r]*"/g, '')))
+							? null : eval('(' + str + ')');
 			} catch (e) {
 				return null;
 			}
@@ -2936,7 +2936,7 @@ Request = Base.extend(Chain, Callback, new function() {
 			encoding: 'utf-8',
 			emulation: true,
 			headers: {},
-			secure: true
+			secure: false
 		},
 
 		initialize: function() {
