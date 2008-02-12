@@ -108,6 +108,8 @@ EditForm = Base.extend({
 	},
 
 	preview: function(previousHtml) {
+		// let #back now that it needs to refetch parents
+		this.applied = true;
 		this.show(false);
 		var that = this;
 		var offset = Window.getScrollOffset();
@@ -132,9 +134,14 @@ EditForm = Base.extend({
 	},
 
 	back: function(count) {
-		var form = this;
-		for (var i = 0; i < count && form; ++i)
-			form = form.close();
+		if (this.applied) {
+			this.applied = false;
+			this.execute('back', { edit_back: count });
+		} else {
+			var form = this;
+			for (var i = 0; i < count && form; ++i)
+				form = form.close();
+		}
 	},
 
 	autoSize: function() {
