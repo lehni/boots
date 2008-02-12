@@ -44,6 +44,8 @@ EditForm = Base.extend({
 	},
 
 	set: function(values) {
+		if (values.applied)
+			this.applied = true;
 		this.html = values.html;
 		this.container.setHtml(this.html);
 		this.fixButtons();
@@ -108,8 +110,6 @@ EditForm = Base.extend({
 	},
 
 	preview: function(previousHtml) {
-		// let #back now that it needs to refetch parents
-		this.applied = true;
 		this.show(false);
 		var that = this;
 		var offset = Window.getScrollOffset();

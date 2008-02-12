@@ -258,6 +258,11 @@ EditForm.register({
 		delete node.title;
 		try {
 			form.applyItems();
+			// Let the client know that things have been applied here, so the
+			// behavior of back can change. See edit.js
+			form.addResponse({
+				applied: true
+			});
 			return EditForm.COMMIT;
 		} catch (e) {
 			if (e instanceof EditException) {
