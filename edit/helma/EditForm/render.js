@@ -30,55 +30,63 @@ EditForm.inject({
 
 				param.items = this.renderItems(this, itemsParam);
 
-				var hasBack = node.parent != null && node.parent.visible;
+				var canGoBack = node.parent != null && node.parent.visible;
+
+				var buttonMode = Base.pick(this.buttonMode, EditForm.BUTTON_MODE);
+
+				var modeBack = buttonMode & EditForm.BUTTON_MODE_BACK;
+				var modeStay = !modeBack || (buttonMode & EditForm.BUTTON_MODE_STAY);
 
 				var leftButtons = [], rightButtons = [];
-				if (this.previewable) {
+				if (EditForm.PREVIEWABLE && this.previewable !== false) {
 					leftButtons.push({
 						value: this.titles.preview || EditForm.TITLE_PREVIEW,
 						onClick: this.renderHandle('execute', 'preview', { post: true })
 					});
 				}
 				rightButtons.push({
-					value: hasBack ? this.titles.cancel || EditForm.TITLE_CANCEL : this.titles.close || EditForm.TITLE_CLOSE,
+					value: canGoBack ? this.titles.back || EditForm.TITLE_BACK
+						: this.titles.close || EditForm.TITLE_CLOSE,
 					onClick: this.renderHandle('back', 1)
 				});
 
 				switch(mode) {
 					case 'new':
 					case 'create':
-						var hasCreateBack = mode == 'create' && node.parent != null
-							&& (hasBack || !EditForm.HAS_BACK)
-						if (hasCreateBack)
-							 rightButtons.push({
-								value: !EditForm.HAS_BACK ? this.titles.create || EditForm.TITLE_CREATE :
-									this.titles.createBack || EditForm.TITLE_CREATE_BACK,
-								onClick: this.renderHandle('execute', 'create', { post: true, edit_back: 1 })
+						if (modeBack) {
+							rightButtons.push({
+								value: canGoBack ? this.titles.createBack || EditForm.TITLE_CREATE_BACK
+									: this.titles.createClose || EditForm.TITLE_CREATE_CLOSE,
+								onClick: this.renderHandle('execute', mode, { post: true, edit_back: 1 })
 							});
-						if (EditForm.HAS_BACK || !hasCreateBack)
+						} 
+						if (modeStay) {
 							rightButtons.push({
 								value: this.titles.create || EditForm.TITLE_CREATE,
 								onClick: this.renderHandle('execute', mode, { post: true })
 							});
+						}
 						break;
 					case 'edit':
 						// render default buttons
-						if (this.removable && EditForm.HAS_DELETE)
+						if (this.removable && EditForm.REMOVABLE)
 							rightButtons.push({
 								value: 'Delete',
 								onClick: this.renderHandle('remove', title)
 							});
-						if (hasBack || !EditForm.HAS_BACK)
+						if (modeBack) {
 							rightButtons.push({
-								value: !EditForm.HAS_BACK ? this.titles.apply || EditForm.TITLE_APPLY :
-									this.titles.apply || EditForm.TITLE_APPLY_BACK,
+								value: canGoBack ? this.titles.applyBack || EditForm.TITLE_APPLY_BACK
+									: this.titles.applyClose || EditForm.TITLE_APPLY_CLOSE,
 								onClick: this.renderHandle('execute', 'apply', { post: true, edit_back: 1 })
 							});
-						if (EditForm.HAS_BACK)
+						}
+						if (modeStay) {
 							rightButtons.push({
 								value: this.titles.apply || EditForm.TITLE_APPLY,
 								onClick: this.renderHandle('execute', 'apply', { post: true })
 							});
+						}
 						break;
 				}
 				// Render buttons after items, so items can add buttons in render.
