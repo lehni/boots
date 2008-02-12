@@ -173,7 +173,7 @@ HopObject.inject({
 	},
 
 	renderEditButtons: function(param, out) {
-		if (!session.user && param.allowAnonymous || User.canEdit(this)) {
+		if (!res.data.preview && (!session.user && param.allowAnonymous || User.canEdit(this))) {
 			var buttons = param.buttons ? param.buttons.split(',') : [];
 			var items = [];
 			for (var i = 0; i < buttons.length; i++) {

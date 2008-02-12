@@ -55,8 +55,7 @@ EditForm.inject(new function() {
 							var result = handler.call(handlers, base, node.object, node, form);
 							if (result == EditForm.COMMIT) {
 								res.commit();
-								// Only render page if it was not set already, e.g. through preview
-								if (!res.data.editResponse.page && base.main_action) {
+								if (base.main_action) {
 									if (base.isTransient()) {
 										// The object has been removed in the meantime
 										// Redirect to its parent.
@@ -291,6 +290,7 @@ EditForm.register({
 			// For objects that do a redirect in main_action, allow them
 			// to implement a different view for preview, through
 			// preview_action:
+			res.data.preview = true;
 			if (object.preview_action) {
 				object.preview_action();
 			} else if (object.main_action) {
@@ -298,11 +298,14 @@ EditForm.register({
 			} else if (base.main_action) {
 				base.main_action();
 			}
+			delete res.data.preview;
 			form.addResponse({
-				page: res.pop(),
-				preview: true
+				preview: res.pop()
 			});
 		}
+		// We would not need to return COMMIT since that's already taken care of above,
+		// but we need to make sure page gets rendered too!
+		return result;
 	},
 
 	edit: function(base, object, node, form) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2003-2007 Juerg Lehni, Lineto.com. All rights reserved.
+// Copyright (c) 2003-2008 Juerg Lehni, Lineto.com. All rights reserved.
 // Copying and reuse is strictly prohibited.
 
 EditForm = Base.extend({
@@ -122,7 +122,7 @@ EditForm = Base.extend({
 					events: {
 						click: function(event) {
 							that.show(true);
-							EditForm.updateBody(previousHtml);
+							EditForm.setBody(previousHtml);
 							Window.scrollTo(offset);
 							button.remove();
 							event.stop();
@@ -454,16 +454,11 @@ EditForm = Base.extend({
 				if (backup) form.restore(backup);
 				form.autoSize();
 			}
-			if (values.page) {
-				var html = values.page.match(/<body[^>]*>([\u0000-\uffff]*)<\/body>/i);
-				if (html) {
-					var offset = Window.getScrollOffset();
-					var previous = this.updateBody(html[1]);
-					Window.scrollTo(offset);
-					if (values.preview)
-						this.preview(values.id, previous);
-				}
-			} else if (values.redirect) {
+			if (values.page)
+				this.setHtml(values.page);
+			if (values.preview)
+				this.preview(values.id, this.setHtml(values.preview));
+			if (values.redirect) {
 				// Redirect one level up, since the href object itself was removed
 				// TODO: Find a way to implement this in lineto.
 				window.location.href = values.redirect;
@@ -475,7 +470,17 @@ EditForm = Base.extend({
 			return !values.alert && !values.error && !values.close;
 		},
 
-		updateBody: function(html) {
+		setHtml: function(html) {
+			html = html.match(/<body[^>]*>([\u0000-\uffff]*)<\/body>/i);
+			if (html) {
+				var offset = Window.getScrollOffset();
+				var previous = this.setBody(html[1]);
+				Window.scrollTo(offset);
+				return previous;
+			}
+		},
+
+		setBody: function(html) {
 			// store references to the targets and remove containers from
 			// the dom, so they can be inserted again bellow in the new dom.
 			this.forms.each(function(form, id) {

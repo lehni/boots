@@ -37,7 +37,7 @@ EditForm.inject({
 				var buttonBack = buttonMode & EditForm.BUTTON_MODE_BACK;
 				var buttonStay = !buttonBack || (buttonMode & EditForm.BUTTON_MODE_STAY);
 
-				var creating = /^new|create$/.test(mode);
+				var creating = /^(new|create)$/.test(mode);
 
 				var leftButtons = [], rightButtons = [];
 				if (EditForm.PREVIEWABLE && this.previewable !== false) {
