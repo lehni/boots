@@ -300,10 +300,6 @@ EditForm.register({
 		}
 	},
 
-	back: function(base, object, node, form) {
-		
-	},
-
 	edit: function(base, object, node, form) {
 		if (req.data.edit_item) {
 			var obj = null;

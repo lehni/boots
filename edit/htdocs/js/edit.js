@@ -136,7 +136,7 @@ EditForm = Base.extend({
 	back: function(count) {
 		if (this.applied) {
 			this.applied = false;
-			this.execute('back', { edit_back: count });
+			this.execute('edit', { edit_back: count });
 		} else {
 			var form = this;
 			for (var i = 0; i < count && form; ++i)
