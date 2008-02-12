@@ -49,4 +49,5 @@ EditForm.TITLE_CREATE_BACK = 'Create & Back';
 EditForm.TITLE_APPLY_CLOSE = 'Save & Close';
 EditForm.TITLE_CREATE_CLOSE = 'Create & Close';
 
-EditForm.TITLE_PREVIEW = 'Save & Preview';
+EditForm.TITLE_APPLY_PREVIEW = 'Save & Preview';
+EditForm.TITLE_CREATE_PREVIEW = 'Create & Preview';

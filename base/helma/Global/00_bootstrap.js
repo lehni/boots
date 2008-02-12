@@ -30,8 +30,6 @@ new function() {
 						break;
 					case 'object':
 					case 'hash':
-						if (prev && prev != val)
-							app.log(name + ' ' + prev + ' ' + val + ' ' + (val instanceof Object));
 						if (prev && prev != val && val instanceof Object)
 							res = Hash.merge({}, prev, val);
 						break;

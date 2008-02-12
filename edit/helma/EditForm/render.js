@@ -8,10 +8,10 @@ EditForm.inject({
 			if (!node.visible) {
 				html = '';
 			} else if (this.object == EditForm.NOT_ALLOWED) {
-				html = this.renderTemplate("notAllowed");
+				html = this.renderTemplate('notAllowed');
 			} else {
-				if (mode == "edit" && this.object.isCreating())
-					mode = "create";
+				if (mode == 'edit' && this.object.isCreating())
+					mode = 'create';
 
 				var param = {
 					action: base.href(EditForm.ACTION),
@@ -34,13 +34,16 @@ EditForm.inject({
 
 				var buttonMode = Base.pick(this.buttonMode, EditForm.BUTTON_MODE);
 
-				var modeBack = buttonMode & EditForm.BUTTON_MODE_BACK;
-				var modeStay = !modeBack || (buttonMode & EditForm.BUTTON_MODE_STAY);
+				var buttonBack = buttonMode & EditForm.BUTTON_MODE_BACK;
+				var buttonStay = !buttonBack || (buttonMode & EditForm.BUTTON_MODE_STAY);
+
+				var creating = /^new|create$/.test(mode);
 
 				var leftButtons = [], rightButtons = [];
 				if (EditForm.PREVIEWABLE && this.previewable !== false) {
 					leftButtons.push({
-						value: this.titles.preview || EditForm.TITLE_PREVIEW,
+						value: creating ? this.titles.createPreview || EditForm.TITLE_CREATE_PREVIEW
+							: this.titles.applyPreview || EditForm.TITLE_APPLY_PREVIEW,
 						onClick: this.renderHandle('execute', 'preview', { post: true })
 					});
 				}
@@ -50,44 +53,41 @@ EditForm.inject({
 					onClick: this.renderHandle('back', 1)
 				});
 
-				switch(mode) {
-					case 'new':
-					case 'create':
-						if (modeBack) {
-							rightButtons.push({
-								value: canGoBack ? this.titles.createBack || EditForm.TITLE_CREATE_BACK
-									: this.titles.createClose || EditForm.TITLE_CREATE_CLOSE,
-								onClick: this.renderHandle('execute', mode, { post: true, edit_back: 1 })
-							});
-						} 
-						if (modeStay) {
-							rightButtons.push({
-								value: this.titles.create || EditForm.TITLE_CREATE,
-								onClick: this.renderHandle('execute', mode, { post: true })
-							});
-						}
-						break;
-					case 'edit':
-						// render default buttons
-						if (this.removable && EditForm.REMOVABLE)
-							rightButtons.push({
-								value: 'Delete',
-								onClick: this.renderHandle('remove', title)
-							});
-						if (modeBack) {
-							rightButtons.push({
-								value: canGoBack ? this.titles.applyBack || EditForm.TITLE_APPLY_BACK
-									: this.titles.applyClose || EditForm.TITLE_APPLY_CLOSE,
-								onClick: this.renderHandle('execute', 'apply', { post: true, edit_back: 1 })
-							});
-						}
-						if (modeStay) {
-							rightButtons.push({
-								value: this.titles.apply || EditForm.TITLE_APPLY,
-								onClick: this.renderHandle('execute', 'apply', { post: true })
-							});
-						}
-						break;
+				if (creating) {
+					// New or Create:
+					if (buttonBack) {
+						rightButtons.push({
+							value: canGoBack ? this.titles.createBack || EditForm.TITLE_CREATE_BACK
+								: this.titles.createClose || EditForm.TITLE_CREATE_CLOSE,
+							onClick: this.renderHandle('execute', mode, { post: true, edit_back: 1 })
+						});
+					} 
+					if (buttonStay) {
+						rightButtons.push({
+							value: this.titles.create || EditForm.TITLE_CREATE,
+							onClick: this.renderHandle('execute', mode, { post: true })
+						});
+					}
+				} else {
+					// Edit:
+					if (this.removable && EditForm.REMOVABLE)
+						rightButtons.push({
+							value: 'Delete',
+							onClick: this.renderHandle('remove', title)
+						});
+					if (buttonBack) {
+						rightButtons.push({
+							value: canGoBack ? this.titles.applyBack || EditForm.TITLE_APPLY_BACK
+								: this.titles.applyClose || EditForm.TITLE_APPLY_CLOSE,
+							onClick: this.renderHandle('execute', 'apply', { post: true, edit_back: 1 })
+						});
+					}
+					if (buttonStay) {
+						rightButtons.push({
+							value: this.titles.apply || EditForm.TITLE_APPLY,
+							onClick: this.renderHandle('execute', 'apply', { post: true })
+						});
+					}
 				}
 				// Render buttons after items, so items can add buttons in render.
 				// renderItem can handle arrays directly:
