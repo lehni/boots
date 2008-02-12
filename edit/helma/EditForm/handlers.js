@@ -283,7 +283,7 @@ EditForm.register({
 	preview: function(base, object, node, form) {
 		// Apply changes first:
 		// First either apply or create the object.
-		var result = this[req.data.edit_create ? 'create' : 'apply'](base, object, node, form);
+		var result = this[req.data.edit_create == 1 ? 'create' : 'apply'](base, object, node, form);
 		if (result == EditForm.COMMIT) {
 			// Commit before the html is rendered.
 			res.commit();
