@@ -44,7 +44,7 @@ EditForm.inject({
 					leftButtons.push({
 						value: creating ? this.titles.createPreview || EditForm.TITLE_CREATE_PREVIEW
 							: this.titles.applyPreview || EditForm.TITLE_APPLY_PREVIEW,
-						onClick: this.renderHandle('execute', 'preview', { post: true })
+						onClick: this.renderHandle('execute', 'preview', { post: true, edit_create: creating ? 1 : 0 })
 					});
 				}
 				rightButtons.push({

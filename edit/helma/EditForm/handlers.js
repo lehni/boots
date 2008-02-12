@@ -277,8 +277,10 @@ EditForm.register({
 
 	preview: function(base, object, node, form) {
 		// Apply changes first:
-		var result = this.apply(base, object, node, form);
+		// First either apply or create the object.
+		var result = this[req.data.edit_create ? 'create' : 'apply'](base, object, node, form);
 		if (result == EditForm.COMMIT) {
+			// Commit before the html is rendered.
 			res.commit();
 			res.push();
 			// For objects that do a redirect in main_action, allow them
