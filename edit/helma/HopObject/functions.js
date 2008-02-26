@@ -27,7 +27,15 @@ HopObject.inject({
 		if (creating) {
 			this.cache.creating = true;
 			this.cache.id = id;
+			// Make sure the modified getById finds this:
+			HopObject.registerById(this._id, this);
+			// Unregistering for the above happens when onStore is called,
+			// not setCreating(false), since they might still be transient after.
+			if (id)
+				HopObject.registerById(id, this);
 		} else {
+			if (this.cache.id)
+				HopObject.unregisterById(this.cache.id);
 			delete this.cache.creating;
 			delete this.cache.id;
 		}
@@ -36,11 +44,7 @@ HopObject.inject({
 	isRemoving: function() {
 		return !!this.cache.removing;
 	},
-/* This is native now:
-	isTransient: function() {
-		return this._id[0] == 't';
-	},
-*/
+
 	/** 
 	 * Returns the target id to be used for inline editing forms.
 	 * By default this is just the object's full id.
@@ -215,6 +219,34 @@ HopObject.inject({
 			}
 			param.showProgress = EditForm.SHOW_PROGRESS;
 			return this.renderTemplate("editButtons", param, out);
+		}
+	},
+
+	statics: {
+		/**
+		 * Improve getById so that it can return transient nodes.
+		 */
+		getById: function(id, prototype) {
+			if (id && id.toString().charAt(0) == 't') {
+				// Tranisent
+				var obj = HopObject._transients[id];
+				// Only return it if it is from the right prototype!
+				if (obj)
+					return !prototype || obj instanceof global[prototype] ? obj : null;
+			}
+			return this.base(id, prototype);
+		},
+
+		// a hash map containing refrences to transient nodes that are to be found
+		// in the modified getById:
+		_transients: {},
+
+		registerById: function(id, object) {
+			this._transients[id] = object;
+		},
+
+		unregisterById: function(id) {
+			delete this._transients[id];
 		}
 	}
 });

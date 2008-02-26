@@ -427,9 +427,8 @@ SelectItem = EditItem.extend({
 
 	convert: function(value) {
 		// Only convert back to HopObject if the options are a HopObject collection
-		var options = this.collection || this.options;
-		if (options instanceof HopObject)
-			value = options.getByFullId(value);
+		if ((this.collection || this.options) instanceof HopObject)
+			value = HopObject.get(value);
 		// Only convert if the current value is not the collection itself,
 		// as we cannot override collections (this happens e.g. when
 		// using a select item for simply creating a list of objects, not
@@ -654,9 +653,7 @@ MultiSelectItem = SelectItem.extend({
 		// Now convert the fullIds in the array to objects, by filtering
 		// according to prototypes.
 		value = value.each(function(id) {
-			var obj = null;
-			if (collection) obj = collection.getByFullId(id);
-			else obj = HopObject.get(id);
+			var obj = HopObject.get(id);
 			// See if the object is an instance of any of the allowed
 			// prototypes, and if so, add its id to the list
 			if (obj

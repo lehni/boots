@@ -223,6 +223,7 @@ EditForm.register({
 						User.log('Created ' + obj.getFullId() + ' from: ' + ch.transientId);
 						if (obj.onStore)
 							obj.onStore(ch.transientId);
+						HopObject.unregisterById(ch.transientId);
 					}
 					delete object.cache.createdChildren;
 				}
@@ -230,6 +231,7 @@ EditForm.register({
 				// Call the onStore handler:
 				if (object.onStore)
 					object.onStore(transientId);
+				HopObject.unregisterById(transientId);
 			}
 			// If the parent's edit form defines an onAfterCreate handler, call it now:
 			if (parentItem && parentItem.onAfterCreate)
@@ -314,8 +316,7 @@ EditForm.register({
 			var item = form.getItem(req.data.edit_item, req.data.edit_group);
 			if (item) {
 				if (req.data.edit_object_id != null) {
-					if (item.collection)
-						obj = item.collection.getByFullId(req.data.edit_object_id);
+					obj = HopObject.get(req.data.edit_object_id);
 				} else {
 					obj = item.getValue();
 				}
@@ -466,14 +467,11 @@ EditForm.register({
 		// Do not check for canEdit, as removeObject() does so.
 		if (req.data.edit_object_ids) {
 			var item = form.getItem(req.data.edit_item, req.data.edit_group);
-			var collection = item && item.collection;
-			if (collection) {
-				req.data.edit_object_ids.split(',').each(function(id) {
-					var obj = collection.getByFullId(id);
-					if (obj && obj.removeObject())
-						removed = true;
-				});
-			}
+			req.data.edit_object_ids.split(',').each(function(id) {
+				var obj = HopObject.get(id);
+				if (obj && obj.removeObject())
+					removed = true;
+			});
 		} else {
 			// The object itself is to be removed.
 			removed = object.removeObject();
