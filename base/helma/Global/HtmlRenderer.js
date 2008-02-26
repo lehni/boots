@@ -1,18 +1,24 @@
 HtmlRenderer = Base.extend({
 	initialize: function(stylesheet) {
-		var kitObj = new Object();
 		// create a HTMLEditorKit that turns of asynchronous loading:
-		this.kit = new JavaAdapter(Packages.javax.swing.text.html.HTMLEditorKit, kitObj);
-		// save the super classes' createDefaultDocument in order to call it in the override
-		kitObj.superCreateDefaultDocument = this.kit.createDefaultDocument;
+		// Weird: We cannot set createDefaultDocument in kitObj before creating the 
+		// JavaAdapter because that throws an error, and if we set it afterwards,
+		// super$createDefaultDocument is not defined. So the whole content of it
+		// is reproduced here... TODO: find a way to get around that?
+		var kitObj = {};
+		this.kit = new JavaAdapter(javax.swing.text.html.HTMLEditorKit, kitObj);
 		kitObj.createDefaultDocument = function() {
-			var doc = this.superCreateDefaultDocument(); // call super.createDefaultDocument()
-			doc.setTokenThreshold(java.lang.Integer.MAX_VALUE);
+			var styles = this.getStyleSheet();
+			var ss = new javax.swing.text.html.StyleSheet();
+			ss.addStyleSheet(styles);
+			var doc = new javax.swing.text.html.HTMLDocument(ss);
+			doc.setParser(this.getParser());
 			doc.setAsynchronousLoadPriority(-1);
+			doc.setTokenThreshold(java.lang.Integer.MAX_VALUE);
 			return doc;
 		}
-		if (stylesheet != null) {
-			var ss = new Packages.javax.swing.text.html.StyleSheet();
+		if (stylesheet) {
+			var ss = new javax.swing.text.html.StyleSheet();
 			var reader = new java.io.BufferedReader(new java.io.FileReader(stylesheet));
 			ss.loadRules(reader, null);
 			reader.close();
