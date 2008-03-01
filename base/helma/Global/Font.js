@@ -175,7 +175,7 @@ Font = Base.extend({
 	breakIntoLines: function(text, maxWidth) {
 		var lines =[];
 		// Split at linebreaks first
-		text.split(/\n|\r\n|\r/mg).each(function(line) {
+		text.split(/\r\n|\n|\r/mg).each(function(line) {
 			var more = true;
 			while (more) {
 				var desc = this.processGlyphLine(line, maxWidth);
@@ -283,11 +283,11 @@ Font = Base.extend({
 		},
 
 		getInstance: function(filename, antialias, fractionalMetrics) {
-			return new Font(
+			return filename ? new Font(
 				getProperty('fontDir') + filename,
 				antialias != null ? antialias : getProperty('fontAntialias', 'true') == 'true',
 				fractionalMetrics != null ? fractionalMetrics : getProperty('fontFractionalMetrics', 'true') == 'true'
-			);
+			) : null;
 		},
 
 		getRenderInfos: function(antialias, fractionalMetrics) {
