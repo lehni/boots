@@ -25,11 +25,6 @@ new function() {
 							}).pretend(val);
 						}
 						break;
-					case 'object':
-					case 'hash':
-						if (prev && prev != val && val instanceof Object)
-							res = Hash.merge({}, prev, val);
-						break;
 				}
 				dest[name] = res;
 			}
@@ -69,7 +64,7 @@ new function() {
 
 		extend: function(src) {
 			var proto = new this(this.dont), ctor = proto.constructor = extend(proto);
-			ctor.dont = '';
+			ctor.dont = {};
 			inject(ctor, this);
 			return this.inject.apply(ctor, arguments);
 		},
@@ -949,7 +944,7 @@ DomElement = Base.extend(new function() {
 			DomElement;
 	}
 
-	var dont = '';
+	var dont = {};
 
 	return {
 		_type: 'element',

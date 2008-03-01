@@ -32,11 +32,6 @@ new function() {
 							}
 						}
 						break;
-					case 'object':
-					case 'hash':
-						if (prev && prev != val && val instanceof Object)
-							res = Hash.merge({}, prev, val);
-						break;
 				}
 				dest[name] = res;
 				if (src._hide && dest.dontEnum)
@@ -92,7 +87,7 @@ new function() {
 		extend: function(src) {
 			var proto = new this(this.dont), ctor = proto.constructor = extend(proto);
 			proto.dontEnum('constructor');
-			ctor.dont = '';
+			ctor.dont = {};
 			inject(ctor, this);
 			return this.inject.apply(ctor, arguments);
 		},
