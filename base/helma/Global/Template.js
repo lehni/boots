@@ -1,6 +1,6 @@
 /**
  * JavaScript Template Engine
- * (c) 2005 - 2007, Juerg Lehni, http://www.scratchdisk.com
+ * (c) 2005 - 2008, Juerg Lehni, http://www.scratchdisk.com
  *
  * Template.js is released under the MIT license
  * http://dev.helma.org/Wiki/JavaScript+Template+Engine/
@@ -169,7 +169,7 @@ Template.prototype = {
 	parseMacroParts: function(tag, code, stack, allowControls) {
 		var match = tag.match(/^<%(=?)\s*(.*?)\s*(-?)%>$/);
 		if (!match)	return null;
-		var isEqualTag = match[1] == '=', content = match[2], swallow = match[3];
+		var isEqualTag = match[1] == '=', content = match[2], swallow = !!match[3];
 
 		var start = 0, pos = 0, end;
 
@@ -458,10 +458,12 @@ Template.prototype = {
 				else
 					code.push(						'var obj = ' + object + ';');
 				object = 'obj';
+				postProcess = postProcess | macro.swallow;
 				code.push(		postProcess		?	'out.push();' : null,
 													'var val = template.renderMacro("' + macro.command + '", ' + object + ', "' +
 															macro.name + '", param, ' + this.parseLoopVariables(macro.arguments, stack) + ', out);',
-								postProcess		?	'template.write(out.pop(), ' + values.filters + ', ' + values.prefix + ', ' +
+								macro.swallow	?	'if (val) val = val.toString().trim()' : null,
+								postProcess		?	'template.write(out.pop()' + (macro.swallow ? '.trim()' : '') + ', ' + values.filters + ', ' + values.prefix + ', ' +
 															values.suffix + ', null, out);' : null);
 				result = 'val';
 			}
@@ -616,7 +618,7 @@ Template.prototype = {
 				reader.close();
 				this.lastModified = this.resource.lastModified();
 			} else if (this.content) {
-				lines = this.content.split(/\n|\r\n|\r/mg);
+				lines = this.content.split(/\r\n|\n|\r/mg);
 			} else {
 				lines = [];
 			}
