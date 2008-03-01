@@ -22,7 +22,7 @@ Medium.inject({
 			if (this.extension == 'video') {
 				// Support for video text file, that defines videos on Youtube or Google
 				var text = this.getFile().readAll();
-				text.split(/[\r\n]/mg).each(function(line) {
+				text.split(/\r\n|\n|\r/mg).each(function(line) {
 					line = line.split('=');
 					if (line.length == 2) {
 						switch (line[0]) {
