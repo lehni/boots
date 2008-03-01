@@ -45,12 +45,14 @@ Picture.inject({
 		if (!thumb.exists()) {
 			var file = this.getFile();
 			if (file.exists()) {
-				var image = new Image(file);
 				var maxWidth = param.maxWidth;
 				var maxHeight = param.maxHeight;
-				width = image.getWidth();
-				height = image.getHeight();
+				var info = Image.getInfo(file);
+				width = info.getWidth();
+				height = info.getHeight();
+				var image = null;
 				if (width > maxWidth || height > maxHeight) {
+					image = new Image(file);
 					if (param.crop) {
 						if (param.cropScale)
 							image.resize(Math.round(width * param.cropScale), Math.round(height * param.cropScale));
@@ -76,6 +78,9 @@ Picture.inject({
 				// Check if we need to tint the image with a color
 				var tint = param.tint;
 				if (tint && (tint = java.awt.Color.decode(tint))) {
+					// image is only set if it was resized before
+					if (!image)
+						image = new Image(file);
 					// convert to grayscale first:
 					/*
 					var cs = new java.awt.color.ColorSpace.getInstance(java.awt.color.ColorSpace.CS_GRAY);
@@ -119,15 +124,21 @@ Picture.inject({
 					// and then tint with color:
 					image = new Image(col);
 				}
-				var quality = parseFloat(getProperty('thumbnailQuality'));
-				if (!quality) quality = 0.8;
-			
-				var numColors = Image.getInfo(file).getNumColors();
-				if (numColors > 0) {
-					// use the same amount of colors as the initial file:
-					image.reduceColors(numColors);
+				if (image) {
+					// A new thumbnail image was produce, save it to a file now:
+					var quality = parseFloat(getProperty('thumbnailQuality'));
+					if (!quality) quality = 0.8;
+
+					var numColors = info.getNumColors();
+					if (numColors > 0) {
+						// use the same amount of colors as the initial file:
+						image.reduceColors(numColors);
+					}
+					image.saveAs(thumb, quality);
+				} else {
+					// No modifications were needed:
+					file.writeToFile(thumb);
 				}
-				image.saveAs(thumb, quality);
 			}
 		} else {
 			var info = Image.getInfo(thumb);
