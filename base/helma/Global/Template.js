@@ -1,6 +1,6 @@
 /**
  * JavaScript Template Engine
- * (c) 2005 - 2008, Juerg Lehni, http://www.scratchdisk.com
+ * (c) 2005 - 2007, Juerg Lehni, http://www.scratchdisk.com
  *
  * Template.js is released under the MIT license
  * http://dev.helma.org/Wiki/JavaScript+Template+Engine/

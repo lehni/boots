@@ -371,6 +371,7 @@ Array.inject(new function() {
 	var proto = Array.prototype;
 
 	var fields = Hash.merge({}, Enumerable, {
+		_hide: true,
 		_generics: true,
 		_type: 'array',
 
