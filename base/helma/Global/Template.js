@@ -361,7 +361,7 @@ Template.prototype = {
 		if (!macro)
 			throw 'Invalid tag';
 		var values = macro.values, result;
-		var postProcess = values.prefix || values.suffix || values.filters;
+		var postProcess = !!(values.prefix || values.suffix || values.filters);
 		var codeIndexBefore = code.length;
 		if (macro.isData) { 
 			result = this.parseLoopVariables(macro.command + ' ' + macro.opcode, stack);
@@ -377,7 +377,7 @@ Template.prototype = {
 					if (!match) throw 'Syntax error';
 					open = true;
 					var variable = match[1], value = match[2];
-					postProcess = postProcess || values.separator;
+					postProcess = postProcess || !!values.separator;
 					var suffix = '_' + (this.listId++);
 					var list = 'list' + suffix, length = 'length' + suffix;
 					var index = 'i' + suffix, first = 'first' + suffix;
