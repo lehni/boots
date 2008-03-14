@@ -69,7 +69,7 @@ EditForm.inject(new function() {
 				item.form.removeRow(item.row.index);
 			}
 		}
-		return !!item;
+		return item;
 	}
 
 	/**
