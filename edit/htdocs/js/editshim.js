@@ -12,7 +12,8 @@ EditSettings = {
 	unnamedObjectLink: '<node>@link</node>',
 	mailLink: '<mail @link>@text</mail>',
 	urlLink: '<url @link>@text</url>',
-	unnamedUrlLink: '<url>@link</url>'
+	unnamedUrlLink: '<url>@link</url>',
+	useButtons: true
 };
 
 EditForm = {

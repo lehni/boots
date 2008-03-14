@@ -20,35 +20,35 @@ EditForm = Base.extend({
 		}
 	},
 
-	fixButtons: function() {
-		if (Browser.WEBKIT) {
-			// On Safari, there is a very odd bug that very rarely mixes all the
-			// buttons on one page, as if they were all thrown into one container,
-			// and redistributed by picking blindy. This code here checks that this
-			// does not happen, by parsing the html for buttons, storing references
-			// to them and comparing that with the result of setHtml.
-			var buttons = [];
-			this.html.replace(/<input[^>]*?type="button"[^>]*>/gi, function(tag) {
-				buttons.push(tag.toElement());
-			});
-			this.container.getElements('input[type=button]').each(function(el, index) {
-				var button = buttons[index];
-				if (el.get('value') != button.get('value')
-					|| el.get('onmouseup') != button.get('onmouseup')
-					|| el.get('onclick') != button.get('onclick')) {
-					alert('Safari bug encountered! Button: ' + el.get('value') + ': ' + el.get('onmouseup'));
-					el.replaceWith(button);
-				}
-			});
-		}
-	},
-
 	set: function(values) {
 		if (values.applied)
 			this.applied = true;
 		this.html = values.html;
+		if (EditSettings.useButtons && Browser.WEBKIT) {
+			// On safari, remove buttons before setting of new html, to prevent
+			// the odd bug described bellow from happening.
+			this.container.getElements('input[type=button]').remove();
+		}
 		this.container.setHtml(this.html);
-		this.fixButtons();
+		// On Safari, there is a very odd bug that very rarely mixes all the
+		// buttons on one page, as if they were all thrown into one container,
+		// and redistributed by picking blindy. The workaround is to not produce
+		// buttons in edit forms, but use <a> tags, and replace them with buttons
+		// here, if useButtons is set to true:
+		if (EditSettings.useButtons) {
+			this.container.getElements('a.button').each(function(el, index) {
+				var id = el.getId();
+				el.removeClass('button'); // for getClass bellow
+				el.replaceWith(['input', {
+					type: 'button',
+					name: id,
+					name: id,
+					value: el.getText(),
+					className: el.getClass(),
+					onmouseup: el.getProperty('onmouseup')
+				}].toElement());
+			});
+		}
 		this.form = $('form', this.container);
 		if (this.form) {
 			this.empty = false;
@@ -77,8 +77,6 @@ EditForm = Base.extend({
 		if (show && this.form)
 			this.form.enable(true);
 		this.visible = show;
-		if (show)
-			this.fixButtons();
 	},
 
 	close: function(stopAt) {
@@ -598,8 +596,12 @@ EditForm.register({
 	},
 
 	help_toggle: function(editForm) {
-		var el = $('input.edit-help-button', editForm.container);
-		el.setValue(el.getValue() == 'Help' ? 'Close Help' : 'Help');
+		var el = $('.edit-help-button', editForm.container);
+		if (el instanceof Input) {
+			el.setValue(el.getValue() == 'Help' ? 'Close Help' : 'Help');
+		} else {
+			el.setText(el.getText() == 'Help' ? 'Close Help' : 'Help');
+		}
 		$$('div.edit-help').toggleClass('hidden');
 		editForm.autoSize();
 	}

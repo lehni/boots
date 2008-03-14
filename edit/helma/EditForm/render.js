@@ -305,7 +305,7 @@ EditForm.inject({
 			}, res);
 		}
 	},
-
+/*
 	renderButton: function(button, out) {
 		Html.input({
 			name: button.name,
@@ -314,11 +314,10 @@ EditForm.inject({
 			onmouseup: button.onClick
 		}, out);
 	}.toRender(),
-/*
+*/
 	renderButton: function(button, out) {
 		return this.renderTemplate('button', button, out);
 	},
-*/
 
 	renderButtons: function(buttons, out) {
 		var first = true;
