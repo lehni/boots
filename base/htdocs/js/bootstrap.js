@@ -1488,32 +1488,25 @@ DomEvent = Base.extend(new function() {
 								this.fireEvent('domready');
 							}
 						}.bind(this);
-
-						var view = this.getView(), doc = this.getDocument();
-
-						function check(obj) {
-							if (/^(loaded|complete)$/.test(obj.$.readyState)) {
-								domReady();
-								return true;
-							}
-						}
-						if (doc.$.readyState && (Browser.WEBKIT || Browser.MACIE)) { 
+						var doc = this.getDocument();
+						if (Browser.WEBKIT) {
 							(function() {
-								if (!check(doc))
-									arguments.callee.delay(50);
+								if (/^(loaded|complete)$/.test(doc.$.readyState)) domReady();
+								else arguments.callee.delay(50);
 							})();
-						} else if (doc.$.readyState && Browser.IE) { 
-							var script = doc.getElement('#ie_domready');
-							if (!script) {
-								doc.write('<script id=ie_domready defer src="'
-									+ (view.$.location.protocol == 'https:' ? '://0' : 'javascript:void(0)')
-									+ '"><\/script>');
-								script = doc.getElement('#ie_domready');
-							}
-							if (!check(script))
-								script.addEvent('readystatechange', check.bind(null, [script]));
-						} else { 
-							view.addEvent('load', domReady);
+						} else if (Browser.IE) {
+							var temp = doc.createElement('div');
+							(function() {
+								try {
+									temp.$.doScroll('left');
+									temp = null;
+									domReady();
+								} catch (e) {
+									arguments.callee.delay(50);
+								}
+							})();
+						} else {
+							this.getView().addEvent('load', domReady);
 							doc.addEvent('DOMContentLoaded', domReady);
 						}
 					}
@@ -2639,11 +2632,11 @@ HtmlElement.inject(new function() {
 			|| { x: html.scrollWidth, y: html.scrollHeight };
 	},
 
-	getOffset: function(){
+	getOffset: function() {
 		return { x: 0, y: 0 };
 	},
 
-	getBounds: function(){
+	getBounds: function() {
 		var size = this.getSize();
 		return {
 			left: 0, top: 0,
