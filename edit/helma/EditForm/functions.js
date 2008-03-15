@@ -199,6 +199,9 @@ EditForm.inject(new function() {
 			var index = row.index;
 			if (index < 0) index = 0;
 			return insertRows(row.form, index, arguments, 1);
+		} else if (this.rows.length == 0) {
+			// Insert still if there is no row in the form currently
+			return insertRows(this, this.rows.length, arguments, 0);
 		}
 		return false;
 	}
@@ -210,6 +213,9 @@ EditForm.inject(new function() {
 			if (index >= 0) index++;
 			else index = this.rows.length;
 			return insertRows(row.form, index, arguments, 1);
+		} else if (this.rows.length == 0) {
+			// Insert still if there is no row in the form currently
+			return insertRows(this, this.rows.length, arguments, 0);
 		}
 		return false;
 	}
