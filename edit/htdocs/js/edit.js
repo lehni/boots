@@ -38,15 +38,14 @@ EditForm = Base.extend({
 		if (EditSettings.useButtons) {
 			this.container.getElements('a.button').each(function(el, index) {
 				var id = el.getId();
-				el.removeClass('button'); // for getClass bellow
-				el.replaceWith(['input', {
+				el.removeClass('button'); // For getClass bellow
+				el.replaceWith('input', {
 					type: 'button',
-					name: id,
-					name: id,
+					id: id, name: id,
 					value: el.getText(),
 					className: el.getClass(),
 					onmouseup: el.getProperty('onmouseup')
-				}].toElement());
+				});
 			});
 		}
 		this.form = $('form', this.container);
