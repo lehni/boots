@@ -1220,10 +1220,16 @@ DomElement.inject(new function() {
 		},
 
 		replaceWith: function(el) {
-			el = DomElement.get(el);
-			if (this.$.parentNode)
-				this.$.parentNode.replaceChild(el.$, this.$);
-			return el;
+			if (this.$.parentNode) {
+				el = toElements.apply(this, arguments);
+				var els = el.array;
+				if (els.length > 0)
+					this.$.parentNode.replaceChild(els[0].$, this.$);
+				for (var i = els.length - 1; i >= 1; i--)
+					els[i].insertAfter(els[0]);
+				return el.result;
+			}
+			return null;
 		},
 
 		clone: function(contents) {
