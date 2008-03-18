@@ -193,6 +193,12 @@ EditForm.register({
 			var parentItem = node.parentItem;
 			if (!parentItem || !parentItem.store(object))
 				EditForm.alert('Cannot store the object.');
+
+			// Clear the creating flag both the node object and the form object,
+			// As they might be two different ones! (e.g. Topic / Post)
+			object.setCreating(false);
+			form.object.setCreating(false);
+
 			// Only call onStore if the object stoped being transient through
 			// the above. If there is a change of transient objects, they become
 			// persistent when the parent of them all becomes persistent:
@@ -233,13 +239,9 @@ EditForm.register({
 					object.onStore(transientId);
 				HopObject.unregisterById(transientId);
 			}
-			// If the parent's edit form defines an onAfterCreate handler, call it now:
-			if (parentItem && parentItem.onAfterCreate)
-				parentItem.onAfterCreate.call(parentItem.form.object, object, parentItem);
-			// Clear the creating flag both the node object and the form object,
-			// As they might be two different ones! (e.g. Topic / Post)
-			object.setCreating(false);
-			form.object.setCreating(false);
+			// If the parent's edit item defines an onStore handler, call it now:
+			if (parentItem && parentItem.onStore)
+				parentItem.onStore.call(parentItem.form.object, object, parentItem);
 			return EditForm.COMMIT;
 		}
 	},
