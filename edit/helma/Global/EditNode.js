@@ -34,7 +34,7 @@ EditNode = Base.extend({
 		// Use versioning so even when dontCache is true, the form is only created
 		// once every request.
 		var data = EditNode.getEditData();
-		if (!this.form || force || this.form.dontCache && this.form.version != data.request) {
+		if (!this.form || force || this.form.dontCache || this.form.version != data.version) {
 			try {
 				if (!this.object.getEditForm)
 					throw "The '" + this.object._prototype + "' prototype does not define #getEditForm (" + this.object + ")";
@@ -43,7 +43,7 @@ EditNode = Base.extend({
 				this.form.id = this.id;
 				this.form.node = this;
 				// update version
-				this.form.version = data.request;
+				this.form.version = data.version;
 				// support groups:
 				if (this.group)
 					this.form = this.form.getGroupForm(this.group);
@@ -162,7 +162,6 @@ EditNode = Base.extend({
 				User.log('Starting with new EditData');
 				data = session.data.editData = {
 					nodes: {},
-					request: 0,
 					version: 0
 				};
 			}
@@ -188,7 +187,6 @@ EditNode = Base.extend({
 					node.visible = clientNode.visible;
 				});
 				editData.version = clientData.version;
-				editData.request = clientData.request;
 			}
 		},
 	}

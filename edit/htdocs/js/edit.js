@@ -327,8 +327,7 @@ EditForm = Base.extend({
 		}).send();
 	},
 
-	getData: function(mode, params, request) {
-		if (request) EditForm.data.request++;
+	getData: function(mode, params) {
 		return Hash.merge({
 			edit_mode: mode,
 			edit_id: this.id,
@@ -349,7 +348,7 @@ EditForm = Base.extend({
 				if (!/^edit_/.test(key))
 					delete params[key];
 			});
-			this.submit(post, this.getData(mode, params, true));
+			this.submit(post, this.getData(mode, params));
 			this.form.enable(enable);
 		}
 	},
@@ -357,9 +356,8 @@ EditForm = Base.extend({
 	statics: {
 		forms: new Hash(),
 		data: {
-			request: 0,
-			version: 0,
-			nodes: new Hash()
+			nodes: new Hash(),
+			version: 0
 		},
 		targets: new Hash(),
 		mode: 'inline',
