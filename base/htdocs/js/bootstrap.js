@@ -8,7 +8,7 @@ new function() {
 	function inject(dest, src, base, generics) {
 		function field(name, generics) {
 			var val = src[name], res = val, prev = dest[name];
-			if (val !== Object.prototype[name]) {
+			if (val !== (src.__proto__ || Object.prototype)[name]) {
 				switch (typeof val) {
 					case 'function':
 						if (generics) generics[name] = function(bind) {
@@ -45,6 +45,9 @@ new function() {
 				return this.initialize.apply(this, arguments);
 		}
 		ctor.prototype = obj;
+		ctor.toString = function() {
+			return (this.prototype.initialize || function() {}).toString();
+		}
 		return ctor;
 	}
 
@@ -1094,7 +1097,7 @@ DomElement.inject(new function() {
 		var fn = name == 'events' && prefix == 'set' ? that.addEvents : list[name];
 		if (fn === undefined)
 			fn = list[name] = that[prefix + name.capitalize()] || null;
-		if (fn) return fn[value && value.push ? 'apply' : 'call'](that, value);
+		if (fn) return fn[Base.type(value) == 'array' ? 'apply' : 'call'](that, value);
 		else return that[prefix + 'Property'](name, value);
 	}
 
@@ -1102,6 +1105,19 @@ DomElement.inject(new function() {
 		el = el[start ? start : name];
 		while (el && Base.type(el) != 'element') el = el[name];
 		return DomElement.get(el);
+	}
+
+	function toElements(elements) {
+		if (Base.type(elements) != 'array')
+			elements = Array.create(arguments);
+		var created = elements.find(function(el) {
+			return Base.type(el) != 'element';
+		});
+		var result = elements.toElement(this.getDocument());
+		return {
+			array: result ? (Base.type(result) == 'array' ? result : [result]) : [],
+			result: created && result
+		};
 	}
 
 	var fields = {
@@ -1306,33 +1322,20 @@ DomElement.inject(new function() {
 
 	inserters.inside = inserters.bottom;
 
-	function toElements(element) {
-		if (arguments.length > 0)
-			element = Array.create(arguments);
-		var result = element && (element.toElement && element.toElement(this.getDocument()) || DomElement.get(element)) || null;
-		return {
-			result: result,
-			array: result ? (Base.type(result) == 'array' ? result : [result]) : [],
-			created: result && Base.type(element) != 'element'
-		};
-	}
-
 	Base.each(inserters, function(inserter, name) {
 		var part = name.capitalize();
 		fields['insert' + part] = function(el) {
 			el = toElements.apply(this, arguments);
-			var dests = el.array;
-			for (var i = 0, l = dests.length; i < l; i++)
-				inserter(i == 0 ? this : this.clone(true), dests[i]);
-			return el.created ? el.result : this;
+			for (var i = 0, list = el.array, l = list.length; i < l; i++)
+				inserter(i == 0 ? this : this.clone(true), list[i]);
+			return el.result || this;
 		}
 
 		fields['inject' + part] = function(el) {
 			el = toElements.apply(this, arguments);
-			var sources = el.array;
-			for (var i = 0, l = sources.length; i < l; i++)
-				inserter(sources[i], this);
-			return el.created ? el.result : this;
+			for (var i = 0, list = el.array, l = list.length; i < l; i++)
+				inserter(list[i], this);
+			return el.result || this;
 		}
 	});
 
@@ -2576,27 +2579,6 @@ HtmlElement.inject(new function() {
 				this.$.scrollTop = off.y;
 			}
 			return this;
-		},
-		statics: {
-			getAt: function(pos, exclude) {
-				var el = this.getDocument().getElement('body');
-				while (true) {
-					var max = -1;
-					var ch = el.getFirst();
-					while (ch) {
-						if (ch.contains(pos) && ch != exclude) {
-							var z = ch.style.zIndex.toInt() || 0;
-							if (z >= max) {
-								el = ch;
-								max = z;
-							}
-						}
-						ch = ch.getNext();
-					}
-					if (max < 0) break;
-				}
-				return el;
-			}
 		}
 	};
 
@@ -2655,6 +2637,26 @@ HtmlElement.inject(new function() {
 		var off = typeof x == 'object' ? x : { x: x, y: y };
 		this.getView().$.scrollTo(off.x, off.y);
 		return this;
+	},
+
+	getElementAt: function(pos, exclude) {
+		var el = this.getDocument().getElement('body');
+		while (true) {
+			var max = -1;
+			var ch = el.getFirst();
+			while (ch) {
+				if (ch.contains(pos) && ch != exclude) {
+					var z = ch.$.style.zIndex.toInt() || 0;
+					if (z >= max) {
+						el = ch;
+						max = z;
+					}
+				}
+				ch = ch.getNext();
+			}
+			if (max < 0) break;
+		}
+		return el;
 	}
 });
 
@@ -2757,16 +2759,20 @@ Select = FormElement.extend({
 		return this.getElements('option[selected]');
 	},
 
-	getValue: function() {
-		return this.getSelected().getProperty('value');
-	},
-
-	setValue: function(values) {
+	setSelected: function(values) {
 		this.$.selectedIndex = -1;
 		return Base.each(values.length != null ? values : [values], function(val) {
 			val = DomElement.unwrap(val);
 			this.getElements('option[value="' + (val.value || val) + '"]').setProperty('selected', true);
 		}, this);
+	},
+
+	getValue: function() {
+		return this.getSelected().getProperty('value');
+	},
+
+	setValue: function(values) {
+		return this.setSelected(values);
 	}
 });
 

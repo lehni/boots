@@ -2,7 +2,7 @@ new function() {
 	function inject(dest, src, base, generics, version) {
 		function field(name, generics) {
 			var val = src[name], res = val, prev = dest[name];
-			if (val !== Object.prototype[name]) {
+			if (val !== (src.__proto__ || Object.prototype)[name]) {
 				switch (typeof val) {
 					case 'function':
 						var match;
@@ -53,6 +53,9 @@ new function() {
 				return this.initialize.apply(this, arguments);
 		}
 		ctor.prototype = obj;
+		ctor.toString = function() {
+			return (this.prototype.initialize || function() {}).toString();
+		}
 		return ctor;
 	}
 
