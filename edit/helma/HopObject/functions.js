@@ -67,6 +67,8 @@ HopObject.inject({
 	// this parent can also be overridden by realParent
 	getEditParent: function(realParent) {
 		if (this.isTransient()) {
+			// See if there is a cached edit node, and if so, determine future
+			// parent from it:
 			var node = EditNode.getCached(this);
 			if (node && node.parent)
 				return node.parent.object;
