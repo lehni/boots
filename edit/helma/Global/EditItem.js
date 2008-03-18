@@ -53,14 +53,14 @@ EditItem = Base.extend(new function() {
 		getValue: function() {
 			if (this.value != null) {
 				return this.value;
-			} else if (this.variable) {
-				// Evaluates the content of item.variable in the object and returns it.
-				// Use a function instead of eval, as only in this way, in "this.variable"
+			} else if (this.evaluate) {
+				// Evaluates the content of item.evaluate in the object and returns it.
+				// Use a function instead of eval, as only in this way, in "this.evaluate"
 				// "this" will point to the right object.
 				try {
-					return new Function('return ' + this.variable).call(this.form.object);
+					return new Function('return ' + this.evaluate).call(this.form.object);
 				} catch (e) {
-					User.logError('EditItem#getValue(): ' + this.variable, e);
+					User.logError('EditItem#getValue(): ' + this.evaluate, e);
 				}
 			} else if (this.name) {
 				 // Read the property with given name
@@ -70,13 +70,13 @@ EditItem = Base.extend(new function() {
 		},
 
 		setValue: function(value) {
-			if (this.variable) {
+			if (this.evaluate) {
 				// evaluate string variable to the content of value:
 				try {
-					new Function(this.variable + ' = value;').call(this.form.object);
+					new Function(this.evaluate + ' = value;').call(this.form.object);
 					return true;
 				} catch (e) {
-					User.logError('EditItem#setValue(): ' + this.variable, e);
+					User.logError('EditItem#setValue(): ' + this.evaluate, e);
 				}
 			} else if (this.name) {
 				this.form.object[this.name] = value;
