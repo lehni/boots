@@ -5,7 +5,7 @@ Page.inject({
 		nodeForm.insertAt(0, {
 			label: 'Title', name: 'title', type: 'string',
 			requirements: {
-				notNull: true, maxLength: 64,
+				notNull: true, maxLength: 64
 			},
 			onApply: function(value) {
 				this.title = value;
