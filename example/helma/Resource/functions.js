@@ -1,7 +1,7 @@
 /*
 Resource.inject({
-	getEditForm: function() {
-		var form = this.base();
+	getEditForm: function(param) {
+		var form = this.base(param);
 		form.insertBefore({
 			
 		})
