@@ -159,9 +159,11 @@ Resource.inject({
 					return exp.test(name);
 				}
 			});
-			for (var i = 0, l = thumbs.length; i < l; ++i) {
-				User.log('Erasing ' + thumbs[i]);
-				thumbs[i]['delete'](); // File#delete
+			if (thumbs != null) {
+				for (var i = 0, l = thumbs.length; i < l; ++i) {
+					User.log('Erasing ' + thumbs[i]);
+					thumbs[i]['delete'](); // File#delete
+				}
 			}
 		}
 	},
