@@ -37,23 +37,23 @@ User.inject({
 		var editSuperuser = this.hasRole(User.SUPERUSER);
 		var isSameUser = session.user == this;
 		var form = new EditForm(this, { removable: isAdmin && !editSuperuser && !isSameUser });
-		var tab = form.addTab("User");
+		var tab = form.addTab('User');
 		if (isAdmin) {
 			if (this.lastLogin !== undefined)
-				tab.add({ label: "Last Login", suffix: this.lastLogin ? this.lastLogin.format("dd MMMM yyyy HH:mm") : "never" });
+				tab.add({ label: 'Last Login', suffix: this.lastLogin ? this.lastLogin.format('dd MMMM yyyy HH:mm') : 'never' });
 			if (!editSuperuser || isSuperuser)
-				tab.add({ label: "Name", name: "name", type: "string", length: 16 });
+				tab.add({ label: 'Name', name: 'name', type: 'string', length: 16 });
 		}
 		if (isSameUser || (isAdmin && !editSuperuser))
-			tab.add({ label: "Password", name: "password", type: "password", length: 16, onApply: this.onApplyPassword });
+			tab.add({ label: 'Password', name: 'password', type: 'password', length: 16, onApply: this.onApplyPassword });
 		if (isAdmin && !isSameUser && !editSuperuser) {
 			var roles = [
-				{ name: "Editor", value: User.READER | User.EDITOR },
-				{ name: "Admin", value: User.READER | User.EDITOR | User.ADMINISTRATOR }
+				{ name: 'Editor', value: User.READER | User.EDITOR },
+				{ name: 'Admin', value: User.READER | User.EDITOR | User.ADMINISTRATOR }
 			];
 			if (isSuperuser)
-				roles.push({ name: "Superuser", value: User.READER | User.EDITOR | User.ADMINISTRATOR | User.SUPERUSER });
-			tab.add({ label: "Role", name: "role", type: "select", options: roles });
+				roles.push({ name: 'Superuser', value: User.READER | User.EDITOR | User.ADMINISTRATOR | User.SUPERUSER });
+			tab.add({ label: 'Role', name: 'roles', type: 'select', options: roles });
 		}
 		return form;
 	},
@@ -95,9 +95,9 @@ User.inject({
 	// otherwise login will allways succeed!!!!
 	encryptPassword: function(password) {
 	    if (password) {
-			return User.encrypt(getProperty("passwordSalt") + this._id + password);
+			return User.encrypt(getProperty('passwordSalt') + this._id + password);
 		} else {
-			return "";
+			return '';
 		}
 	},
 
@@ -109,22 +109,22 @@ User.inject({
 
 	setAutoLogin: function(remember) {
 		if (remember) {
-			res.setCookie("autoLogin", this._id + ":" + this.getCookieHash(), 90);
+			res.setCookie('autoLogin', this._id + ':' + this.getCookieHash(), 90);
 		} else {
-			res.setCookie("autoLogin", null);
+			res.setCookie('autoLogin', null);
 		}
 	},
 
 	logout: function() {
 		if (session.user == this) {
-			User.setMessage("loggedOut", session.user.name);
+			User.setMessage('loggedOut', session.user.name);
 			this.setAutoLogin(false);
 			session.logout();
 		}
 	},
 
 	onLogin: function() {
-		app.log("Logged In: " + this.name);
+		app.log('Logged In: ' + this.name);
 		this.lastLogin = new Date();
 	},
 
@@ -139,12 +139,12 @@ User.inject({
 			// return Packages.helma.util.MD5Encoder.encode(str);
 
 			// for sha-1:
-		    var algorithm = java.security.MessageDigest.getInstance("SHA-1");
+		    var algorithm = java.security.MessageDigest.getInstance('SHA-1');
 		    var digest = algorithm.digest(new java.lang.String(str).getBytes());
 		    res.push();
 		    for (var i = 0; i < digest.length; i++) {
 		        var b = digest[i] & 0xff;
-		        if (b < 0x10) res.write("0");
+		        if (b < 0x10) res.write('0');
 		        res.write(java.lang.Integer.toHexString(b));
 		    }
 		    return res.pop();
@@ -154,30 +154,30 @@ User.inject({
 			var user = root.users.get(username);
 			if (user != null) {
 				if (user.hasRole(User.DISABLED)) {
-					User.setMessage("loginDisabled");
+					User.setMessage('loginDisabled');
 					return false;
 				} else if (!User.isLoginAllowed() && !(user.hasRole(User.SUPERUSER))) {
-					User.setMessage("loginTemporarilyDisabled");
+					User.setMessage('loginTemporarilyDisabled');
 					return false;
 				}
 				password = user.encryptPassword(password);
 				if (session.login(username, password)) {
 					if (session.user.onLogin)
 						session.user.onLogin();
-					User.setMessage("loggedIn", username);
+					User.setMessage('loggedIn', username);
 					if (remember != null)
 						session.user.setAutoLogin(remember);
 					return true;
 				}
 			}
-			User.setMessage("loginFailed");
+			User.setMessage('loginFailed');
 			return false;
 		},
 
 		autoLogin: function() {
-		//	if (!session.user) session.login(root.users.get("Lehni"));
+		//	if (!session.user) session.login(root.users.get('Lehni'));
 			if (!session.user && req.data.autoLogin) {
-				var parts = req.data.autoLogin.split(":");
+				var parts = req.data.autoLogin.split(':');
 				if (parts.length > 0) {
 					var user = root.users.getById(parts[0]);
 					if (user != null &&  parts[1] == user.getCookieHash() &&
@@ -198,7 +198,7 @@ User.inject({
 				if (User.isLoginAllowed() || user.hasRole(User.SUPERUSER)) {
 					return true;
 				} else {
-					User.setMessage("loginDisabled");
+					User.setMessage('loginDisabled');
 					user.logout(false);
 				}
 			} 
