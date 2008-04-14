@@ -220,6 +220,9 @@ UrlTag = MarkupTag.extend({
 		// allways write domain part of url for simple rendering (e.g. in rss feeds)
 		if (param.simple && isLocal)
 			str += getProperty('serverUri');
+		// Make sure the non-local url has a protocol, http is default:
+		if (!isLocal && !Net.parseUrl(url).protocol)
+			url = 'http://' + url;
 		str += url;
 		// links to local pages do not need to open blank
 		if (!isLocal)
