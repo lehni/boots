@@ -682,9 +682,9 @@ Number.inject({
 		return bind || this;
 	},
 
-	toPaddedString: function(length, base) {
+	toPaddedString: function(length, base, prefix) {
 		var str = this.toString(base || 10);
-		return '0'.times(length - str.length) + str;
+		return (prefix || '0').times(length - str.length) + str;
 	}
 });
 
@@ -1019,7 +1019,7 @@ DomElement = Base.extend(new function() {
 						classCheck = new RegExp('(^|\\s)(' + Base.each(classes, function(val, name) {
 							this.push(name);
 						}, []).join('|') + ')(\\s|$)');
-						if (src.initialize) Document.addEvent('domready', function() {
+						if (!src._lazy && src.initialize) Document.addEvent('domready', function() {
 							Document.getElements('.' + src._class);
 						});
 					}

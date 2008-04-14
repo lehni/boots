@@ -655,9 +655,9 @@ Number.inject({
 		return bind || this;
 	},
 
-	toPaddedString: function(length, base) {
+	toPaddedString: function(length, base, prefix) {
 		var str = this.toString(base || 10);
-		return '0'.times(length - str.length) + str;
+		return (prefix || '0').times(length - str.length) + str;
 	}
 });
 
