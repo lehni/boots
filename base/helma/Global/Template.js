@@ -167,7 +167,7 @@ Template.prototype = {
 	},
 
 	parseMacroParts: function(tag, code, stack, allowControls) {
-		var match = tag.match(/^<%(=?)\s*(.*?)\s*(-?)%>$/);
+		var match = tag.match(/^<%(=?)\s*([\u0000-\uffff]*?)\s*(-?)%>$/);
 		if (!match)	return null;
 		var isEqualTag = match[1] == '=', content = match[2], swallow = !!match[3];
 
@@ -272,7 +272,7 @@ Template.prototype = {
 			if (next) {
 				macro = {
 					command: next, opcode: [], param: [], unnamed: [],
-					values: { prefix: null, suffix: null, 'default': null, encoding: null, separator: null }
+					values: { prefix: null, suffix: null, 'default': null, encoding: null, separator: null, 'if': null }
 				};
 				if (isMain) {
 					macro.isControl = allowControls && /^(foreach|if|elseif|else|end)$/.test(next);
@@ -361,10 +361,14 @@ Template.prototype = {
 		if (!macro)
 			throw 'Invalid tag';
 		var values = macro.values, result;
+		var condition = values['if'];
+		if (condition)
+			code.push(								'if (' + condition + ') {');
 		var postProcess = !!(values.prefix || values.suffix || values.filters);
 		var codeIndexBefore = code.length;
 		if (macro.isData) { 
-			result = this.parseLoopVariables(macro.command + ' ' + macro.opcode, stack);
+			result = this.parseLoopVariables(macro.opcode
+				? macro.command + ' ' + macro.opcode : macro.command, stack);
 		} else if (macro.isControl) {
 			var open = false, close = false;
 			var prevControl = stack.control[stack.control.length - 1];
@@ -492,9 +496,11 @@ Template.prototype = {
 			}
 		}
 		if (toString && postProcess) {
-			code.splice(codeIndexBefore, 0,		'out.push();');
+			code.splice(codeIndexBefore, 0,			'out.push();');
 			return 'out.pop()';
 		}
+		if (condition)
+			code.push(								'}');
 		if (!toString)
 			return macro.swallow;
 	},
