@@ -291,7 +291,7 @@ Base.inject({
 
 	debug: function() {
 		return /^(string|number|function|regexp)$/.test(Base.type(this)) ? this
-			: this.each(function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
+			: Base.each(this, function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
 	},
 
 	clone: function() {
@@ -513,6 +513,10 @@ Array.inject(new function() {
 		},
 
 		associate: function(obj) {
+			if (!obj)
+				obj = this;
+			else if (typeof obj == 'function')
+				obj = this.map(obj);
 			if (obj.length != null) {
 				var that = this;
 				return Base.each(obj, function(name, index) {
@@ -520,10 +524,10 @@ Array.inject(new function() {
 					if (index == that.length) throw Base.stop;
 				}, {});
 			} else {
-				obj = Hash.create(obj);
+				obj = Hash.merge({}, obj);
 				return Base.each(this, function(val) {
 					var type = Base.type(val);
-					obj.each(function(hint, name) {
+					Base.each(obj, function(hint, name) {
 						if (hint == 'any' || type == hint) {
 							this[name] = val;
 							delete obj[name];
@@ -551,7 +555,7 @@ Array.inject(new function() {
 		shuffle: function() {
 			var res = this.clone();
 			var i = this.length;
-			while (i--) res.swap(i, Math.rand(0, i));
+			while (i--) res.swap(i, Math.rand(i + 1));
 			return res;
 		},
 
@@ -692,8 +696,8 @@ RegExp.inject({
 	_type: 'regexp'
 });
 
-Math.rand = function(min, max) {
-	return Math.floor(Math.random() * (max - min + 1) + min);
+Math.rand = function(value) {
+	return Math.floor(Math.random() * Math.abs(value)); 
 }
 
 Array.inject({
@@ -1078,17 +1082,19 @@ DomElement = Base.extend(new function() {
 });
 
 DomElement.inject(new function() {
-	var properties = {
-		'class': 'className', className: 'className', 'for': 'htmlFor',
-		colspan: 'colSpan', rowspan: 'rowSpan', accesskey: 'accessKey',
-		tabindex: 'tabIndex', maxlength: 'maxLength', readonly: 'readOnly',
-		value: 'value', disabled: 'disabled', checked: 'checked',
-		multiple: 'multiple', selected: 'selected'
-	};
-
-	var flags = {
-		href: 2, src: 2
-	};
+	var bools = ['compact', 'nowrap', 'ismap', 'declare', 'noshade', 'checked',
+		'disabled', 'readonly', 'multiple', 'selected', 'noresize', 'defer'
+	].associate();
+	var properties = Hash.merge({ 
+		text: Browser.IE ? 'innerText' : 'textContent', html: 'innerHTML',
+		'class': 'className', 'for': 'htmlFor'
+	}, [ 
+		'value', 'accessKey', 'cellPadding', 'cellSpacing', 'colSpan',
+		'frameBorder', 'maxLength', 'readOnly', 'rowSpan', 'tabIndex',
+		'useMap'
+	].associate(function(name) {
+		return name.toLowerCase();
+	}), bools);
 
 	function handle(that, prefix, name, value) {
 		var ctor = that.__proto__.constructor;
@@ -1254,24 +1260,22 @@ DomElement.inject(new function() {
 
 		getProperty: function(name) {
 			var key = properties[name];
-			if (key) return this.$[key];
-			var flag = flags[name];
-			if (!Browser.IE || flag) return this.$.getAttribute(name, flag);
-			var node = this.$.attributes[name];
-			return node && node.nodeValue;
+			var value = key ? this.$[key] : this.$.getAttribute(name);
+			return (bools[name]) ? !!value : value;
+		},
+
+		getProperties: function() {
+			var props = {};
+			for (var i = 0; i < arguments.length; i++)
+				props[arguments[i]] = this.getProperty(arguments[i]);
+			return props;
 		},
 
 		setProperty: function(name, value) {
-			var key = properties[name];
-			if (key) this.$[key] = value;
-			else this.$.setAttribute(name, value);
-			return this;
-		},
-
-		removeProperty: function(name) {
-			var key = properties[name];
-			if (key) this.$[key] = '';
-			else this.$.removeAttribute(name);
+			var key = properties[name], defined = value != undefined;
+			if (key && bools[name]) value = value || !defined ? true : false;
+			else if (!defined) return this.removeProperty(name);
+			key ? this.$[key] = value : this.$.setAttribute(name, value);
 			return this;
 		},
 
@@ -1279,6 +1283,16 @@ DomElement.inject(new function() {
 			return Base.each(src, function(value, name) {
 				this.setProperty(name, value);
 			}, this);
+		},
+
+		removeProperty: function(name) {
+			var key = properties[name], bool = key && bools[name];
+			key ? this.$[key] = bool ? false : '' : this.$.removeAttribute(name);
+			return this;
+		},
+
+		removeProperties: function() {
+			return Base.each(arguments, this.removeProperty, this);
 		},
 
 		toString: function() {
@@ -2184,36 +2198,19 @@ HtmlElement.inject({
 	},
 
 	getHtml: function() {
-		return this.$.innerHTML;
+		return this.getProperty('html');
 	},
 
 	setHtml: function(html) {
-		this.$.innerHTML = html;
-		return this;
+		return this.setProperty('html', html);
 	},
 
 	getText: function() {
-		var tag = this.getTag();
-		return /^(style|script)$/.test(tag)
-			? Browser.IE
-				? tag == 'style' ? this.$.styleSheet.cssText : this.getProperty('text')
-				: this.$.innerHTML
-			: this.$.innerText || this.$.textContent;
+		return this.getProperty('text');
 	},
 
 	setText: function(text) {
-		var tag = this.getTag();
-		if (/^(style|script)$/.test(tag)) {
-			if (Browser.IE) {
-				if (tag == 'style') this.$.styleSheet.cssText = text;
-				else this.setProperty('text', text);
-			} else {
-				this.$.innerHTML = text;
-			}
-		} else {
-			this.$[this.$.innerText !== undefined ? 'innerText' : 'textContent'] = text;
-		}
-		return this;
+		return this.setProperty('text', text);
 	}
 });
 

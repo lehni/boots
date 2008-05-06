@@ -290,7 +290,7 @@ Base.inject({
 
 	debug: function() {
 		return /^(string|number|function|regexp)$/.test(Base.type(this)) ? this
-			: this.each(function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
+			: Base.each(this, function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
 	},
 
 	clone: function() {
@@ -492,6 +492,10 @@ Array.inject(new function() {
 		},
 
 		associate: function(obj) {
+			if (!obj)
+				obj = this;
+			else if (typeof obj == 'function')
+				obj = this.map(obj);
 			if (obj.length != null) {
 				var that = this;
 				return Base.each(obj, function(name, index) {
@@ -499,10 +503,10 @@ Array.inject(new function() {
 					if (index == that.length) throw Base.stop;
 				}, {});
 			} else {
-				obj = Hash.create(obj);
+				obj = Hash.merge({}, obj);
 				return Base.each(this, function(val) {
 					var type = Base.type(val);
-					obj.each(function(hint, name) {
+					Base.each(obj, function(hint, name) {
 						if (hint == 'any' || type == hint) {
 							this[name] = val;
 							delete obj[name];
@@ -530,7 +534,7 @@ Array.inject(new function() {
 		shuffle: function() {
 			var res = this.clone();
 			var i = this.length;
-			while (i--) res.swap(i, Math.rand(0, i));
+			while (i--) res.swap(i, Math.rand(i + 1));
 			return res;
 		},
 
@@ -665,8 +669,8 @@ RegExp.inject({
 	_type: 'regexp'
 });
 
-Math.rand = function(min, max) {
-	return Math.floor(Math.random() * (max - min + 1) + min);
+Math.rand = function(value) {
+	return Math.floor(Math.random() * Math.abs(value)); 
 }
 
 Array.inject({
