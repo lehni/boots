@@ -106,6 +106,13 @@ HopObject.inject({
 		return this._prototype + '-' + (this.cache.id || this._id);
 	},
 
+	/**
+	 * Radomly returns one entry from the list.
+	 */
+	getRandom: function() {
+		return this.get(Math.rand(this.count()));
+	},
+
 	statics: {
 		/**
 		 * Takes either an id / prototype pair of a full id ("prototype-id")
