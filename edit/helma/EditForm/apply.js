@@ -133,10 +133,6 @@ EditForm.inject(new function() {
 		},
 
 		applyItem: function(item, value) {
-			// do not apply hidden items, as there cannot be any data coming from them
-			if (item.hidden)
-				return false;
-
 			if (item.type == 'tab') {
 				item.groupForm.applyItems();
 			} else {

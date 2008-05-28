@@ -157,7 +157,7 @@ EditForm.inject({
 		param = param || {};
 		if (item instanceof Array) {
 			for (var i = 0; i < item.length; i++) {
-				if (i > 0 && !item[i].type == 'hidden')
+				if (i > 0 && item[i].type != 'hidden')
 					out.write('&nbsp;');
 				this.renderItem(baseForm, item[i], param, out);
 			}
@@ -237,7 +237,7 @@ EditForm.inject({
 			// for the cell settings
 			if (item instanceof Array)
 				item = item[0];
-			if (item.hidden) {
+			if (item.type == 'hidden') {
 				cellCount--;
 			} else if (item.width) {
 				var w = parseFloat(item.width);
@@ -266,7 +266,7 @@ EditForm.inject({
 			if (item instanceof Array)
 				item = item[0];
 
-			if (!item.hidden) {
+			if (item.type != 'hidden') {
 				if (!firstItem)
 					firstItem = item;
 				var width = widths[i];
