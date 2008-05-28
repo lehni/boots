@@ -1197,7 +1197,9 @@ DomElement.inject(new function() {
 
 		appendChild: function(el) {
 			if (el = DomElement.get(el)) {
+				var text = Browser.IE && el.text;
 				this.$.appendChild(el.$);
+				if (text) this.$.text = text;
 			}
 			return this;
 		},
