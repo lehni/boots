@@ -1197,9 +1197,10 @@ DomElement.inject(new function() {
 
 		appendChild: function(el) {
 			if (el = DomElement.get(el)) {
-				var text = Browser.IE && el.text;
+				var text = Browser.IE && el.$.text;
+				if (text) el.$.text = '';
 				this.$.appendChild(el.$);
-				if (text) this.$.text = text;
+				if (text) el.$.text = text;
 			}
 			return this;
 		},
@@ -1310,7 +1311,10 @@ DomElement.inject(new function() {
 	var inserters = {
 		before: function(source, dest) {
 			if (source && dest && dest.$.parentNode) {
+				var text = Browser.IE && dest.$.text;
+				if (text) dest.$.text = '';
 				dest.$.parentNode.insertBefore(source.$, dest.$);
+				if (text) dest.$.text = text;
 			}
 		},
 
