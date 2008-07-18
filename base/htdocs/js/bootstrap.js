@@ -7,14 +7,14 @@ if (!this.__proto__) {
 new function() { 
 	function inject(dest, src, base, generics) {
 		function field(name, generics) {
+			if (generics) generics[name] = function(bind) {
+				return bind && dest[name].apply(bind,
+					Array.prototype.slice.call(arguments, 1));
+			}
 			var val = src[name], res = val, prev = dest[name];
 			if (val !== (src.__proto__ || Object.prototype)[name]) {
 				switch (typeof val) {
 					case 'function':
-						if (generics) generics[name] = function(bind) {
-							return bind && dest[name].apply(bind,
-								Array.prototype.slice.call(arguments, 1));
-						}
 						if (prev && /\bthis\.base\b/.test(val)) {
 							var fromBase = base && base[name] == prev;
 							res = (function() {
@@ -555,7 +555,7 @@ Array.inject(new function() {
 		shuffle: function() {
 			var res = this.clone();
 			var i = this.length;
-			while (i--) res.swap(i, Math.rand(i + 1));
+			while (i--) res.swap(i, Math.rand(0, i + 1));
 			return res;
 		},
 
@@ -696,8 +696,8 @@ RegExp.inject({
 	_type: 'regexp'
 });
 
-Math.rand = function(value) {
-	return Math.floor(Math.random() * Math.abs(value)); 
+Math.rand = function(min, max) {
+	return Math.floor(Math.random() * (max - min) + min);
 }
 
 Array.inject({

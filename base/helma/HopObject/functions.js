@@ -110,7 +110,7 @@ HopObject.inject({
 	 * Radomly returns one entry from the list.
 	 */
 	getRandom: function() {
-		return this.get(Math.rand(this.count()));
+		return this.get(Math.rand(0, this.count()));
 	},
 
 	statics: {
