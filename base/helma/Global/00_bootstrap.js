@@ -5,35 +5,32 @@ new function() {
 				return bind && dest[name].apply(bind,
 					Array.prototype.slice.call(arguments, 1));
 			}
-			var val = src[name], res = val, prev = dest[name];
+			var val = src[name], res = val, prev, set;
 			if (val !== (src.__proto__ || Object.prototype)[name]) {
-				switch (typeof val) {
-					case 'function':
-						var match;
-						if (match = name.match(/(.*)_(g|s)et$/)) {
-							dest['__define' + match[2].toUpperCase() + 'etter__'](match[1], val);
-							return;
+				if (typeof val == 'function') {
+					if (/\[native code/.test(val))
+						return;
+					if (set = name.match(/(.*)_(g|s)et$/)) {
+						name = set[1];
+						dest['__define' + set[2].toUpperCase() + 'etter__'](name, val);
+					} else if ((prev = dest[name]) && /\bthis\.base\b/.test(val)) {
+						if (prev._version && prev._version != version)
+							prev = prev._previous;
+						var fromBase = base && base[name] == prev;
+						res = (function() {
+							var tmp = this._base;
+							this._base = fromBase ? base[name] : prev;
+							try { return val.apply(this, arguments); }
+							finally { this._base = tmp; }
+						}).pretend(val);
+						if (version) {
+							res._version = version;
+							res._previous = prev;
 						}
-						if (/\[native code/.test(val))
-							return;
-						if (prev && /\bthis\.base\b/.test(val)) {
-							if (prev._version && prev._version != version)
-								prev = prev._previous;
-							var fromBase = base && base[name] == prev;
-							res = (function() {
-								var tmp = this.base;
-								this.base = fromBase ? base[name] : prev;
-								try { return val.apply(this, arguments); }
-								finally { this.base = tmp; }
-							}).pretend(val);
-							if (version) {
-								res._version = version;
-								res._previous = prev;
-							}
-						}
-						break;
+					}
 				}
-				dest[name] = res;
+				if (!set)
+					dest[name] = res;
 				if (src._hide && dest.dontEnum)
 					dest.dontEnum(name);
 			}
@@ -108,6 +105,11 @@ new function() {
 
 	Base = Object.inject({
 		_hide: true,
+
+		base_get: function() {
+			return this._base;
+		},
+
 		has: function(name) {
 			return visible(this, name);
 		},
