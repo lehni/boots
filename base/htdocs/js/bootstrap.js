@@ -11,20 +11,18 @@ new function() {
 				return bind && dest[name].apply(bind,
 					Array.prototype.slice.call(arguments, 1));
 			}
-			var val = src[name], res = val, prev = dest[name];
+			var val = src[name], res = val, prev;
 			if (val !== (src.__proto__ || Object.prototype)[name]) {
-				switch (typeof val) {
-					case 'function':
-						if (prev && /\bthis\.base\b/.test(val)) {
-							var fromBase = base && base[name] == prev;
-							res = (function() {
-								var tmp = this.base;
-								this.base = fromBase ? base[name] : prev;
-								try { return val.apply(this, arguments); }
-								finally { this.base = tmp; }
-							}).pretend(val);
-						}
-						break;
+				if (typeof val == 'function') {
+					if ((prev = dest[name]) && /\bthis\.base\b/.test(val)) {
+						var fromBase = base && base[name] == prev;
+						res = (function() {
+							var tmp = this.base;
+							this.base = fromBase ? base[name] : prev;
+							try { return val.apply(this, arguments); }
+							finally { this.base = tmp; }
+						}).pretend(val);
+					}
 				}
 				dest[name] = res;
 			}
@@ -1087,7 +1085,7 @@ DomElement.inject(new function() {
 	].associate();
 	var properties = Hash.merge({ 
 		text: Browser.IE ? 'innerText' : 'textContent', html: 'innerHTML',
-		'class': 'className', 'for': 'htmlFor'
+		'class': 'className', className: 'className', 'for': 'htmlFor'
 	}, [ 
 		'value', 'accessKey', 'cellPadding', 'cellSpacing', 'colSpan',
 		'frameBorder', 'maxLength', 'readOnly', 'rowSpan', 'tabIndex',
