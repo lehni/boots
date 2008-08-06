@@ -27,7 +27,7 @@ EditForm = Base.extend({
 		if (EditSettings.useButtons && Browser.WEBKIT) {
 			// On safari, remove buttons before setting of new html, to prevent
 			// the odd bug described bellow from happening.
-			this.container.getElements('input[type=button]').remove();
+			$$('input[type=button]', this.container).remove();
 		}
 		this.container.setHtml(this.html);
 		// On Safari, there is a very odd bug that very rarely mixes all the
@@ -36,7 +36,7 @@ EditForm = Base.extend({
 		// buttons in edit forms, but use <a> tags, and replace them with buttons
 		// here, if useButtons is set to true:
 		if (EditSettings.useButtons) {
-			this.container.getElements('a.button').each(function(el, index) {
+			$$('a.button', this.container).each(function(el, index) {
 				var id = el.getId();
 				el.removeClass('button'); // For getClass bellow
 				el.replaceWith('input', {
