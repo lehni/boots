@@ -29,7 +29,7 @@ new function() {
 		}
 		if (src) {
 			for (var name in src)
-				if (visible(src, name) && !/^(prototype|constructor|toString|valueOf|statics|_generics)$/.test(name))
+				if (visible(src, name) && !/^(prototype|constructor|toString|valueOf|statics|_generics|_beans)$/.test(name))
 					field(name, generics);
 			field('toString');
 			field('valueOf');
@@ -95,13 +95,17 @@ new function() {
 		extend: function() {
 			var res = new (extend(this));
 			return res.inject.apply(res, arguments);
+		},
+
+		statics: {
+			has: visible
 		}
 	});
 }
 
 Function.inject(new function() {
 	function timer(that, type, delay, bind, args) {
-		if (delay == undefined)
+		if (delay === undefined)
 			return that.apply(bind, args ? args : []);
 		var fn = that.bind(bind, args);
 		var timer = window['set' + type](fn, delay);
@@ -115,17 +119,17 @@ Function.inject(new function() {
 	return {
 		_generics: true,
 
-		name: function() {
+		getName: function() {
 			var match = this.toString().match(/^\s*function\s*(\w*)/);
 			return match && match[1];
 		},
 
-		parameters: function() {
+		getParameters: function() {
 			var str = this.toString().match(/^\s*function[^\(]*\(([^\)]*)/)[1];
 			return str ? str.split(/\s*,\s*/) : [];
 		},
 
-		body: function() {
+		getBody: function() {
 			return this.toString().match(/^\s*function[^\{]*\{([\u0000-\uffff]*)\}\s*$/)[1];
 		},
 
@@ -179,11 +183,9 @@ Enumerable = new function() {
 			for (var i in this)
 				iter.call(bind, this[i], i, this);
 		} else {
-			for (var i in this) {
-				var val = this[i];
-				if (val !== this.__proto__ && val !== this.__proto__[i])
-					iter.call(bind, val, i, this);
-			}
+			for (var i in this)
+				if (this[i] !== this.__proto__ && this[i] !== this.__proto__[i])
+					iter.call(bind, this[i], i, this);
 		}
 	};
 
@@ -365,19 +367,19 @@ Hash = Base.extend(Enumerable, {
 		}, this);
 	},
 
-	keys: function() {
+	getKeys: function() {
 		return this.map(function(val, key) {
 			return key;
 		});
 	},
 
-	length: function() {
-		return this.each(function() {
-			this.length++;
-		}, { length: 0 }).length;
-	},
+	getValues: Enumerable.toArray,
 
-	values: Enumerable.toArray,
+	getSize: function() {
+		return this.each(function() {
+			this.size++;
+		}, { size: 0 }).size;
+	},
 
 	statics: {
 		create: function(obj) {
@@ -477,11 +479,11 @@ Array.inject(new function() {
 			this.length = 0;
 		},
 
-		first: function() {
+		getFirst: function() {
 			return this[0];
 		},
 
-		last: function() {
+		getLast: function() {
 			return this[this.length - 1];
 		},
 
@@ -590,7 +592,7 @@ Array.inject(new function() {
 			this.length = 0;
 		},
 
-		conact: function(list) {
+		concat: function(list) {
 			return Browser.WEBKIT
 				? new Array(this.length + list.length).append(this).append(list)
 				: Array.concat(this, list);
@@ -874,7 +876,7 @@ DomElements = Array.extend(new function() {
 				return this.base(Base.each(src || {}, function(val, key) {
 					if (typeof val == 'function') {
 						var func = val, prev = proto[key];
-						var count = func.parameters().length, prevCount = prev && prev.parameters().length;
+						var count = func.getParameters().length, prevCount = prev && prev.getParameters().length;
 						val = function() {
 							var args = arguments, values;
 							if (prev && args.length > count && args.length <= prevCount)
@@ -1125,6 +1127,7 @@ DomElement.inject(new function() {
 	}
 
 	var fields = {
+
 		set: function(name, value) {
 			switch (Base.type(name)) {
 				case 'string':
@@ -1558,7 +1561,7 @@ DomElement.inject({
 				listener = pseudo && pseudo.listener || listener;
 				name = pseudo && pseudo.type;
 			}
-			var that = this, bound = listener.parameters().length == 0
+			var that = this, bound = listener.getParameters().length == 0
 				? listener.bind(this)
 				: function(event) { 
 					event = new DomEvent(event);
@@ -1852,6 +1855,7 @@ DomElement.inject(new function() {
 	}
 
 	return {
+
 		getElements: function(selectors, nowrap) {
 			var elements = nowrap ? [] : new this._elements();
 			selectors = !selectors ? ['*'] : typeof selectors == 'string'
@@ -2174,6 +2178,7 @@ HtmlElement = DomElement.extend({
 HtmlElement.inject = DomElement.inject;
 
 HtmlElement.inject({
+
 	getClass: function() {
 		return this.$.className;
 	},
@@ -2355,6 +2360,7 @@ HtmlElement.inject(new function() {
 	});
 
 	var fields = {
+
 		getComputedStyle: function(name) {
 			var style;
 			return this.$.currentStyle && this.$.currentStyle[name.camelize()]
@@ -2521,6 +2527,7 @@ HtmlElement.inject(new function() {
 	var getScrollOffset = cumulate('scroll', 'parentNode');
 
 	var fields = {
+
 		getSize: function() {
 			return body(this)
 				? this.getView().getSize()
@@ -2599,6 +2606,7 @@ HtmlElement.inject(new function() {
 [HtmlDocument, HtmlView].each(function(ctor) {
 	ctor.inject(this);
 }, {
+
 	getSize: function() {
 		var doc = this.getDocument().$, view = this.getView().$, html = doc.documentElement;
 		return Browser.WEBKIT2 && { width: view.innerWidth, height: view.innerHeight }
@@ -2662,6 +2670,7 @@ HtmlElement.inject(new function() {
 });
 
 HtmlElement.inject({
+
 	getFormElements: function() {
 		return this.getElements(['input', 'select', 'textarea']);
 	},
@@ -3130,7 +3139,7 @@ Request = Base.extend(Chain, Callback, new function() {
 					this.transport.onreadystatechange = this.onStateChange.bind(this);
 					if (method == 'post' && this.transport.overrideMimeType)
 						this.setHeader('Connection', 'close');
-					this.headers.merge(opts.headers).each(function(header, name) {
+					new Hash(this.headers, opts.headers).each(function(header, name) {
 						try{
 							this.transport.setRequestHeader(name, header);
 						} catch (e) {
@@ -3227,7 +3236,7 @@ Asset = new function() {
 		},
 
 		stylesheet: function(src, props) {
-			return new HtmlElement('link', Hash.create({
+			return new HtmlElement('link', new Hash({
 				rel: 'stylesheet', media: 'screen', type: 'text/css', href: src
 			}, props)).insertInside(Document.getElement('head'));
 		},

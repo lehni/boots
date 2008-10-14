@@ -137,7 +137,7 @@ EditForm.inject({
 			nodes.unshift(node);
 			node = node.parent;
 		}
-		var last = nodes.length - 1, lastForm = nodes.last().form;
+		var last = nodes.length - 1, lastForm = nodes.last.form;
 		return nodes.each(function(node, index) {
 			if (node.visible) {
 				var title = node.getTitle(), form = node.getForm();

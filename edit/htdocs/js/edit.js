@@ -101,7 +101,7 @@ EditForm = Base.extend({
 		// inline interface
 		if (this.parent && this.parent.empty)
 			return this.parent.close();
-		if (!EditForm.forms.length())
+		if (!EditForm.forms.getSize())
 			Document.fireEvent('endedit');
 		return this.parent;
 	},
@@ -365,7 +365,7 @@ EditForm = Base.extend({
 		get: function(id, target, parent) {
 			var form = this.forms[id];
 			if (target) { // If target is passed, we're asked to create a form
-				if (!this.forms.length())
+				if (!this.forms.getSize())
 					Document.fireEvent('beginedit');
 				if (!form)
 					form = this.forms[id] = new EditForm(id, target, parent);
@@ -689,7 +689,7 @@ EditForm.register(new function() {
 EditForm.register(new function() {
 	function moveSelected(from, to) {
 		var children = to.getOptions();
-		var at = children.last();
+		var at = children.getLast();
 		children.each(function(opt) {
 			if (opt.getSelected()) {
 				opt.setSelected(false);
@@ -797,7 +797,7 @@ EditForm.register(new function() {
 					if (element.getElement('option[value="' + id + '"]')) {
 						alert('This element was already added to the list.');
 					} else {
-						var selected = element.getSelected().last();
+						var selected = element.getSelected().getLast();
 						var opt = new SelectOption({ text: title, value: id });
 						if (selected)
 							opt.insertAfter(selected);

@@ -8,8 +8,8 @@ Function.inject({
 	 */
 	/*
 	toRender: function() {
-		var params = this.parameters();
-		var last = params.last();
+		var params = this.parameters;
+		var last = params.last;
 		return Function.compile(params, 
 			'var _asString = ' + last + ' == null;' +
 			'if (_asString) (' + last + ' = res).push();' +
@@ -18,7 +18,7 @@ Function.inject({
 	},
 	*/
 	toRender: function(count) {
-		var length = count == undefined ? this.parameters().length : count;
+		var length = count == undefined ? this.parameters.length : count;
 		var last = length ? length - 1 : 0;
 		var that = this;
 		return function() {

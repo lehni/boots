@@ -5,21 +5,20 @@ new function() {
 				return bind && dest[name].apply(bind,
 					Array.prototype.slice.call(arguments, 1));
 			}
-			var val = src[name], res = val, prev, set;
+			var val = src[name], res = val, prev, bean, field;
 			if (val !== (src.__proto__ || Object.prototype)[name]) {
 				if (typeof val == 'function') {
 					if (/\[native code/.test(val))
 						return;
-					if (set = name.match(/(.*)_(g|s)et$/)) {
-						name = set[1];
-						dest['__define' + set[2].toUpperCase() + 'etter__'](name, val);
-					} else if ((prev = dest[name]) && /\bthis\.base\b/.test(val)) {
+					if ((prev = dest[name]) && /\bthis\.base\b/.test(val)) {
 						if (prev._version && prev._version != version)
 							prev = prev._previous;
 						var fromBase = base && base[name] == prev;
 						res = (function() {
 							var tmp = this._base;
 							this._base = fromBase ? base[name] : prev;
+							if (!(this instanceof HopObject))
+								this.dontEnum('_base');
 							try { return val.apply(this, arguments); }
 							finally { this._base = tmp; }
 						}).pretend(val);
@@ -28,16 +27,22 @@ new function() {
 							res._previous = prev;
 						}
 					}
+					if (src._beans && (bean = name.match(/^(set|get|is)(([A-Z])(.*))$/))) {
+						field = bean[3].toLowerCase() + bean[4];
+						if ((src.__lookupGetter__(field) || dest.__lookupGetter__(field)) || (src[field] || dest[field]) === undefined) {
+							dest['__define' + (bean[1] == 'set' ? 'S' : 'G') + 'etter__'](field, res);
+							dest.dontEnum(field);
+						}
+					}
 				}
-				if (!set)
-					dest[name] = res;
+				dest[name] = res;
 				if (src._hide && dest.dontEnum)
 					dest.dontEnum(name);
 			}
 		}
 		if (src) {
 			for (var name in src)
-				if (!/^(prototype|constructor|toString|valueOf|statics|_generics|_hide)$/.test(name))
+				if (!/^(prototype|constructor|toString|valueOf|statics|_generics|_beans|_hide)$/.test(name))
 					field(name, generics);
 			field('toString');
 			field('valueOf');
@@ -105,8 +110,9 @@ new function() {
 
 	Base = Object.inject({
 		_hide: true,
+		_beans: true,
 
-		base_get: function() {
+		getBase: function() {
 			return this._base;
 		},
 
@@ -123,6 +129,10 @@ new function() {
 		extend: function() {
 			var res = new (extend(this));
 			return res.inject.apply(res, arguments);
+		},
+
+		statics: {
+			has: visible
 		}
 	});
 }
@@ -130,19 +140,20 @@ new function() {
 Function.inject(new function() {
 
 	return {
+		_beans: true,
 		_generics: true,
 
-		name: function() {
+		getName: function() {
 			var match = this.toString().match(/^\s*function\s*(\w*)/);
 			return match && match[1];
 		},
 
-		parameters: function() {
+		getParameters: function() {
 			var str = this.toString().match(/^\s*function[^\(]*\(([^\)]*)/)[1];
 			return str ? str.split(/\s*,\s*/) : [];
 		},
 
-		body: function() {
+		getBody: function() {
 			return this.toString().match(/^\s*function[^\{]*\{([\u0000-\uffff]*)\}\s*$/)[1];
 		},
 
@@ -190,6 +201,7 @@ Enumerable = new function() {
 
 	return {
 		_hide: true,
+		_beans: true,
 		_generics: true,
 
 		each: Base.iterate(function(iter, bind) {
@@ -333,6 +345,7 @@ $type = Base.type;
 
 Hash = Base.extend(Enumerable, {
 	_hide: true,
+	_beans: true,
 	_generics: true,
 
 	initialize: function() {
@@ -348,19 +361,19 @@ Hash = Base.extend(Enumerable, {
 		}, this);
 	},
 
-	keys: function() {
+	getKeys: function() {
 		return this.map(function(val, key) {
 			return key;
 		});
 	},
 
-	length: function() {
-		return this.each(function() {
-			this.length++;
-		}, { length: 0 }).length;
-	},
+	getValues: Enumerable.toArray,
 
-	values: Enumerable.toArray,
+	getSize: function() {
+		return this.each(function() {
+			this.size++;
+		}, { size: 0 }).size;
+	},
 
 	statics: {
 		create: function(obj) {
@@ -460,11 +473,11 @@ Array.inject(new function() {
 			this.length = 0;
 		},
 
-		first: function() {
+		getFirst: function() {
 			return this[0];
 		},
 
-		last: function() {
+		getLast: function() {
 			return this[this.length - 1];
 		},
 
@@ -582,6 +595,7 @@ Array.inject(new function() {
 $A = Array.create;
 
 String.inject({
+	_beans: true,
 	_type: 'string',
 
 	test: function(exp, param) {

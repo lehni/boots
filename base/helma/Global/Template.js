@@ -1,6 +1,6 @@
 /**
  * JavaScript Template Engine
- * (c) 2005 - 2007, Juerg Lehni, http://www.scratchdisk.com
+ * (c) 2005 - 2008, Juerg Lehni, http://www.scratchdisk.com
  *
  * Template.js is released under the MIT license
  * http://dev.helma.org/Wiki/JavaScript+Template+Engine/
@@ -257,7 +257,7 @@ Template.prototype = {
 				} else {
 					var unnamed = macro.unnamed.join(', ');
 					macro.arguments = '[ { ' + macro.param.join(', ') + ' } ' + (unnamed ? ', ' + unnamed : '') + ' ]';
-					var match = macro.command.match(/^([^.]*)\.(.*)$/);
+					var match = macro.command.match(/^(.*)\.(.*)$/);
 					if (match) {
 						macro.object = match[1];
 						macro.name = match[2];
