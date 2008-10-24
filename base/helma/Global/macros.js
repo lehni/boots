@@ -15,8 +15,6 @@ function json_macro(param, object) {
 		// produces code like { key: 'value', 'class': 'content' }, using single quote
 		// for reserved keywords. This means we cannot simply replace like bellow
 		// if an object is passed, since the single quote then gets replaced by \'
-		// The workaround is to allways use .each even when the include filter is
-		// not defined
 		if (Base.type(object) == 'object') {
 		 	return '{' + object.each(function(val, key) {
 				if (val != undefined)

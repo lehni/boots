@@ -29,7 +29,7 @@ new function() {
 		}
 		if (src) {
 			for (var name in src)
-				if (visible(src, name) && !/^(prototype|constructor|toString|valueOf|statics|_generics|_beans)$/.test(name))
+				if (visible(src, name) && !/^(prototype|constructor|toString|valueOf|statics|_generics)$/.test(name))
 					field(name, generics);
 			field('toString');
 			field('valueOf');

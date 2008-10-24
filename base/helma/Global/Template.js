@@ -42,10 +42,18 @@ function Template(object, name, parent) {
 Template.prototype = {
 	render: function(object, param, out) {
 		try {
-			if (param && param.__param__) {
-				function inherit() {};
-				inherit.prototype = param.__param__;
-				var prm = new inherit();
+			var parentParam = param && param.__param__;
+			if (parentParam) {
+				var prm;
+				if (parentParam instanceof java.util.Map) {
+					prm = {};
+					for (var i in parentParam)
+						prm[i] = parentParam[i];
+				} else {
+					function inherit() {};
+					inherit.prototype = parentParam;
+					prm = new inherit();
+				}
 				for (var i in param)
 					prm[i] = param[i];
 				param = prm;

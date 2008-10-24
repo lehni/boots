@@ -5,7 +5,7 @@ new function() {
 				return bind && dest[name].apply(bind,
 					Array.prototype.slice.call(arguments, 1));
 			}
-			var val = src[name], res = val, prev, bean, field;
+			var val = src[name], res = val, prev, bean, key;
 			if (val !== (src.__proto__ || Object.prototype)[name]) {
 				if (typeof val == 'function') {
 					if (/\[native code/.test(val))
@@ -27,12 +27,11 @@ new function() {
 							res._previous = prev;
 						}
 					}
-					if (src._beans && (bean = name.match(/^(set|get|is)(([A-Z])(.*))$/))) {
-						field = bean[3].toLowerCase() + bean[4];
-						if ((src.__lookupGetter__(field) || dest.__lookupGetter__(field)) || (src[field] || dest[field]) === undefined) {
-							dest['__define' + (bean[1] == 'set' ? 'S' : 'G') + 'etter__'](field, res);
-							dest.dontEnum(field);
-						}
+					if (src._beans && (bean = name.match(/^(set|get|is)(([A-Z])(.*))$/))
+						&& ((src.__lookupGetter__(key = bean[3].toLowerCase() + bean[4]) || dest.__lookupGetter__(key))
+							|| (src[key] || dest[key]) === undefined)) {
+						dest['__define' + (bean[1] == 'set' ? 'S' : 'G') + 'etter__'](key, res);
+						dest.dontEnum(key);
 					}
 				}
 				dest[name] = res;
@@ -135,6 +134,16 @@ new function() {
 			has: visible
 		}
 	});
+}
+
+HopObject.prototype.__iterator__ = function() {
+	var en = toJava(this).properties();
+	while (en.hasMoreElements()) {
+		var key = en.nextElement();
+		if (key.charAt(0) != '_')
+			yield key;
+	}
+	throw StopIteration;
 }
 
 Function.inject(new function() {
