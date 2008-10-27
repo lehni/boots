@@ -44,16 +44,15 @@ Template.prototype = {
 		try {
 			var parentParam = param && param.__param__;
 			if (parentParam) {
-				var prm;
 				if (parentParam instanceof java.util.Map) {
-					prm = {};
+					var prm = {};
 					for (var i in parentParam)
 						prm[i] = parentParam[i];
-				} else {
-					function inherit() {};
-					inherit.prototype = parentParam;
-					prm = new inherit();
+					parentParam = param.__param__ = prm;
 				}
+				function inherit() {};
+				inherit.prototype = parentParam;
+				var prm = new inherit();
 				for (var i in param)
 					prm[i] = param[i];
 				param = prm;
