@@ -84,6 +84,7 @@ Template.prototype = {
 		this.tags = []; 
 		this.listId = 0; 
 		var skipLineBreak = false;
+		var skipWhiteSpace = false;
 		var tagCounter = 0;
 		var templateTag = null;
 		var stack = { control: [], loop: {} };
@@ -93,10 +94,18 @@ Template.prototype = {
 		function append() {
 			if (buffer.length) {
 				var part = buffer.join('');
-				if (templateTag)
-					templateTag.buffer.push(part);
-				else 
-					code.push('out.write(' + uneval(part) + ');');
+				if (part && skipWhiteSpace) {
+					part = part.match(/\s*([\u0000-\uffff]*)/);
+					if (part)
+						part = part[1];
+					skipWhiteSpace = false;
+				}
+				if (part) {
+					if (templateTag)
+						templateTag.buffer.push(part);
+					else 
+						code.push('out.write(' + uneval(part) + ');');
+				}
 				buffer.length = 0;
 			}
 		}
@@ -139,6 +148,8 @@ Template.prototype = {
 							} else {
 								if (templateTag)
 									templateTag.buffer.push(tag);
+								else if (tag == '<%-%>')
+									skipWhiteSpace = true;
 								else if (this.parseMacro(tag, code, stack, true) && end == line.length)
 									skipLineBreak = true;
 							}
@@ -363,7 +374,8 @@ Template.prototype = {
 	},
 
 	parseMacro: function(tag, code, stack, allowControls, toString) {
-		if (/^<%--/.test(tag) || tag == '<%-%>') return true;
+		if (/^<%--/.test(tag))
+			return true;
 		var macro = this.parseMacroParts(tag, code, stack, allowControls);
 		if (!macro)
 			throw 'Invalid tag';
