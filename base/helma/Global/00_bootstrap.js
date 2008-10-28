@@ -17,8 +17,7 @@ new function() {
 						res = (function() {
 							var tmp = this._base;
 							this._base = fromBase ? base[name] : prev;
-							if (!(this instanceof HopObject))
-								this.dontEnum('_base');
+							this.dontEnum('_base');
 							try { return val.apply(this, arguments); }
 							finally { this._base = tmp; }
 						}).pretend(val);
@@ -134,16 +133,23 @@ new function() {
 			has: visible
 		}
 	});
-}
 
-HopObject.prototype.__iterator__ = function() {
-	var en = toJava(this).properties();
-	while (en.hasMoreElements()) {
-		var key = en.nextElement();
-		if (key.charAt(0) != '_')
-			yield key;
+	HopObject.prototype.dontEnum = function() {
+		if (!this.__dontEnum__)
+			this.__dontEnum__ = { __dontEnum__: true };
+		for (var i = 0, l = arguments.length; i < l; i++)
+			this.__dontEnum__[arguments[i]] = true;
 	}
-	throw StopIteration;
+
+	HopObject.prototype.__iterator__ = function() {
+		var en = toJava(this).properties();
+		while (en.hasMoreElements()) {
+			var key = en.nextElement();
+			if (!this.__dontEnum__ || !this.__dontEnum__[key])
+				yield key;
+		}
+		throw StopIteration;
+	}
 }
 
 Function.inject(new function() {
@@ -630,14 +636,14 @@ String.inject({
 	},
 
 	uncamelize: function(separator) {
-		separator = separator || '-';
-		return this.replace(/[a-zA-Z][A-Z0-9]|[0-9][a-zA-Z]/g, function(match) {
-			return match.charAt(0) + separator + match.charAt(1);
+		separator = separator || ' ';
+		return this.replace(/[a-z][A-Z0-9]|[0-9][a-zA-Z]|[A-Z]{2}[a-z]/g, function(match) {
+			return match.charAt(0) + separator + match.substring(1);
 		});
 	},
 
 	hyphenate: function(separator) {
-		return this.uncamelize(separator).toLowerCase();
+		return this.uncamelize(separator || '-').toLowerCase();
 	},
 
 	capitalize: function() {

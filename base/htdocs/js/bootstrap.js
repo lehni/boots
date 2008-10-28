@@ -101,6 +101,7 @@ new function() {
 			has: visible
 		}
 	});
+
 }
 
 Function.inject(new function() {
@@ -632,14 +633,14 @@ String.inject({
 	},
 
 	uncamelize: function(separator) {
-		separator = separator || '-';
-		return this.replace(/[a-zA-Z][A-Z0-9]|[0-9][a-zA-Z]/g, function(match) {
-			return match.charAt(0) + separator + match.charAt(1);
+		separator = separator || ' ';
+		return this.replace(/[a-z][A-Z0-9]|[0-9][a-zA-Z]|[A-Z]{2}[a-z]/g, function(match) {
+			return match.charAt(0) + separator + match.substring(1);
 		});
 	},
 
 	hyphenate: function(separator) {
-		return this.uncamelize(separator).toLowerCase();
+		return this.uncamelize(separator || '-').toLowerCase();
 	},
 
 	capitalize: function() {
@@ -1986,7 +1987,7 @@ DomElement.operators = new function() {
 				return '[starts-with(@' + a + ', "' + v + '")]';
 			},
 			function(a, v) {
-				return a.substr(0, v.length) == v;
+				return a.substring(0, v.length) == v;
 			}
 		],
 
@@ -1995,7 +1996,7 @@ DomElement.operators = new function() {
 				return '[substring(@' + a + ', string-length(@' + a + ') - ' + v.length + ' + 1) = "' + v + '"]';
 			},
 			function(a, v) {
-				return a.substr(a.length - v.length) == v;
+				return a.substring(a.length - v.length) == v;
 			}
 		],
 
