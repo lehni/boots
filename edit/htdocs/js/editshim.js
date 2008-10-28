@@ -1,12 +1,3 @@
-/* lineto:
-EditSettings = {
-	objectLink: '<% link id="@link" text="@text" %>',
-	unnamedObjectLink: '<% link id="@link" %>',
-	mailLink: '<% link mail="@link" text="@text" %>',
-	urlLink: '<% link url="@link" text="@text" %>',
-	unnamedUrlLink: '<% link url="@link" %>'
-};
-*/
 EditSettings = {
 	objectLink: '<node @link>@text</node>',
 	unnamedObjectLink: '<node>@link</node>',
