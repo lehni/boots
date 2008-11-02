@@ -142,3 +142,11 @@ renderLink = function(content, urlOptions, htmlOptions, out) {
 	out.write(content);
 	out.write('</a>');
 }.toRender();
+
+// Simple helper for debugging
+
+function print() {
+	var str = Array.create(arguments).join(' ');
+	app.log(str);
+	res.write(str + '<br/>');
+}
