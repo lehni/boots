@@ -1,13 +1,17 @@
 new function() { 
 	function inject(dest, src, base, generics, version) {
-		function field(name, generics) {
-			if (generics) generics[name] = function(bind) {
+		function field(name, val, generics) {
+			if (!val) {
+				var get = src.__lookupGetter__(name);
+				val = get ? { _get: get, _set: src.__lookupSetter__(name) } : src[name];
+			}
+			var type = typeof val, func = type == 'function', res = val, prev, beans;
+			if (generics && func) generics[name] = function(bind) {
 				return bind && dest[name].apply(bind,
 					Array.prototype.slice.call(arguments, 1));
 			}
-			var val = src[name], res = val, prev, bean, key;
 			if (val !== (src.__proto__ || Object.prototype)[name]) {
-				if (typeof val == 'function') {
+				if (func) {
 					if (/\[native code/.test(val))
 						return;
 					if ((prev = dest[name]) && /\bthis\.base\b/.test(val)) {
@@ -26,14 +30,20 @@ new function() {
 							res._previous = prev;
 						}
 					}
-					if (src._beans && (bean = name.match(/^(set|get|is)(([A-Z])(.*))$/))
-						&& ((src.__lookupGetter__(key = bean[3].toLowerCase() + bean[4]) || dest.__lookupGetter__(key))
-							|| (src[key] || dest[key]) === undefined)) {
-						dest['__define' + (bean[1] == 'set' ? 'S' : 'G') + 'etter__'](key, res);
-						dest.dontEnum(key);
-					}
+					if (src._beans && (bean = name.match(/^(get|is)(([A-Z])(.*))$/)))
+						field(bean[3].toLowerCase() + bean[4], {
+							_get: src['get' + bean[2]] || src['is' + bean[2]],
+							_set: src['set' + bean[2]]
+						});
 				}
-				dest[name] = res;
+				if (type == 'object' && (val._get || val._set)) {
+					if (val._get)
+						dest.__defineGetter__(name, val._get);
+					if (val._set)
+						dest.__defineSetter__(name, val._set);
+				} else {
+					dest[name] = res;
+				}
 				if (src._hide && dest.dontEnum)
 					dest.dontEnum(name);
 			}
@@ -41,7 +51,7 @@ new function() {
 		if (src) {
 			for (var name in src)
 				if (!/^(prototype|constructor|toString|valueOf|statics|_generics|_beans|_hide)$/.test(name))
-					field(name, generics);
+					field(name, null, generics);
 			field('toString');
 			field('valueOf');
 		}
@@ -110,8 +120,10 @@ new function() {
 		_hide: true,
 		_beans: true,
 
-		getBase: function() {
-			return this._base;
+		base: {
+			_get: function() {
+				return this._base;
+			}
 		},
 
 		has: function(name) {
@@ -630,7 +642,7 @@ String.inject({
 	},
 
 	camelize: function(separator) {
-		return this.replace(new RegExp(separator || '-', 'g'), function(match) {
+		return this.replace(new RegExp(separator || '\s-', 'g'), function(match) {
 			return match.charAt(1).toUpperCase();
 		});
 	},

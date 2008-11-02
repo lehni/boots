@@ -7,13 +7,13 @@ if (!this.__proto__) {
 new function() { 
 	function inject(dest, src, base, generics) {
 		function field(name, generics) {
-			if (generics) generics[name] = function(bind) {
+			var val = src[name], func = typeof val == 'function', res = val, prev;
+			if (generics && func) generics[name] = function(bind) {
 				return bind && dest[name].apply(bind,
 					Array.prototype.slice.call(arguments, 1));
 			}
-			var val = src[name], res = val, prev;
 			if (val !== (src.__proto__ || Object.prototype)[name]) {
-				if (typeof val == 'function') {
+				if (func) {
 					if ((prev = dest[name]) && /\bthis\.base\b/.test(val)) {
 						var fromBase = base && base[name] == prev;
 						res = (function() {
@@ -627,7 +627,7 @@ String.inject({
 	},
 
 	camelize: function(separator) {
-		return this.replace(new RegExp(separator || '-', 'g'), function(match) {
+		return this.replace(new RegExp(separator || '\s-', 'g'), function(match) {
 			return match.charAt(1).toUpperCase();
 		});
 	},
