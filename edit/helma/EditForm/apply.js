@@ -70,6 +70,10 @@ EditForm.inject(new function() {
 		afterApply: function(itemsChanged, changedItems) {
 			var obj = this.object;
 
+			// Helma returns null for unset existing properties and undefined for
+			// not existing properties. Make sure we're only setting modifier and date
+			// if the properties are actually defined in type.properties
+
 			if (obj.modifier !== undefined)
 				obj.modifier = session.user;
 

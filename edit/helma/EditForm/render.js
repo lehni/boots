@@ -26,7 +26,7 @@ EditForm.inject({
 				};
 
 				if (EditForm.SHOW_TITLE && this.showTitle !== false)
-					itemsParam.title = this.renderPath(node, mode);
+					itemsParam.title = this.renderTitle(node, mode);
 
 				param.items = this.renderItems(this, itemsParam);
 
@@ -75,7 +75,7 @@ EditForm.inject({
 							value: 'Delete',
 							onClick: this.renderHandle('remove', title)
 						});
-					if (buttonBack) {
+					if (buttonBack && (canGoBack || (buttonMode & EditForm.BUTTON_MODE_APPLY_CLOSE))) {
 						rightButtons.push({
 							value: canGoBack ? this.titles.applyBack || EditForm.TITLE_APPLY_BACK
 								: this.titles.applyClose || EditForm.TITLE_APPLY_CLOSE,
@@ -97,7 +97,7 @@ EditForm.inject({
 				if (str) buttons.push(str);
 				str = this.renderButtons(leftButtons);
 				if (str) buttons.push(str);
-				param.leftButtons = buttons.join('&nbsp;');
+				param.leftButtons = buttons.join('');
 				// Right
 				param.rightButtons = this.renderButtons(rightButtons);
 				html = this.renderTemplate('form', param);
@@ -131,26 +131,31 @@ EditForm.inject({
 		return "EditForm.handle(" + str + ");";
 	},
 
-	renderPath: function(node, mode) {
+	renderTitle: function(node, mode) {
 		var nodes = [];
 		while (node) {
 			nodes.unshift(node);
 			node = node.parent;
+			if (!EditForm.SHOW_PATH)
+				break;
 		}
 		var last = nodes.length - 1, lastForm = nodes.last.form;
-		return nodes.each(function(node, index) {
+		var parts = [];
+		nodes.each(function(node, index) {
 			if (node.visible) {
-				var title = node.getTitle(), form = node.getForm();
+				var title = '<span class="edit-node-title">' + node.getTitle() + '</span>', form = node.getForm();
 				if (EditForm.SHOW_PROTOTYPE && form && !form.title
 					&& mode == 'edit' && this.object != root)
-						title += ' (' + this.object._prototype.uncamelize(' ') + ')';
+						title += ' <span class="edit-node-type">(' + this.object._prototype.uncamelize() + ')</span>';
+				// XXX:
 				if (index < last)
 					title = '<a href="javascript:' +
 						lastForm.renderHandle('back', last - index) + '">'
 						+ title + '</a>';
-				this.push(title);
+				parts.push(title);
 			}
-		}, []).join(' &raquo; ');
+		}, this)
+		return parts.join(' &raquo; ');
 	},
 
 	renderItem: function(baseForm, item, param, out) {
@@ -305,30 +310,16 @@ EditForm.inject({
 			}, res);
 		}
 	},
-/*
-	renderButton: function(button, out) {
-		Html.input({
-			name: button.name,
-			type: 'button', value: button.value,
-			className: button.className,
-			onmouseup: button.onClick
-		}, out);
-	}.toRender(),
-*/
+
 	renderButton: function(button, out) {
 		return this.renderTemplate('button', button, out);
 	},
 
 	renderButtons: function(buttons, out) {
 		var first = true;
-		for (var i = 0; i < buttons.length; i++) {
-			var button = buttons[i];
-			if (button) {
-				if (first) first = false;
-				else res.write('&nbsp;');
-				this.renderButton(button, out);
-			}
-		}
+		for (var i = 0; i < buttons.length; i++)
+			if (buttons[i])
+				this.renderButton(buttons[i], out);
 	}.toRender(),
 
 	addResponse: function(data) {

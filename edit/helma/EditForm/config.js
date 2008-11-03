@@ -2,6 +2,8 @@
 // Do not modify or copy!
 EditForm.BUTTON_MODE_BACK = 1;
 EditForm.BUTTON_MODE_STAY = 2;
+// To force Apply & Close
+EditForm.BUTTON_MODE_APPLY_CLOSE = 4;
 
 // Config switches:
 
@@ -25,6 +27,7 @@ EditForm.BUTTON_MODE = EditForm.BUTTON_MODE_BACK;
 // Global switch for making the title bar of the editor visible.
 // Overridden by EditForm#showTitle
 EditForm.SHOW_TITLE = true;
+EditForm.SHOW_PATH = true;
 // Global switch for making the progress bar in the title visible.
 // Overridden by EditForm#showProgress
 EditForm.SHOW_PROGRESS = true;
