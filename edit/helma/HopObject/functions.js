@@ -76,32 +76,33 @@ HopObject.inject({
 		return realParent ? realParent : this.getParent();
 	},
 
-	// removeObject deletes an object and its subnodes according to the values set
-	// in its form. it also calls the onRemove handler.
-	removeObject: function() {
-		// this removes an editable object after having called it's onRemove handler:
-		if (User.canEdit(this) && !this.isRemoving()) {
-			if (this.onBeforeRemove) {
-				// The onBeforeRemove handler can return false to prevent removal,
-				// or throw a string exception if called from the EditForm framework
-				var ret = this.onBeforeRemove();
-				if (ret != undefined && !ret)
-					return false;
-			}
-			var remove = false;
-			if (this.getEditForm) {
+	// remove deletes an object and its subnodes according to the values set
+	// in its edit form. it also calls the onBeforeRemove / onRemove handlers.
+	remove: function() {
+		if (this.onBeforeRemove) {
+			// The onBeforeRemove handler can return false to prevent removal,
+			// or throw a string exception if called from the EditForm framework
+			var ret = this.onBeforeRemove();
+			if (ret != undefined && !ret)
+				return false;
+		}
+		var remove = false;
+		if (this.getEditForm) {
+			// this removes an editable object after having called it's onRemove handler:
+			if (User.canEdit(this) && !this.isRemoving()) {
 				this.cache.removing = true;
 				// Do not get form through EditNode, as we need to pass true
 				// for the remove parameter, and do not want things to be cached.
 				var form = this.getEditForm({ removing: true });
 				// only remove objects that are also allowed to remove directly and
 				// don't override the base object
-				// TODO: bad not to check for object match? In case of Topic / Post
+				// TODO: Is it bad not to check for object match? In case of Topic / Post
 				// this would not work, as editing a node returns the editor for the
 				// first post....
 				if (form.removable/* && form.object == this*/) {
-					User.log("Remove " + this.getFullId());
-					// now check all the form's items to see wether
+					User.log("Removing " + this.getFullId());
+					remove = true;
+					// Now check all the form's items to see wether
 					// they define autoRemove:
 					if (form.autoRemove) {
 						for (var i = 0; i < form.autoRemove.length; i++) {
@@ -111,38 +112,35 @@ HopObject.inject({
 									var list = item.collection.list();
 									for (var j = 0; j < list.length; j++) {
 										var child = list[j];
-										User.log("Auto Remove " + child + " " +
+										User.log("Auto Removing " + child + " " +
 											EditForm.getEditName(child));
 										item.collection.removeChild(child);
-										child.removeObject();
+										child.remove();
 									}
 								} else {
 									var value = item.getValue();
 									if (value) {
-										User.log("Auto Remove " + value + " " +
+										User.log("Auto Removing " + value + " " +
 											EditForm.getEditName(value));
-										value.removeObject();
+										value.remove();
 									}
 								}
 							}
 						}
 					}
-					remove = true;
 				}
-			} else {
-				User.log("Remove " + this.getFullId());
-				remove = true;
 			}
-			// Allow onRemove to stop removal
-			if (remove) {
-				if (this.onRemove)
-					this.onRemove();
-				this.remove();
-			} else {
-				delete this.cache.removing;
-			}
+		} else {
+			remove = true;
 		}
-		return remove;
+		if (remove) {
+			if (this.onRemove)
+				this.onRemove();
+			return this.base();
+		} else {
+			delete this.cache.removing;
+			return false;
+		}
 	},
 
 	handleLogin: function(url) {
