@@ -64,7 +64,20 @@ Property = Base.extend({
 	},
 
 	statics: {
-		commit: {}
+		commit: {},
+
+		onCommit: function() {
+			for (var id in this.commit) {
+				var commit = this.commit[id];
+				var object = commit.object, properties = commit.properties;
+				for (var name in properties) {
+					var property = properties[name];
+					property._set.call(object, property._get.call(object));
+					app.log('Commiting ' + name + ' on ' + object + ': ' + object[name]);
+				}
+			}
+			this.commit = {};
+		}
 	}
 
 	/*
@@ -79,16 +92,7 @@ Property = Base.extend({
 });
 
 function onCommit() {
-	for (var id in Property.commit) {
-		var commit = Property.commit[id];
-		var object = commit.object, properties = commit.properties;
-		for (var name in properties) {
-			var property = properties[name];
-			property._set.call(object, property._get.call(object));
-			app.log('Commiting ' + name + ' on ' + object + ': ' + object[name]);
-		}
-	}
-	Property.commit = {};
+	Property.onCommit();
 }
 
 JsonProperty = Property.extend(new function() {
