@@ -97,39 +97,14 @@ function onCommit() {
 
 JsonProperty = Property.extend(new function() {
 
-	function wrap(obj, onChange) {
-		// Instead of wrapping obj in a ObjectWrapper that inherits from it,
-		// we can just set it's __meta__ field. __has__ is unnecessary then:
-		obj.__meta__ = {
-			__get__: function(prop) {
-				var value = this[prop];
-				return typeof value == 'object' ? wrap(value, onChange) : value;
-			},
-
-			__set__: function(prop, value) {
-				this[prop] = value;
-				if (onChange)
-					onChange();
-			},
-
-			__delete__: function(prop) {
-				delete this[prop];
-				if (onChange)
-					onChange();
-			}
-		};
-		return obj;
-	}
-
 	return {
 		_cache: true,
 
 		wrap: function(obj, property, value) {
 			var that = this;
-			// return new ObjectWrapper(
-			return wrap(
+			return new ObjectWrapper(
 				value,
-				// onChange handler for the xml object and any of its children:
+				// onChange handler for the json object and any of its children:
 				function() {
 					that.markDirty(obj, property);
 				}
