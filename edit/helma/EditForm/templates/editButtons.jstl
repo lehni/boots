@@ -1,0 +1,6 @@
+<div class="edit-buttons">
+<% if (param.spacer) %>
+<div class="edit-spacer"></div>
+<% end %>
+<%= param.buttons %>
+</div>

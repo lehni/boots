@@ -157,20 +157,22 @@ StringItem = EditItem.extend(new function() {
 		},
 
 		renderLinkButtons: function(baseForm, name, out) {
-			out.write('<div class="edit-spacer"></div>');
-			baseForm.renderButtons([{
-				name: name + '_link',
-				value: 'Internal Link',
-				onClick: baseForm.renderHandle('choose_link', name, {
-					root: this.root ? this.root.getFullId() : '',
-					multiple: false
-				})
-			}, {
-				name: name + '_url',
-				value: 'External Link',
-				onClick: baseForm.renderHandle('choose_url', name)
-			}], out);
-		}.toRender(),
+			return baseForm.renderTemplate('editButtons', {
+				spacer: true,
+				buttons: baseForm.renderButtons([{
+					name: name + '_link',
+					value: 'Internal Link',
+					onClick: baseForm.renderHandle('choose_link', name, {
+						root: this.root ? this.root.getFullId() : '',
+						multiple: false
+					})
+				}, {
+					name: name + '_url',
+					value: 'External Link',
+					onClick: baseForm.renderHandle('choose_url', name)
+				}])
+			}, out);
+		}
 	};
 });
 
@@ -379,12 +381,13 @@ SelectItem = EditItem.extend({
 				{ edit_item: this.name, edit_group: this.form.name });
 		select.options = options;
 		Html.select(select, out);
-		if (editButtons) {
-			// for multi line items, add the buttons bellow,
-			// for pulldown, add them to the right
-			out.write(this.size ? '<div class="edit-spacer"></div>' : ' ');
-			out.write(editButtons);
-		}
+		if (editButtons)
+			baseForm.renderTemplate('editButtons', {
+				// for multi line items, add the buttons bellow,
+				// for pulldown, add them to the right
+				spacer: this.size,
+				buttons: editButtons
+			}, out);
 	},
 
 	store: function(object) {
@@ -468,7 +471,7 @@ SelectItem = EditItem.extend({
 			// it.
 			var prototypes = this.prototypes.map(function(proto) {
 				return {
-					name: proto.uncamelize(' '),
+					name: proto.uncamelize(),
 					href: baseForm.renderHandle('select_new', name, proto,
 						Hash.merge({ edit_prototype: proto }, editParams))
 				};
