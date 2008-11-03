@@ -1,4 +1,4 @@
-// Copyright (c) 2003-2008 Juerg Lehni, Lineto.com. All rights reserved.
+// Copyright (c) 2003 - 2008 Juerg Lehni, Lineto.com. All rights reserved.
 // Copying and reuse is strictly prohibited.
 
 EditForm = Base.extend({
@@ -24,11 +24,10 @@ EditForm = Base.extend({
 		if (values.applied)
 			this.applied = true;
 		this.html = values.html;
-		if (EditSettings.useButtons && Browser.WEBKIT) {
-			// On safari, remove buttons before setting of new html, to prevent
-			// the odd bug described bellow from happening.
+		// On safari, remove buttons before setting of new html, to prevent
+		// the odd bug described bellow from happening.
+		if (EditSettings.useButtons && Browser.WEBKIT)
 			$$('input[type=button]', this.container).remove();
-		}
 		this.container.setHtml(this.html);
 		// On Safari, there is a very odd bug that very rarely mixes all the
 		// buttons on one page, as if they were all thrown into one container,
@@ -36,9 +35,9 @@ EditForm = Base.extend({
 		// buttons in edit forms, but use <a> tags, and replace them with buttons
 		// here, if useButtons is set to true:
 		if (EditSettings.useButtons) {
-			$$('a.button', this.container).each(function(el, index) {
+			$$('a.edit-button', this.container).each(function(el, index) {
 				var id = el.getId();
-				el.removeClass('button'); // For getClass bellow
+				// el.removeClass('button'); // For getClass bellow
 				el.replaceWith('input', {
 					type: 'button',
 					id: id, name: id,
@@ -55,6 +54,9 @@ EditForm = Base.extend({
 			var tab = $('div.tab-pane', this.form);
 			TabPane.setup();
 			this.tab = tab && tab.tabPane;
+			// Set a reference to the editForm so TabPane can call autoSize if needed (on Lineto)
+			if (this.tab)
+				this.tab.editForm = this;
 			this.show(true);
 			if (values.error) {
 				$('#edit-error-' + values.error.name, this.form).setHtml(values.error.message).removeClass('hidden');
@@ -141,16 +143,17 @@ EditForm = Base.extend({
 		}
 	},
 
-	autoSize: function() {
-		// To be overridden if size changes require repositioning of things.
-	},
-
 	setSelectedTab: function(index) {
-		if (this.tab) this.tab.setSelectedIndex(index);
+		if (this.tab)
+			this.tab.setSelectedIndex(index);
 	},
 
 	getSelectedTab: function() {
 		return this.tab && this.tab.getSelectedIndex();
+	},
+
+	autoSize: function() {
+		// To be overridden if size changes require repositioning of things.
 	},
 
 	backup: function() {
@@ -380,10 +383,15 @@ EditForm = Base.extend({
 			return form;
 		},
 
+		getTarget: function(param) {
+			return $('#' + param.target);
+		},
+
 		inline: function(url, param) {
-			var target = $('#' + param.target);
-			if (!target) {
-				alert('Cannot find target element for editor of object ' + param.id);
+			var target = this.getTarget(param);
+		 	var editForm = target && this.get(param.id, target);
+			if (!editForm) {
+				alert('Cannot find edit form for object ' + param.id);
 			} else if (!param.confirm || confirm(param.confirm)) {
 				var elements = $('div#edit-elements-' + param.id + '.edit-elements');
 				var progress = $('span.edit-progress', elements);
@@ -395,8 +403,6 @@ EditForm = Base.extend({
 				}
 				var form = $('form', buttons);
 				form.enable(false);
-				this.mode = 'inline';
-				var editForm = this.get(param.id, target);
 				editForm.request = new Request({
 					url: url, method: 'get', json: true,
 					data: editForm.getData(param.mode, param)
@@ -446,7 +452,8 @@ EditForm = Base.extend({
 				};
 				// update version so server knows wether to sync or not.
 				this.data.version++;
-				if (backup) form.restore(backup);
+				if (backup)
+					form.restore(backup);
 				form.autoSize();
 			}
 			if (values.page)
@@ -902,11 +909,10 @@ EditChooser = Base.extend({
 			id: params.name,
 			className: 'edit-chooser'
 		});
-
 		this.content = this.element.injectBottom('div', {
 			html: params.html || '',
 			padding: params.padding || 0,
-			className: params.className || ''
+			className: params.className
 		});
 		var that = this;
 
@@ -924,7 +930,9 @@ EditChooser = Base.extend({
 					that.onCancel();
 			});
 
-			this.buttons = this.element.injectBottom('div', { className: 'edit-element edit-buttons-right' }, [
+			this.buttons = this.element.injectBottom('div', { 
+				className: 'edit-element edit-buttons-right'
+			}, [
 				cancel,
 				ok,
 			]);
