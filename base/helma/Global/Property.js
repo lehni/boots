@@ -95,29 +95,26 @@ function onCommit() {
 	Property.onCommit();
 }
 
-JsonProperty = Property.extend(new function() {
+JsonProperty = Property.extend({
+	_cache: true,
 
-	return {
-		_cache: true,
+	wrap: function(obj, property, value) {
+		var that = this;
+		return new ObjectWrapper(
+			value,
+			// onChange handler for the json object and any of its children:
+			function() {
+				that.markDirty(obj, property);
+			}
+		);
+	},
+	
+	get: function(obj, property, value) {
+		return Json.decode(value);
+	},
 
-		wrap: function(obj, property, value) {
-			var that = this;
-			return new ObjectWrapper(
-				value,
-				// onChange handler for the json object and any of its children:
-				function() {
-					that.markDirty(obj, property);
-				}
-			);
-		},
-		
-		get: function(obj, property, value) {
-			return Json.decode(value);
-		},
-
-		set: function(obj, property, value) {
-			return Json.encode(value);
-		}
+	set: function(obj, property, value) {
+		return Json.encode(value);
 	}
 });
 
