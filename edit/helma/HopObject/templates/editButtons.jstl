@@ -4,8 +4,8 @@
 <% end %>
 	<span class="edit-buttons">
 		<form>
-<% foreach ($button in param.buttons) %>
-			<% this.template "#button" value=$button.title onclick=<% this.template "#onclick" mode=$button.mode confirm=$button.confirm edit_item=$button.edit_item edit_prototype=$button.edit_prototype edit_back=$button.edit_back %> %>
+<% foreach ($button in param.buttons) %><%-%>
+			<% this.template "#button" value=$button.title onclick=<% this.template "#onclick" mode=$button.mode confirm=$button.confirm edit_item=$button.edit_item edit_prototype=$button.edit_prototype edit_back=$button.edit_back %> %><%-%>
 <% end %>
 		</form>
 	</span>
@@ -18,5 +18,5 @@ EditForm.open('<%= param.url %>', <% json singleQuotes="true" include="mode,id,c
 EditForm.inline('<%= param.url %>', <% json singleQuotes="true" include="mode,id,target,confirm,style,class,edit_item,edit_prototype,edit_back" param %>);<%-%>
 <% end %>
 
-<% #button %>
-<input type="button" value="<% param.value %>" onclick="return <%= param.onclick %>">
+<% #button -%>
+<input type="button" value="<% param.value %>" onclick="return <%= param.onclick %>" class="edit-button"><%-%>

@@ -1,2 +1,2 @@
 <%-- ATTN: onMouseUp event is needed for some scripts, for the event object! --%>
-<span><a href="#" onclick="return false;" onmouseup="<%= param.onClick %>" class="button<%= param.className prefix=" " %>" id="<%= param.name %>"><%= param.value %></a></span>
+<span><a href="#" onclick="return false" onmouseup="<%= param.onClick %>" class="edit-button<%= param.className prefix=" " %>" id="<%= param.name %>"><%= param.value %></a></span><%-%>
