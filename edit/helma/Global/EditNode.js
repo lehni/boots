@@ -83,7 +83,7 @@ EditNode = Base.extend({
 			// generate a default title if it's not set.
 			var obj = this.object;
 			if (obj.isCreating()) {
-				title = 'Create ' + obj._prototype.uncamelize(' ');
+				title = 'Create ' + obj._prototype.uncamelize();
 			} else {
 				title = EditForm.getEditName(obj);
 			}
