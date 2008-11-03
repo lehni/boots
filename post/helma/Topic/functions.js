@@ -40,7 +40,7 @@ Topic.inject({
 	 * For Topics, this means remove the topic node as well.
 	 */
 	onRemoveLastPost: function() {
-		this.removeObject();
+		this.remove();
 	},
 
 	/**

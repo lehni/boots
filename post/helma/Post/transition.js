@@ -31,7 +31,7 @@ Post.inject({
 								if (resources[i] == resource)
 									resources.splice(i, 1);
 							}
-							resource.removeObject();
+							resource.remove();
 						} else if (group.file && group.file.name) {
 							resource.setFile(group.file);
 						}

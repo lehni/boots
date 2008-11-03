@@ -466,17 +466,17 @@ EditForm.register({
 		// If ids and collection are set, delete the objects of the collection with these ids.
 		// Otherwise remove the object itself:
 		var removed = false;
-		// Do not check for canEdit, as removeObject() does so.
+		// Do not check for canEdit, as remove() does so.
 		if (req.data.edit_object_ids) {
 			var item = form.getItem(req.data.edit_item, req.data.edit_group);
 			req.data.edit_object_ids.split(',').each(function(id) {
 				var obj = HopObject.get(id);
-				if (obj && obj.removeObject())
+				if (obj && obj.remove())
 					removed = true;
 			});
 		} else {
 			// The object itself is to be removed.
-			removed = object.removeObject();
+			removed = object.remove();
 		}
 		if (removed) {
 			return EditForm.COMMIT;

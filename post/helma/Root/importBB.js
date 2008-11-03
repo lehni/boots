@@ -55,7 +55,7 @@ Root.inject({
 				// remove nodes
 				var nodes = forum.list();
 				for (var i in nodes)
-					nodes[i].removeObject();
+					nodes[i].remove();
 				res.commit();
 				forum.text = desc;
 
