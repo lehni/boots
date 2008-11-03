@@ -85,7 +85,7 @@ function onCommit() {
 		for (var name in properties) {
 			var property = properties[name];
 			property._set.call(object, property._get.call(object));
-			print(object[name]);
+			app.log('Commiting ' + name + ' on ' + object + ': ' + object[name]);
 		}
 	}
 	Property.commit = {};
