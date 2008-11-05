@@ -50,17 +50,19 @@
 	background: #eee;
 }
 
-#edit .edit-buttons {
+#edit .edit-buttons-left, #edit .edit-buttons-right {
 	padding-top: 2px;
 }
 
-.edit-button {
+/* do not filter through #edit since buttons are also used in choosers */
+.edit-buttons-left .edit-button {
+	margin-left: 0;
 	margin-right: 2px;
 }
 
 .edit-buttons-right .edit-button {
-	margin-right: 0px;
 	margin-left: 2px;
+	margin-right: 0;
 }
 
 .edit-buttons-right {
@@ -69,11 +71,11 @@
 
 /* only change padding within the main edit form, not in the choosers -> use #edit */
 
-#edit .edit-buttons-left {
+#edit .edit-footer .edit-buttons-left {
 	padding: 2px 0px 8px 8px;
 }
 
-#edit .edit-buttons-right {
+#edit .edit-footer .edit-buttons-right {
 	padding: 2px 8px 8px 0px;
 }
 
@@ -244,7 +246,7 @@
 #edit .tab-pane .edit-title {
 	border-bottom: 1px dotted #999;
 	padding: 8px;
-	/* for layering over the edit-progress progress bar */
+	/* for layering over the edit-upload progress bar */
 	position: relative;
 	z-index: 2;
 }

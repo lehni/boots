@@ -1,6 +1,7 @@
 HopObject.inject({
 	// edit_action is only used in the non-dhtml editor.
 	edit_action: function() {
+		// java.lang.Thread.sleep(1000);
 		EditForm.handle(this);
 		/*
 		if (!EditForm.handle(this) && this.login_action)

@@ -14,7 +14,7 @@ EditForm.inject({
 					mode = 'create';
 
 				var param = {
-					action: base.href(EditForm.ACTION),
+					action: base.href(EditForm.ACTION_EDIT),
 					width: this.width + (this.widthInPercent ? '%' : '')
 				};
 

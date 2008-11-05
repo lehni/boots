@@ -55,7 +55,8 @@ EditForm.inject(new function() {
 							var result = handler.call(handlers, base, node.object, node, form);
 							if (result == EditForm.COMMIT) {
 								res.commit();
-								if (base.main_action) {
+								var renderAction = EditForm.ACTION_RENDER + '_action';
+								if (base[renderAction]) {
 									if (base.isTransient()) {
 										// The object has been removed in the meantime
 										// Redirect to its parent.
@@ -75,7 +76,7 @@ EditForm.inject(new function() {
 									} else {
 										// Render the page into res.data.editResponse.page:
 										res.push();
-										base.main_action();
+										base[renderAction]();
 										res.data.editResponse.page = res.pop();
 									}
 								}
@@ -297,10 +298,13 @@ EditForm.register({
 			res.data.preview = true;
 			if (object.preview_action) {
 				object.preview_action();
-			} else if (object.main_action) {
-				object.main_action();
-			} else if (base.main_action) {
-				base.main_action();
+			} else {
+				var renderAction = EditForm.ACTION_RENDER + '_action';
+				if (object[renderAction]) {
+					object[renderAction]();
+				} else if (base[renderAction]) {
+					base[renderAction]();
+				}
 			}
 			delete res.data.preview;
 			form.addResponse({

@@ -2,7 +2,7 @@
 <form id="edit" class="edit" action="<% param.action %>" target="" method="post" enctype="multipart/form-data" action="javascript:return false;" onSubmit="return false;" autocomplete="off">
 <table border="0" cellpadding="0" cellspacing="0" class="edit">
 <tr><td colspan="2"><%= param.items %></td></tr>	
-<tr><td class="edit-buttons edit-buttons-left"><%= param.leftButtons %></td><td class="edit-buttons edit-buttons-right"><%= param.rightButtons %></td></tr>
+<tr class="edit-footer"><td class="edit-buttons-left"><%= param.leftButtons %></td><td class="edit-buttons-right"><%= param.rightButtons %></td></tr>
 </table>
 <% this.additionalParams %>
 </form>

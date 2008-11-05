@@ -4,7 +4,8 @@ EditSettings = {
 	mailLink: '<mail @link>@text</mail>',
 	urlLink: '<url @link>@text</url>',
 	unnamedUrlLink: '<url>@link</url>',
-	useButtons: true
+	useButtons: true,
+	hideButtons: false
 };
 
 EditForm = {

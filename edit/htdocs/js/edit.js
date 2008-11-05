@@ -108,7 +108,7 @@ EditForm = Base.extend({
 		return this.parent;
 	},
 
-	preview: function(previousHtml) {
+	preview: function(previousContent) {
 		this.show(false);
 		var that = this;
 		var offset = Window.getScrollOffset();
@@ -121,7 +121,7 @@ EditForm = Base.extend({
 					events: {
 						click: function(event) {
 							that.show(true);
-							EditForm.setBody(previousHtml);
+							EditForm.setContent(previousContent);
 							Window.scrollTo(offset);
 							button.remove();
 							event.stop();
@@ -269,10 +269,11 @@ EditForm = Base.extend({
 
 	// To be overridden by different implementations!
 	submit: function(post, params) {
-		// clear all errors:
+		// Clear all errors:
 		$$('div.edit-error', this.form).addClass('hidden');
 		var progress = $('div.edit-progress', this.form);
-		if (progress) progress.removeClass('hidden');
+		if (progress)
+			progress.removeClass('hidden');
 		var method = 'get';
 		var url = this.url;
 		var back = params.edit_back;
@@ -289,6 +290,7 @@ EditForm = Base.extend({
 				var startTime = new Date().getTime(), current;
 				var uploadStatus = $('div.edit-upload', this.container);
 				if (uploadStatus) {
+					var maxWidth = uploadStatus.getParent().getWidth();
 					var request = new Request({
 						url: url, method: 'get', json: true, data: this.getData('upload_status')
 					}, function(status) {
@@ -296,7 +298,7 @@ EditForm = Base.extend({
 							if (status.current == status.total ||
 								current == status.current && new Date().getTime() - startTime > 6000)
 									that.uploadTimer = that.uploadTimer.clear();
-							uploadStatus.setWidth(status.current / status.total * 100 + '%');
+							uploadStatus.setWidth(status.current / status.total * maxWidth);
 							// .setHtml(status.current + ' of ' + status.total + ' uploaded.');
 							current = status.current;
 						}
@@ -315,7 +317,10 @@ EditForm = Base.extend({
 		this.request = new Request({
 			url: url, method: method, json: true, data: params
 		}, function(values) {
-			if (progress) progress.addClass('hidden');
+			/*
+			if (progress)
+				progress.addClass('hidden');
+			*/
 			if (values) {
 				if (EditForm.mode == 'inline')
 					that.show(false);
@@ -397,9 +402,9 @@ EditForm = Base.extend({
 				var progress = $('span.edit-progress', elements);
 				var buttons = $('span.edit-buttons', elements);
 				if (progress) {
-					var hideButtons = progress.getParent() != buttons;
+					if (EditSettings.hideButtons)
+						buttons.addClass('hidden');
 					progress.removeClass('hidden');
-					if (hideButtons) buttons.addClass('hidden');
 				}
 				var form = $('form', buttons);
 				form.enable(false);
@@ -409,7 +414,8 @@ EditForm = Base.extend({
 				}, function(values) {
 					if (progress) {
 						progress.addClass('hidden');
-						if (hideButtons) buttons.removeClass('hidden');
+						if (EditSettings.hideButtons)
+							buttons.removeClass('hidden');
 					}
 					form.enable(true);
 					if (values) {
@@ -457,9 +463,9 @@ EditForm = Base.extend({
 				form.autoSize();
 			}
 			if (values.page)
-				this.setHtml(values.page);
+				this.setPage(values.page);
 			if (values.preview)
-				this.preview(values.id, this.setHtml(values.preview));
+				this.preview(values.id, this.setPage(values.preview));
 			if (values.redirect) {
 				// Redirect one level up, since the href object itself was removed
 				// TODO: Find a way to implement this in lineto.
@@ -472,17 +478,17 @@ EditForm = Base.extend({
 			return !values.alert && !values.error && !values.close;
 		},
 
-		setHtml: function(html) {
-			html = html.match(/<body[^>]*>([\u0000-\uffff]*)<\/body>/i);
-			if (html) {
+		setPage: function(page) {
+			var match = page.match(/<body[^>]*>([\u0000-\uffff]*)<\/body>/i);
+			if (match) {
 				var offset = Window.getScrollOffset();
-				var previous = this.setBody(html[1]);
+				var previous = this.setContent(match[1]);
 				Window.scrollTo(offset);
 				return previous;
 			}
 		},
 
-		setBody: function(html) {
+		setContent: function(content) {
 			// store references to the targets and remove containers from
 			// the dom, so they can be inserted again bellow in the new dom.
 			this.forms.each(function(form, id) {
@@ -494,8 +500,8 @@ EditForm = Base.extend({
 			// Replace the content of the body only...
 			Document.fireEvent('beforeupdate');
 			var body = $('body');
-			var previousHtml = body.getHtml();
-			body.setHtml(html);
+			var previousContent = body.getHtml();
+			body.setHtml(content);
 			// now insert forms again
 			this.forms.each(function(form, id) {
 				form.target = $('#' + form.targetId);
@@ -517,7 +523,7 @@ EditForm = Base.extend({
 			EditChooser.choosers.each(function(chooser) {
 				chooser.element.insertInside(body);
 			});
-			return previousHtml;
+			return previousContent;
 		},
 
 		close: function(id) {
@@ -525,9 +531,9 @@ EditForm = Base.extend({
 			return form ? form.close() : null;
 		},
 
-		preview: function(id, previousHtml) {
+		preview: function(id, previousContent) {
 			var form = this.get(id);
-			if (form) form.preview(previousHtml);
+			if (form) form.preview(previousContent);
 		}
 	}
 });
@@ -1234,7 +1240,7 @@ ColorChooser = EditChooser.extend({
 	}
 });
 
-/* TODO: Port this
+/* XXX: Port this
 Edit = {
 	onChooseObject: function(name, prototype, id) {
 		var values = this.chooserValues;

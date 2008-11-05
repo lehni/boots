@@ -9,7 +9,8 @@ EditForm.BUTTON_MODE_APPLY_CLOSE = 4;
 
 // The action to be used to edit the object. Default is edit, corresponding with
 // the edit_action.
-EditForm.ACTION = 'edit';
+EditForm.ACTION_EDIT = 'edit';
+EditForm.ACTION_RENDER = 'main';
 
 // Global switch for making objects removable.
 // Overridden by EditForm#removable
