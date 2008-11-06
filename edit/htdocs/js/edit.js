@@ -270,8 +270,8 @@ EditForm = Base.extend({
 	// To be overridden by different implementations!
 	submit: function(post, params) {
 		// Clear all errors:
-		$$('div.edit-error', this.form).addClass('hidden');
-		var progress = $('div.edit-progress', this.form);
+		$$('.edit-error', this.form).addClass('hidden');
+		var progress = $('.edit-progress', this.form);
 		if (progress)
 			progress.removeClass('hidden');
 		var method = 'get';
@@ -288,7 +288,7 @@ EditForm = Base.extend({
 				if (this.uploadTimer)
 					this.uploadTimer.clear();
 				var startTime = new Date().getTime(), current;
-				var uploadStatus = $('div.edit-upload', this.container);
+				var uploadStatus = $('.edit-upload', this.container);
 				if (uploadStatus) {
 					var maxWidth = uploadStatus.getParent().getWidth();
 					var request = new Request({
@@ -317,10 +317,8 @@ EditForm = Base.extend({
 		this.request = new Request({
 			url: url, method: method, json: true, data: params
 		}, function(values) {
-			/*
 			if (progress)
 				progress.addClass('hidden');
-			*/
 			if (values) {
 				if (EditForm.mode == 'inline')
 					that.show(false);
@@ -398,9 +396,9 @@ EditForm = Base.extend({
 			if (!editForm) {
 				alert('Cannot find edit form for object ' + param.id);
 			} else if (!param.confirm || confirm(param.confirm)) {
-				var elements = $('div#edit-elements-' + param.id + '.edit-elements');
-				var progress = $('span.edit-progress', elements);
-				var buttons = $('span.edit-buttons', elements);
+				var elements = $('#edit-elements-' + param.id + '.edit-elements');
+				var progress = $('.edit-progress', elements);
+				var buttons = $('.edit-buttons', elements);
 				if (progress) {
 					if (EditSettings.hideButtons)
 						buttons.addClass('hidden');
@@ -612,7 +610,7 @@ EditForm.register({
 		} else {
 			el.setText(el.getText() == 'Help' ? 'Close Help' : 'Help');
 		}
-		$$('div.edit-help').toggleClass('hidden');
+		$$('.edit-help').toggleClass('hidden');
 		editForm.autoSize();
 	}
 });
