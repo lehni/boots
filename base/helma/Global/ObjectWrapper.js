@@ -121,4 +121,4 @@ XMLObjectWrapper = ObjectWrapper.extend(new function() {
 			return ret;
 		}
 	}
-})
+});
