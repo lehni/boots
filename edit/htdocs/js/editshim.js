@@ -5,7 +5,7 @@ EditSettings = {
 	urlLink: '<url @link>@text</url>',
 	unnamedUrlLink: '<url>@link</url>',
 	useButtons: true,
-	hideButtons: false
+	hideButtons: true
 };
 
 EditForm = {
