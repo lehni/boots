@@ -75,8 +75,8 @@ EditNode = Base.extend({
 	},
 
 	getTitle: function() {
-		// use node as a cache for title. This is also used
-		// in StackEntry.renderPath
+		// Use node as a cache for title. This is also used
+		// in EditForm.renderTitle
 		var form = this.getForm();
 		var title = this.title || form.title;
 		if (!title) {
