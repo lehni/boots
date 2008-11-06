@@ -150,3 +150,7 @@ function print() {
 	app.log(str);
 	res.write(str + '<br/>');
 }
+
+function sleep(milliseconds) {
+	java.lang.Thread.sleep(milliseconds);
+}
