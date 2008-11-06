@@ -53,30 +53,30 @@ Property = Base.extend({
 
 	markDirty: function(obj, property) {
 		var id = obj.getFullId();
-		var commit = Property.commit[id];
-		if (!commit) {
-			commit = Property.commit[id] = {
+		var entry = Property.objects[id];
+		if (!entry) {
+			entry = Property.objects[id] = {
 				object: obj,
 				properties: {}
 			};
 		}
-		commit.properties[property] = this;
+		entry.properties[property] = this;
 	},
 
 	statics: {
-		commit: {},
+		objects: {},
 
-		onCommit: function() {
-			for (var id in this.commit) {
-				var commit = this.commit[id];
-				var object = commit.object, properties = commit.properties;
+		commit: function() {
+			for (var id in this.objects) {
+				var entry = this.objects[id];
+				var object = entry.object, properties = entry.properties;
 				for (var name in properties) {
 					var property = properties[name];
 					property._set.call(object, property._get.call(object));
 					app.log('Commiting ' + name + ' on ' + object + ': ' + object[name]);
 				}
 			}
-			this.commit = {};
+			this.objects = {};
 		}
 	}
 
@@ -91,8 +91,8 @@ Property = Base.extend({
 	*/
 });
 
-function onCommit() {
-	Property.onCommit();
+function onBeforeCommit() {
+	Property.commit();
 }
 
 JsonProperty = Property.extend({
