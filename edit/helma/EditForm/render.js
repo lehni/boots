@@ -146,7 +146,7 @@ EditForm.inject({
 				var title = '<span class="edit-node-title">' + node.getTitle() + '</span>', form = node.getForm();
 				if (EditForm.SHOW_PROTOTYPE && form && !form.title
 					&& mode == 'edit' && this.object != root)
-						title += ' <span class="edit-node-type">(' + this.object._prototype.uncamelize() + ')</span>';
+						title += ' <span class="edit-node-type">(' + node.object._prototype.uncamelize() + ')</span>';
 				// XXX:
 				if (index < last)
 					title = '<a href="javascript:' +
