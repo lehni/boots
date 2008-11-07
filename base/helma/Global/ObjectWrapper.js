@@ -59,53 +59,53 @@ ObjectWrapper = new function() {
 					adapter = new JavaAdapter(XMLObject, {
 						ecmaGet: function(cx, id) {
 							// Wrap sub elements again
-							return ObjectWrapper.wrap(xml.ecmaGet(cx, id), onChange);
+							return ObjectWrapper.wrap(obj.ecmaGet(cx, id), onChange);
 						},
 
 						ecmaPut: function(cx, id, value) {
-							xml.ecmaPut(cx, id, value);
+							obj.ecmaPut(cx, id, value);
 							if (onChange)
 								onChange.call(this);
 						},
 
 						ecmaHas: function(cx, id) {
-							return xml.ecmaHas(cx, id);
+							return obj.ecmaHas(cx, id);
 						},
 
 						ecmaDelete: function(cx, id) {
-							var ret = xml.ecmaDelete(cx, id);
+							var ret = obj.ecmaDelete(cx, id);
 							if (ret && onChange)
 								onChange.call(this);
 							return ret;
 						},
 
 						getDefaultValue: function(hint) {
-							return xml.getDefaultValue(hint);
+							return obj.getDefaultValue(hint);
 						},
 
 						toString: function() {
-							return xml.toString();
+							return obj.toString();
 						},
 
 						enterDotQuery: function(scope) {
-							return xml.enterDotQuery(scope);
+							return obj.enterDotQuery(scope);
 						},
 
 						enterWith: function(scope) {
-							return xml.enterWith(scope);
+							return obj.enterWith(scope);
 						},
 
 						getExtraMethodSource: function(cx) {
-							return xml.getExtraMethodSource(cx);
+							return obj.getExtraMethodSource(cx);
 						},
 
 						memberRef: function() {
 							// varargs
-							return xml.memberRef.apply(xml, arguments);
+							return obj.memberRef.apply(obj, arguments);
 						},
 
 						getClassName: function() {
-							return xml.getClassName();
+							return obj.getClassName();
 						}
 					});
 				}

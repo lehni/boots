@@ -4,6 +4,8 @@ Property = Base.extend({
 	initialize: function(property, onChange) {
 		var that = this;
 
+		// Define get getter that inject will use for the propery. This part is 
+		// define in Boots.
 		this._get = function() {
 			var cache = null;
 			if (that._cache) {
@@ -17,7 +19,7 @@ Property = Base.extend({
 			var value = this[property];
 			if (that.get)
 				value = that.get(this, property, value);
-			if (that.wrap)
+			if (that._wrap)
 				value = that.wrap(this, property, value);
 			// Store in cache after conversion from native type
 			if (cache)
@@ -25,6 +27,8 @@ Property = Base.extend({
 			return value;
 		}
 
+		// Define get setter that inject will use for the propery. This part is 
+		// define in Boots.
 		this._set = function(value) {
 			// Lookup function if it's a string
 			if (onChange) {
@@ -41,7 +45,7 @@ Property = Base.extend({
 				cache = this.cache._properties;
 				if (!cache)
 					cache = this.cache._properties = {};
-				if (that.wrap)
+				if (that._wrap)
 					value = that.wrap(this, property, value);
 				cache[property] = value;
 			}
@@ -49,6 +53,17 @@ Property = Base.extend({
 				value = that.set(this, property, value);
 			this[property] = value;
 		}
+	},
+
+	wrap: function(obj, property, value) {
+		var that = this;
+		return ObjectWrapper.wrap(
+			value,
+			// onChange handler for the object and any of its children:
+			function() {
+				that.markDirty(obj, property);
+			}
+		);
 	},
 
 	markDirty: function(obj, property) {
@@ -97,17 +112,7 @@ function onBeforeCommit() {
 
 JsonProperty = Property.extend({
 	_cache: true,
-
-	wrap: function(obj, property, value) {
-		var that = this;
-		return new ObjectWrapper(
-			value,
-			// onChange handler for the json object and any of its children:
-			function() {
-				that.markDirty(obj, property);
-			}
-		);
-	},
+	_wrap: true,
 	
 	get: function(obj, property, value) {
 		return Json.decode(value);
@@ -120,18 +125,8 @@ JsonProperty = Property.extend({
 
 XmlProperty = Property.extend({
 	_cache: true,
+	_wrap: true,
 
-	wrap: function(obj, property, value) {
-		var that = this;
-		return new XMLObjectWrapper(
-			value,
-			// onChange handler for the xml object and any of its children:
-			function() {
-				that.markDirty(obj, property);
-			}
-		);
-	},
-	
 	get: function(obj, property, value) {
 		return new XML(value);
 	},
