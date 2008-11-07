@@ -93,6 +93,39 @@ EditItem = Base.extend(new function() {
 			return { scaleToFit: this._scale };
 		},
 
+		getEditName: function() {
+			return this.name && this.form.variablePrefix + this.name;
+		},
+
+		getEditParam: function(params) {
+			return Hash.merge({
+				edit_item: this.name,
+				edit_group: this.form.name
+			}, params);
+		},
+
+		getPrototypeEditButton: function(baseForm, param) {
+			// Pass an array containing name / creation handler href mappings
+			// if there are more than one prototype.
+			// If there's only one prototype, directly use the href that produces
+			// it.
+			var editName = this.getEditName();
+			var editParam = this.getEditParam();
+			var prototypes = this.prototypes.map(function(proto) {
+				return {
+					name: proto.uncamelize(),
+					href: baseForm.renderHandle('select_new', editName, proto,
+						Hash.merge({ edit_prototype: proto }, editParam))
+				};
+			});
+			return Hash.merge({
+				name: editName + '_new',
+				onClick: prototypes.length == 1
+					? prototypes[0].href
+					: baseForm.renderHandle('select_new', editName, prototypes, editParam)
+			}, param);
+		},
+
 		toString: function() {
 			var out = [];
 			['type', 'name', 'index', 'row', 'groupForm'].each(function(val) {
@@ -286,7 +319,7 @@ DateItem = EditItem.extend({
 	},
 
 	convert: function(value) {
-		var prefix = this.form.variablePrefix + this.name;
+		var prefix = this.getEditName();
 		return new Date(
 			req.data[prefix + '_year'],
 			req.data[prefix + '_month'] || 0,
@@ -304,11 +337,7 @@ ButtonItem = EditItem.extend({
 	render: function(baseForm, name, value, param, out) {
 		var onClick = null;
 		if (this.onClick) {
-			var params = {
-				post: true,
-				edit_item: this.name,
-				edit_group: this.form.name
-			}
+			var params = this.getEditParam({ post: true });
 			if (this.confirm)
 				params.confirm = this.confirm;
 			// if onClick is a string, it's js code to be executed
@@ -377,8 +406,7 @@ SelectItem = EditItem.extend({
 
 		var editButtons = this.renderEditButtons(baseForm);
 		if (editButtons)
-			select.onDblClick = baseForm.renderHandle('select_edit', [name],
-				{ edit_item: this.name, edit_group: this.form.name });
+			select.onDblClick = baseForm.renderHandle('select_edit', [name], this.getEditParam());
 		select.options = options;
 		Html.select(select, out);
 		if (editButtons)
@@ -440,12 +468,9 @@ SelectItem = EditItem.extend({
 	},
 
 	renderEditButtons: function(baseForm, out) {
-		var name = this.form.variablePrefix + this.name;
-		var editParams = {
-			edit_item: this.name,
-			edit_group: this.form.name
-		};
-		var selParams = this.type == 'multiselect'
+		var name = this.getEditName();
+		var editParam = this.getEditParam();
+		var selParam = this.type == 'multiselect'
 			? [ name + '_left', name + '_right' ]
 			: [ name ];
 
@@ -453,40 +478,22 @@ SelectItem = EditItem.extend({
 		if (this.prototypes || this.editable) {
 			buttons.push({
 				value: 'Edit',
-				onClick: baseForm.renderHandle('select_edit', selParams, editParams)
+				onClick: baseForm.renderHandle('select_edit', selParam, editParam)
 			});
 		}
 		if (this.movable) {
 			buttons.push({
 				value: 'Move',
 				name: name + '_move',
-				onClick: baseForm.renderHandle('select_move', name, selParams,
-					Hash.merge({ edit_prototype: this.destPrototype || '' }, editParams))
+				onClick: baseForm.renderHandle('select_move', name, selParam,
+					Hash.merge({ edit_prototype: this.destPrototype || '' }, editParam))
 			});
 		}
-		if (this.prototypes) {
-			// Pass an array containing name / creation handler href mappigns
-			// if there are more than one prototype.
-			// If there's only one prototype, directly use the href that produces
-			// it.
-			var prototypes = this.prototypes.map(function(proto) {
-				return {
-					name: proto.uncamelize(),
-					href: baseForm.renderHandle('select_new', name, proto,
-						Hash.merge({ edit_prototype: proto }, editParams))
-				};
-			});
-			buttons.push({
-				value: 'New',
-				name: name + '_new',
-				onClick: prototypes.length == 1
-					? prototypes[0].href
-					: baseForm.renderHandle('select_new', name, prototypes, editParams)
-			}, {
+		if (this.prototypes)
+			buttons.push(this.getPrototypeEditButton(baseForm, { value: 'New '}), {
 				value: 'Delete',
-				onClick: baseForm.renderHandle('select_remove', selParams, editParams)
+				onClick: baseForm.renderHandle('select_remove', selParam, editParam)
 			});
-		}
 		return baseForm.renderButtons(buttons, out);
 	},
 
@@ -610,7 +617,7 @@ MultiSelectItem = SelectItem.extend({
 		var size = Base.pick(this.size, '6');
 		// var width = this.width || '120';
 		var left = name + '_left', right = name + '_right';
-		var editParam = param.buttons && { edit_item: this.name, edit_group: this.form.name };
+		var editParam = param.buttons && this.getEditParam();
 		param.left = Html.select({
 			size: size, name: left, multiple: true,
 			/* style: 'width: ' + width + 'px;', */ 
@@ -727,10 +734,7 @@ ReferenceItem = EditItem.extend({
 		if (this.editable) {
 			buttons.push({
 				name: name + '_edit', value: 'Edit', 
-				onClick: baseForm.renderHandle('execute', 'edit', {
-					edit_item: this.name,
-					edit_group: this.form.name
-				})
+				onClick: baseForm.renderHandle('execute', 'edit', this.getEditParam())
 			});
 		}
 		baseForm.renderButtons(buttons, out);
@@ -750,23 +754,16 @@ ReferenceItem = EditItem.extend({
 });
 
 ObjectItem = EditItem.extend({
-	_types: 'edit', // TODO: rename to 'object'?
+	_types: 'object',
 
 	render: function(baseForm, name, value, param, out) {
 		var title = this.title ? ' ' + this.title : '';
-		var mode;
-		if (value) {
-			title = 'Edit' + title;
-			mode = 'edit';
-		} else {
-			title = 'Create' + title;
-			mode = 'new';
-		}
-		this.form.renderButton({
-			value: title,
-			onClick: baseForm.renderHandle('execute', mode,
-				{ edit_item: this.name, edit_group: this.form.name })
-		}, out);
+		return this.form.renderButton(value ? {
+				value: 'Edit' + title,
+				onClick: baseForm.renderHandle('execute', 'edit', this.getEditParam())
+			} : this.getPrototypeEditButton(baseForm, {
+				value: 'Create' + title
+			}), out);
 	}
 });
 
@@ -776,8 +773,7 @@ GroupItem = EditItem.extend({
 	render: function(baseForm, name, value, param, out) {
 		this.form.renderButton({
 			value: 'Edit',
-			onClick: baseForm.renderHandle('execute', 'group',
-				{ edit_item: this.name, edit_group: this.form.name })
+			onClick: baseForm.renderHandle('execute', 'group', this.getEditParam())
 		}, out);
 	}
 });

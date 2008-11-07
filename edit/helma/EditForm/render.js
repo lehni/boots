@@ -177,7 +177,7 @@ EditForm.inject({
 				out.write(item.prefix);
 				out.write(' ');
 			}
-			item.render(baseForm, this.variablePrefix + item.name, value, param, out);
+			item.render(baseForm, item.getEditName(), value, param, out);
 		    if (item.suffix) {
 				out.write(' ');
 				out.write(item.suffix);
@@ -276,7 +276,7 @@ EditForm.inject({
 					firstItem = item;
 				var width = widths[i];
 				var param = {
-					name: item.name && this.variablePrefix + item.name,
+					name: item.getEditName(),
 					label: !EditForm.LABEL_LEFT ? item.label : null,
 					span: item.span ? item.span : rowSpan, align: item.align,
 					spacer: i > 0, spacerWidth: spacerWidth,

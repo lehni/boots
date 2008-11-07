@@ -138,6 +138,8 @@ EditForm.register({
 					prototype = null;
 			} else if (prototypes.length == 1) {
 				prototype = prototypes[0];
+			} else {
+				User.log('More than one prototype available, no choice was made: ' + prototypes);
 			}
 			// Creation can be allowed to anonymous users, by setting item.allow to true:
 			if (prototype && (User.canEdit(form.object) || !session.user && item.allowAnonymous)) {
@@ -272,7 +274,7 @@ EditForm.register({
 			if (e instanceof EditException) {
 				form.addResponse({
 					error: {
-						name: e.item.form.variablePrefix + e.item.name,
+						name: e.item.getEditName(),
 						value: e.value, tab: e.item.form.tabIndex,
 						message: format(e.message)
 					}

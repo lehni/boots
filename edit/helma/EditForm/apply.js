@@ -121,7 +121,7 @@ EditForm.inject(new function() {
 				for (var j = 0; j < row.length; j++) {
 					var item = row[j];
 					if (item.name != null) {
-						var value = req.data[this.variablePrefix + item.name];
+						var value = req.data[item.getEditName()];
 						if (value !== undefined && this.applyItem(item, value)) {
 							root.itemsChanged = true;
 							root.changedItems[item.name] = item;

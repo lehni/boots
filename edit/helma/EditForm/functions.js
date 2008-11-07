@@ -470,19 +470,7 @@ EditForm.inject(new function() {
 				var item = arguments[i];
 				if (!item.type)
 					item.type = 'button';
-				/* TODO: Is this still needed?
-				// If label is set, move it to title so it can be distinguised
-				// by HopObject.renderEditItem
-					if (item.label)
-					item.title = item.label;
-				*/
 				initializeItem(this, item, this.buttons, this.buttons.push(item));
-				/* TODO: is not initializeItem doing this already?
-				if (item.name) {
-					this.items[item.name] = item;
-					this.root.allItems[item.name] = item;
-				}
-				*/
 				item.form = this;
 			}
 		},
