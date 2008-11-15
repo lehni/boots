@@ -49,6 +49,23 @@ EditForm = Base.extend({
 		}
 		this.form = $('form', this.container);
 		if (this.form) {
+			var that = this;
+			// Rememver focused elements and their last selection and scroll position,
+			// so they can be restored after previewing pages.
+			// Do not store direct references since the elements are replaced when
+			// saving before preview, therefore use ids instead.
+			$$('input[type=text],input[type=password],textarea', this.form).addEvents({
+				focus: function() {
+					that.focus = { id: this.getId() };
+				},
+
+				blur: function() {
+					if (that.focus && this.getId() == that.focus.id) {
+						that.focus.selection = this.getSelection();
+						that.focus.offset = this.getScrollOffset();
+					}
+				} 
+			});
 			this.empty = false;
 			this.url = this.form.getAction();
 			var tab = $('div.tab-pane', this.form);
@@ -112,7 +129,6 @@ EditForm = Base.extend({
 		this.show(false);
 		var that = this;
 		var offset = Window.getScrollOffset();
-		Window.scrollTo(0, 0);
 		var button = $('body').injectBottom('div', {
 				className: 'edit-preview'
 			}, [
@@ -122,8 +138,17 @@ EditForm = Base.extend({
 						click: function(event) {
 							that.show(true);
 							EditForm.setContent(previousContent);
-							Window.scrollTo(offset);
+							Window.setScrollOffset(offset);
 							button.remove();
+							// TODO: See if we also need to restore these states
+							// after clicking back, or apply & back, and if so,
+							// put it in one central place.
+							var focus = that.focus && $(that.focus.id, that.form);
+							if (focus) {
+								focus.setSelection(that.focus.selection);
+								focus.setScrollOffset(that.focus.offset);
+								focus.focus();
+							}
 							event.stop();
 						}
 					}
@@ -267,7 +292,6 @@ EditForm = Base.extend({
 		}, this);
 	},
 
-	// To be overridden by different implementations!
 	submit: function(post, params) {
 		// Clear all errors:
 		$$('.edit-error', this.form).addClass('hidden');
@@ -481,7 +505,7 @@ EditForm = Base.extend({
 			if (match) {
 				var offset = Window.getScrollOffset();
 				var previous = this.setContent(match[1]);
-				Window.scrollTo(offset);
+				Window.setScrollOffset(offset);
 				return previous;
 			}
 		},
