@@ -2573,21 +2573,25 @@ HtmlElement.inject(new function() {
 
 		setSize: bounds(['width', 'height', 'clip']),
 
-		contains: function(pos) {
-			var bounds = this.getBounds();
-			return pos.x >= bounds.left && pos.x < bounds.right &&
-				pos.y >= bounds.top && pos.y < bounds.bottom;
-		},
-
-		scrollTo: function(x, y) {
+		setScrollOffset: function(x, y) {
 			if (body(this)) {
-				this.getView().scrollTo(x, y);
+				this.getView().setScrollOffset(x, y);
 			} else {
 				var off = typeof x == 'object' ? x : { x: x, y: y };
 				this.$.scrollLeft = off.x;
 				this.$.scrollTop = off.y;
 			}
 			return this;
+		},
+
+		scrollTo: function(x, y) {
+			return this.setScrollOffset(x, y);
+		},
+
+		contains: function(pos) {
+			var bounds = this.getBounds();
+			return pos.x >= bounds.left && pos.x < bounds.right &&
+				pos.y >= bounds.top && pos.y < bounds.bottom;
 		}
 	};
 
@@ -2643,7 +2647,7 @@ HtmlElement.inject(new function() {
 		};
 	},
 
-	scrollTo: function(x, y) {
+	setScrollOffset: function(x, y) {
 		var off = typeof x == 'object' ? x : { x: x, y: y };
 		this.getView().$.scrollTo(off.x, off.y);
 		return this;
