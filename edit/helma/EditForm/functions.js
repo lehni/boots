@@ -499,7 +499,7 @@ EditForm.inject(new function() {
 
 		statics: {
 			get: function(obj) {
-				return EditNode.get(obj).form;
+				return EditNode.get(obj).getForm();
 			},
 
 			/**
