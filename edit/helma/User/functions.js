@@ -74,7 +74,7 @@ User.inject({
 	},
 
 	hasRole: function(role) {
-		return this.roles & role;
+		return !!(this.roles & role);
 	},
 
 	// call with object = null just to see wether the user is an editor or an admin,
