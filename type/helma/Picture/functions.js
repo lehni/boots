@@ -28,7 +28,7 @@ Picture.inject({
 			// Only set the popup if this is actually linking to the image.
 			// if href is set, the image is taking us to another page, so don't popup!
 			param.popup = {
-				title: this.name,
+				name: this.name,
 				width: this.width,
 				height: this.height
 			};

@@ -12,7 +12,8 @@ EditForm = {
 	open: function(url, param) {
 		if (!param.confirm || confirm(param.confirm)) {
 			this.cache = null;
-			Window.open(url, 'edit', {
+			new Window({
+				url: url, name: 'edit',
 				width: param.width, height: param.height,
 				left: (screen.width - param.width - 20),
 				top: 40, resizable: 1, scrollbars: 1, noFocus: 1

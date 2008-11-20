@@ -143,10 +143,13 @@ EditForm.inject(new function() {
 				form = EditForm.get(obj);
 			}
 		}
-		if (!form) { // Otherwise create a new one and insert the items:
-			form = new EditForm(that.object, { parent: that, title: label });
+		if (!form) {
+			// Otherwise create a new one and insert the items:
+			form = new EditForm(that.object, { title: label });
 			addRows = true;
 		}
+		// Make sure it has the right parent:
+		form.setParent(that);
 		form.name = name;
 		if (addRows)
 			insertRows(form, 0, args, startIndex);
@@ -249,35 +252,32 @@ EditForm.inject(new function() {
 			if (!this.titles)
 				this.titles = {};
 
-			// for group items, only to be used internally here:
-			if (this.parent) {
-				// determine root:
-				var root = this.parent;
-				while (root.parent)
-					root = root.parent;
-				this.root = root;
-				// inherit width settings from root:
-				this.width = root.width;
-				this.spacerWidth = root.spacerWidth;
-				this.widthInPercent = root.widthInPercent;
-				// dont cache
-				this.dontCache = root.dontCache;
-			} else {
-				this.root = this;
-				this.allItems = {};
-				this.allGroups = {};
-				// the width of the table, defaults to 100 percent, but can
-				// be specified in pixels too
-				var width = this.width || EditForm.WIDTH;
-				this.width = parseFloat(width);
-				this.widthInPercent = typeof width == 'string' && /%$/.test(width);
-				if (this.spacerWidth) {
-					this.spacerWidth = parseFloat(this.spacerWidth);
-				} else {
-					// defaults, maybe define in config switches
-					this.spacerWidth = this.widthInPercent ? 2 : 8;
-				}
-			}
+			// Initialize settings as if there is no parent for this form
+			// These might later change, see #setParent
+			this.root = this;
+			this.allItems = {};
+			this.allGroups = {};
+			// the width of the table, defaults to 100 percent, but can
+			// be specified in pixels too
+			var width = this.width || EditForm.WIDTH_TOTAL;
+			this.width = parseFloat(width);
+			this.widthInPercent = /%$/.test(width);
+			this.spacerWidth = parseFloat(this.spacerWidth || EditForm.WIDTH_SPACER);
+		},
+
+		setParent: function(parent) {
+			this.parent = parent;
+			// Determine root by walking up the parent chain:
+			while (parent.parent)
+				parent = parent.parent;
+			this.root = parent;
+			// Inherit width settings from root:
+			this.width = parent.width;
+			this.spacerWidth = parent.spacerWidth;
+			this.widthInPercent = parent.widthInPercent;
+			// Inherit don't cache
+			this.dontCache = parent.dontCache;
+			
 		},
 
 		/**

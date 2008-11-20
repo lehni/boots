@@ -522,7 +522,8 @@ Array.inject(new function() {
 				var that = this;
 				return Base.each(obj, function(name, index) {
 					this[name] = that[index];
-					if (index == that.length) throw Base.stop;
+					if (index == that.length)
+						throw Base.stop;
 				}, {});
 			} else {
 				obj = Hash.merge({}, obj);
@@ -683,7 +684,8 @@ Number.inject({
 	toFloat: String.prototype.toFloat,
 
 	times: function(func, bind) {
-		for (var i = 0; i < this; ++i) func.call(bind, i);
+		for (var i = 0; i < this; ++i)
+			func.call(bind, i);
 		return bind || this;
 	},
 
@@ -781,24 +783,24 @@ String.inject({
 });
 
 Json = new function() {
-	var special = { '\b': '\\b', '\t': '\\t', '\n': '\\n', '\f': '\\f', '\r': '\\r', '"' : '\\"', '\\': '\\\\' };
-
-	function replace(chr) {
-		return special[chr] || '\\u00' + Math.floor(chr.charCodeAt() / 16).toString(16) + (chr.charCodeAt() % 16).toString(16);
-	}
-
+	var special = { '\b': '\\b', '\t': '\\t', '\n': '\\n', '\f': '\\f', '\r': '\\r', '"' : '\\"', "'" : "\\'", '\\': '\\\\' };
 	return {
-		encode: function(obj) {
+		encode: function(obj, singles) {
 			switch (Base.type(obj)) {
 				case 'string':
-					return '"' + obj.replace(/[\x00-\x1f\\"]/g, replace) + '"';
+					var quote = singles ? "'" : '"';
+					return quote + obj.replace(new RegExp('[\\x00-\\x1f\\\\' + quote + ']', 'g'), function(chr) {
+						return special[chr] || '\\u' + chr.charCodeAt(0).toPaddedString(4, 16);
+					}) + quote;
 				case 'array':
-					return '[' + obj.collect(Json.encode) + ']';
+					return '[' + obj.collect(function(val) {
+						return Json.encode(val, singles);
+					}) + ']';
 				case 'object':
 				case 'hash':
 					return '{' + Hash.collect(obj, function(val, key) {
-						val = Json.encode(val);
-						if (val) return Json.encode(key) + ':' + val;
+						val = Json.encode(val, singles);
+						if (val) return Json.encode(key, singles) + ':' + val;
 					}) + '}';
 				default:
 					return obj + '';
@@ -859,7 +861,7 @@ DomElements = Array.extend(new function() {
 		append: function(items) {
 			for (var i = 0, l = items.length; i < l; ++i) {
 				var el = items[i];
-				if ((el = el && (el._wrapper || DomElement.get(el))) && el._unique != this._unique) {
+				if ((el = el && (el._wrapper || DomElement.wrap(el))) && el._unique != this._unique) {
 					el._unique = this._unique;
 					this[this.length++] = el;
 				}
@@ -947,8 +949,8 @@ DomElement = Base.extend(new function() {
 		return classCheck && el.className && (match = el.className.match(classCheck)) && match[2] && classes[match[2]] ||
 			el.tagName && tags[el.tagName] ||
 			el.className !== undefined && HtmlElement ||
-			el.location && el.frames && el.history && HtmlView ||
-			el.nodeName == '#document' && (document.documentElement.nodeName.toLowerCase() == 'html' && HtmlDocument || DomDocument) ||
+			el.nodeType == 9 && (el.documentElement.nodeName.toLowerCase() == 'html' && HtmlDocument || DomDocument) ||
+			el.location && el.frames && el.history && DomWindow ||
 			DomElement;
 	}
 
@@ -957,8 +959,10 @@ DomElement = Base.extend(new function() {
 	return {
 		_type: 'element',
 		_elements: DomElements,
+		_initialize: true,
 
 		initialize: function(el, props, doc) {
+			if (!el) return null;
 			if (this._tag && Base.type(el) == 'object') {
 				props = el;
 				el = this._tag;
@@ -981,6 +985,7 @@ DomElement = Base.extend(new function() {
 				elements[elements.length] = el;
 			} catch (e) {} 
 			if (props) this.set(props);
+			return this;
 		},
 
 		statics: {
@@ -1010,9 +1015,9 @@ DomElement = Base.extend(new function() {
 				var ret = this.base();
 				var init = src.initialize;
 				if (init) src.initialize = function(el, props) {
-					var ret = this.base(el, props);
+					var ret = this._initialize && this.base(el, props);
 					if (ret) return ret;
-					init.call(this);
+					init.apply(this, arguments);
 				}
 				inject.call(ret, src);
 				ret.inject = inject;
@@ -1024,19 +1029,31 @@ DomElement = Base.extend(new function() {
 						classCheck = new RegExp('(^|\\s)(' + Base.each(classes, function(val, name) {
 							this.push(name);
 						}, []).join('|') + ')(\\s|$)');
-						if (!src._lazy && src.initialize) Document.addEvent('domready', function() {
-							Document.getElements('.' + src._class);
+						if (!src._lazy && src.initialize) Browser.document.addEvent('domready', function() {
+							this.getElements('.' + src._class);
 						});
 					}
 				}
 				return ret;
 			},
 
-			get: function(el) {
+			wrap: function(el) {
 				return el ? typeof el == 'string'
-					? Document.getElement(el)
+					? DomElement.get(el)
 					: el._wrapper || el._elements && el || new (getConstructor(el))(el, dont)
 						: null;
+			},
+
+			unwrap: function(el) {
+				return el && el.$ || el;
+			},
+
+			get: function(selector, root) {
+				return (root && DomElement.wrap(root) || Browser.document).getElement(selector);
+			},
+
+			getAll: function(selector, root) {
+				return (root && DomElement.wrap(root) || Browser.document).getElements(selector);
 			},
 
 			create: function(tag, props, doc) {
@@ -1051,10 +1068,6 @@ DomElement = Base.extend(new function() {
 					tag = '<' + tag + '>';
 				}
 				return (DomElement.unwrap(doc) || document).createElement(tag);
-			},
-
-			unwrap: function(el) {
-				return el && el.$ || el;
 			},
 
 			collect: function(el) {
@@ -1081,6 +1094,9 @@ DomElement = Base.extend(new function() {
 		}
 	}
 });
+
+$ = DomElement.get;
+$$ = DomElement.getAll;
 
 DomElement.inject(new function() {
 	var bools = ['compact', 'nowrap', 'ismap', 'declare', 'noshade', 'checked',
@@ -1111,7 +1127,7 @@ DomElement.inject(new function() {
 	function walk(el, name, start) {
 		el = el[start ? start : name];
 		while (el && Base.type(el) != 'element') el = el[name];
-		return DomElement.get(el);
+		return DomElement.wrap(el);
 	}
 
 	function toElements(elements) {
@@ -1154,11 +1170,11 @@ DomElement.inject(new function() {
 		},
 
 		getDocument: function() {
-			return DomElement.get(this.$.ownerDocument);
+			return DomElement.wrap(this.$.ownerDocument);
 		},
 
-		getView: function() {
-			return this.getDocument().getView();
+		getWindow: function() {
+			return this.getDocument().getWindow();
 		},
 
 		getPrevious: function() {
@@ -1178,7 +1194,7 @@ DomElement.inject(new function() {
 		},
 
 		getParent: function() {
-			return DomElement.get(this.$.parentNode);
+			return DomElement.wrap(this.$.parentNode);
 		},
 
 		getChildren: function() {
@@ -1198,7 +1214,7 @@ DomElement.inject(new function() {
 		},
 
 		appendChild: function(el) {
-			if (el = DomElement.get(el)) {
+			if (el = DomElement.wrap(el)) {
 				var text = Browser.IE && el.$.text;
 				if (text) el.$.text = '';
 				this.$.appendChild(el.$);
@@ -1209,7 +1225,7 @@ DomElement.inject(new function() {
 
 		appendChildren: function() {
 			return Array.flatten(arguments).each(function(el) {
-				this.appendChild($(DomElement.get(el)));
+				this.appendChild($(DomElement.wrap(el)));
 			}, this);
 		},
 
@@ -1235,7 +1251,7 @@ DomElement.inject(new function() {
 		},
 
 		removeChild: function(el) {
-			el = DomElement.get(el);
+			el = DomElement.wrap(el);
 			this.$.removeChild(el.$);
 			return el;
 		},
@@ -1260,7 +1276,7 @@ DomElement.inject(new function() {
 		},
 
 		clone: function(contents) {
-			return DomElement.get(this.$.cloneNode(!!contents));
+			return DomElement.wrap(this.$.cloneNode(!!contents));
 		},
 
 		getProperty: function(name) {
@@ -1366,7 +1382,6 @@ DomElement.inject(new function() {
 
 DomDocument = DomElement.extend({
 	_type: 'document',
-	_elements: DomElements,
 
 	initialize: function() {
 		if(Browser.IE)
@@ -1376,7 +1391,7 @@ DomDocument = DomElement.extend({
 	},
 
 	createElement: function(tag, props) {
-		return DomElement.get(DomElement.create(tag, props, this.$)).set(props);
+		return DomElement.wrap(DomElement.create(tag, props, this.$)).set(props);
 	},
 
 	createTextNode: function(text) {
@@ -1387,8 +1402,8 @@ DomDocument = DomElement.extend({
 		return this;
 	},
 
-	getView: function() {
-		return DomElement.get(this.$.defaultView || this.$.parentWindow);
+	getWindow: function() {
+		return DomElement.wrap(this.$.defaultView || this.$.parentWindow);
 	},
 
 	open: function() {
@@ -1408,17 +1423,50 @@ DomDocument = DomElement.extend({
 	}
 });
 
-DomView = DomElement.extend({
-	_type: 'view',
+DomWindow = DomElement.extend({
+	_type: 'window',
+	_initialize: false,
+	_methods: ['close', 'alert', 'prompt', 'confirm', 'blur', 'focus', 'reload'],
 
 	getDocument: function() {
-		return DomElement.get(this.$.document);
+		return DomElement.wrap(this.$.document);
 	},
 
-	getView: function() {
+	getWindow: function() {
 		return this;
+	},
+
+	initialize: function(param) {
+		var win;
+		if (param.location && param.frames && param.history) {
+			win = this.base(param);
+		} else {
+			if (typeof param == 'string')
+				param = { url: param };
+			(['toolbar','menubar','location','status','resizable','scrollbars']).each(function(key) {
+				param[key] = param[key] ? 1 : 0;
+			});
+			if (param.width && param.height) {
+				if (param.left == null) param.left = Math.round(
+					Math.max(0, (screen.width - param.width) / 2));
+				if (param.top == null) param.top = Math.round(
+					Math.max(0, (screen.height - param.height) / 2 - 40));
+			}
+			var str = Base.each(param, function(val, key) {
+				if (!/^(focus|confirm|url|name)$/.test(key))
+					this.push(key + '=' + (val + 0));
+			}, []).join();
+			win = this.base(window.open(param.url, param.name.replace(/\s+|\.+|-+/gi, ''), str));
+			if (win && param.focus)
+				win.focus();
+		}
+		return ['location', 'frames', 'history'].each(function(key) {
+			this[key] = this.$[key];
+		}, win);
 	}
 });
+
+Window = DomWindow;
 
 DomEvent = Base.extend(new function() {
 	var keys = {
@@ -1447,7 +1495,7 @@ DomEvent = Base.extend(new function() {
 		initialize: function(event) {
 			this.event = event = event || window.event;
 			this.type = event.type;
-			this.target = DomElement.get(event.target || event.srcElement);
+			this.target = DomElement.wrap(event.target || event.srcElement);
 			if (this.target.nodeType == 3)
 				this.target = this.target.getParent(); 
 			this.shift = event.shiftKey;
@@ -1477,7 +1525,7 @@ DomEvent = Base.extend(new function() {
 				}
 				this.rightClick = event.which == 3 || event.button == 2;
 				if (/^mouse(over|out)$/.test(this.type))
-					this.relatedTarget = DomElement.get(event.relatedTarget ||
+					this.relatedTarget = DomElement.wrap(event.relatedTarget ||
 						this.type == 'mouseout' ? event.toElement : event.fromElement);
 			}
 		},
@@ -1537,7 +1585,7 @@ DomEvent = Base.extend(new function() {
 								}
 							})();
 						} else {
-							this.getView().addEvent('load', domReady);
+							this.getWindow().addEvent('load', domReady);
 							doc.addEvent('DOMContentLoaded', domReady);
 						}
 					}
@@ -1873,12 +1921,14 @@ DomElement.inject(new function() {
 		getElement: function(selector) {
 			var el, type = Base.type(selector), match;
 			if (type == 'string' && (match = selector.match(/^#?([\w-]+)$/)))
-				el = document.getElementById(match[1]);
+				el = this.getDocument().$.getElementById(match[1]);
 			else if (type == 'element')
 				el = DomElement.unwrap(selector);
-			if (el && !DomElement.isAncestor(el, this.$)) el = null;
-			if (!el) el = this.getElements(selector, true)[0];
-			return DomElement.get(el);
+			if (el && !DomElement.isAncestor(el, this.$))
+				el = null;
+			if (!el)
+				el = this.getElements(selector, true)[0];
+			return DomElement.wrap(el);
 		},
 
 		hasElement: function(selector) {
@@ -1897,7 +1947,7 @@ DomElement.inject(new function() {
 			var params = parse(selector), doc = this.$.ownerDocument;
 			for (var el = this.$.parentNode; el && el != doc; el = el.parentNode)
 				if (match(el, params, {}))
-					return DomElement.get(el);
+					return DomElement.wrap(el);
 			return null;
 
 		},
@@ -2226,7 +2276,7 @@ HtmlElement.inject({
 
 Array.inject({
 	toElement: function(doc) {
-		doc = DomElement.get(doc || document);
+		doc = DomElement.wrap(doc || document);
 		var elements = new HtmlElements();
 		for (var i = 0; i < this.length;) {
 			var value = this[i++], element = null;
@@ -2287,7 +2337,7 @@ String.inject({
 			}
 			elements = new HtmlElements(div.childNodes);
 		} else {
-			elements = DomElement.get(doc).getElements(this);
+			elements = DomElement.wrap(doc).getElements(this);
 		}
 		return elements.length == 1 ? elements[0] : elements;
 	}
@@ -2295,33 +2345,6 @@ String.inject({
 
 HtmlDocument = DomDocument.extend({
 	_elements: HtmlElements
-});
-
-HtmlView = DomView.extend({
-	open: function(url, title, params) {
-		var focus;
-		if (params && typeof params != 'string') {
-			if (params.confirm && !confirm(params.confirm))
-				return null;
-			(['toolbar','menubar','location','status','resizable','scrollbars']).each(function(d) {
-				params[d] = params[d] ? 1 : 0;
-			});
-			if (params.width && params.height) {
-				if (params.left == null) params.left = Math.round(
-					Math.max(0, (screen.width - params.width) / 2));
-				if (params.top == null) params.top = Math.round(
-					Math.max(0, (screen.height - params.height) / 2 - 40));
-			}
-			focus = params.focus;
-			params = Base.each(params, function(p, n) {
-				if (!/^(focus|confirm)$/.test(n))
-					this.push(n + '=' + p);
-			}, []).join(',');
-		}
-		var win = this.$.open(url, title.replace(/\s+|\.+|-+/gi, ''), params);
-		if (win && focus) win.focus();
-		return win;
-	}
 });
 
 HtmlElement.inject(new function() {
@@ -2365,7 +2388,7 @@ HtmlElement.inject(new function() {
 		getComputedStyle: function(name) {
 			var style;
 			return this.$.currentStyle && this.$.currentStyle[name.camelize()]
-				|| (style = this.getView().$.getComputedStyle(this.$, null)) && style.getPropertyValue(name.hyphenate())
+				|| (style = this.getWindow().$.getComputedStyle(this.$, null)) && style.getPropertyValue(name.hyphenate())
 				|| null;
 		},
 
@@ -2426,7 +2449,8 @@ HtmlElement.inject(new function() {
 				var parts = styles.all[name] || ['@'], index = 0;
 				value = (type == 'array' ? value.flatten() : [value]).map(function(val) {
 					var part = parts[index++];
-					if (!part) throw Base.stop;
+					if (!part)
+						throw Base.stop;
 					return Base.type(val) == 'number' ? part.replace('@', name == 'opacity' ? val : Math.round(val)) : val;
 				}).join(' ');
 			}
@@ -2493,7 +2517,7 @@ HtmlElement.inject(new function() {
 				cur = next;
 				x += cur.$[left] || 0;
 				y += cur.$[top] || 0;
-			} while((next = HtmlElement.get(cur.$[parent])) && (!iter || iter(cur, next)))
+			} while((next = DomElement.wrap(cur.$[parent])) && (!iter || iter(cur, next)))
 			return { x: x, y: y };
 		}
 	}
@@ -2531,31 +2555,31 @@ HtmlElement.inject(new function() {
 
 		getSize: function() {
 			return body(this)
-				? this.getView().getSize()
+				? this.getWindow().getSize()
 				: { width: this.$.offsetWidth, height: this.$.offsetHeight };
 		},
 
 		getOffset: function(positioned) {
 			return body(this)
-				? this.getView().getOffset()
+				? this.getWindow().getOffset()
 			 	: (positioned ? getPositioned : getCumulative)(this);
 		},
 
 		getScrollOffset: function() {
 			return body(this)
-				? this.getView().getScrollOffset()
+				? this.getWindow().getScrollOffset()
 			 	: getScrollOffset(this);
 		},
 
 		getScrollSize: function() {
 			return body(this)
-				? this.getView().getScrollSize()
+				? this.getWindow().getScrollSize()
 			 	: { width: this.$.scrollWidth, height: this.$.scrollHeight };
 		},
 
 		getBounds: function() {
 			if (body(this))
-				return this.getView().getBounds();
+				return this.getWindow().getBounds();
 			var off = this.getOffset(), el = this.$;
 			return {
 				left: off.x,
@@ -2575,7 +2599,7 @@ HtmlElement.inject(new function() {
 
 		setScrollOffset: function(x, y) {
 			if (body(this)) {
-				this.getView().setScrollOffset(x, y);
+				this.getWindow().setScrollOffset(x, y);
 			} else {
 				var off = typeof x == 'object' ? x : { x: x, y: y };
 				this.$.scrollLeft = off.x;
@@ -2608,19 +2632,19 @@ HtmlElement.inject(new function() {
 	return fields;
 });
 
-[HtmlDocument, HtmlView].each(function(ctor) {
+[DomDocument, DomWindow].each(function(ctor) {
 	ctor.inject(this);
 }, {
 
 	getSize: function() {
-		var doc = this.getDocument().$, view = this.getView().$, html = doc.documentElement;
+		var doc = this.getDocument().$, view = this.getWindow().$, html = doc.documentElement;
 		return Browser.WEBKIT2 && { width: view.innerWidth, height: view.innerHeight }
 			|| Browser.OPERA && { width: doc.body.clientWidth, height: doc.body.clientHeight }
 			|| { width: html.clientWidth, height: html.clientHeight };
 	},
 
 	getScrollOffset: function() {
-		var doc = this.getDocument().$, view = this.getView().$, html = doc.documentElement;
+		var doc = this.getDocument().$, view = this.getWindow().$, html = doc.documentElement;
 		return {
 			x: view.pageXOffset || html.scrollLeft || doc.body.scrollLeft || 0,
 			y: view.pageYOffset || html.scrollTop || doc.body.scrollTop || 0
@@ -2649,7 +2673,7 @@ HtmlElement.inject(new function() {
 
 	setScrollOffset: function(x, y) {
 		var off = typeof x == 'object' ? x : { x: x, y: y };
-		this.getView().$.scrollTo(off.x, off.y);
+		this.getWindow().$.scrollTo(off.x, off.y);
 		return this;
 	},
 
@@ -2851,18 +2875,8 @@ FormElement.inject({
 	}
 });
 
-Document = DomElement.get(document);
-Window = DomElement.get(window);
-
-Window.addEvent('unload', DomElement.dispose);
-
-function $(selector, root) {
-	return (DomElement.get(root) || Document).getElement(selector);
-}
-
-function $$(selector, root) {
-	return (DomElement.get(root) || Document).getElements(selector);
-}
+$document = Browser.document = DomElement.wrap(document);
+$window = Browser.window = DomElement.wrap(window).addEvent('unload', DomElement.dispose);
 
 Chain = {
 	chain: function(fn) {
@@ -2927,7 +2941,7 @@ Request = Base.extend(Chain, Callback, new function() {
 
 	function createFrame(that, form) {
 		var id = 'request_' + unique++, onLoad = that.onFrameLoad.bind(that);
-		var div = Document.getElement('body').injectBottom('div', {
+		var div = DomElement.get('body').injectBottom('div', {
 				styles: {
 					position: 'absolute', top: '0', marginLeft: '-10000px'
 				}
@@ -2942,7 +2956,7 @@ Request = Base.extend(Chain, Callback, new function() {
 		that.frame = {
 			id: id, div: div, form: form,
 			iframe: window.frames[id] || document.getElementById(id),
-			element: Document.getElement(id)
+			element: DomElement.get(id)
 		};
 		div.offsetWidth;
 	}
@@ -3009,7 +3023,7 @@ Request = Base.extend(Chain, Callback, new function() {
 				div.remove();
 				this.success(text);
 				if (Browser.GECKO) {
-					div.insertBottom(Document.getElement('body'));
+					div.insertBottom(DomElement.get('body'));
 					div.remove.delay(1, div);
 				}
 				this.frame = null;
@@ -3022,7 +3036,7 @@ Request = Base.extend(Chain, Callback, new function() {
 				var match = text.match(/<body[^>]*>([\u0000-\uffff]*?)<\/body>/i);
 				var stripped = this.stripScripts(match ? match[1] : text);
 				if (this.options.update)
-					DomElement.get(this.options.update).setHtml(stripped.html);
+					DomElement.wrap(this.options.update).setHtml(stripped.html);
 				if (this.options.evalScripts)
 					this.executeScript(stripped.javascript);
 				args = [ stripped.html, text ];
@@ -3061,7 +3075,7 @@ Request = Base.extend(Chain, Callback, new function() {
 			if (window.execScript) {
 				window.execScript(script);
 			} else {
-				Document.getElement('head').injectBottom('script', {
+				DomElement.get('head').injectBottom('script', {
 					type: 'text/javascript', text: script
 				}).remove();
 			}
@@ -3098,7 +3112,7 @@ Request = Base.extend(Chain, Callback, new function() {
 			var method = params.method || opts.method;
 			switch (Base.type(data)) {
 				case 'element':
-					var el = DomElement.get(data);
+					var el = DomElement.wrap(data);
 					if (el.getTag() != 'form' || !el.hasElement('input[type=file]'))
 						data = el.toQueryString();
 					break;
@@ -3115,7 +3129,7 @@ Request = Base.extend(Chain, Callback, new function() {
 				method = 'post';
 			}
 			if (Base.type(data) == 'element') { 
-		 		createFrame(this, DomElement.get(data));
+		 		createFrame(this, DomElement.wrap(data));
 			} else {
 				createRequest(this);
 				if (!this.transport) {
@@ -3223,7 +3237,7 @@ Asset = new function() {
 
 	return {
 		script: function(src, props) {
-			var script = Document.getElement('head').injectBottom('script', Hash.merge({
+			var script = DomElement.get('head').injectBottom('script', Hash.merge({
 				events: {
 					load: props.onLoad,
 					readystatechange: function() {
@@ -3243,7 +3257,7 @@ Asset = new function() {
 		stylesheet: function(src, props) {
 			return new HtmlElement('link', new Hash({
 				rel: 'stylesheet', media: 'screen', type: 'text/css', href: src
-			}, props)).insertInside(Document.getElement('head'));
+			}, props)).insertInside(DomElement.get('head'));
 		},
 
 		image: function(src, props) {
@@ -3304,7 +3318,7 @@ Fx = Base.extend(Chain, Callback, {
 	},
 
 	initialize: function(element, options) {
-		this.element = HtmlElement.get(element);
+		this.element = DomElement.wrap(element);
 		this.setOptions(options);
 	},
 
@@ -3515,7 +3529,7 @@ HtmlElement.inject({
 Fx.Elements = Fx.extend({
 	initialize: function(elements, options) {
 		this.base(null, options);
-		this.elements = Document.getElements(elements);
+		this.elements = DomElement.getAll(elements);
 	},
 
 	start: function(obj) {
@@ -3534,7 +3548,7 @@ Fx.Elements = Fx.extend({
 					start(this, key, val);
 				}, this);
 			} else if (isNaN(parseInt(key))) {
-				var els = Document.getElements(key);
+				var els = DomElement.getAll(key);
 				this.elements.append(els);
 				els.each(function(el) {
 					start(this, this.elements.indexOf(el), val);

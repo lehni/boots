@@ -10,22 +10,7 @@ function json_macro(param, object) {
 				this[key] = val;
 		}, {});
 	}
-	if (param.singleQuotes == 'true') {
-		// This is a bit of a hack:  Json.encode uses uneval internally, and this
-		// produces code like { key: 'value', 'class': 'content' }, using single quote
-		// for reserved keywords. This means we cannot simply replace like bellow
-		// if an object is passed, since the single quote then gets replaced by \'
-		if (Base.type(object) == 'object') {
-		 	return '{' + object.each(function(val, key) {
-				if (val != undefined)
-					this.push("'" + key + "':" + Json.encode(val).replaceAll("'", "\\'").replaceAll('"', "'"));
-			}, []).join(',') + '}';
-		} else {
-			return Json.encode(object).replaceAll("'", "\\'").replaceAll('"', "'");
-		}
-	} else {
-		return Json.encode(object);
-	}
+	return Json.encode(object, param.singleQuotes == 'true');
 }
 
 function link_macro(param) {	

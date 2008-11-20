@@ -22,6 +22,7 @@ EditForm.PREVIEWABLE = true;
 // BUTTON_MODE can be any of these:
 // 		EditForm.BUTTON_MODE_BACK
 // 		EditForm.BUTTON_MODE_STAY
+//		EditForm.BUTTON_MODE_APPLY_CLOSE
 // 		EditForm.BUTTON_MODE_BACK | EditForm.BUTTON_MODE_STAY
 EditForm.BUTTON_MODE = EditForm.BUTTON_MODE_BACK;
 
@@ -38,8 +39,10 @@ EditForm.SHOW_PROTOTYPE = false;
 
 // Display labels on the left instead of the top of the row.
 EditForm.LABEL_LEFT = false;
+
 // The width value to be used in tables. Can be in pecent, otherwise pixels.
-EditForm.WIDTH = "100%";
+EditForm.WIDTH_TOTAL = "100%";
+EditForm.WIDTH_SPACER = "2%";
 
 // Titles
 EditForm.TITLE_BACK = 'Back';

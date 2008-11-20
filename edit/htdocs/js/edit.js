@@ -121,14 +121,14 @@ EditForm = Base.extend({
 		if (this.parent && this.parent.empty)
 			return this.parent.close();
 		if (!EditForm.forms.getSize())
-			Document.fireEvent('endedit');
+			$document.fireEvent('endedit');
 		return this.parent;
 	},
 
 	preview: function(previousContent) {
 		this.show(false);
 		var that = this;
-		var offset = Window.getScrollOffset();
+		var offset = $window.getScrollOffset();
 		var button = $('body').injectBottom('div', {
 				className: 'edit-preview'
 			}, [
@@ -138,7 +138,7 @@ EditForm = Base.extend({
 						click: function(event) {
 							that.show(true);
 							EditForm.setContent(previousContent);
-							Window.setScrollOffset(offset);
+							$window.setScrollOffset(offset);
 							button.remove();
 							// TODO: See if we also need to restore these states
 							// after clicking back, or apply & back, and if so,
@@ -396,7 +396,7 @@ EditForm = Base.extend({
 			var form = this.forms[id];
 			if (target) { // If target is passed, we're asked to create a form
 				if (!this.forms.getSize())
-					Document.fireEvent('beginedit');
+					$document.fireEvent('beginedit');
 				if (!form)
 					form = this.forms[id] = new EditForm(id, target, parent);
 				var targetId = target.getId();
@@ -503,9 +503,9 @@ EditForm = Base.extend({
 		setPage: function(page) {
 			var match = page.match(/<body[^>]*>([\u0000-\uffff]*)<\/body>/i);
 			if (match) {
-				var offset = Window.getScrollOffset();
+				var offset = $window.getScrollOffset();
 				var previous = this.setContent(match[1]);
-				Window.setScrollOffset(offset);
+				$window.setScrollOffset(offset);
 				return previous;
 			}
 		},
@@ -520,7 +520,7 @@ EditForm = Base.extend({
 				chooser.element.remove();
 			});
 			// Replace the content of the body only...
-			Document.fireEvent('beforeupdate');
+			$document.fireEvent('beforeupdate');
 			var body = $('body');
 			var previousContent = body.getHtml();
 			body.setHtml(content);
@@ -537,11 +537,11 @@ EditForm = Base.extend({
 				}
 			});
 			// Retrigger domready event since things have completely changed.
-			Document.fireEvent('domready');
+			$document.fireEvent('domready');
 			// Fire event on document so website can react to html update
 			// and do some JS magic with it if needed before the ditors are
 			// injected again.
-			Document.fireEvent('afterupdate');
+			$document.fireEvent('afterupdate');
 			EditChooser.choosers.each(function(chooser) {
 				chooser.element.insertInside(body);
 			});
@@ -970,7 +970,7 @@ EditChooser = Base.extend({
 
 		if (!EditChooser.choosers.length) {
 			// The first chooser. Install catch-all mousedown....
-			Document.addEvent('mousedown', function(event) {
+			$document.addEvent('mousedown', function(event) {
 				var close = true;
 				var chooser = EditChooser.current;
 				if (chooser && chooser.buttons && !chooser.buttons.hasClass('hidden'))

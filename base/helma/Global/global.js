@@ -32,8 +32,10 @@ function encodeUrl(str) {
 	return str ? Packages.helma.util.UrlEncoded.encode(str, 'UTF-8').replace('%20', '+') : str;
 }
 
-function encodeJs(str) {
-	return str ? (str = uneval(str)).substring(1, str.length - 1) : str;
+function encodeJs(str, singleQuotes) {
+	// We cannot use uneval unfortunately since we want to be able to replace ' or ", depending on singleQuotes
+	return str ? Json.encode(str, singleQuotes).substring(1, str.length - 1) : str;
+	// return str ? (str = uneval(str)).substring(1, str.length - 1) : str;
 }
 
 function encodeHex(str) {
@@ -105,42 +107,35 @@ renderLink = function(content, urlOptions, htmlOptions, out) {
 	var attributes = '';
 	if (htmlOptions) {
 		var onClick;
-		// TODO: make confirm work with destination, and maybe onClick
+		// Use single quotes for confirm, since it will be inside double quotes
+		var confirm = htmlOptions.confirm && 'confirm(' + Json.encode(htmlOptions.confirm, true) + ')';
 		if (htmlOptions.onClick) {
-			// Convert single quotes to double quotes, as we're using single quotes
-			// for the HTML attribute here (due to the use of uneval bellow)
-			onClick = htmlOptions.onClick.replace(/'/mgi, '"');
+			onClick = htmlOptions.onClick;
+			// Make sure it ends with ;
+			if (!/;$/.test(onClick))
+				onClick += ';';
 		} else if (htmlOptions.update) {
-			onClick = 'DomElement.get("' + htmlOptions.update + '").load("' + url + '"); return false;';
+			// TODO: This is BootStrap specific. Is that ok? How to handle this?
+			onClick = "$('" + htmlOptions.update + "').load('" + url + "');";
 			url = '#';
 		} else if (htmlOptions.popup) {
-			var params = htmlOptions.popup.clone();
-			delete params.title;
-			if (htmlOptions.confirm)
-				params.confirm = htmlOptions.confirm;
-			onClick = 'Window.open("' + url + '", "' + (htmlOptions.popup.title || content.urlize()) + '", ' + Json.encode(params) + '); return false;';
+			var param = Hash.merge({ url: url }, htmlOptions.popup);
+			// TODO: This is BootStrap specific. Is that ok? How to handle this?
+			onClick = 'new Window(' + Json.encode(param, true) + ');';
 			url = '#';
-		} else if (htmlOptions.confirm) {
-			onClick = 'return confirm("' + encodeJs(htmlOptions.confirm) + '")';
-		}
+		} 
 		if (htmlOptions.attributes) {
 			attributes = htmlOptions.attributes.each(function(val, key) {
 				this.push(key + '="' + val + '"');
 			}, ['']).join(' ');
 		}
-		// Use single quotes for onClick, due to uneval above.
-		if (onClick)
-			attributes += " onclick='" + onClick + "'";
+		if (onClick || confirm) {
+			if (confirm)
+				onClick = onClick ? 'if (' + confirm + ') ' + onClick + ' return false;' : 'return ' + confirm + ';';
+			attributes += ' onclick=' + Json.encode(onClick + (confirm ? '' : ' return false;'));
+		}
 	}
-	
-	out.write('<a href="');
-	out.write(url);
-	out.write('"');
-	if (attributes)
-		out.write(attributes);
-	out.write('>');
-	out.write(content);
-	out.write('</a>');
+	res.write('<a href="' + url + '"' + attributes + '>' + content + '</a>');
 }.toRender();
 
 // Simple helper for debugging

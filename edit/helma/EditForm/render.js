@@ -125,10 +125,10 @@ EditForm.inject({
 	renderHandle: function(handler) {
 		var args = handler instanceof Array ? handler : Array.create(arguments);
 		args.unshift(this.id);
-		var str = Json.encode(args);
-		// Encode for inline html JS by replacing ' with \' and " with ':
-		str = str.substring(1, str.length - 1).replaceAll("'", "\\'").replaceAll('"', "'");
-		return "EditForm.handle(" + str + ");";
+		// Encode with single quotes since it goes into html attributes with doubles
+		var str = Json.encode(args, true);
+		// Remove [] from string:
+		return "EditForm.handle(" + str.substring(1, str.length - 1) + ");";
 	},
 
 	renderTitle: function(node, mode) {
