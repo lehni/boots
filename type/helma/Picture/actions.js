@@ -1,5 +1,5 @@
 function main_action() {
-	if (req.path.endsWith("/")) { // popup
+	if (/\/$/.test(req.path)) { // Path ends with / -> we're in a popup
 		this.renderPopup({
 			content: '<a href="javascript:window.close()"><img src="' +
 				this.href() + '" width="' + this.width + ' height="' +

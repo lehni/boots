@@ -9,9 +9,9 @@ String.inject({
 
 	unaccent: function() {
 		str = encode(this);
-		// convert to html entities, replace them by the normal unnaccented chars and convert back
+		// Convert to html entities, replace them by the normal unnaccented chars and convert back
 		str = str.replace(/&(.)(?:uml);/gi, '$1e'); // replace ö with oe, ä with ae, etc.
-		str = str.replace(/&(.)(?:acute|grave|cedil|circ|ring|tilde|uml);/gi, '$1'); // replace é with e, à with a, etc.
+		str = str.replace(/&(.)(?:acute|grave|cedil|circ|ring|tilde);/gi, '$1'); // replace é with e, à with a, etc.
 		return Packages.org.htmlparser.util.Translate.decode(str);
 	},
 

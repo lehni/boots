@@ -244,9 +244,9 @@ EditForm.inject({
 				item = item[0];
 			if (item.type == 'hidden') {
 				cellCount--;
-			} else if (item.type && item.width) {
+			} else if (item.width) {
 				var w = parseFloat(item.width);
-				if (typeof item.width == 'string' && item.width.endsWith('%'))
+				if (/%$/.test(item.width))
 					w = this.width * w / 100.0;
 				width -= w;
 				if (this.widthInPercent)
@@ -270,8 +270,7 @@ EditForm.inject({
 			// for the cell settings
 			if (item instanceof Array)
 				item = item[0];
-
-			if (item.type && item.type != 'hidden') {
+			if (item.type != 'hidden') {
 				if (!firstItem)
 					firstItem = item;
 				var width = widths[i];

@@ -261,8 +261,8 @@ EditForm.inject(new function() {
 			// be specified in pixels too
 			var width = this.width || EditForm.WIDTH_TOTAL;
 			this.width = parseFloat(width);
-			this.widthInPercent = /%$/.test(width);
 			this.spacerWidth = parseFloat(this.spacerWidth || EditForm.WIDTH_SPACER);
+			this.widthInPercent = /%$/.test(width);
 		},
 
 		setParent: function(parent) {
