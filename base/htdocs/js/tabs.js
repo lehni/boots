@@ -73,7 +73,7 @@ TabPage = Base.extend({
 		this.tab = $('.tab', el);
 		this.anchor = new HtmlElement('a', { href: '#' });
 		this.anchor.addEvent('click', function() { return false; });
-		this.tab.getChildren().insertInside(this.anchor);
+		this.tab.getChildNodes().insertInside(this.anchor);
 		this.tab.appendChild(this.anchor);
 		var that = this;
 		this.tab.addEvents({

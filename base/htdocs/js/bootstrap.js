@@ -882,7 +882,7 @@ DomElements = Array.extend(new function() {
 						var count = func.getParameters().length, prevCount = prev && prev.getParameters().length;
 						val = function() {
 							var args = arguments, values;
-							if (prev && args.length > count && args.length <= prevCount)
+							if (prev && args.length == prevCount || (args.length > count && args.length <= prevCount))
 								return prev.apply(this, args);
 							this.each(function(obj) {
 								var ret = (obj[key] || func).apply(obj, args);
@@ -1124,10 +1124,17 @@ DomElement.inject(new function() {
 		else return that[prefix + 'Property'](name, value);
 	}
 
-	function walk(el, name, start) {
-		el = el[start ? start : name];
-		while (el && Base.type(el) != 'element') el = el[name];
-		return DomElement.wrap(el);
+	function walk(el, walk, start, match, all) {
+		var elements = all && new el._elements();
+		el = el.$[start || walk];
+		while (el) {
+			if (el.nodeType == 1 && (!match || DomElement.match(el, match))) {
+				if (!all) return DomElement.wrap(el);
+				elements.push(el);
+			}
+			el = el[walk];
+		}
+		return elements;
 	}
 
 	function toElements(elements) {
@@ -1177,40 +1184,64 @@ DomElement.inject(new function() {
 			return this.getDocument().getWindow();
 		},
 
-		getPrevious: function() {
-			return walk(this.$, 'previousSibling');
+		getPrevious: function(match) {
+			return walk(this, 'previousSibling', null, match);
 		},
 
-		getNext: function() {
-			return walk(this.$, 'nextSibling');
+		getAllPrevious: function(match) {
+			return walk(this, 'previousSibling', null, match, true);
 		},
 
-		getFirst: function() {
-			return walk(this.$, 'nextSibling', 'firstChild');
+		getNext: function(match) {
+			return walk(this, 'nextSibling', null, match);
 		},
 
-		getLast: function() {
-			return walk(this.$, 'previousSibling', 'lastChild');
+		getAllNext: function(match) {
+			return walk(this, 'nextSibling', null, match, true);
 		},
 
-		getParent: function() {
-			return DomElement.wrap(this.$.parentNode);
+		getFirst: function(match) {
+			return walk(this, 'nextSibling', 'firstChild', match);
 		},
 
-		getChildren: function() {
-		 	return new this._elements(this.$.childNodes);
-		},
-
-		hasChildren: function() {
-			return this.$.hasChildNodes();
-		},
-
-		hasParent: function(el) {
-			return DomElement.isAncestor(this.$, DomElement.unwrap(el));
+		getLast: function(match) {
+			return walk(this, 'previousSibling', 'lastChild', match);
 		},
 
 		hasChild: function(el) {
-			return DomElement.isAncestor(DomElement.unwrap(el), this.$);
+			return Base.type(match) == 'element'
+				? DomElement.isAncestor(DomElement.unwrap(el), this.$)
+				: !!this.getFirst(match);
+		},
+
+		getParent: function(match) {
+			return walk(this, 'parentNode', null, match);
+		},
+
+		getParents: function(match) {
+			return walk(this, 'parentNode', null, match, true);
+		},
+
+		hasParent: function(match) {
+			return Base.type(match) == 'element'
+				? DomElement.isAncestor(this.$, DomElement.unwrap(el))
+				: !!this.getParent(match);
+		},
+
+		getChildren: function(match) {
+			return walk(this, 'nextSibling', 'firstChild', match, true);
+		},
+
+		hasChildren: function(match) {
+			return !!this.getChildren(match).length;
+		},
+
+		getChildNodes: function() {
+		 	return new this._elements(this.$.childNodes);
+		},
+
+		hasChildNodes: function() {
+			return this.$.hasChildNodes();
 		},
 
 		appendChild: function(el) {
@@ -1935,34 +1966,18 @@ DomElement.inject(new function() {
 			return !!this.getElement(selector);
 		},
 
-		getParents: function(selector) {
-			var parents = [], doc = this.$.ownerDocument;
-			for (var el = this.$.parentNode; el && el != doc; el = el.parentNode)
-				parents.push(el);
-			return filter(parents, selector, doc, new this._elements(), {});
-		},
-
-		getParent: function(selector) {
-			if (!selector) return this.base();
-			var params = parse(selector), doc = this.$.ownerDocument;
-			for (var el = this.$.parentNode; el && el != doc; el = el.parentNode)
-				if (match(el, params, {}))
-					return DomElement.wrap(el);
-			return null;
-
-		},
-
-		hasParent: function(selector) {
-			return typeof selector == 'string' ?
-				!!this.getParent(selector) : this.base(selector);
-		},
-
 		match: function(selector) {
 			return !selector || match(this.$, parse(selector), {});
 		},
 
 		filter: function(elements, selector) {
 			return filter(elements, selector, this.$, new this._elements(), {});
+		},
+
+		statics: {
+			match: function(el, selector) {
+				return !selector || match(DomElement.unwrap(el), parse(selector), {});
+			}
 		}
 	};
 });
@@ -2963,12 +2978,15 @@ Request = Base.extend(Chain, Callback, new function() {
 
 	return {
 		options: {
+			headers: {
+				'X-Requested-With': 'XMLHttpRequest',
+				'Accept': 'text/javascript, text/html, application/xml, text/xml, */*'
+			},
 			method: 'post',
 			async: true,
 			urlEncoded: true,
 			encoding: 'utf-8',
 			emulation: true,
-			headers: {},
 			secure: false
 		},
 
@@ -2978,10 +2996,7 @@ Request = Base.extend(Chain, Callback, new function() {
 			this.url = params.url || this.options.url;
 			if (params.handler)
 				this.addEvents({ success: params.handler, failure: params.handler });
-			this.headers = new Hash({
-				'X-Requested-With': 'XMLHttpRequest',
-				'Accept': 'text/javascript, text/html, application/xml, text/xml, */*'
-			});
+			this.headers = new Hash(this.options.headers);
 			if (this.options.json) {
 				this.setHeader('Accept', 'application/json');
 				this.setHeader('X-Request', 'JSON');
@@ -3156,8 +3171,6 @@ Request = Base.extend(Chain, Callback, new function() {
 				try {
 					this.transport.open(method.toUpperCase(), url, opts.async);
 					this.transport.onreadystatechange = this.onStateChange.bind(this);
-					if (method == 'post' && this.transport.overrideMimeType)
-						this.setHeader('Connection', 'close');
 					new Hash(this.headers, opts.headers).each(function(header, name) {
 						try{
 							this.transport.setRequestHeader(name, header);
