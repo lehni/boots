@@ -672,7 +672,7 @@ MultiSelectItem = SelectItem.extend({
 
 	apply: function(value) {
 		var changed = false;
-		if (this.type == 'multiselect') {
+		if (this.type == 'multiselect' && !this.linkedCollection) {
 			// Standard procedure for multiselects assumes
 			// 'position' property that controls the ordering of the objects
 			// 'visible' property that controls their visibility
