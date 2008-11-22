@@ -68,6 +68,7 @@ HopObject.inject({
 	/**
 	 * getDisplayName can be used to define the way a object's name should be
 	 * on the page displayed.
+	 * TODO: Find a better name?
 	 */
 	getDisplayName: function() {
 		return this.name;

@@ -62,7 +62,8 @@ Html = new function() {
 			var value = attributes.value;
 			delete attributes.value;
 			// Form elements should have both id and name
-			if (!attributes.id) attributes.id = attributes.name;
+			if (!attributes.id)
+				attributes.id = attributes.name;
 			return this.element('textarea', attributes, value ? encodeForm(value) : '', out);
 		},
 
@@ -70,7 +71,8 @@ Html = new function() {
 			var options = attributes.options;
 			delete attributes.options;
 			// Form elements should have both id and name
-			if (!attributes.id) attributes.id = attributes.name;
+			if (!attributes.id)
+				attributes.id = attributes.name;
 			out.write('<select');
 			this.attributes(attributes, out);
 			out.write('>');
@@ -118,7 +120,8 @@ Html = new function() {
 
 			}
 			// Form elements should have both id and name
-			if (!attributes.id) attributes.id = attributes.name;
+			if (!attributes.id)
+				attributes.id = attributes.name;
 			delete attributes.current;
 			return this.element('input', attributes, null, out);
 		}
