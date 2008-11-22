@@ -520,6 +520,10 @@ EditForm.inject(new function() {
 				return name;
 			},
 
+			getPrototypeName: function(obj) {
+				return obj._prototype.uncamelize();
+			},
+
 			alert: function(str) {
 				EditForm.addMessage('editMessage', str);
 			},
