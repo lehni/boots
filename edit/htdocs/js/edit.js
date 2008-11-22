@@ -75,15 +75,16 @@ EditForm = Base.extend({
 			if (this.tab)
 				this.tab.editForm = this;
 			this.show(true);
-			if (values.error) {
-				$('#edit-error-' + values.error.name, this.form).setHtml(values.error.message).removeClass('hidden');
-				this.setSelectedTab(values.error.tab);
-				var field = $('#' + values.error.name, this.form);
-				if (field && field.focus) {
-					field.focus();
-					field.setValue(values.error.value);
-				}
-			}
+		}
+	},
+
+	reportError: function(error) {
+		$('#edit-error-' + error.name, this.form).setHtml(error.message).removeClass('hidden');
+		this.setSelectedTab(error.tab);
+		var field = $('#' + error.name, this.form);
+		if (field && field.focus) {
+			field.focus();
+			field.setValue(error.value);
 		}
 	},
 
@@ -478,10 +479,12 @@ EditForm = Base.extend({
 					visible: values.visible,
 					parent: values.parent
 				};
-				// update version so server knows wether to sync or not.
+				// Update version so server knows wether to sync or not.
 				this.data.version++;
 				if (backup)
 					form.restore(backup);
+				if (values.error)
+					form.reportError(values.error);
 				form.autoSize();
 			}
 			if (values.page)
@@ -647,8 +650,8 @@ EditForm.register(new function() {
 		sels.each(function(sel) {
 			sel = $('#' + sel, editForm.form);
 			if (sel) {
-				sel.getOptions().each(function(opt) {
-					if (opt.getSelected() && opt.getValue()) {
+				sel.getSelected().each(function(opt) {
+					if (opt.getValue()) {
 						names.push(opt.getText());
 						values.push(opt.getValue());
 					}
@@ -656,7 +659,7 @@ EditForm.register(new function() {
 			}
 		});
 		return values.length > 0 ?
-			{ values: values, names: names.join(', '), ids: values.join(',') } : null;
+			{ values: values, names: names.join(', '), ids: values.join() } : null;
 	}
 
 	var prototypeChooser = null;
@@ -697,10 +700,7 @@ EditForm.register(new function() {
 				// Remove links from list
 				sels.each(function(sel) {
 					sel = $('#' + sel, editForm.form);
-					sel.getOptions().each(function(opt) {
-						if (opt.getSelected())
-							opt.remove();
-					});
+					sel.getSelected().remove();
 				 	// Generate values
 					// TODO: replace substring with regexp
 					this.multiselect_update(editForm, el.name.substring(0, el.name.indexOf('_left')));
@@ -723,29 +723,24 @@ EditForm.register(new function() {
 // multiselect
 EditForm.register(new function() {
 	function moveSelected(from, to) {
-		var children = to.getOptions();
-		var at = children.getLast();
-		children.each(function(opt) {
-			if (opt.getSelected()) {
-				opt.setSelected(false);
-				at = opt;
-			}
+		var at = null;
+		to.getSelected().each(function(opt) {
+			opt.setSelected(false);
+			at = opt;
 		});
-		from.getOptions().each(function(opt) {
-			if (opt.getSelected()) {
-				if (at) opt.insertAfter(at);
-				else opt.insertInside(to);
-				at = opt;
-			}
+		from.getSelected().each(function(opt) {
+			if (at) opt.insertAfter(at);
+			else opt.insertInside(to);
+			at = opt;
 		});
 	}
 
 	function swapSelected(options, i1, i2) {
-		var o1 = options[i1];
-		var o2 = options[i2];
+		var o1 = options[i1], o2 = options[i2];
 		if (o1.getSelected() && !o2.getSelected()) {
 			if (i1 < i2) o2.insertBefore(o1);
 			else o1.insertBefore(o2);
+			options.swap(i1, i2);
 		}
 	}
 
