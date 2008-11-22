@@ -95,7 +95,7 @@ Post.inject({
 			label: 'Resources', type: 'multiselect', name: 'resources',
 			showOptions: true, collection: this.allResources, value: this.resources,
 			prototypes: 'Resource,Medium,Picture', movable: true,
-			size: 6, autoRemove: true, ordered: true
+			size: 6, autoRemove: true, sortable: true
 		});
 		if (User.hasRole(User.ADMINISTRATOR) && !this.isCreating()) {
 			form.add({

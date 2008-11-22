@@ -594,7 +594,7 @@ MultiSelectItem = SelectItem.extend({
 		}
 		// param already contains width, calculatedWidth, etc
 		param.name = name;
-		param.ordered = this.ordered;
+		param.sortable = this.sortable;
 		// render the ids of the left column as a hidden input.
 		// This value is manipulated by select_* handlers
 		param.ids = ids.join(',');
@@ -643,11 +643,11 @@ MultiSelectItem = SelectItem.extend({
 		// same table, so ids alone are enough a reference!
 
 		// Convert string prototype names to constructors
-		var prototypes = this.prototypes && this.prototypes.each(function(name) {
+		var prototypes = this.prototypes && this.prototypes.collect(function(name) {
 			var proto = global[name];
-			if (proto) this.push(proto);
-			else User.log("WARNING: Prototype '" + name + "' does not exist!");
-		}, []);
+			if (proto) return proto;
+			User.log("WARNING: Prototype '" + name + "' does not exist!");
+		});
 
 		// Also make sure the objects are contained in collection if that is defined.
 		var collection = this.collection;
@@ -676,28 +676,61 @@ MultiSelectItem = SelectItem.extend({
 			// Standard procedure for multiselects assumes
 			// 'position' property that controls the ordering of the objects
 			// 'visible' property that controls their visibility
-			var options = this.collection;
-			// Look-up table for used items
-			if (options) {
-				var used = {};
-				for (var i = 0; i < value.length; i++) {
-					var obj = value[i];
-					used[obj._id] = true;
-					if (obj && (obj.position != i || !obj.visible)) {
-						obj.position = i;
-						obj.visible = true;
-						changed = true;
-					}
-				}
-				// Now delete the positions of the unused items:
-				var list = options.list();
-				for (var i = 0; i < list.length; i++) {
-					var obj = list[i];
-					var pos = value.length + i;
-					if (!used[obj._id] && (obj.position != pos || obj.visible)) {
-						obj.position = pos;
-						obj.visible = false;
-						changed = true;
+			if (this.collection) {
+				// We are supporting two modes of sorting / hiding in multiselects:
+				
+				// - Index mode: visible items are sorted by index, hidden ones
+				//   are defined by setting index to null
+				
+				// - Position / Visible mode: position is used as an index for both
+				//   visible and hidden items, in their respective lists. visible
+				//   controlls the visibility.
+				
+				// The code bellow automatically decides which mode to use by
+				// looking at the first available option.
+				var options = this.collection.list();
+				var first = options.first;
+				if (first) {
+					// Make sure the objects actually define a index property or both
+					// the visible and position properties:
+					var modePositionVisible = first.position !== undefined && first.visible !== undefined;
+					var modeIndex = first.index !== undefined;
+					if (modePositionVisible || modeIndex) {
+						// Look-up table for used items
+						var used = {};
+						for (var i = 0; i < value.length; i++) {
+							var obj = value[i];
+							used[obj._id] = true;
+							if (obj) {
+								if (modePositionVisible && (obj.position != i || !obj.visible)) {
+									// Position / Visible mode
+									obj.position = i;
+									obj.visible = true;
+									changed = true;
+								} else if (modeIndex && obj.index != i) {
+									// Index mode
+									obj.index = i;
+									changed = true;
+								}
+							}
+						}
+						// Now make the unused items invisible:
+						for (var i = 0; i < options.length; i++) {
+							var obj = options[i];
+							var pos = value.length + i;
+							if (!used[obj._id]) {
+								if (modePositionVisible && (obj.position != pos || obj.visible)) {
+									// Position / Visible mode
+									obj.position = pos;
+									obj.visible = false;
+									changed = true;
+								} else if (modeIndex && obj.index != null) {
+									// Index mode: set index to null to hide item
+									obj.index = null;
+									changed = true;
+								}
+							}
+						}
 					}
 				}
 			}

@@ -12,7 +12,7 @@ Node.inject({
 			param.children ? {
 				type: 'multiselect', name: 'children',
 				label: param.children.label || 'Sub Pages',
-				ordered: Base.pick(param.children.ordered, true),
+				sortable: Base.pick(param.children.sortable, true),
 				showOptions: Base.pick(param.children.showOptions, true),
 				collection: this.all, value: this,
 				prototypes: Base.pick(param.children.prototypes, 'Node'),
@@ -23,7 +23,7 @@ Node.inject({
 			param.resources ? {
 				type: 'multiselect', name: 'resources',
 				label: param.resources.label || 'Resources',
-				ordered: Base.pick(param.resources.ordered, true),
+				sortable: Base.pick(param.resources.sortable, true),
 				showOptions: Base.pick(param.resources.showOptions, true),
 				collection: this.allResources, value: this.resources,
 				prototypes: Base.pick(param.resources.prototypes, 'Resource,Medium,Picture'),
