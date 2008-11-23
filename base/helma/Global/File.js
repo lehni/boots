@@ -702,13 +702,13 @@ File = Base.extend(new function() {
 		equals: function(object) {
 			var file = null;
 			if (object instanceof File) {
-	            file = file.file;
+	            file = object.file;
 	        } else if (object instanceof java.io.File) {
 	            file = object;
 	        } else if (object instanceof String) {
 	            file = new java.io.File(object);
 	        } 
-	        return file && file.equals(this);
+	        return file && file.equals(this.file);
 		},
 
 		getRelativePath: function(base) {
@@ -717,8 +717,7 @@ File = Base.extend(new function() {
 			var res = [];
 			do {
 				res.unshift(file.getName());
-				file = file.getParentFile();
-				User.log(file, base, file.equals(base));
+				file = file.getParent();
 			} while (file && !file.equals(base));
 			return res.join(File.separator);
 		},
