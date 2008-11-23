@@ -7,8 +7,8 @@ function main_action() {
 		});
 	} else { // Just the file
 		// Make sure it's a valid thumbnail id:
-		if (/[a-z0-9]{32}/.test(req.data.thumb)) {
-			var file = this.getThumbnailFile(req.data.thumb);
+		if (/[a-z0-9]{32}/.test(req.data.version)) {
+			var file = this.getVersionFile(req.data.version);
 			if (file.exists())
 				this.forwardFile(file);
 		}

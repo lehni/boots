@@ -99,8 +99,13 @@ Resource.inject({
 			this.extension = ext;
 			var file = this.getFile();
 			mimeObj.writeToFile(file.getParent(), file.getName());
-			if (this.version == null) this.version = 0;
-			else this.version++;
+			// Every time the file is changed, it can increase a verion field in the database.
+			// This can be used to force refresh of caches. 
+			// But only do this if the field is actually defined.
+			if (this.version !== undefined) {
+				if (this.version == null) this.version = 0;
+				else this.version++;
+			}
 			return true;
 		}
 		return false;
@@ -145,24 +150,19 @@ Resource.inject({
 		return this.base(param, out);
 	},
 
-	getThumbnailFile: function(id, extension) {
-		return new File(getProperty('resourceDir'), 'thumbnails/' + this._id +
-			(id != null ? '_' + id : '') + '.' + (extension || this.extension));
+	getVersionFile: function(versionId, extension) {
+		return new File(getProperty('resourceDir'), 'versions/' + this._id +
+			(versionId ? '_' + versionId : '') + '.' + (extension || this.extension));
 	},
 
-	removeThumbnailFiles: function() {
+	removeVersionFiles: function() {
 		if (this.extension) {
 			// Remove all thumbnails of this image through java.io.File filtering
-			var exp = new RegExp('^' + this._id + '[_.]');
-			var thumbs = new java.io.File(getProperty('resourceDir'), 'thumbnails').listFiles(new java.io.FilenameFilter() {
-				accept: function(dir, name) {
-					return exp.test(name);
-				}
-			});
-			if (thumbs != null) {
-				for (var i = 0, l = thumbs.length; i < l; ++i) {
+			var versions = new File(getProperty('resourceDir'), 'versions').listFiles(new RegExp('^' + this._id + '[_.]'));
+			if (versions) {
+				for (var i = 0, l = versions.length; i < l; ++i) {
 					User.log('Erasing ' + thumbs[i]);
-					thumbs[i]['delete'](); // File#delete
+					thumbs[i].remove();
 				}
 			}
 		}
@@ -171,7 +171,7 @@ Resource.inject({
 	removeResource: function() {
 		if (this.extension) {
 			this.getFile().remove();
-			this.removeThumbnailFiles();
+			this.removeVersionFiles();
 			this.extension = null;
 
 		}

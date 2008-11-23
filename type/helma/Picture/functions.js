@@ -37,12 +37,13 @@ Picture.inject({
 	},
 
 	processImage: function(param) {
-		// generate a unique id for the characteristics of this image:
-		var id = encodeMD5(param.maxWidth +  param.maxHeight + (param.tint || '') + (param.crop || ''));
-		var thumb = this.getThumbnailFile(id);
+		// Generate a unique id for the characteristics of this image:
+		var versionId = encodeMD5(param.maxWidth +  param.maxHeight + (param.tint || '') + (param.crop || ''));
+		var version = this.getVersionFile(versionId);
 		var width, height;
-		// we use on the fly generation of thumbnails. the file's existance is checked each time it's requested, and generated if needed
-		if (!thumb.exists()) {
+		// We use on the fly generation of image versions (e.g. thumbnails).
+		// The file's existance is checked each time it's requested, and generated if needed
+		if (!version.exists()) {
 			var file = this.getFile();
 			if (file.exists()) {
 				var maxWidth = param.maxWidth;
@@ -125,8 +126,8 @@ Picture.inject({
 					image = new Image(col);
 				}
 				if (image) {
-					// A new thumbnail image was produce, save it to a file now:
-					var quality = parseFloat(getProperty('thumbnailQuality'));
+					// A new image version was produced, save it to a file now:
+					var quality = parseFloat(getProperty('imageQuality'));
 					if (!quality) quality = 0.8;
 
 					var numColors = info.getNumColors();
@@ -134,19 +135,19 @@ Picture.inject({
 						// use the same amount of colors as the initial file:
 						image.reduceColors(numColors);
 					}
-					image.saveAs(thumb, quality);
+					image.saveAs(version, quality);
 				} else {
 					// No modifications were needed:
-					file.writeToFile(thumb);
+					file.writeToFile(version);
 				}
 			}
 		} else {
-			var info = Image.getInfo(thumb);
+			var info = Image.getInfo(version);
 			width = info.width;
 			height = info.height;
 		}
 		return {
-			src: this.getUri() + '?thumb=' + id,
+			src: this.getUri() + '?version=' + versionId,
 			width: width,
 			height: height
 		};
