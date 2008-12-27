@@ -1,19 +1,6 @@
 File = Base.extend(new function() {
 	var mimeTypes = null;
 
-	function listFiles(file, iter, method) {
-		if (iter) {
-			var regexp = Base.type(iter) == 'regexp';
-			return file[method](new java.io.FilenameFilter() {
-				accept: function(dir, name) {
-				 	return regexp && iter.test(name) || !regexp && iter(new File(dir), name);
-				}
-			});
-		} else {
-			return file[method]();
-		}
-	}
-
 	return {
 		_type: 'file',
 		_beans: true,
@@ -28,25 +15,23 @@ File = Base.extend(new function() {
 		 */
 		initialize: function(path, name) {
 			if (name !== undefined) {
-				this.file = new java.io.File(path, name);
+				this._file = new java.io.File(path, name);
 			} else if (path instanceof java.io.File) {
-				this.file = path;
+				this._file = path;
 			} else {
-				this.file = new java.io.File(path);
+				this._file = new java.io.File(path);
 			}
-			if (!this.file.isAbsolute()) {
+			if (!this._file.isAbsolute()) {
 				// Immediately convert to absolute path - java.io.File is
 				// incredibly stupid when dealing with relative file names
-				this.file = this.file.getAbsoluteFile();
+				this._file = this._file.getAbsoluteFile();
 			}
-			this.readerWriter = null;
-			this.isEof = false;
-			this.lastLine = null;
+			this._eof = false;
 		},
 
 		/** @ignore */
 		toString: function() {
-			return this.file.toString();
+			return this._file.toString();
 		},
 
 		/**
@@ -60,7 +45,7 @@ File = Base.extend(new function() {
 		 * @type String
 		 */
 		getName: function() {
-			return this.file.getName() || '';
+			return this._file.getName() || '';
 		},
 
 		/**
@@ -71,7 +56,7 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		isOpened: function() {
-			return !!this.readerWriter;
+			return !!(this._reader || this._writer);
 		},
 
 		/**
@@ -88,52 +73,40 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		open: function(options) {
-			if (this.isOpened()) {
-				throw new java.lang.IllegalStateException("File already open");
-			}
+			if (this.isOpened())
+				return false;
 			// We assume that the BufferedReader and PrintWriter creation
 			// cannot fail except if the FileReader/FileWriter fails.
 			// Otherwise we have an open file until the reader/writer
 			// get garbage collected.
 			var charset = options && options.charset;
 			var append = options && options.append;
-			if (this.file.exists() && !append) {
+			if (this._file.exists() && !append) {
 				if (charset) {
-					this.readerWriter = new java.io.BufferedReader(
-						new java.io.InputStreamReader(new java.io.FileInputStream(this.file), charset));
+					this._reader = new java.io.BufferedReader(
+						new java.io.InputStreamReader(
+							new java.io.FileInputStream(this._file), charset));
 				} else {
-					this.readerWriter = new java.io.BufferedReader(new java.io.FileReader(this.file));
+					this._reader = new java.io.BufferedReader(
+						new java.io.FileReader(this._file));
+				}
+			} else if (append) {
+				var stream = new java.io.FileFileOutputStream(this._file, true);
+				if (charset)  {
+					this._writer = new java.io.PrintWriter(
+						new java.io.OutputStreamWriter(stream, charset));
+				} else {
+					this._writer = new java.io.PrintWriter(
+						new java.io.OutputStreamWriter(stream));
 				}
 			} else {
-				if (append && charset)  {
-					this.readerWriter = new java.io.PrintWriter(
-						new java.io.OutputStreamWriter(new java.io.FileFileOutputStream(this.file, true), charset));
-				} else if (append) {
-					this.readerWriter = new java.io.PrintWriter(
-						new java.io.OutputStreamWriter(new java.io.FileFileOutputStream(this.file, true)));
-				} else if (charset) {
-					this.readerWriter = new java.io.PrintWriter(this.file, charset);
+				if (charset) {
+					this._writer = new java.io.PrintWriter(this._file, charset);
 				} else {
-					this.readerWriter = new java.io.PrintWriter(this.file);
+					this._writer = new java.io.PrintWriter(this._file);
 				}
 			}
 			return true;
-		},
-
-		createNewFile: function() {
-			return this.file.createNewFile();
-		},
-
-		/**
-		 * Create a new empty temporary file in the this directory, or in the directory
-		 * containing this file.
-		 * @param {String} prefix the prefix of the temporary file; must be at least three characters long
-		 * @param {String} suffix the suffix of the temporary file; may be null
-		 * @return {File} the temporary file 
-		 */
-		createTempFile: function(prefix, suffix) {
-			var dir = this.isDirectory() ? this.file : this.file.getParentFile();
-			return new File(java.io.File.createTempFile(prefix, suffix, dir));
 		},
 
 		/**
@@ -143,7 +116,7 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		exists: function() {
-			return this.file.exists();
+			return this._file.exists();
 		},
 
 		/**
@@ -153,9 +126,9 @@ File = Base.extend(new function() {
 		 * @type String
 		 */
 		getParent: function() {
-			if (!this.file.getParent())
+			if (!this._file.getParent())
 				return null;
-			return new File(this.file.getParent());
+			return new File(this._file.getParent());
 		},
 
 		/**
@@ -167,28 +140,20 @@ File = Base.extend(new function() {
 		 * @type String
 		 */
 		readln: function() {
-			if (!this.isOpened()) {
-				throw new java.lang.IllegalStateException("File not opened");
-			}
-			if (!(this.readerWriter instanceof java.io.BufferedReader)) {
-				throw new java.lang.IllegalStateException("File not opened for reading");
-			}
-			if (this.isEof) {
-				throw new java.io.EOFException();
-			}
-			var line;
-			if (this.lastLine != null) {
-				line = this.lastLine;
-				this.lastLine = null;
+			if (!this.isOpened())
+				return false;
+			if (this._reader && !this._eof) {
+				var line;
+				if (this._lastLine != null) {
+					line = this._lastLine;
+					this._lastLine = null;
+				} else {
+					line = this._reader.readLine();
+					this._eof = line == null;
+				}
 				return line;
 			}
-			// Here lastLine is null, return a new line
-			line = this.readerWriter.readLine();
-			if (line == null) {
-				this.isEof = true;
-				throw new java.io.EOFException();
-			}
-			return line;
+			return null;
 		},
 
 		/**
@@ -200,16 +165,12 @@ File = Base.extend(new function() {
 		 * @see #writeln
 		 */
 		write: function(what) {
-			if (!this.isOpened()) {
-				throw new java.lang.IllegalStateException("File not opened");
+			if (this.isOpened() && this._writer) {
+				if (what != null)
+					this._writer.print(what.toString());
+				return true;
 			}
-			if (!(this.readerWriter instanceof java.io.PrintWriter)) {
-				throw new java.lang.IllegalStateException("File not opened for writing");
-			}
-			if (what != null) {
-				this.readerWriter.print(what.toString());
-			}
-			return true;
+			return false;
 		},
 
 		/**
@@ -223,7 +184,7 @@ File = Base.extend(new function() {
 		 */
 		writeln: function(what) {
 			if (this.write(what)) {
-				this.readerWriter.println();
+				this._writer.println();
 				return true;
 			}
 			return false;
@@ -241,36 +202,7 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		isAbsolute: function() {
-			return this.file.isAbsolute();
-		},
-
-		/**
-		 * Deletes the file or directory represented by this File object.
-		 * 
-		 * @returns Boolean
-		 * @type Boolean
-		 */
-		remove: function() {
-			if (this.isOpened())
-				throw new java.lang.IllegalStateException("An openened file cannot be removed");
-			return this.file['delete']();
-		},
-
-		/**
-		 * List of all files within the directory represented by this File object.
-		 * <br /><br />
-		 * You may pass a RegExp Pattern to return just files matching this pattern.
-		 * <br /><br />
-		 * Example: var xmlFiles = dir.list(/.*\.xml/);
-		 * 
-		 * @param {RegExp} pattern as RegExp, optional pattern to test each file name against
-		 * @returns Array the list of file names
-		 * @type Array
-		 */
-		list: function(iter) {
-			if (this.isOpened() || !this.file.isDirectory())
-				return null;
-			return listFiles(this.file, iter, 'list');
+			return this._file.isAbsolute();
 		},
 
 		/**
@@ -280,17 +212,43 @@ File = Base.extend(new function() {
 		 * <br /><br />
 		 * Example: var xmlFiles = dir.list(/.*\.xml/);
 		 *
-		 * @param {RegExp} pattern as RegExp, optional pattern to test each file name against
 		 * @returns Array the list of File objects
 		 * @type Array
 		 */
-		listFiles: function(iter) {
-			if (this.isOpened() || !this.file.isDirectory())
-				return null;
-			var files = listFiles(this.file, iter, 'listFiles');
-			return files && files.map(function(file) {
-				return new File(file.path);
-			});
+		list: function(iter, recursive) {
+			var files = [];
+			if (!this.isOpened() && this._file.isDirectory()) {
+				var regexp = Base.type(iter) == 'regexp';
+				// Always use filter version, even if we're not filtering, so accept
+				// can produce the File objects directly
+				this._file.list(new java.io.FilenameFilter() {
+					accept: function(dir, name) {
+						var file = new File(dir, name);
+					 	if (!iter || regexp && iter.test(name) || !regexp && iter(file)) {
+							files.push(file);
+							if (recursive && file._file.isDirectory())
+								files = files.concat(file.list(iter, recursive));
+						}
+						// Always return false so we're not producing a java list as well
+						return false;
+					}
+				});
+			}
+			return files;
+		},
+
+		/**
+		 * Deletes the file or directory represented by this File object.
+		 * passing true for recursive deletes directory recursively.
+		 * 
+		 * @returns Boolean
+		 * @type Boolean
+		 */
+		remove: function(recursive) {
+			if (recursive && this._file.isDirectory())
+				for each (var file in this.listFiles())
+					file.remove(recursive);
+			return this._file['delete']();
 		},
 
 		/**
@@ -300,14 +258,11 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		flush: function() {
-			if (!this.isOpened())
-				throw new java.lang.IllegalStateException("File not opened");
-			if (this.readerWriter instanceof java.io.Writer) {
-				this.readerWriter.flush();
-			} else {
-				throw new java.lang.IllegalStateException("File not opened for write");
+			if (this.isOpened() && this._writer) {
+				this._writer.flush();
+				return true;
 			}
-			return true;
+			return false;
 		},
 
 		/**
@@ -317,14 +272,20 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		close: function() {
-			if (!this.isOpened()) {
-				return false;
+			if (this.isOpened()) {
+				if (this._reader) {
+					this._reader.close();
+					this._reader = null;
+				}
+				if (this._writer) {
+					this._writer.close();
+					this._writer = null;
+				}
+				this._eof = false;
+				this._lastLine = null;
+				return true;
 			}
-			this.readerWriter.close();
-			this.readerWriter = null;
-			this.isEof = false;
-			this.lastLine = null;
-			return true;
+			return false;
 		},
 
 		/**
@@ -337,7 +298,7 @@ File = Base.extend(new function() {
 		 * @type String
 		 */
 		getPath: function() {
-			return this.file.getPath() || '';
+			return this._file.getPath() || '';
 		},
 
 		/**
@@ -348,7 +309,7 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		canRead: function() {
-			return this.file.canRead();
+			return this._file.canRead();
 		},
 
 		/**
@@ -358,7 +319,7 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		canWrite: function() {
-			return this.file.canWrite();
+			return this._file.canWrite();
 		},
 
 		/**
@@ -380,7 +341,7 @@ File = Base.extend(new function() {
 		 * @type String
 		 */
 		getAbsolutePath: function() {
-			return this.file.getAbsolutePath() || '';
+			return this._file.getAbsolutePath() || '';
 		},
 
 		/**
@@ -394,7 +355,7 @@ File = Base.extend(new function() {
 		// Do not use getLength as a name, since this will produce the .length bean
 		// and make BootStrap think it's iterable as an array.
 		getSize: function() {
-			return this.file.length();
+			return this._file.length();
 		},
 
 		getSizeAsString: function() {
@@ -411,7 +372,7 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		isDirectory: function() {
-			return this.file.isDirectory();
+			return this._file.isDirectory();
 		},
 
 		/**
@@ -425,7 +386,7 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		isFile: function() {
-			return this.file.isFile();
+			return this._file.isFile();
 		},
 
 		/**
@@ -437,7 +398,7 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		isHidden: function() {
-			return this.file.isHidden();
+			return this._file.isHidden();
 		},
 
 		/**
@@ -451,11 +412,11 @@ File = Base.extend(new function() {
 		 * @type Number
 		 */
 		getLastModified: function() {
-			return this.file.lastModified();
+			return this._file.lastModified();
 		},
 
 		setLastModified: function(lastModified) {
-			this.file.setLastModified(lastModified);
+			this._file.setLastModified(lastModified);
 		},
 
 		/**
@@ -466,7 +427,7 @@ File = Base.extend(new function() {
 		 */
 		makeDirectory: function() {
 			// Don't do anything if file exists or use multi directory version
-			return !this.isOpened() && (this.file.isDirectory() || this.file.mkdirs());
+			return !this.isOpened() && (this._file.isDirectory() || this._file.mkdirs());
 		},
 
 		/**
@@ -481,14 +442,9 @@ File = Base.extend(new function() {
 		 * @returns true if the renaming succeeded; false otherwise
 		 * @type Boolean
 		 */
-		renameTo: function(toFile) {
-			if (!toFile)
-				throw new java.lang.IllegalArgumentException("Uninitialized target File object");
-			if (this.isOpened())
-				throw new java.lang.IllegalStateException("An openened file cannot be renamed");
-			if (toFile.isOpened())
-				throw new java.lang.IllegalStateException("You cannot rename to an openened file");
-			return this.file.renameTo(new java.io.File(toFile.getAbsolutePath()));
+		renameTo: function(to) {
+			return !this.isOpened() && !to.isOpened()
+				&& this._file.renameTo(new java.io.File(to.getAbsolutePath()));
 		},
 
 		/**
@@ -499,19 +455,25 @@ File = Base.extend(new function() {
 		 * @type Boolean
 		 */
 		isEof: function() {
-			if (!this.isOpened())
-				throw new java.lang.IllegalStateException("File not opened");
-			if (!(this.readerWriter instanceof java.io.BufferedReader))
-				throw new java.lang.IllegalStateException("File not opened for read");
-			if (this.isEof) {
-				return true;
-			} else if (this.lastLine != null) {
-				return false;
+			if (this.isOpened() && this._reader) {
+				if (this._eof) {
+					return true;
+				} else if (this._lastLine != null) {
+					return false;
+				}
+				this._lastLine = this._reader.readLine();
+				if (this._lastLine == null)
+					this._eof = true;
+				return this._eof;
 			}
-			this.lastLine = this.readerWriter.readLine();
-			if (this.lastLine == null)
-				this.isEof = true;
-			return this.isEof;
+			return true;
+		},
+
+		/**
+		 * Returns the internal java file object.
+		 */
+		getFile: function() {
+			return this._file;
 		},
 
 		/**
@@ -522,78 +484,23 @@ File = Base.extend(new function() {
 		 * @type String
 		 */
 		readAll: function() {
-			// Open the file for readAll
-			if (this.isOpened())
-				throw new java.lang.IllegalStateException("File already open");
-			if (this.file.exists()) {
-				this.readerWriter = new java.io.BufferedReader(new java.io.FileReader(this.file));
-			} else {
-				throw new java.lang.IllegalStateException("File does not exist");
-			}
-			if (!this.file.isFile())
-				throw new java.lang.IllegalStateException("File is not a regular file");
+			if (!this._file.isFile())
+				throw new Error("File does not exist or is not a regular file");
+			var reader = new java.io.BufferedReader(new java.io.FileReader(this._file));
 			// Read content line by line to setup proper eol
-			var buffer = new java.lang.StringBuffer(this.file.length() * 1.10);
+			var buffer = new java.lang.StringBuffer(this._file.length() * 1.1);
+			var lineBreak = java.lang.System.getProperty('line.separator');
 			while (true) {
-				var line = this.readerWriter.readLine();
+				var line = reader.readLine();
 				if (line == null)
 					break;
 				if (buffer.length() > 0)
-					buffer.append("\n");  // EcmaScript EOL
+					buffer.append(lineBreak);
 				buffer.append(line);
 			}
 			// Close the file
-			this.readerWriter.close();
-			this.readerWriter = null;
+			reader.close();
 			return buffer.toString();
-		},
-
-		/**
-		 * This method removes a directory recursively .
-		 * <br /><br />
-		 * DANGER! DANGER! HIGH VOLTAGE!
-		 * The directory is deleted recursively without 
-		 * any warning or precautious measures.
-		 */
-		removeDirectory: function() {
-			if (!this.file.isDirectory())
-				return false;
-			var files = this.file.list();
-			for (var i = 0; i < files.length; i++) {
-				var file = new File(this.file, files[i]);
-				if (file.isDirectory())
-					file.removeDirectory();
-				else
-					file.remove();
-			}
-			return this.remove();
-		},
-
-		/**
-		 * Recursivly lists all files below a given directory
-		 * you may pass a RegExp Pattern to return just
-		 * files matching this pattern.
-		 * 
-		 * @param {RegExp} pattern as RegExp, to test each file name against
-		 * @returns Array the list of absolute file paths
-		 */
-		listRecursive: function(pattern) {
-			if (!this.file.isDirectory())
-				return false;
-			var result;
-			if (!pattern || pattern.test(this.file.getName()))
-				result = [this.file.getAbsolutePath()];
-			else
-				result = [];
-			var arr = this.file.list();
-			for (var i=0; i<arr.length; i++) {
-				var f = new File(this.file, arr[i]);
-				if (f.isDirectory())
-					result = result.concat(f.listRecursive(pattern));
-				else if (!pattern || pattern.test(arr[i]))
-					result.push(f.getAbsolutePath());
-			}
-			return result;
 		},
 
 		/**
@@ -651,20 +558,18 @@ File = Base.extend(new function() {
 		 * Useful for passing it to a function instead of an request object.
 		 */
 		toByteArray: function() {
-			if (!this.exists())
-				return null;
-			var body = new java.io.ByteArrayOutputStream();
-			var stream = new java.io.BufferedInputStream(
-				new java.io.FileInputStream(this.getAbsolutePath())
-			);
-			var buf = java.lang.reflect.Array.newInstance(
-				java.lang.Byte.TYPE, 1024
-			);
-			var read;
-			while ((read = stream.read(buf)) > -1)
-				body.write(buf, 0, read);
-			stream.close();
-			return body.toByteArray();
+			if (this.exists()) {
+				var body = new java.io.ByteArrayOutputStream();
+				var stream = new java.io.BufferedInputStream(
+					new java.io.FileInputStream(this.getAbsolutePath()));
+				var buf = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 1024);
+				var read;
+				while ((read = stream.read(buf)) > -1)
+					body.write(buf, 0, read);
+				stream.close();
+				return body.toByteArray();
+			}
+			return null;
 		},
 
 		/**
@@ -675,7 +580,7 @@ File = Base.extend(new function() {
 		 *
 		 *	for each (var filename in dir) ...
 		 */
-		/* TODO:
+		/* TODO: add support for _iterator: to bootstrap?
 		__iterator__: function() {
 			if (this.isDirectory()) {
 				var files = this.list();
@@ -702,13 +607,13 @@ File = Base.extend(new function() {
 		equals: function(object) {
 			var file = null;
 			if (object instanceof File) {
-	            file = object.file;
+	            file = object._file;
 	        } else if (object instanceof java.io.File) {
 	            file = object;
 	        } else if (object instanceof String) {
 	            file = new java.io.File(object);
 	        } 
-	        return file && file.equals(this.file);
+	        return file && file.equals(this._file);
 		},
 
 		getRelativePath: function(base) {
@@ -730,18 +635,24 @@ File = Base.extend(new function() {
 			return File.getContentType(this.getExtension());
 		},
 
+		createNewFile: function() {
+			return this._file.createNewFile();
+		},
+
+		/**
+		 * Create a new empty temporary file in the this directory, or in the directory
+		 * containing this file.
+		 * @param {String} prefix the prefix of the temporary file; must be at least three characters long
+		 * @param {String} suffix the suffix of the temporary file; may be null
+		 * @return {File} the temporary file 
+		 */
+		createTempFile: function(prefix, suffix) {
+			return new File(java.io.File.createTempFile(prefix, suffix,
+				this.isDirectory() ? this._file : this._file.getParentFile()));
+		},
+
 		statics: {
 			separator: java.io.File.separator,
-
-			/**
-			 * Create a new empty temporary file in the default temporary-file directory.
-			 * @param {String} prefix the prefix of the temporary file; must be at least three characters long
-			 * @param {String} suffix the suffix of the temporary file; may be null
-			 * @return {File} the temporary file
-			 */
-			createTempFile: function(prefix, suffix) {
-				return new File(java.io.File.createTempFile(prefix, suffix));
-			},
 
 			getExtension: function(name) {
 				var pos = name.lastIndexOf('.');
@@ -756,7 +667,7 @@ File = Base.extend(new function() {
 					var reader = new java.io.BufferedReader(
 						new java.io.InputStreamReader(resource.getInputStream())
 					);
-					// parse mime.types: 
+					// Parse mime.types: 
 					mimeTypes = {};
 					var line;
 					while ((line = reader.readLine()) != null) {
@@ -774,6 +685,16 @@ File = Base.extend(new function() {
 
 			getContentType: function(extension) {
 				return File.getMimeTypes()[extension] || 'application/octetstream';
+			},
+	
+			/**
+			 * Create a new empty temporary file in the default temporary-file directory.
+			 * @param {String} prefix the prefix of the temporary file; must be at least three characters long
+			 * @param {String} suffix the suffix of the temporary file; may be null
+			 * @return {File} the temporary file
+			 */
+			createTempFile: function(prefix, suffix) {
+				return new File(java.io.File.createTempFile(prefix, suffix));
 			}
 		}
 	}
