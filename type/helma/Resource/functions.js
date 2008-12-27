@@ -158,12 +158,10 @@ Resource.inject({
 	removeVersionFiles: function() {
 		if (this.extension) {
 			// Remove all thumbnails of this image through java.io.File filtering
-			var versions = new File(getProperty('resourceDir'), 'versions').listFiles(new RegExp('^' + this._id + '[_.]'));
-			if (versions) {
-				for (var i = 0, l = versions.length; i < l; ++i) {
-					User.log('Erasing ' + thumbs[i]);
-					thumbs[i].remove();
-				}
+			var versions = new File(getProperty('resourceDir'), 'versions').list(new RegExp('^' + this._id + '[_.]'));
+			for each (file in versions) {
+				User.log('Erasing ' + file);
+				file.remove();
 			}
 		}
 	},
