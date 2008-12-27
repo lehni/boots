@@ -93,8 +93,6 @@ MarkupTag = Base.extend(new function() {
 
 			create: function(name, args, parent) {
 				// Render any undefined tag through the UndefinedTag.
-				// Any app can override its behavior simply by defining a new tag
-				// that defines _tags: 'undefined'.
 				var proto = tags[name] || tags['undefined'];
 				// Instead of using the empty tag initializers that are a bit
 				// slow through bootstrap's #initalize support, produce a pure
@@ -123,6 +121,7 @@ RootTag = MarkupTag.extend({
 });
 
 // Special tag to render undefined tag names unmodified.
+// UndefinedTag#render can be overridden and is handling the rendering of all the undefined tags.
 UndefinedTag = MarkupTag.extend({
 	_tags: 'undefined',
 
