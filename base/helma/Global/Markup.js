@@ -47,7 +47,9 @@ Markup = {
 						if (openTag) {
 							// Activate top tag (the one before the current one)
 						 	tag = tags[tags.length - 1];
-							tag.buffer.push(openTag.parse(openTag.buffer.join(''), param, encoder));
+							// Concat buffered parts into content string
+							openTag.content = openTag.buffer.join('');
+							tag.buffer.push(openTag.render(param, encoder));
 							// If the object defines the cleanUp function, 
 							// collect it now:
 							if (openTag && openTag.cleanUp)
@@ -71,7 +73,7 @@ MarkupTag = Base.extend(new function() {
 	var tags = new Hash();
 
 	return {
-		parse: function(content, param, encoder) {
+		render: function(param, encoder) {
 			// Define in subclasses
 		},
 
@@ -115,7 +117,7 @@ MarkupTag = Base.extend(new function() {
 });
 
 // The root tag, to contain the main buffer for rendering. This is used
-// in Markup.parse and does not need to define any parse functionality.
+// in Markup.parse and does not need to define any render functionality.
 RootTag = MarkupTag.extend({
 	_tags: 'root'
 });
@@ -124,17 +126,18 @@ RootTag = MarkupTag.extend({
 UndefinedTag = MarkupTag.extend({
 	_tags: 'undefined',
 
-	parse: function(content, param, encoder) {
+	render: function(param, encoder) {
 		return encoder('<' + this.name + (this.arguments ? ' ' + this.arguments.join(' ') : '') + '>')
-			+ content + encoder('</' + this.name + '>');
+			+ this.content + encoder('</' + this.name + '>');
 	}
 });
 
 NodeTag = MarkupTag.extend({
 	_tags: 'node',
 
-	parse: function(content) {
+	render: function() {
 		var id = this.arguments[0];
+		var content = this.content;
 		if (!id) {
 			id = content;
 			content = null;
@@ -148,8 +151,8 @@ NodeTag = MarkupTag.extend({
 CodeTag = MarkupTag.extend({
 	_tags: 'code',
 
-	parse: function(content) {
-		return '<pre><code>' + content.replaceAll('<br />', '') + '</code></pre>';
+	render: function() {
+		return '<pre><code>' + this.content.replaceAll('<br />', '') + '</code></pre>';
 	}
 });
 
@@ -185,14 +188,14 @@ ResourceTag = MarkupTag.extend({
 		delete param.resourceLookup;
 	},
 
-	// Defined outside parse() so it can be overridden by applications.
+	// Defined outside render() so it can be overridden by applications.
 	renderIcon: function(resource, param) {
 		// TODO: pass param, and define small as smallIcon or iconSmall ?
 		return resource.renderIcon({ small: true });
 	},
 
-	parse: function(content, param) {
-		var resource = this.getResource(content, param);
+	render: function(param) {
+		var resource = this.getResource(this.content, param);
 		if (resource)
 			return this.renderIcon(resource, param);
 	}
@@ -201,18 +204,18 @@ ResourceTag = MarkupTag.extend({
 ImageTag = ResourceTag.extend({
 	_tags: 'img',
 
-	// Defined outside parse() so it can be overridden by applications.
+	// Defined outside render() so it can be overridden by applications.
 	renderImage: function(picture, param) {
 		return picture.renderImage(param);
 	},
 
-	parse: function(content, param) {
-		if (!/^http/.test(content)) {
-			var resource = this.getResource(content, param);
+	render: function(param) {
+		if (!/^http/.test(this.content)) {
+			var resource = this.getResource(this.content, param);
 			if (resource && resource instanceof Picture)
 				return this.renderImage(resource, param);
 		} else {
-			return '<img src="' + content + '"/>';
+			return '<img src="' + this.content + '"/>';
 		}
 	}
 });
@@ -220,32 +223,32 @@ ImageTag = ResourceTag.extend({
 HtmlTag = MarkupTag.extend({
 	_tags: 'i,b,strong,s,strike',
 
-	parse: function(content) {
+	render: function() {
 		return '<' + this.name +
 			(this.arguments ? ' ' + this.arguments.join(' ') : '') +
-			(content != null ? '>' + content + '</' + this.name + '>' : '>');
+			(this.content != null ? '>' + this.content + '</' + this.name + '>' : '>');
 	}
 });
 
 BoldTag = MarkupTag.extend({
 	_tags: 'bold',
 
-	parse: function(content) {
-		return '<b>' + content + '</b>';
+	render: function() {
+		return '<b>' + this.content + '</b>';
 	}
 });
 
 UrlTag = MarkupTag.extend({
 	_tags: 'url',
 
-	parse: function(content, param) {
+	render: function(param) {
 		var url, title;
 		if (this.arguments && this.arguments[0]) {
 			url = this.arguments[0];
-			title = content;
+			title = this.content;
 		} else {
-			url = content;
-			title = content;
+			url = this.content;
+			title = this.content;
 		}
 		if (!title)
 			title = url;
@@ -269,21 +272,21 @@ UrlTag = MarkupTag.extend({
 QuoteTag = MarkupTag.extend({
 	_tags: 'quote',
 
-	parse: function(content) {
+	render: function() {
 		var title;
 		if (this.arguments[0]) {
 			title = this.arguments[0] + ' wrote:';
 		} else {
 			title = 'Quote:';
 		}
-		return '<div class="quote-title">' + title + '</div><div class="quote">' + content + '</div>';
+		return '<div class="quote-title">' + title + '</div><div class="quote">' + this.content + '</div>';
 	}
 });
 
 ListTag = MarkupTag.extend({
 	_tags: 'list',
 
-	parse: function(content) {
-		return '<ul>' + content + '</ul>';
+	render: function() {
+		return '<ul>' + this.content + '</ul>';
 	}
 });
