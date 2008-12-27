@@ -6,13 +6,16 @@ Markup = {
 			// Determine encoder to be used, default is not encoding anything:
 			var encoder = param.encoding && global['encode' + param.encoding.capitalize()]
 				|| function(val) { return val };
-			// Structure for nested tags, each having its own buffer for rendered output
-			var buffer = [], tag = { buffer: buffer };
-			var tags = [tag];
+			// Create the root tag that only contains all the others' outputs in its buffer
+			var rootTag = MarkupTag.create('root');
+			// Stack for nested tags, each having its own buffer for rendered output
+			var tags = [rootTag];
 			// Keep tag objects that need to clean up something in the end. This is
 			// only used for resource rendering in Scriptographer right now. 
 			var cleanUps = {};
 			var start = 0, end = 0;
+			// Current tag:
+			var tag = rootTag;
 			while (start != -1) { 
 				start = text.indexOf('<', end);
 				if (start > end)
@@ -28,7 +31,9 @@ Markup = {
 					if (open) {
 						// Opening tag
 						var parts = text.substring(start + 1, end - 1).split(/\s+/);
-						tag = { name: parts.shift(), args: parts, buffer: [] };
+						// Pass current tag as parent, so parse methods can know
+						// about their context 
+						tag = MarkupTag.create(parts.shift(), parts, tag);
 						tags.push(tag);
 					} else {
 						// Closing tag
@@ -40,25 +45,20 @@ Markup = {
 							openTag = tags.length > 1 && tags.pop();
 						} while (openTag && openTag.name != name);
 						if (openTag) {
-							// Activate top tag
+							// Activate top tag (the one before the current one)
 						 	tag = tags[tags.length - 1];
-							var args = openTag.args, content = openTag.buffer.join('');
-							var tagObj = MarkupTag.get(name);
-							tag.buffer.push(tagObj
-								? tagObj.parse(name, args, content, param, encoder) || ''
-								: encoder('<' + name + (args ? ' ' + args.join(' ') : '') + '>')
-									+ content + encoder('</' + name + '>'));
+							tag.buffer.push(openTag.parse(openTag.buffer.join(''), param, encoder));
 							// If the object defines the cleanUp function, 
 							// collect it now:
-							if (tagObj && tagObj.cleanUp)
-								cleanUps[name] = tagObj;
+							if (openTag && openTag.cleanUp)
+								cleanUps[name] = openTag;
 						}
 					}
 				}
 			}
 			if (end > start)
-				buffer.push(encoder(text.substring(end)));
-			text = buffer.join('');
+				rootTag.buffer.push(encoder(text.substring(end)));
+			text = rootTag.buffer.join('');
 			// See if we need to do some clean up now:
 			for (var name in cleanUps)
 				cleanUps[name].cleanUp(name, param);
@@ -71,7 +71,7 @@ MarkupTag = Base.extend(new function() {
 	var tags = new Hash();
 
 	return {
-		parse: function(name, args, content, param, encoder) {
+		parse: function(content, param, encoder) {
 			// Define in subclasses
 		},
 
@@ -84,23 +84,57 @@ MarkupTag = Base.extend(new function() {
 		statics: {
 			extend: function(src) {
 				return src._tags.split(',').each(function(tag) {
-					// create a new instance of this prototype and put it in tags
-					tags[tag] = new this();
+					// Store a reference to this prototype in prototypes
+					tags[tag] = this.prototype;
 				}, this.base(src));
 			},
 
-			get: function(name) {
-				return tags[name];
+			create: function(name, args, parent) {
+				// Render any undefined tag through the UndefinedTag.
+				// Any app can override its behavior simply by defining a new tag
+				// that defines _tags: 'undefined'.
+				var proto = tags[name] || tags['undefined'];
+				// Instead of using the empty tag initializers that are a bit
+				// slow through bootstrap's #initalize support, produce a pure
+				// js object and then set its __proto__ field on Rhino,
+				// to speed things up.
+				// This hack works on Rhino but not on every browser.
+				// On Browsers, you would do this instead:
+				// var tag = new proto();
+				var tag = {};
+				tag.__proto__ = proto;
+				// This part stays the same:
+				tag.name = name;
+				tag.arguments = args;
+				tag.parent = parent;
+				tag.buffer = [];
+				return tag;
 			}
 		}
+	}
+});
+
+// The root tag, to contain the main buffer for rendering. This is used
+// in Markup.parse and does not need to define any parse functionality.
+RootTag = MarkupTag.extend({
+	_tags: 'root'
+});
+
+// Special tag to render undefined tag names unmodified.
+UndefinedTag = MarkupTag.extend({
+	_tags: 'undefined',
+
+	parse: function(content, param, encoder) {
+		return encoder('<' + this.name + (this.arguments ? ' ' + this.arguments.join(' ') : '') + '>')
+			+ content + encoder('</' + this.name + '>');
 	}
 });
 
 NodeTag = MarkupTag.extend({
 	_tags: 'node',
 
-	parse: function(name, args, content) {
-		var id = args[0];
+	parse: function(content) {
+		var id = this.arguments[0];
 		if (!id) {
 			id = content;
 			content = null;
@@ -114,7 +148,7 @@ NodeTag = MarkupTag.extend({
 CodeTag = MarkupTag.extend({
 	_tags: 'code',
 
-	parse: function(name, args, content) {
+	parse: function(content) {
 		return '<pre><code>' + content.replaceAll('<br />', '') + '</code></pre>';
 	}
 });
@@ -157,7 +191,7 @@ ResourceTag = MarkupTag.extend({
 		return resource.renderIcon({ small: true });
 	},
 
-	parse: function(name, args, content, param) {
+	parse: function(content, param) {
 		var resource = this.getResource(content, param);
 		if (resource)
 			return this.renderIcon(resource, param);
@@ -172,7 +206,7 @@ ImageTag = ResourceTag.extend({
 		return picture.renderImage(param);
 	},
 
-	parse: function(name, args, content, param) {
+	parse: function(content, param) {
 		if (!/^http/.test(content)) {
 			var resource = this.getResource(content, param);
 			if (resource && resource instanceof Picture)
@@ -186,17 +220,17 @@ ImageTag = ResourceTag.extend({
 HtmlTag = MarkupTag.extend({
 	_tags: 'i,b,strong,s,strike',
 
-	parse: function(name, args, content) {
-		return '<' + name +
-			(args ? ' ' + args.join(' ') : '') +
-			(content != null ? '>' + content + '</' + name + '>' : '>');
+	parse: function(content) {
+		return '<' + this.name +
+			(this.arguments ? ' ' + this.arguments.join(' ') : '') +
+			(content != null ? '>' + content + '</' + this.name + '>' : '>');
 	}
 });
 
 BoldTag = MarkupTag.extend({
 	_tags: 'bold',
 
-	parse: function(name, args, content) {
+	parse: function(content) {
 		return '<b>' + content + '</b>';
 	}
 });
@@ -204,10 +238,10 @@ BoldTag = MarkupTag.extend({
 UrlTag = MarkupTag.extend({
 	_tags: 'url',
 
-	parse: function(name, args, content, param) {
+	parse: function(content, param) {
 		var url, title;
-		if (args && args[0]) {
-			url = args[0];
+		if (this.arguments && this.arguments[0]) {
+			url = this.arguments[0];
 			title = content;
 		} else {
 			url = content;
@@ -235,10 +269,10 @@ UrlTag = MarkupTag.extend({
 QuoteTag = MarkupTag.extend({
 	_tags: 'quote',
 
-	parse: function(name, args, content) {
+	parse: function(content) {
 		var title;
-		if (args[0]) {
-			title = args[0] + ' wrote:';
+		if (this.arguments[0]) {
+			title = this.arguments[0] + ' wrote:';
 		} else {
 			title = 'Quote:';
 		}
@@ -249,7 +283,7 @@ QuoteTag = MarkupTag.extend({
 ListTag = MarkupTag.extend({
 	_tags: 'list',
 
-	parse: function(name, args, content) {
+	parse: function(content) {
 		return '<ul>' + content + '</ul>';
 	}
 });
