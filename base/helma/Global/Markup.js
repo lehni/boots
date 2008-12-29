@@ -30,10 +30,9 @@ Markup = {
 					var open = text.charAt(start + 1) != '/';
 					if (open) {
 						// Opening tag
-						var parts = text.substring(start + 1, end - 1).split(/\s+/);
 						// Pass current tag as parent, so parse methods can know
 						// about their context 
-						tag = MarkupTag.create(parts.shift(), parts, tag);
+						tag = MarkupTag.create(text.substring(start + 1, end - 1), tag);
 						tags.push(tag);
 					} else {
 						// Closing tag
@@ -63,14 +62,70 @@ Markup = {
 			text = rootTag.buffer.join('');
 			// See if we need to do some clean up now:
 			for (var name in cleanUps)
-				cleanUps[name].cleanUp(name, param);
+				cleanUps[name].cleanUp(param);
 		}
 		return text;
 	}
 };
 
 MarkupTag = Base.extend(new function() {
-	var tags = new Hash();
+	// Private function to parse tag definitions (everything wihtout the trailing '<' & '>')
+	// This is used both when creating a tag object from a tag string and when parsing
+	// _attributes definitions, in which case collectAttributes is set to true
+	// and the method collects different information, see bellow.
+	function parseDefinition(str, collectAttributes) {
+		var name = null, list = [], attribute = null, attributes = {};
+		for (var match; match = /(\w+)=|("(?:[^"\\]*(?:\\"|\\)?)*")|(\S+)/g.exec(str);) {
+			if (match[1]) { // attribute name
+				attribute = match[1];
+			} else { // string or value
+				// Eval strings (match[2]) here is safe, due to regex above it is always a string
+				var value = match[2] ? eval(match[2]) : match[3];
+				if (collectAttributes) {
+					// When collecting _attributes, use list array to store them
+					if (!attribute) // attribute with no default value
+						list.push({ name: value });
+					else
+						list.push({ name: attribute, defaultValue: value });
+				} else {
+					// Normal tag parsing:
+					// Find tag name, and store attributes (named) and arguments (unnamed)
+					if (!name) { // The first value is the tag name
+						name = value;
+					} else if (attribute) { // named attribute
+						attributes[attribute] = value;
+					} else { // unnamed argument
+						list.push(value);
+					}
+				}
+				// Reset attribute name again
+				attribute = null;
+			}
+		}
+		if (collectAttributes) {
+			// Scan backwards to see wether further attributes define defaults.
+			// This is needed to stop looping through attributes early once
+			// no more defaults are available and unnamed arguments are used up.
+			// See MarkupTag#create
+			var defaultsFollow = false;
+			for (var i = list.length - 1; i >= 0; i--) {
+				list[i].defaultsFollow = defaultsFollow;
+				defaultsFollow = defaultsFollow || list[i].defaultValue !== undefined;
+			}
+			return list;
+		} else {
+			// Normal tag parsing.
+			// Return name, unnamed arguments and named attributes for further
+			// scanning in MarkupTag.create, if the tag defines _attributes.
+			return {
+				name: name,
+				arguments: list,
+				attributes: attributes
+			};
+		}
+	}
+
+	var tags = {};
 
 	return {
 		render: function(param, encoder) {
@@ -78,35 +133,72 @@ MarkupTag = Base.extend(new function() {
 		},
 
 		/*
-		cleanUp: function(name, param) {
+		cleanUp: function(param) {
 			// Define only if tag needs to clean up something in param
 		}
 		*/
 
 		statics: {
 			extend: function(src) {
+				// Parse _attributes definition through the same tag parsing mechanism
+				// parseDefinition contains special logic to produce an info object
+				// for attribute / argument parsing further down in MarkupTag.create
+				var attributes = src._attributes && parseDefinition(src._attributes, true);
 				return src._tags.split(',').each(function(tag) {
-					// Store a reference to this prototype in prototypes
-					tags[tag] = this.prototype;
+					// Store attributes information and a reference to prototype in tags
+					tags[tag] = {
+						attributes: attributes,
+						proto: this.prototype
+					};
 				}, this.base(src));
 			},
 
-			create: function(name, args, parent) {
+			create: function(definition, parent) {
+				// Parse tag definition for attributes (named) and arguments (unnamed).
+				var def = parseDefinition(definition);
 				// Render any undefined tag through the UndefinedTag.
-				var proto = tags[name] || tags['undefined'];
+				var obj = tags[def.name] || tags['undefined'];
+				if (obj.attributes) {
+					// If _attributes were defined, use the info object produced
+					// by parseDefinition in MarkupTag.extend now to scan through
+					// defined named attributes and unnamed arguments,
+					// and use default values if available.
+					var index = 0;
+					for (var i = 0, l = obj.attributes.length; i < l; i++) {
+						var attrib = obj.attributes[i];
+						// If the tag does not define this predefined attribute,
+						// either take its value from the unnamed arguments,
+						// and increase index, or use its default value.
+						if (def.attributes[attrib.name] === undefined) {
+							def.attributes[attrib.name] = index < def.arguments.length
+								? def.arguments[index++]
+								: attrib.defaultValue; // Use default value if running out of unnamed args
+						}
+						// If the _attributes definition does not contain any more defaults
+						// and we are running out of unnamed arguments, we might as well
+						// drop out of the loop since there won't be anything to be done.
+						if (!attrib.defaultsFollow && index >= def.arguments.length)
+							break;
+					}
+					// Cut away consumed unnamed arguments
+					if (index > 0)
+						def.arguments.splice(0, index);
+				}
 				// Instead of using the empty tag initializers that are a bit
 				// slow through bootstrap's #initalize support, produce a pure
 				// js object and then set its __proto__ field on Rhino,
 				// to speed things up.
 				// This hack works on Rhino but not on every browser.
 				// On Browsers, you would do this instead:
-				// var tag = new proto();
+				// var tag = new obj.proto();
 				var tag = {};
-				tag.__proto__ = proto;
+				tag.__proto__ = obj.proto;
 				// This part stays the same:
-				tag.name = name;
-				tag.arguments = args;
+				tag.name = def.name;
+				tag.attributes = def.attributes;
+				tag.arguments = def.arguments;
 				tag.parent = parent;
+				tag.definition = definition;
 				tag.buffer = [];
 				return tag;
 			}
@@ -126,16 +218,16 @@ UndefinedTag = MarkupTag.extend({
 	_tags: 'undefined',
 
 	render: function(param, encoder) {
-		return encoder('<' + this.name + (this.arguments ? ' ' + this.arguments.join(' ') : '') + '>')
-			+ this.content + encoder('</' + this.name + '>');
+		return encoder('<' + this.definition + '>')	+ this.content + encoder('</' + this.name + '>');
 	}
 });
 
 NodeTag = MarkupTag.extend({
 	_tags: 'node',
+	_attributes: 'id',
 
 	render: function() {
-		var id = this.arguments[0];
+		var id = this.attributes.id;
 		var content = this.content;
 		if (!id) {
 			id = content;
@@ -177,7 +269,7 @@ ResourceTag = MarkupTag.extend({
 		}
 	},
 
-	cleanUp: function(name, param) {
+	cleanUp: function(param) {
 		if (param.removeUsedResources && param.resources) {
 			// Remove the resources that have been flaged 'used'
 			for (var i = param.resources.length - 1; i >= 0; i--)
@@ -223,9 +315,9 @@ HtmlTag = MarkupTag.extend({
 	_tags: 'i,b,strong,s,strike',
 
 	render: function() {
-		return '<' + this.name +
-			(this.arguments ? ' ' + this.arguments.join(' ') : '') +
-			(this.content != null ? '>' + this.content + '</' + this.name + '>' : '>');
+		return '<' + this.definition + (this.content != null 
+				? '>' + this.content + '</' + this.name + '>' 
+				: '>');
 	}
 });
 
@@ -239,18 +331,11 @@ BoldTag = MarkupTag.extend({
 
 UrlTag = MarkupTag.extend({
 	_tags: 'url',
+	_attributes: 'url',
 
 	render: function(param) {
-		var url, title;
-		if (this.arguments && this.arguments[0]) {
-			url = this.arguments[0];
-			title = this.content;
-		} else {
-			url = this.content;
-			title = this.content;
-		}
-		if (!title)
-			title = url;
+		var url = this.attributes.url || this.content;
+		var title = this.content || url;
 		var str = '<a href="';
 		var isLocal = /^\//.test(url);
 		// allways write domain part of url for simple rendering (e.g. in rss feeds)
@@ -270,15 +355,13 @@ UrlTag = MarkupTag.extend({
 
 QuoteTag = MarkupTag.extend({
 	_tags: 'quote',
+	_attributes: 'name',
 
 	render: function() {
-		var title;
-		if (this.arguments[0]) {
-			title = this.arguments[0] + ' wrote:';
-		} else {
-			title = 'Quote:';
-		}
-		return '<div class="quote-title">' + title + '</div><div class="quote">' + this.content + '</div>';
+		return '<div class="quote-title">' + (this.attributes.name
+			? this.attributes.name + ' wrote:'
+			: 'Quote:')
+			+ '</div><div class="quote">' + this.content + '</div>';
 	}
 });
 
