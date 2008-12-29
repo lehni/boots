@@ -223,9 +223,9 @@ File = Base.extend(new function() {
 				// can produce the File objects directly
 				this._file.list(new java.io.FilenameFilter() {
 					accept: function(dir, name) {
-						var file = new File(dir, name);
-					 	if (!iter || regexp && iter.test(name) || !regexp && iter(file)) {
-							files.push(file);
+						var file = null;
+					 	if (!iter || regexp && iter.test(name) || !regexp && iter(file = new File(dir, name))) {
+							files.push(file || (file = new File(dir, name)));
 							if (recursive && file._file.isDirectory())
 								files = files.concat(file.list(iter, recursive));
 						}
