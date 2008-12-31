@@ -1,70 +1,53 @@
 Markup = {
-	parse: function(text, param) {
+	parse: function(text) {
 		if (text) {
-			if (!param)
-				param = {};
-			// Determine encoder to be used, default is not encoding anything:
-			var encoder = param.encoding && global['encode' + param.encoding.capitalize()]
-				|| function(val) { return val };
-			// Create the root tag that only contains all the others' outputs in its buffer
+			var t = new Date();
+			// Create the root tag as a container for all the other bits
 			var rootTag = MarkupTag.create('root');
-			// Stack for nested tags, each having its own buffer for rendered output
-			var tags = [rootTag];
-			// Keep tag objects that need to clean up something in the end. This is
-			// only used for resource rendering in Scriptographer right now. 
-			var cleanUps = {};
 			var start = 0, end = 0;
 			// Current tag:
 			var tag = rootTag;
 			while (start != -1) { 
 				start = text.indexOf('<', end);
 				if (start > end)
-					tag.buffer.push(encoder(text.substring(end, start)));
+					tag.parts.push(text.substring(end, start));
 				if (start >= 0) {
 					end = text.indexOf('>', start) + 1;
 					if (end <= start) {
 						// Non-closed tag:
-						tag.buffer.push(encoder(text.substring(start)));
+						tag.parts.push(text.substring(start));
 						break;
 					}
 					var open = text.charAt(start + 1) != '/';
 					if (open) {
 						// Opening tag
-						// Pass current tag as parent, so parse methods can know
-						// about their context 
+						// Pass current tag as parent
 						tag = MarkupTag.create(text.substring(start + 1, end - 1), tag);
-						tags.push(tag);
 					} else {
 						// Closing tag
-						var name = text.substring(start + 2, end - 1), openTag;
-						// Pop tags from stack until we find the fitting tag
-						do {
-							// Make sure we keep the last tag on the stack, since
-							// it contains the root buffer
-							openTag = tags.length > 1 && tags.pop();
-						} while (openTag && openTag.name != name);
-						if (openTag) {
-							// Activate top tag (the one before the current one)
-						 	tag = tags[tags.length - 1];
-							// Concat buffered parts into content string
-							openTag.content = openTag.buffer.join('');
-							tag.buffer.push(openTag.render(param, encoder));
-							// If the object defines the cleanUp function, 
-							// collect it now:
-							if (openTag && openTag.cleanUp)
-								cleanUps[name] = openTag;
+						var name = text.substring(start + 2, end - 1), openTag = tag;
+						// Walk up hierarchy until we find closing tag:
+						while(openTag && openTag.name != name)
+							openTag = openTag.parent;
+						if (openTag && openTag != rootTag) {
+							// Activate parent tag
+						 	tag = openTag.parent;
+							tag.parts.push(openTag);
 						}
 					}
 				}
 			}
 			if (end > start)
-				rootTag.buffer.push(encoder(text.substring(end)));
-			text = rootTag.buffer.join('');
-			// See if we need to do some clean up now:
-			for (var name in cleanUps)
-				cleanUps[name].cleanUp(param);
+				rootTag.parts.push(text.substring(end));
+			app.log("TIME " + (new Date() - t));
+			return rootTag;
 		}
-		return text;
+		return null;
+	},
+
+	render: function(text, param) {
+		var tag = Markup.parse(text);
+		return tag && tag.render(param) || '';
 	}
 };
 
@@ -128,15 +111,41 @@ MarkupTag = Base.extend(new function() {
 	var tags = {};
 
 	return {
-		render: function(param, encoder) {
+		render: function(content, param, encoder) {
 			// Define in subclasses
 		},
 
 		/*
 		cleanUp: function(param) {
 			// Define only if tag needs to clean up something in param
+			// This is only called once per used tag type, not for each tag!
 		}
 		*/
+
+		renderChildren: function(param, encoder, cleanUps) {
+			var buffer = new Array(this.parts.length);
+			for (var i = 0, l = this.parts.length; i < l; i++) {
+				var part = this.parts[i];
+				if (part.render) {
+					// This is a tag, render its children first into one content string
+					var content = part.renderChildren(param, encoder, cleanUps);
+					// Now render the tag itself and place it in the resulting buffer
+					buffer[i] = part.render(content, param, encoder)
+					// If the object defines the cleanUp function, 
+					// collect it now:
+					if (part.cleanUp)
+						cleanUps[part.name] = part;
+				} else {
+					// A simple string. Just encode it
+					buffer[i] = encoder(this.parts[i]);
+				}
+			}
+			return buffer.join('');
+		},
+
+		toString: function() {
+			return '<' + this.definition + '>';
+		},
 
 		statics: {
 			extend: function(src) {
@@ -155,7 +164,7 @@ MarkupTag = Base.extend(new function() {
 
 			create: function(definition, parent) {
 				// Parse tag definition for attributes (named) and arguments (unnamed).
-				var def = parseDefinition(definition);
+				var def = definition == 'root' ? { name: 'root' } : parseDefinition(definition);
 				// Render any undefined tag through the UndefinedTag.
 				var obj = tags[def.name] || tags['undefined'];
 				if (obj.attributes) {
@@ -199,17 +208,45 @@ MarkupTag = Base.extend(new function() {
 				tag.arguments = def.arguments;
 				tag.parent = parent;
 				tag.definition = definition;
-				tag.buffer = [];
+				tag.parts = [];
+				// Setup children list, and previous / next references
+				tag.children = [];
+				if (parent) {
+					var siblings = parent.children;
+					tag.previous = siblings[siblings.length - 1];
+					if (tag.previous)
+						tag.previous.next = tag;
+					siblings.push(tag);
+				}
 				return tag;
 			}
 		}
 	}
 });
 
-// The root tag, to contain the main buffer for rendering. This is used
-// in Markup.parse and does not need to define any render functionality.
+// The RootTag is there to contain all other markup tags and content parts and 
+// is produced internally in and returned by Markup.parse. Call render on it
+// to render the parsed Markup tree.
 RootTag = MarkupTag.extend({
-	_tags: 'root'
+	_tags: 'root',
+
+	// The RootTag's render function is different as it is used to render the whole tree
+	// and does not receive content or encoder as parameters.
+	render: function(param) {
+		if (!param)
+			param = {};
+		// Determine encoder to be used, default is not encoding anything:
+		var encoder = param.encoding && global['encode' + param.encoding.capitalize()]
+			|| function(val) { return val };
+		// Keep tag objects that need to clean up something in the end. This is
+		// only used for resource rendering in Scriptographer right now. 
+		var cleanUps = {};
+		var str = this.renderChildren(param, encoder, cleanUps);
+		// See if we need to do some clean up now:
+		for (var name in cleanUps)
+			cleanUps[name].cleanUp(param);
+		return str;
+	}
 });
 
 // Special tag to render undefined tag names unmodified.
@@ -217,8 +254,8 @@ RootTag = MarkupTag.extend({
 UndefinedTag = MarkupTag.extend({
 	_tags: 'undefined',
 
-	render: function(param, encoder) {
-		return encoder('<' + this.definition + '>')	+ this.content + encoder('</' + this.name + '>');
+	render: function(content, param, encoder) {
+		return encoder('<' + this.definition + '>')	+ content + encoder('</' + this.name + '>');
 	}
 });
 
@@ -226,9 +263,8 @@ NodeTag = MarkupTag.extend({
 	_tags: 'node',
 	_attributes: 'id',
 
-	render: function() {
+	render: function(content) {
 		var id = this.attributes.id;
-		var content = this.content;
 		if (!id) {
 			id = content;
 			content = null;
@@ -242,8 +278,8 @@ NodeTag = MarkupTag.extend({
 CodeTag = MarkupTag.extend({
 	_tags: 'code',
 
-	render: function() {
-		return '<pre><code>' + this.content.replaceAll('<br />', '') + '</code></pre>';
+	render: function(content) {
+		return '<pre><code>' + content.replaceAll('<br />', '') + '</code></pre>';
 	}
 });
 
@@ -285,8 +321,8 @@ ResourceTag = MarkupTag.extend({
 		return resource.renderIcon({ small: true });
 	},
 
-	render: function(param) {
-		var resource = this.getResource(this.content, param);
+	render: function(content, param) {
+		var resource = this.getResource(content, param);
 		if (resource)
 			return this.renderIcon(resource, param);
 	}
@@ -300,13 +336,13 @@ ImageTag = ResourceTag.extend({
 		return picture.renderImage(param);
 	},
 
-	render: function(param) {
-		if (!/^http/.test(this.content)) {
-			var resource = this.getResource(this.content, param);
+	render: function(content, param) {
+		if (!/^http/.test(content)) {
+			var resource = this.getResource(content, param);
 			if (resource && resource instanceof Picture)
 				return this.renderImage(resource, param);
 		} else {
-			return '<img src="' + this.content + '"/>';
+			return '<img src="' + content + '"/>';
 		}
 	}
 });
@@ -314,9 +350,9 @@ ImageTag = ResourceTag.extend({
 HtmlTag = MarkupTag.extend({
 	_tags: 'i,b,strong,s,strike',
 
-	render: function() {
-		return '<' + this.definition + (this.content != null 
-				? '>' + this.content + '</' + this.name + '>' 
+	render: function(content) {
+		return '<' + this.definition + (content != null 
+				? '>' + content + '</' + this.name + '>' 
 				: '>');
 	}
 });
@@ -324,8 +360,8 @@ HtmlTag = MarkupTag.extend({
 BoldTag = MarkupTag.extend({
 	_tags: 'bold',
 
-	render: function() {
-		return '<b>' + this.content + '</b>';
+	render: function(content) {
+		return '<b>' + content + '</b>';
 	}
 });
 
@@ -333,9 +369,9 @@ UrlTag = MarkupTag.extend({
 	_tags: 'url',
 	_attributes: 'url',
 
-	render: function(param) {
-		var url = this.attributes.url || this.content;
-		var title = this.content || url;
+	render: function(content, param) {
+		var url = this.attributes.url || content;
+		var title = content || url;
 		var str = '<a href="';
 		var isLocal = /^\//.test(url);
 		// allways write domain part of url for simple rendering (e.g. in rss feeds)
@@ -357,18 +393,18 @@ QuoteTag = MarkupTag.extend({
 	_tags: 'quote',
 	_attributes: 'name',
 
-	render: function() {
+	render: function(content) {
 		return '<div class="quote-title">' + (this.attributes.name
 			? this.attributes.name + ' wrote:'
 			: 'Quote:')
-			+ '</div><div class="quote">' + this.content + '</div>';
+			+ '</div><div class="quote">' + content + '</div>';
 	}
 });
 
 ListTag = MarkupTag.extend({
 	_tags: 'list',
 
-	render: function() {
-		return '<ul>' + this.content + '</ul>';
+	render: function(content) {
+		return '<ul>' + content + '</ul>';
 	}
 });

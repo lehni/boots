@@ -86,5 +86,5 @@ function format_filter(input, param, format, locale) {
 }
 
 function markup_filter(input, param) {
-	return Markup.parse(input, param);
+	return Markup.render(input, param);
 }

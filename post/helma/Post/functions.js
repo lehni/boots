@@ -167,7 +167,10 @@ Post.inject({
 	renderSimple: function(out) {
 		var resources = this.resources.list();
 		return this.renderTemplate('simple', {
-			text: Markup.parse(this.text, { resources: resources, simple: true, inline: true, encoding: 'all' }),
+			text: Markup.render(this.text, {
+				resources: resources, removeUsedResources: true,
+				simple: true, inline: true, encoding: 'all'
+			}),
 			resources: resources,
 		}, out);
 	},
@@ -178,7 +181,8 @@ Post.inject({
 			return this.creator.renderLink(null, out);
 		} else if (node.POST_ANONYMOUS) {
 			var name = encode(this.username);
-			out.write(this.website ? '<a href="' + this.website + '" target="_blank">' + name + '</a>' : name);
+			out.write(this.website ? '<a href="' + this.website 
+				+ '" target="_blank">' + name + '</a>' : name);
 		}
 	}.toRender(),
 
@@ -187,7 +191,12 @@ Post.inject({
 		var title = encode(this.title);
 		var param = {
 			id: this.getEditId(),
-		//	text: Markup.parse(this.text, { resources: resources, inline: true, encoding: 'all' }),
+		/* This happens from template now
+			text: Markup.render(this.text, {
+				resources: resources, removeUsedResources: true,
+				inline: true, encoding: 'all'
+			}),
+		*/
 			title: withLink ? this.node.renderLink(title) : title,
 			isEditable: User.canEdit(this),
 			resources: resources,
