@@ -31,6 +31,7 @@ Markup = {
 						if (openTag && openTag != rootTag) {
 							// Activate parent tag
 						 	tag = openTag.parent;
+							// Add the closed tag to its parent's parts
 							tag.parts.push(openTag);
 						}
 					}
@@ -44,8 +45,8 @@ Markup = {
 	},
 
 	render: function(text, param) {
-		var tag = Markup.parse(text);
-		return tag && tag.render(param) || '';
+		var markup = Markup.parse(text);
+		return markup && markup.render(param) || '';
 	}
 };
 
