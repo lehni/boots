@@ -15,7 +15,7 @@
 	<div class="clear"></div>
 </div>
 <div class="text">
-<%= this.text | markup resources=param.resources removeUsedResources=true encoding="all" %>
+<%= this.text | markup resources=param.resources removeUsedResources=true encoding="all" allowedTags="b" %>
 </div>
 <% if (param.resources.length > 0) %>
 <div class="resources">

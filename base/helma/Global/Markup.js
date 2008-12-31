@@ -125,7 +125,7 @@ MarkupTag = Base.extend(new function() {
 			var buffer = new Array(this.parts.length);
 			for (var i = 0, l = this.parts.length; i < l; i++) {
 				var part = this.parts[i];
-				if (part.render) {
+				if (part.render && (!param.allowedTags || param.allowedTags[part.name])) {
 					// This is a tag, render its children first into one content string
 					var content = part.renderChildren(param, encoder, cleanUps);
 					// Now render the tag itself and place it in the resulting buffer
@@ -143,7 +143,12 @@ MarkupTag = Base.extend(new function() {
 		},
 
 		toString: function() {
-			return '<' + this.definition + '>';
+			// Since parts contains both strings and tags, join calls toString on each
+			// of them, resulting in automatic toString recursion for child tags.
+			var content = this.parts.join('');
+			return '<' + this.definition + (content 
+					? '>' + content + '</' + this.name + '>' 
+					: '>');
 		},
 
 		statics: {
@@ -234,6 +239,11 @@ RootTag = MarkupTag.extend({
 	render: function(param) {
 		if (!param)
 			param = {};
+		if (typeof param.allowedTags == 'string') {
+			var names = param.allowedTags.split(','), tags = param.allowedTags = {};
+			for (var i = 0, l = names.length; i < l; i++)
+				tags[names[i]] = true;
+		}
 		// Determine encoder to be used, default is not encoding anything:
 		var encoder = param.encoding && global['encode' + param.encoding.capitalize()]
 			|| function(val) { return val };
