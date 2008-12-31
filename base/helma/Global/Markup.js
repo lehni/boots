@@ -1,7 +1,6 @@
 Markup = {
 	parse: function(text) {
 		if (text) {
-			var t = new Date();
 			// Create the root tag as a container for all the other bits
 			var rootTag = MarkupTag.create('root');
 			var start = 0, end = 0;
@@ -39,7 +38,6 @@ Markup = {
 			}
 			if (end > start)
 				rootTag.parts.push(text.substring(end));
-			app.log("TIME " + (new Date() - t));
 			return rootTag;
 		}
 		return null;
