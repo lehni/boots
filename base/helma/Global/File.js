@@ -246,7 +246,7 @@ File = Base.extend(new function() {
 		 */
 		remove: function(recursive) {
 			if (recursive && this._file.isDirectory())
-				for each (var file in this.listFiles())
+				for each (var file in this.list())
 					file.remove(recursive);
 			return this._file['delete']();
 		},
@@ -506,16 +506,16 @@ File = Base.extend(new function() {
 		/**
 		 * Makes a copy of a file or directory, possibly over filesystem borders.
 		 * 
-		 * @param {String|helma.File} dest as a File object or the String of
+		 * @param {String|File} dest as a File object or the String of
 		 *		  full path of the new file
 		 */
-		copyTo: function(file, filename) {
-			file = filename ? new File(file, filename) : typeof file == 'string' ? new File(file) : file;
+		copyTo: function(file) {
+			file = File.get(file);
 			if (this.isDirectory()) {
 				if (!file.exists() && !file.makeDirectory())
 					throw new Error("Could not create directory " + file);
 				var ok = true;
-				for each (var f in this.listFiles())
+				for each (var f in this.list())
 					ok = ok && f.copyTo(new File(file, f.getName()));
 				return ok;
 			} else {
@@ -531,15 +531,14 @@ File = Base.extend(new function() {
 			}
 		},
 
-		// writeToFile mimics MimePart writeToFile and uses java.nio.channels for the copying
+		// writeToFile mimics MimePart writeToFile and uses copyTo internally
 		writeToFile: function(file, filename) {
-			return this.copyTo(file, filename);
+			return this.copyTo(filename ? new File(file, filename) : File.get(file));
 		},
 
 		/**
 		 * Moves a file to a new destination directory.
 		 * 
-		 * @param {String} dest as String, the full path of the new file
 		 * @returns Boolean true in case file could be moved, false otherwise
 		 */
 		move: function(dest) {
@@ -653,6 +652,10 @@ File = Base.extend(new function() {
 
 		statics: {
 			separator: java.io.File.separator,
+
+			get: function(file) {
+				return typeof file == 'string' ? new File(file) : file;
+			},
 
 			getExtension: function(name) {
 				var pos = name.lastIndexOf('.');
