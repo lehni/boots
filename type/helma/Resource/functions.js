@@ -208,7 +208,7 @@ Resource.inject({
 				// Display image / video size for media
 				(this instanceof Medium ? this.width + ' x ' + this.height + ' Pixels, ' : '') +
 				// File size
-				this.getFile().getLengthAsString() + 
+				this.getFile().getSizeAsString() + 
 				')';
 		param.width = param.height = param.small ? 16 : 32;
 		return this.renderTemplate('icon', param, out);

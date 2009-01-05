@@ -359,7 +359,7 @@ File = Base.extend(new function() {
 		},
 
 		getSizeAsString: function() {
-			var size = this.getLength();
+			var size = this.getSize();
 			if (size < 1024) return size + ' B';
 			else if (size < 1048576) return Math.round(size / 10.24) / 100 + ' KB';
 			else return Math.round(size / 10485.76) / 100 + ' MB';
