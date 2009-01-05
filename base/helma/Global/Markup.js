@@ -29,7 +29,7 @@ Markup = {
 					if (closing || emtpy) {
 						// Closing tag
 						var openTag = tag;
-						// Walk up hierarchy until we find closing tag:
+						// Walk up hierarchy until we find opening tag:
 						if (!emtpy)
 							while(openTag && openTag.name != definition)
 								openTag = openTag.parent;
