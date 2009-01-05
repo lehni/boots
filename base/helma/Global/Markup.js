@@ -1,4 +1,7 @@
 Markup = {
+	// Parses the passed markup text to a DOM tree contained in a RootTag object,
+	// which can be rendered through RootTag#render. This object can be used
+	// for caching. But that is not a necessity since parsing is very fast. 
 	parse: function(text) {
 		if (text) {
 			// Create the root tag as a container for all the other bits
@@ -17,17 +20,19 @@ Markup = {
 						tag.parts.push(text.substring(start));
 						break;
 					}
-					var open = text.charAt(start + 1) != '/';
-					if (open) {
-						// Opening tag
-						// Pass current tag as parent
-						tag = MarkupTag.create(text.substring(start + 1, end - 1), tag);
-					} else {
+					var closing = text.charAt(start + 1) == '/';
+					var emtpy = !closing && text.charAt(end - 2) == '/';
+					var definition = text.substring(start + (closing ? 2 : 1), end - (emtpy ? 2 : 1));
+					if (!closing || emtpy)
+						// Opening tag, pass current tag as parent
+						tag = MarkupTag.create(definition, tag);
+					if (closing || emtpy) {
 						// Closing tag
-						var name = text.substring(start + 2, end - 1), openTag = tag;
+						var openTag = tag;
 						// Walk up hierarchy until we find closing tag:
-						while(openTag && openTag.name != name)
-							openTag = openTag.parent;
+						if (!emtpy)
+							while(openTag && openTag.name != definition)
+								openTag = openTag.parent;
 						if (openTag && openTag != rootTag) {
 							// Activate parent tag
 						 	tag = openTag.parent;
@@ -44,6 +49,7 @@ Markup = {
 		return null;
 	},
 
+	// Parses the passed text into a DOM tree and renders it directly.
 	render: function(text, param) {
 		var markup = Markup.parse(text);
 		return markup && markup.render(param) || '';
@@ -148,7 +154,7 @@ MarkupTag = Base.extend(new function() {
 			var content = this.parts.join('');
 			return '<' + this.definition + (content 
 					? '>' + content + '</' + this.name + '>' 
-					: '>');
+					: '/>');
 		},
 
 		statics: {
@@ -362,7 +368,7 @@ HtmlTag = MarkupTag.extend({
 	render: function(content) {
 		return '<' + this.definition + (content != null 
 				? '>' + content + '</' + this.name + '>' 
-				: '>');
+				: '/>');
 	}
 });
 
