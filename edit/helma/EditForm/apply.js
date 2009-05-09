@@ -19,30 +19,30 @@ EditForm.inject(new function() {
 					throw message || 'cannot be empty.';
 				break;
 			case 'length':
-				if (value.length != req)
+				if (value != null && value.length != req)
 					throw message || 'needs to contain exactly ' + 
 						req + ' characters.';
 				break;
 			case 'minLength':
-				if (value.length < req)
+				if (value != null && value.length < req)
 					throw message || 'needs to contain at least ' + 
 						req + ' characters.';
 				break;
 			case 'maxLength':
-				if (value.length > req)
+				if (value != null && value.length > req)
 					throw message || 'cannot contain more than ' + 
 						req + ' characters.';
 				break;
 			case 'match':
-				if (!req.test || !req.test(value))
+				if (value != null && (!req.test || !req.test(value)))
 					throw message || 'is not correctly formated.';
 				break;
 			case 'email':
-				if (req && !/^([a-zA-Z0-9\-\.\_]+)(\@)([a-zA-Z0-9\-\.]+)(\.)([a-zA-Z]{2,4})$/.test(value))
+				if (value != null && req && !/^([a-zA-Z0-9\-\.\_]+)(\@)([a-zA-Z0-9\-\.]+)(\.)([a-zA-Z]{2,4})$/.test(value))
 					throw message || 'is not a valid address.';
 				break;
 			case 'uri':
-				if (req && !/(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/.test(value))
+				if (value != null && req && !/(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/.test(value))
 					throw message || 'is not a valid URI.';
 				break;
 			case 'uniqueIn':
