@@ -26,7 +26,7 @@ Post.inject({
 
 	getEditForm: function() {
 		var form = new EditForm(this, {
-			removable: true, showTitle: false, titles: { create: 'Post' }
+			previewable: false, removable: true, showTitle: false, titles: { create: 'Post' }
 		});
 		var notifyItem = {
 			type: 'boolean', name: 'notify', value: !!this.getNotification(),
@@ -91,12 +91,12 @@ Post.inject({
 			requirements: {
 				notNull: { value: true, message: 'Please write a text.' }
 			}
-		}, {
+		}/*, {
 			label: 'Resources', type: 'multiselect', name: 'resources',
 			showOptions: true, collection: this.allResources, value: this.resources,
 			prototypes: 'Resource,Medium,Picture', movable: true,
 			size: 6, autoRemove: true, sortable: true
-		});
+		}*/);
 		if (User.hasRole(User.ADMINISTRATOR) && !this.isCreating()) {
 			form.add({
 				type: 'ruler'
