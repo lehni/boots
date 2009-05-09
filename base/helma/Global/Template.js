@@ -306,7 +306,7 @@ Template.prototype = {
 		function nestedMacro(that, value, code, stack) {
 			if (/<%/.test(value)) {
 				var nested = value;
-				value = 'param_' + (this.macroParam++);
+				value = 'param_' + (that.macroParam++);
 				if (/^<%/.test(nested)) {
 					code.push('var ' + value + ' = ' + that.parseMacro(nested, code, stack, false, true) + ';');
 				} else if (/^['"]/.test(nested)) {
@@ -650,6 +650,7 @@ Template.prototype = {
 			this.subTemplates = {};
 			this.renderTemplates = [];
 			var code = this.parse(lines);
+			app.log(code);
 			var cx = Packages.org.mozilla.javascript.Context.getCurrentContext();
 			var level = cx.getOptimizationLevel();
 			cx.setOptimizationLevel(-1);
@@ -675,6 +676,8 @@ Template.prototype = {
 	},
 
 	checkResource: function() {
+		this.compile();
+		return;
 		var now = new Date().getTime();
 		if (now - this.lastChecked > 1000) {
 			this.lastChecked = now;
