@@ -6,7 +6,7 @@ function json_macro(param, object) {
 			this[val] = true;
 		}, {});
 		object = object.each(function(val, key) {
-			if (include[key])
+			if (include[key] && val !== undefined)
 				this[key] = val;
 		}, {});
 	}
