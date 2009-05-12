@@ -25,6 +25,7 @@ Post.inject({
 	},
 
 	getEditForm: function() {
+		var node = this.getNode();
 		var form = new EditForm(this, {
 			previewable: false, removable: true, showTitle: false, titles: { create: 'Post' }
 		});
@@ -32,7 +33,7 @@ Post.inject({
 			type: 'boolean', name: 'notify', value: !!this.getNotification(),
 			suffix: 'Notify on subsequent posts',
 			onAfterApply: function(value) {
-				this.getNode().setNotification(value, this.creator, this.getUserEmail(), this.getUserName());
+				node.setNotification(value, this.creator, this.getUserEmail(), this.getUserName());
 			}
 		};
 		// TODO: add POSTER, and cosider renaming from name to role (EDITOR -> EDIT...)
@@ -79,7 +80,7 @@ Post.inject({
 			]);
 		}
 		form.add({
-			label: 'Subject', type: 'string', name: 'title', trim: true,
+			label: node.POST_TITLE, type: 'string', name: 'title', trim: true,
 			requirements: {
 				notNull: { value: true, message: 'Please specify a title.' },
 				maxLength: 64
@@ -91,12 +92,12 @@ Post.inject({
 			requirements: {
 				notNull: { value: true, message: 'Please write a text.' }
 			}
-		}/*, {
+		}, {
 			label: 'Resources', type: 'multiselect', name: 'resources',
 			showOptions: true, collection: this.allResources, value: this.resources,
 			prototypes: 'Resource,Medium,Picture', movable: true,
 			size: 6, autoRemove: true, sortable: true
-		}*/);
+		});
 		if (User.hasRole(User.ADMINISTRATOR) && !this.isCreating()) {
 			form.add({
 				type: 'ruler'
@@ -109,8 +110,11 @@ Post.inject({
 			});
 		}
 
-		if (this.isFirst && this.node.addEditFields)
-			this.node.addEditFields(form);
+		// Allow the parent node of the first post to add things to the post's
+		// edit form, for scripts, gallery entires, etc, which are nothing more
+		// than a stick first post.
+		if (this.isFirst && this.node.populateFirstPostEditForm(form))
+			this.node.populateFirstPostEditForm(form);
 
 		form.add({
 			type: 'help', text: this.renderTemplate('help')
@@ -140,9 +144,7 @@ Post.inject({
 
 	onCreate: function() {
 		var node = this.getNode();
-
 		this.isFirst = node.posts.count() == 0;
-
 		if (node.onAddPost)
 			node.onAddPost(this);
 	},

@@ -853,3 +853,10 @@ HelpItem = EditItem.extend({
 		}, out);
 	}
 });
+
+ListItem = EditItem.extend({
+	_types: 'list',
+
+	render: function(baseForm, name, value, param, out) {
+	}
+});

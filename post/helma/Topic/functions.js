@@ -17,12 +17,17 @@ Topic.inject({
 	},
 
 	getEditForm: function(param) {
-		param.children = false;
-		param.resources = false;
-		param.posts = true;
-		var form = this.base(param);
-		form.removeTab('node');
-		return form;
+		if (!param.removing && this.isCreating()) { 
+			return this.getFirstPost().getEditForm(param); 
+		} else {
+			param.children = false;
+			param.resources = false;
+			// Call this.base for param.posts
+			param.posts = true;
+			var form = this.base(param);
+			form.removeTab('node');
+			return form;
+		}
 	},
 
 	/**

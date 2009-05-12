@@ -6,7 +6,7 @@ HopObject.inject({
 			if (i != 'http_browser')
 				buffer.push(i + '=' + req.data[i]);
 		}
-		User.log("REQUEST: " + req.path + ' ' + buffer.join(';'));
+		User.log('REQUEST: ' + req.path + ' ' + buffer.join(';'));
 		*/
 		User.autoLogin();
 	},
@@ -100,7 +100,7 @@ HopObject.inject({
 				// this would not work, as editing a node returns the editor for the
 				// first post....
 				if (form.removable/* && form.object == this*/) {
-					User.log("Removing " + this.getFullId());
+					User.log('Removing ' + this.getFullId());
 					remove = true;
 					// Now check all the form's items to see wether
 					// they define autoRemove:
@@ -112,7 +112,7 @@ HopObject.inject({
 									var list = item.collection.list();
 									for (var j = 0; j < list.length; j++) {
 										var child = list[j];
-										User.log("Auto Removing " + child + " " +
+										User.log('Auto Removing ' + child + ' ' +
 											EditForm.getEditName(child));
 										item.collection.removeChild(child);
 										child.remove();
@@ -120,7 +120,7 @@ HopObject.inject({
 								} else {
 									var value = item.getValue();
 									if (value) {
-										User.log("Auto Removing " + value + " " +
+										User.log('Auto Removing ' + value + ' ' +
 											EditForm.getEditName(value));
 										value.remove();
 									}
@@ -150,7 +150,7 @@ HopObject.inject({
 			var login = true;
 			if (user) {
 				if (user.hasRole(User.UNVERIFIED)) {
-					User.setMessage("loginUnverified");
+					User.setMessage('loginUnverified');
 					login = false;
 				}
 			}
@@ -165,7 +165,7 @@ HopObject.inject({
 			if (req.data.logout) {
 				session.user.logout();
 			} else {
-				User.setMessage("alreadyLoggedIn", session.user.name);
+				User.setMessage('alreadyLoggedIn', session.user.name);
 			}
 		}
 	},
@@ -184,26 +184,35 @@ HopObject.inject({
 				var button = buttons[i].split(':');
 				var type = button[0];
 				var title = button[1];
+				// Suppot for a third parameter to edit buttons. Right now,
+				// only click is supported, which clicks the button right
+				// upon display in the user's browser.
+				var action = button[2];
+				var item = null;
 				switch (type) {
 				case 'create':
-					items.push({
+					item = {
 						mode: 'new', title: title || 'Create',
 						edit_item: param.item, edit_prototype: param.prototype
-					});
+					};
 					break;
 				case 'delete':
 				case 'remove':
-					items.push({
+					item = {
 						mode: 'remove', title: title || 'Delete',
 						confirm: 'Do you really want to delete "' + EditForm.getEditName(this) + '"' + '?',
 						edit_item: param.item, edit_back: 1
-					});
+					};
 					break;
 				case 'edit':
-					items.push({
+					item = {
 						mode: 'edit', title: title || 'Edit'
-					});
+					};
 					break;
+				}
+				if (item) {
+					items.push(item);
+					item.click = action == 'click';
 				}
 			}
 			param.buttons = items;
@@ -218,7 +227,7 @@ HopObject.inject({
 				if (!param.height) param.height = 400;
 			}
 			param.showProgress = EditForm.SHOW_PROGRESS;
-			return this.renderTemplate("editButtons", param, out);
+			return this.renderTemplate('editButtons', param, out);
 		}
 	},
 

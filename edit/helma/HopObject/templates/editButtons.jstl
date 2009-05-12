@@ -5,13 +5,13 @@
 	<div class="edit-buttons"><%-%>
 		<form><%-%>
 <% foreach ($button in param.buttons) %><%-%>
-			<% this.template "#button" value=$button.title onclick=<% this.template "#onclick" mode=$button.mode confirm=$button.confirm edit_item=$button.edit_item edit_prototype=$button.edit_prototype edit_back=$button.edit_back %> %><%-%>
+			<% this.template "#button" button=$button %><%-%>
 <% end %><%-%>
 		</form>
 	</div>
 </div>
 
-<% #onclick %>
+<% #onclick -%>
 <% if (param.popup) %>
 EditForm.open('<%= param.url %>', <% json singleQuotes="true" include="mode,id,confirm,style,class,edit_item,edit_prototype,edit_back,width,height" param %>);<%-%>
 <% else %>
@@ -19,4 +19,8 @@ EditForm.inline('<%= param.url %>', <% json singleQuotes="true" include="mode,id
 <% end %>
 
 <% #button -%>
-<input type="button" value="<% param.value %>" onclick="return <%= param.onclick %>" class="edit-button"><%-%>
+<% $id = 'edit-button-' + param.button.mode + '-' + param.id %>
+<input type="button" id=<%= $id %> value="<% param.button.title %>" onclick="return <% this.template "#onclick" param=param.button %>" class="edit-button"><%-%>
+<% if (param.button.click) %>
+<script type="text/javascript">$("<%= $id %>").click();</script><%-%>
+<% end %>
