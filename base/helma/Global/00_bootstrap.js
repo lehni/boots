@@ -19,11 +19,11 @@ new function() {
 							prev = prev._previous;
 						var fromBase = base && base[name] == prev;
 						res = (function() {
-							var tmp = this._base;
-							this._base = fromBase ? base[name] : prev;
-							this.dontEnum('_base');
+							var tmp = this.base;
+							this.base = fromBase ? base[name] : prev;
+							this.dontEnum('base');
 							try { return val.apply(this, arguments); }
-							finally { this._base = tmp; }
+							finally { this.base = tmp; }
 						}).pretend(val);
 						if (version) {
 							res._version = version;
@@ -118,14 +118,6 @@ new function() {
 
 	Base = Object.inject({
 		_hide: true,
-		_beans: true,
-
-		base: {
-			_get: function() {
-				return this._base;
-			}
-		},
-
 		has: function(name) {
 			return visible(this, name);
 		},
@@ -162,6 +154,17 @@ new function() {
 		}
 		throw StopIteration;
 	}
+	HopObject.inject({
+		base: {
+			_get: function() {
+				return this._base;
+			},
+
+			_set: function(base) {
+				this._base = base;
+			}
+		}
+	});
 }
 
 Function.inject(new function() {
