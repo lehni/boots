@@ -25,9 +25,9 @@ HopObject.inject({
 	 * But since core parts rely on it to be there, here it is, along with a
 	 * simple template.
 	 */
-	renderHtml: function(param) {
+	renderHtml: function(param, out) {
 		param.title = param.title || this.getDisplayName && this.getDisplayName() || this.name;
-		this.renderTemplate('html', param, res);
+		return this.renderTemplate('html', param, out);
 	},
 
 	/**
