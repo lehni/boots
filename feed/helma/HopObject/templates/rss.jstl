@@ -7,15 +7,15 @@
 		<lastBuildDate><%= param.date | format "EEE, dd MMM yyyy HH:mm:ss ZZZZ" "US" %></lastBuildDate>
 		<generator><%= param.generator %></generator>
 		<language><% param.language %></language>
-<% foreach (item in param.items) %>
-	<% set link = item.absoluteHref() %>
+<% foreach ($item in param.items) %>
+	<% $link = $item.absoluteHref() %>
 		<item>
-			<title><%= item.getTitle() %></title> 
-			<link><%= link %></link>
-			<guid isPermaLink="true"><%= link %></guid>
-			<pubDate><%= item.modificationDate | format "EEE, dd MMM yyyy HH:mm:ss ZZZZ" "US" %></pubDate>
-			<dc:creator><%= item.renderUser() %></dc:creator>
-			<description><%= encodeXml(item.renderSimple()) %></description>
+			<title><%= $item.getTitle() %></title> 
+			<link><%= $link %></link>
+			<guid isPermaLink="true"><%= $link %></guid>
+			<pubDate><%= $item.modificationDate | format "EEE, dd MMM yyyy HH:mm:ss ZZZZ" "US" %></pubDate>
+			<dc:creator><%= $item.renderUser() %></dc:creator>
+			<description><%= encodeXml($item.renderSimple()) %></description>
 		</item>
 <% end %>
 	</channel>

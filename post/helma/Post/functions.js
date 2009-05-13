@@ -113,7 +113,7 @@ Post.inject({
 		// Allow the parent node of the first post to add things to the post's
 		// edit form, for scripts, gallery entires, etc, which are nothing more
 		// than a stick first post.
-		if (this.isFirst && this.node.populateFirstPostEditForm(form))
+		if (this.isFirst && this.node.populateFirstPostEditForm)
 			this.node.populateFirstPostEditForm(form);
 
 		form.add({

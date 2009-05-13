@@ -20,7 +20,7 @@ HopObject.inject({
 		if (items.length > 0) {
 			res.push();
 			this.renderTemplate(type, {
-				title: getProperty("feedTitle") + " - " + this.getPathName(),
+				title: getProperty("feedTitle") + " - " + this.getDisplayName(),
 				description: getProperty("feedDescription"),
 				language: getProperty("feedLanguage"),
 				generator: getProperty("feedGenerator"),

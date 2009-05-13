@@ -94,48 +94,69 @@ function executeProcess() {
 	};
 }
 
-renderLink = function(content, urlOptions, htmlOptions, out) {
+renderLink = function(param, out) {
+	if (!param || typeof param == 'string')
+		param = { content: param };
 	var url = '';
-	if (urlOptions) {
-		if (typeof urlOptions == 'string') url = urlOptions;
-		else if (urlOptions instanceof HopObject) url = urlOptions.href();
-		else if (urlOptions.href) url = urlOptions.href;
-		else if (urlOptions.object) url = urlOptions.object.href(urlOptions.action);
-		if (urlOptions.query)
-			url += (urlOptions.query[0] == '?' ? '' : url.indexOf('?') != -1 ? '&' : '?') + urlOptions.query;
-	}
-	var attributes = '';
-	if (htmlOptions) {
-		var onClick;
-		// Use single quotes for confirm, since it will be inside double quotes
-		var confirm = htmlOptions.confirm && 'confirm(' + Json.encode(htmlOptions.confirm, true) + ')';
-		if (htmlOptions.onClick) {
-			onClick = htmlOptions.onClick;
-			// Make sure it ends with ;
-			if (!/;$/.test(onClick))
-				onClick += ';';
-		} else if (htmlOptions.update) {
-			// TODO: This is BootStrap specific. Is that ok? How to handle this?
-			onClick = "$('" + htmlOptions.update + "').load('" + url + "');";
-			url = '#';
-		} else if (htmlOptions.popup) {
-			var param = Hash.merge({ url: url }, htmlOptions.popup);
-			// TODO: This is BootStrap specific. Is that ok? How to handle this?
-			onClick = 'new Window(' + Json.encode(param, true) + ');';
-			url = '#';
-		} 
-		if (htmlOptions.attributes) {
-			attributes = htmlOptions.attributes.each(function(val, key) {
-				this.push(key + '="' + val + '"');
-			}, ['']).join(' ');
+	if (param.href) {
+		url = param.href;
+	} else if (param.email) {
+		function createHexString(str) {
+			var hex = '';
+			// two \\ needed because it's javascript encoded (for the client side)
+			for (var i = 0; i < str.length; i++)
+				hex += '\\u' + str.charCodeAt(i).toPaddedString(4, 16);
+			return hex;
 		}
-		if (onClick || confirm) {
-			if (confirm)
-				onClick = onClick ? 'if (' + confirm + ') ' + onClick + ' return false;' : 'return ' + confirm + ';';
-			attributes += ' onclick=' + Json.encode(onClick + (confirm ? '' : ' return false;'));
-		}
+		var parts = param.email.split('@');
+		if (parts.length == 2)
+			url = "javascript:window.location='\x6D\x61\x69\x6C\x74\x6F\x3A" + createHexString(parts[0]) + "'\x40'" + createMailHexString(parts[1]) + "';";
+	} else { // object / id ; action
+		var object = param.object || param.id && HopObject.get(param.id);
+		if (object)
+			url = param.object.href(param.action);
 	}
-	res.write('<a href="' + url + '"' + attributes + '>' + content + '</a>');
+	if (param.query)
+		url += (param.query[0] == '?' ? '' : url.indexOf('?') != -1 ? '&' : '?') + param.query;
+
+	// TODO: make handling of this an app wide switch?
+	if (!/^\//.test(url)) { // Not a local page -> target = '_blank'
+		if (!param.attributes)
+			param.attributes = {}
+		if (!param.attributes.target)
+			param.attributes.target = '_blank';
+	}
+
+	// Start with '' for attributes list so that the joined result starts with ' '.
+	var attributes = param.attributes ? param.attributes.each(function(val, key) {
+		this.push(key + '="' + val + '"');
+	}, ['']).join(' ') : '';
+
+	// Use single quotes for confirm, since it will be inside double quotes
+	var confirm = param.confirm && 'confirm(' + Json.encode(param.confirm, true) + ')';
+
+	var onClick;
+	if (param.onClick) {
+		onClick = param.onClick;
+		// Make sure it ends with ;
+		if (!/;$/.test(onClick))
+			onClick += ';';
+	} else if (param.update) {
+		// TODO: This is BootStrap specific. Is that ok? How to handle this?
+		onClick = "$('" + param.update + "').load('" + url + "');";
+		url = '#';
+	} else if (param.popup) {
+		// TODO: This is BootStrap specific. Is that ok? How to handle this?
+		onClick = 'new Window(' + Json.encode(Hash.merge({ url: url }, param.popup), true) + ');';
+		url = '#';
+	}
+	if (onClick || confirm) {
+		if (confirm)
+			onClick = onClick ? 'if (' + confirm + ') ' + onClick + ' return false;' : 'return ' + confirm + ';';
+		attributes += ' onclick=' + Json.encode(onClick + (confirm ? '' : ' return false;'));
+	}
+
+	res.write('<a href="' + url + '"' + attributes + '>' + param.content + '</a>');
 }.toRender();
 
 // Simple helper for debugging

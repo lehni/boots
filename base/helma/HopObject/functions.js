@@ -61,8 +61,10 @@ HopObject.inject({
 		if (multiPage || param.prefix) {
 			if (multiPage) {
 				var href = param.href ? param.href : param.container ? this.href('posts') : this.href();
-				var htmlOptions = param.container ? { update: param.container } : null;
-				var pages = pos > 0 ? [ renderLink('&lt;', { href: href, query: 'pos=' + (pos - 1) }, htmlOptions) ] : [];
+				var pages = [ pos > 0
+					? renderLink({ content: '&lt;', href: href, query: 'pos=' + (pos - 1), update: param.container })
+					: '&lt;'
+				];
 				var step = 1;
 				var num = last;
 				while (num >= (step == 1 ? 15 : 7)) {
@@ -76,12 +78,12 @@ HopObject.inject({
 					if (pos >= i && pos < i + step)
 						pages.push(name);
 					else
-						pages.push(renderLink(name, { href: href, query: 'pos=' + i }, htmlOptions));
+						pages.push(renderLink({ content: name, href: href, query: 'pos=' + i, update: param.container }));
 				}
-				if (pos < last)
-					pages.push(renderLink('&gt;', { href: href, query: 'pos=' + (pos + 1) }, htmlOptions));
-				else
-					pages.push('<span>&gt;</span>');
+				pages.push(pos < last
+					? renderLink({ content: '&gt;', href: href, query: 'pos=' + (pos + 1), update: param.container })
+					: '&gt;'
+				);
 				param.pages = pages.join('&nbsp;');
 			}
 			if (param.count > 0) {

@@ -50,19 +50,15 @@ HopObject.inject({
 	 * If no content is defined, getDisplayName is called.
 	 */
 	renderLink: function(param, out) {
-		var content, href;
-		if (param) {
-			if (typeof param == 'string') {
-				content = param;
-				param = null;
-			} else {
-				content = param.content;
-				href = param.href;
-			}
-		}
-		return renderLink(
-			content || encode(this.getDisplayName()),
-			href || this.href(), param, out);
+		if (!param || typeof param == 'string')
+			param = { content: param };
+		// Default href = this object's
+		if (!param.href && !param.object)
+			param.object = this;
+		// Default content = encoded display name
+		if (!param.content)
+			param.content = encode(this.getDisplayName());
+		return renderLink(param, out);
 	},
 
 	/**

@@ -138,7 +138,7 @@ Resource.inject({
 		if (!param || typeof param == 'string')
 			param = { content: param };
 		// override default href (this.href())
-		if (!param.href) {
+		if (!param.href && !param.object) {
 			param.href = this.getUri();
 			// Open in blank window if it's not forcing a download
 			if (!this.forceDownload()) {
