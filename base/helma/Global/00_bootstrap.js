@@ -118,6 +118,7 @@ new function() {
 
 	Base = Object.inject({
 		_hide: true,
+
 		has: function(name) {
 			return visible(this, name);
 		},
@@ -154,6 +155,7 @@ new function() {
 		}
 		throw StopIteration;
 	}
+
 	HopObject.inject({
 		base: {
 			_get: function() {
