@@ -21,7 +21,6 @@ new function() {
 						res = (function() {
 							var tmp = this.base;
 							this.base = fromBase ? base[name] : prev;
-							this.dontEnum('base');
 							try { return val.apply(this, arguments); }
 							finally { this.base = tmp; }
 						}).pretend(val);
@@ -140,17 +139,16 @@ new function() {
 	});
 
 	HopObject.prototype.dontEnum = function() {
-		if (!this.__dontEnum__)
-			this.__dontEnum__ = { __dontEnum__: true };
+		if (!this._dontEnum) this._dontEnum = { _dontEnum: true, _base: true };
 		for (var i = 0, l = arguments.length; i < l; i++)
-			this.__dontEnum__[arguments[i]] = true;
+			this._dontEnum[arguments[i]] = true;
 	}
 
 	HopObject.prototype.__iterator__ = function() {
 		var en = toJava(this).properties();
 		while (en.hasMoreElements()) {
 			var key = en.nextElement();
-			if (!this.__dontEnum__ || !this.__dontEnum__[key])
+			if (!this._dontEnum || !this._dontEnum[key])
 				yield key;
 		}
 		throw StopIteration;
@@ -163,6 +161,7 @@ new function() {
 			},
 
 			_set: function(base) {
+				if (!this._dontEnum) this._dontEnum = { _dontEnum: true, _base: true };
 				this._base = base;
 			}
 		}
