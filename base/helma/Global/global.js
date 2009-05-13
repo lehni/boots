@@ -39,14 +39,11 @@ function encodeJs(str, singleQuotes) {
 }
 
 function encodeHex(str) {
-	if (!str) return str;
-	res.push();
-	for (var i = 0; i < str.length; i++) {
-		// TODO: why escape twice???
-		res.write('\\\\x');
-		res.write(str.charCodeAt(i).toString(16));
-	}
-	return res.pop();
+	var hex = '';
+	// two \\ needed because it's javascript encoded (for the client side)
+	for (var i = 0; i < str.length; i++)
+		hex += '\\u' + str.charCodeAt(i).toPaddedString(4, 16);
+	return hex;
 }
 
 // encodeSql is the same as encodeJs:
@@ -101,23 +98,20 @@ renderLink = function(param, out) {
 	if (param.href) {
 		url = param.href;
 	} else if (param.email) {
-		function createHexString(str) {
-			var hex = '';
-			// two \\ needed because it's javascript encoded (for the client side)
-			for (var i = 0; i < str.length; i++)
-				hex += '\\u' + str.charCodeAt(i).toPaddedString(4, 16);
-			return hex;
-		}
+		// Simple email 'encryption'. Hopefully enough for spam bots?
 		var parts = param.email.split('@');
 		if (parts.length == 2)
-			url = "javascript:window.location='\x6D\x61\x69\x6C\x74\x6F\x3A" + createHexString(parts[0]) + "'\x40'" + createMailHexString(parts[1]) + "';";
+			url = "javascript:window.location='\\x6D\\x61\\x69\\x6C\\x74\\x6F\\x3A"
+					+ encodeHex(parts[0]) + "' + '\\x40' + '"
+					+ encodeHex(parts[1]) + "';";
 	} else { // object / id ; action
 		var object = param.object || param.id && HopObject.get(param.id);
 		if (object)
 			url = param.object.href(param.action);
 	}
 	if (param.query)
-		url += (param.query[0] == '?' ? '' : url.indexOf('?') != -1 ? '&' : '?') + param.query;
+		url += (param.query[0] == '?' ? '' : url.indexOf('?') != -1 ? '&' : '?')
+				+ param.query;
 
 	// TODO: make handling of this an app wide switch?
 	if (!/^\//.test(url)) { // Not a local page -> target = '_blank'
@@ -147,13 +141,17 @@ renderLink = function(param, out) {
 		url = '#';
 	} else if (param.popup) {
 		// TODO: This is BootStrap specific. Is that ok? How to handle this?
-		onClick = 'new Window(' + Json.encode(Hash.merge({ url: url }, param.popup), true) + ');';
+		onClick = 'new Window(' 
+				+ Json.encode(Hash.merge({ url: url }, param.popup), true) + ');';
 		url = '#';
 	}
 	if (onClick || confirm) {
 		if (confirm)
-			onClick = onClick ? 'if (' + confirm + ') ' + onClick + ' return false;' : 'return ' + confirm + ';';
-		attributes += ' onclick=' + Json.encode(onClick + (confirm ? '' : ' return false;'));
+			onClick = onClick 
+				? 'if (' + confirm + ') ' + onClick + ' return false;'
+				: 'return ' + confirm + ';';
+		attributes += ' onclick=' + Json.encode(onClick
+				+ (confirm ? '' : ' return false;'));
 	}
 
 	res.write('<a href="' + url + '"' + attributes + '>' + param.content + '</a>');
