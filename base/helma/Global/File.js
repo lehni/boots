@@ -631,7 +631,7 @@ File = Base.extend(new function() {
 		},
 
 		getContentType: function() {
-			return File.getContentType(this.getExtension());
+			return File.getContentType(this.getName());
 		},
 
 		createNewFile: function() {
@@ -659,7 +659,7 @@ File = Base.extend(new function() {
 
 			getExtension: function(name) {
 				var pos = name.lastIndexOf('.');
-				return pos != -1 ? name.substring(pos + 1, name.length) : null;
+				return pos != -1 ? name.substring(pos + 1, name.length) : name;
 			},
 
 			getMimeTypes: function() {
@@ -686,8 +686,8 @@ File = Base.extend(new function() {
 				return mimeTypes;
 			},
 
-			getContentType: function(extension) {
-				return File.getMimeTypes()[extension] || 'application/octetstream';
+			getContentType: function(name) {
+				return File.getMimeTypes()[File.getExtension(name)] || 'application/octetstream';
 			},
 	
 			/**
