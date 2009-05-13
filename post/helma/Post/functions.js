@@ -117,6 +117,16 @@ Post.inject({
 			this.node.populateFirstPostEditForm(form);
 
 		form.add({
+			label: 'Attachments', type: 'list', name: 'resources',
+			collection: this.resources, prototypes: 'Resource',
+			button: 'Attach', autoRemove: true, sortable: true,
+			onCreate: function(values) {
+				if (values.file)
+					var resource = Resource.create(values.file);
+				app.log(resource);
+				return resource;
+			}
+		}, {
 			type: 'help', text: this.renderTemplate('help')
 		});
 		return form;

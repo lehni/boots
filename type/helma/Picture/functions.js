@@ -24,7 +24,7 @@ Picture.inject({
 		// Convert to object param first:
 		if (!param || typeof param == 'string')
 			param = { content: param };
-		if (!param.href && ! param.object) {
+		if (!param.href && !param.object) {
 			// Only set the popup if this is actually linking to the image.
 			// if href or object is set, the image is probably taking us to 
 			// another page, so don't popup!
@@ -34,7 +34,7 @@ Picture.inject({
 				height: this.height
 			};
 		}
-		return this.base(param, out);
+	 	return this.base(param, out);
 	},
 
 	processImage: function(param) {

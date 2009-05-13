@@ -187,9 +187,9 @@ EditForm.inject({
 
 	renderItems: function(baseForm, param, out) {
 		if (this.tabs != null) {
-			res.push();
+			out.push();
 			var tabs = this.tabs;
-			param.noPane = true;
+			param.itemsOnly = true;
 			for (var i = 0; i < tabs.length; i++) {
 				var tab = tabs[i];
 				if (tab.type == 'tab') {
@@ -197,20 +197,20 @@ EditForm.inject({
 						label: tab.groupForm.label,
 						items: tab.groupForm.renderItems(baseForm, param),
 						width: param.width
-					}, res);
+					}, out);
 				}
 			}
-			param.tabs = res.pop();
+			param.tabs = out.pop();
 			baseForm.renderTemplate('tabPane', param, out);
 		} else {
 			var rows = this.rows;
-			if (!param.noPane)
-				res.push();
+			if (!param.itemsOnly)
+				out.push();
 			for (var i = 0; i < rows.length; i++)
-				this.renderItemRow(baseForm, rows[i], i);
-			if (!param.noPane) {
+				this.renderItemRow(baseForm, rows[i], i, out);
+			if (!param.itemsOnly) {
 				param.tabs = baseForm.renderTemplate('tabPage', {
-					items: res.pop(),
+					items: out.pop(),
 					width: param.width
 				});
 				baseForm.renderTemplate('tabPane', param, out);
@@ -218,7 +218,7 @@ EditForm.inject({
 		}
 	}.toRender(),
 
-	renderItemRow: function(baseForm, row, index) {
+	renderItemRow: function(baseForm, row, index, out) {
 		if (index == 0) {
 			// calculate maxRowLength, for creating span values in rows smaller
 			// than the maximum. This is only calculated once per edit form, when
@@ -261,7 +261,7 @@ EditForm.inject({
 			itemWidth += '%';
 			spacerWidth += '%';
 		}
-		res.push();
+		out.push();
 		var firstItem = null;
 		var labels = [];
 		for (var i = 0; i < row.length; i++) {
@@ -288,7 +288,7 @@ EditForm.inject({
 				// for the cell settings when arrays are passed, use row[i]
 				// pass param to renderItem so EditItems can access calculatedWidth
 				param.item = this.renderItem(baseForm, row[i], param);
-				baseForm.renderTemplate('item', param, res);
+				baseForm.renderTemplate('item', param, out);
 				// Collect the param here, so they can be used in itemRow
 				// bellow, for rendering the labels. It is optional to use this
 				// in itemRow.jstl. Labels can also be directly rendered in item.jstl
@@ -296,22 +296,25 @@ EditForm.inject({
 				labels.push(param);
 			}
 		}
+		var items = out.pop();
 		// at least one item needs to be rendered
 		if  (firstItem) {
 			baseForm.renderTemplate('itemRow', {
 				label: EditForm.LABEL_LEFT ? firstItem.label ?
 					firstItem.label + ':' : ' ' : null,
 				labels: labels,
-				items: res.pop(),
+				items: items,
 				index: index
 				// TODO: fix this
 				// addEmptyCell: firstItem.width != null
-			}, res);
+			}, out);
 		}
-	},
+	}.toRender(),
 
 	renderButton: function(button, out) {
-		return this.renderTemplate('button', button, out);
+		var btn = this.renderTemplate('button', button);
+		if (out) out.write(btn);
+		return btn;
 	},
 
 	renderButtons: function(buttons, out) {

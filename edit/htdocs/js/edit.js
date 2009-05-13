@@ -928,6 +928,19 @@ EditForm.register(new function() {
 	};
 });
 
+// list
+EditForm.register(new function() {
+	return {
+		list_add: function(editForm, name, html) {
+			var table = $('edit-list-' + name);
+			table.counter = table.counter || 0;
+			html = html.replace(/<%id%>/g, 'n' + table.counter++);
+			table.injectBottom(html);
+		}
+	};
+});
+
+
 // Choosers:
 EditChooser = Base.extend({
 	initialize: function(params) {

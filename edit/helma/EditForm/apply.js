@@ -122,7 +122,7 @@ EditForm.inject(new function() {
 					var item = row[j];
 					if (item.name != null) {
 						var value = req.data[item.getEditName()];
-						if (value !== undefined && this.applyItem(item, value)) {
+						if (this.applyItem(item, value)) {
 							root.itemsChanged = true;
 							root.changedItems[item.name] = item;
 						}
@@ -160,10 +160,9 @@ EditForm.inject(new function() {
 								checkRequirement(item, name, value);
 					}
 					// Setting onApply to EditForm.DO_NOTHING prevents execution
-					// of applyDefault
+					// of EditItem#apply
 					// if onApply is set, execute it even if convert returned DONT_APPLY
 					// DONT_APPLY is just ot prevent item.apply being called.
-					/// TODO: find out why this was added!
 					var dontApply = value == EditForm.DONT_APPLY;
 					if (dontApply)
 						value = null;
@@ -171,7 +170,7 @@ EditForm.inject(new function() {
 					// too. This is cleared again in #afterApply.
 					item.appliedValue = value;
 					if (item.onApply && item.onApply != EditForm.DO_NOTHING) {
-						// Call the handler, prevent passing DONT_APPLY 
+						// Call the handler 
 						if (item.onApply.call(item.form.object, value, item))
 							return true;
 					}

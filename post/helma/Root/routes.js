@@ -19,7 +19,9 @@ Root.inject({
 			res.redirect(node.href());
 		} else {
 			// TODO: renderHtml is not a globally available function, it's scriptographer specific!
-			this.renderHtml({ content: "You are already unsubscribed from this discussion." });
+			this.renderHtml({
+				content: "You are already unsubscribed from this discussion."
+			}, res);
 		}
 	}
 });

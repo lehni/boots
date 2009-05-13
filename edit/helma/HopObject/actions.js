@@ -13,7 +13,7 @@ HopObject.inject({
 		this.handleLogin();
 		this.renderHtml({
 			content: this.renderTemplate("editLogin")
-		});
+		}, res);
 	},
 
 	logout_action: function() {

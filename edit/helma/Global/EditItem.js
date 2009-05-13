@@ -1,3 +1,9 @@
+/* TODO:
+- Rename .name -> id?
+- Rename getEditName -> getEditId() ?
+- Don't pass name in render? but use getEditId like everywhere else?
+*/
+
 EditItem = Base.extend(new function() {
 	var types = new Hash();
 
@@ -104,6 +110,15 @@ EditItem = Base.extend(new function() {
 			}, params);
 		},
 
+		getPrototypes: function() {
+			// Convert string prototype names to constructors
+		 	return this.prototypes && this.prototypes.collect(function(name) {
+				var proto = global[name];
+				if (proto) return proto;
+				User.log("WARNING: Prototype '" + name + "' does not exist!");
+			});
+		},
+
 		getPrototypeEditButton: function(baseForm, param) {
 			// Pass an array containing name / creation handler href mappings
 			// if there are more than one prototype.
@@ -139,6 +154,37 @@ EditItem = Base.extend(new function() {
 				this.push(key + ': ' + val);
 			}, []).join(', ') + ' }';
 			*/
+		},
+
+		/**
+		 * We are supporting two modes of sorting / hiding in lists and multiselects:
+		 *
+		 * - Index mode: visible items are sorted by index, hidden ones
+		 *   are defined by setting index to null
+		 *
+		 * - Position / Visible mode: position is used as an index for both
+		 *   visible and hidden items, in their respective lists. visible
+		 *   controlls the visibility.
+		 *
+		 * setPosition is here to fasciliate these modes
+		 */
+		setPosition: function(obj, position, visible) {
+			if (obj.position !== undefined && obj.visible !== undefined) {
+				// Position / Visible mode
+				if (obj.position != position || !obj.visible != !visible) {
+					obj.position = position;
+					obj.visible = visible;
+					return true;
+				}
+			} else if (object.index !== undefined) {
+				// Index mode: Set index to null to hide item
+				var index = visible ? position : null;
+				if (obj.index != index) {
+					obj.index = index;
+					return true;
+				}
+			}
+			return false;
 		},
 
 		statics: {
@@ -304,29 +350,28 @@ DateItem = EditItem.extend({
 		var now = new Date();
 		var date = value ? value : now;
 		if (this.day)
-			renderSelect(name + '_day', 1, 31, '00', date.getDate());
+			renderSelect(name + '[day]', 1, 31, '00', date.getDate());
 		if (this.month)
-			renderSelect(name + '_month', 0, 12, 'MMMM', date.getMonth());
+			renderSelect(name + '[month]', 0, 12, 'MMMM', date.getMonth());
 		if (this.year)
-			renderSelect(name + '_year', this.startYear || 2000,
+			renderSelect(name + '[year]', this.startYear || 2000,
 				now.getFullYear() + 2, '0000', date.getFullYear());
 		if (this.hours)
-			renderSelect(name + '_hours', 0, 23, '00', date.getHours());
+			renderSelect(name + '[hours]', 0, 23, '00', date.getHours());
 		if (this.minutes)
-			renderSelect(name + '_minutes', 0, 59, '00', date.getMinutes());
+			renderSelect(name + '[minutes]', 0, 59, '00', date.getMinutes());
 		if (this.seconds)
-			renderSelect(name + '_seconds', 0, 59, '00', date.getSeconds());
+			renderSelect(name + '[seconds]', 0, 59, '00', date.getSeconds());
 	},
 
 	convert: function(value) {
-		var prefix = this.getEditName();
 		return new Date(
-			req.data[prefix + '_year'],
-			req.data[prefix + '_month'] || 0,
-			req.data[prefix + '_day'] || 1,
-			req.data[prefix + '_hours'] || 0,
-			req.data[prefix + '_minutes'] || 0,
-			req.data[prefix + '_seconds'] || 0
+			value.year,
+			value.month || 0,
+			value.day || 1,
+			value.hours || 0,
+			value.minutes || 0,
+			value.seconds || 0
 		);
 	}
 });
@@ -349,7 +394,7 @@ ButtonItem = EditItem.extend({
 				onClick = baseForm.renderHandle('execute', 'click', Json.encode(params));
 			}
 		}
-		this.form.renderButton({
+		baseForm.renderButton({
 			value: this.value,
 			name: this.name,
 			onClick: onClick,
@@ -615,19 +660,16 @@ MultiSelectItem = SelectItem.extend({
 			param.buttons = this.renderEditButtons(baseForm);
 		}
 		var size = Base.pick(this.size, '6');
-		// var width = this.width || '120';
 		var left = name + '_left', right = name + '_right';
 		var editParam = param.buttons && this.getEditParam();
 		param.left = Html.select({
 			size: size, name: left, multiple: true,
-			/* style: 'width: ' + width + 'px;', */ 
 			options: values, className: this.className || 'edit-element',
 			onDblClick: editParam && baseForm.renderHandle('select_edit', [left], editParam)
 		});
 		if (this.showOptions) {
 			param.right = Html.select({
 				size: size, name: right, multiple: true,
-				/* style: 'width: ' + width + 'px;', */
 				options: options, className: this.className || 'edit-element',
 				onDblClick: editParam && baseForm.renderHandle('select_edit', [right], editParam)
 			});
@@ -641,13 +683,7 @@ MultiSelectItem = SelectItem.extend({
 		// the prototypes that are not allowed, as defined by prototypes.
 		// It is the user's responisibility to make sure they are all in the
 		// same table, so ids alone are enough a reference!
-
-		// Convert string prototype names to constructors
-		var prototypes = this.prototypes && this.prototypes.collect(function(name) {
-			var proto = global[name];
-			if (proto) return proto;
-			User.log("WARNING: Prototype '" + name + "' does not exist!");
-		});
+		var prototypes = this.getPrototypes();
 
 		// Also make sure the objects are contained in collection if that is defined.
 		var collection = this.collection;
@@ -673,64 +709,26 @@ MultiSelectItem = SelectItem.extend({
 	apply: function(value) {
 		var changed = false;
 		if (this.type == 'multiselect' && !this.linkedCollection) {
-			// Standard procedure for multiselects assumes
-			// 'position' property that controls the ordering of the objects
-			// 'visible' property that controls their visibility
 			if (this.collection) {
-				// We are supporting two modes of sorting / hiding in multiselects:
-				
-				// - Index mode: visible items are sorted by index, hidden ones
-				//   are defined by setting index to null
-				
-				// - Position / Visible mode: position is used as an index for both
-				//   visible and hidden items, in their respective lists. visible
-				//   controlls the visibility.
-				
 				// The code bellow automatically decides which mode to use by
 				// looking at the first available option.
 				var options = this.collection.list();
 				var first = options.first;
 				if (first) {
-					// Make sure the objects actually define a index property or both
-					// the visible and position properties:
-					var modePositionVisible = first.position !== undefined && first.visible !== undefined;
-					var modeIndex = first.index !== undefined;
-					if (modePositionVisible || modeIndex) {
-						// Look-up table for used items
-						var used = {};
-						for (var i = 0; i < value.length; i++) {
-							var obj = value[i];
-							used[obj._id] = true;
-							if (obj) {
-								if (modePositionVisible && (obj.position != i || !obj.visible)) {
-									// Position / Visible mode
-									obj.position = i;
-									obj.visible = true;
-									changed = true;
-								} else if (modeIndex && obj.index != i) {
-									// Index mode
-									obj.index = i;
-									changed = true;
-								}
-							}
-						}
-						// Now make the unused items invisible:
-						for (var i = 0; i < options.length; i++) {
-							var obj = options[i];
-							var pos = value.length + i;
-							if (!used[obj._id]) {
-								if (modePositionVisible && (obj.position != pos || obj.visible)) {
-									// Position / Visible mode
-									obj.position = pos;
-									obj.visible = false;
-									changed = true;
-								} else if (modeIndex && obj.index != null) {
-									// Index mode: set index to null to hide item
-									obj.index = null;
-									changed = true;
-								}
-							}
-						}
+					// Look-up table for used items
+					var used = {};
+					for (var i = 0; i < value.length; i++) {
+						var obj = value[i];
+						used[obj._id] = true;
+						if (obj)
+							changed = this.setPosition(obj, i, true) || changed;
+					}
+					// Now make the unused items invisible:
+					for (var i = 0; i < options.length; i++) {
+						var obj = options[i];
+						var pos = value.length + i;
+						if (!used[obj._id])
+							changed = this.setPosition(obj, pos, false) || changed;
 					}
 				}
 			}
@@ -791,7 +789,7 @@ ObjectItem = EditItem.extend({
 
 	render: function(baseForm, name, value, param, out) {
 		var title = this.title ? ' ' + this.title : '';
-		return this.form.renderButton(value ? {
+		return baseForm.renderButton(value ? {
 				value: 'Edit' + title,
 				onClick: baseForm.renderHandle('execute', 'edit', this.getEditParam())
 			} : this.getPrototypeEditButton(baseForm, {
@@ -804,7 +802,7 @@ GroupItem = EditItem.extend({
 	_types: 'group',
 
 	render: function(baseForm, name, value, param, out) {
-		this.form.renderButton({
+		baseForm.renderButton({
 			value: 'Edit',
 			onClick: baseForm.renderHandle('execute', 'group', this.getEditParam())
 		}, out);
@@ -841,8 +839,7 @@ HelpItem = EditItem.extend({
 	render: function(baseForm, name, value, param, out) {
 		if (!this.initialized) {
 			// Add the button only once to the form!
-			// TODO: this.form or baseForm?
-			this.form.addButtons({
+			baseForm.addButtons({
 				value: 'Help', className: 'edit-help-button',
 				onClick: baseForm.renderHandle('help_toggle')
 			});
@@ -857,6 +854,107 @@ HelpItem = EditItem.extend({
 ListItem = EditItem.extend({
 	_types: 'list',
 
+	getEditForm: function(obj, id) {
+		// TODO: Use cachining mechanisms
+		var form = obj.getEditForm({ small: true });
+		if (id == null)
+			id = obj.isTransient() ? '<%id%>' : obj._id;
+		form.variablePrefix = this.getEditName() + '_' + id + '_';
+		return form;
+	},
+
+	renderSimpleForm: function(obj, param, out) {
+		var form = this.getEditForm(obj);
+		return form.renderItems(form, {
+			itemsOnly: true,
+			width: param.width
+		}, out);
+	},
+
 	render: function(baseForm, name, value, param, out) {
+		if (this.button && !this.initialized) {
+			// Add the button only once to the form!
+			var prototypes = this.getPrototypes();
+			var proto = prototypes[0];
+			if (proto) {
+				// Create an empty instance in order to render small edit form:
+				var html = this.renderSimpleForm(new proto(), param);
+				baseForm.addButtons({
+					value: this.button,
+					onClick: baseForm.renderHandle('list_add', name, html)
+				});
+			}
+			this.initialized = true;
+		}
+		out.push();
+		var list = this.collection.list();
+		for (var i = 0; i < list.length; i++) {
+			var obj = list[i];
+			this.renderSimpleForm(obj, param, out);
+		}
+		baseForm.renderTemplate('listItem', {
+			name: name,
+			rows: out.pop()
+		}, out);
+	},
+
+	convert: function(value) {
+		// Make sure apply gets called
+		return value;
+	},
+
+	apply: function(value) {
+		var name = this.getEditName();
+		// Scan through all values and group by id
+		var create = {};
+		var applied = {};
+		var pos = 0;
+		for (var key in req.data) {
+			if (key.startsWith(name)) {
+				var rest = key.substring(name.length + 1);
+				var pos = rest.indexOf('_');
+				var id = rest.substring(0, pos);
+				if (/^n/.test(id)) { // Create
+					// Group values and process later.
+					// This is neede by the onCreate handler that
+					// can produce an object based on e.g. file type
+					var variable = rest.substring(pos + 1);
+					var entry = create[id];
+					if (!entry)
+						entry = create[id] = {};
+					entry[variable] = req.data[key];
+				} else if (!applied[id]) { // Apply
+					// Just pass this through the form. No further
+					// grouping is needed.
+					// Mark this object as applied once one field was found,
+					// since form handles the rest.
+					applied[id] = true;
+					var obj = this.collection.getById(id);
+					if (obj) {
+						pos++;
+						var form = this.getEditForm(obj);
+						if (form)
+							form.applyItems();
+					}
+				}
+			}
+		}
+		// Now produce the items
+		var prototypes = this.getPrototypes();
+		var proto = prototypes[0];
+		for (var id in create) {
+			var entry = create[id];
+			// Support an onCreate handler that can produce special types
+			// e.g. based on the file type
+			var obj = this.onCreate ? this.onCreate(entry) : new proto();
+			if (obj) {
+				// TODO: Handle position proberly
+				this.setPosition(obj, pos++, true);
+				this.collection.add(obj);
+				var form = this.getEditForm(obj, id);
+				if (form)
+					form.applyItems();
+			}
+		}
 	}
 });
