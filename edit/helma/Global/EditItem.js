@@ -855,8 +855,11 @@ ListItem = EditItem.extend({
 	_types: 'list',
 
 	getEditForm: function(obj, id) {
-		// TODO: Use cachining mechanisms
-		var form = obj.getEditForm({ small: true });
+		var form = EditForm.get(obj);
+		// Update the edit form's variablePrefix to group by this
+		// edit item.
+		// TODO: Since we're using cached forms, this means we cannot use
+		// the same form elsewhere at the same time.
 		if (id == null)
 			id = obj.isTransient() ? '<%id%>' : obj._id;
 		form.variablePrefix = this.getEditName() + '_' + id + '_';
@@ -908,7 +911,7 @@ ListItem = EditItem.extend({
 		// Scan through all values and group by id
 		var create = {};
 		var applied = {};
-		var pos = 0;
+		var index = 0;
 		for (var key in req.data) {
 			if (key.startsWith(name)) {
 				var rest = key.substring(name.length + 1);
@@ -931,7 +934,7 @@ ListItem = EditItem.extend({
 					applied[id] = true;
 					var obj = this.collection.getById(id);
 					if (obj) {
-						pos++;
+						index++;
 						var form = this.getEditForm(obj);
 						if (form)
 							form.applyItems();
@@ -949,7 +952,7 @@ ListItem = EditItem.extend({
 			var obj = this.onCreate ? this.onCreate(entry) : new proto();
 			if (obj) {
 				// TODO: Handle position proberly
-				this.setPosition(obj, pos++, true);
+				this.setPosition(obj, index++, true);
 				this.collection.add(obj);
 				var form = this.getEditForm(obj, id);
 				if (form)

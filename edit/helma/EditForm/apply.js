@@ -97,6 +97,9 @@ EditForm.inject(new function() {
 				});
 			}
 
+			// Forces clearing of cache.
+			delete this.version;
+
 			// The same on the form / object
 			var onAfterApply = obj.onAfterApply || this.onAfterApply;
 			if (onAfterApply)

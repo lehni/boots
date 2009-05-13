@@ -184,6 +184,11 @@
 	display: inline;
 }
 
+/* hide edit-labels in edit-lists */
+#edit .edit-list .edit-label {
+	display: none;
+}
+
 #edit .edit-error {
 	font-weight: normal;
 	color: #ff3300;
