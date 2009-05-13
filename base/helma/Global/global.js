@@ -34,7 +34,7 @@ function encodeUrl(str) {
 
 function encodeJs(str, singleQuotes) {
 	// We cannot use uneval unfortunately since we want to be able to replace ' or ", depending on singleQuotes
-	return str ? Json.encode(str, singleQuotes).substring(1, str.length - 1) : str;
+	return str ? (str = Json.encode(str, singleQuotes)).substring(1, str.length - 1) : str;
 	// return str ? (str = uneval(str)).substring(1, str.length - 1) : str;
 }
 
