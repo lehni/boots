@@ -1456,7 +1456,7 @@ DomDocument = DomElement.extend({
 	}
 });
 
-DomWindow = DomElement.extend({
+Window = DomWindow = DomElement.extend({
 	_type: 'window',
 	_initialize: false,
 	_methods: ['close', 'alert', 'prompt', 'confirm', 'blur', 'focus', 'reload'],
@@ -1499,7 +1499,195 @@ DomWindow = DomElement.extend({
 	}
 });
 
-Window = DomWindow;
+DomElement.inject(new function() {
+	function cumulate(name, parent, iter) {
+		var left = name + 'Left', top = name + 'Top';
+		return function(that) {
+			var cur, next = that, x = 0, y = 0;
+			do {
+				cur = next;
+				x += cur.$[left] || 0;
+				y += cur.$[top] || 0;
+			} while((next = DomElement.wrap(cur.$[parent])) && (!iter || iter(cur, next)))
+			return { x: x, y: y };
+		}
+	}
+
+	function bounds(fields, offset) {
+		return function(values) {
+			var vals = /^(object|array)$/.test(Base.type(values)) ? values : arguments;
+			if (offset) {
+				if (vals.x) vals.left = vals.x;
+				if (vals.y) vals.top = vals.y;
+			}
+			var i = 0;
+			return fields.each(function(name) {
+				var val = vals.length ? vals[i++] : vals[name];
+				if (val != null) this.setStyle(name, val);
+			}, this);
+		}
+	}
+
+	function body(that) {
+		return that.getTag() == 'body';
+	}
+
+	var getCumulative = cumulate('offset', 'offsetParent', Browser.WEBKIT ? function(cur, next) {
+		return next.$ != document.body || cur.getStyle('position') != 'absolute';
+	} : null, true);
+
+	var getPositioned = cumulate('offset', 'offsetParent', function(cur, next) {
+		return next.$ != document.body && !/^(relative|absolute)$/.test(next.getStyle('position'));
+	});
+
+	var getScrollOffset = cumulate('scroll', 'parentNode');
+
+	var fields = {
+
+		getSize: function() {
+			return body(this)
+				? this.getWindow().getSize()
+				: { width: this.$.offsetWidth, height: this.$.offsetHeight };
+		},
+
+		getOffset: function(positioned) {
+			return body(this)
+				? this.getWindow().getOffset()
+			 	: (positioned ? getPositioned : getCumulative)(this);
+		},
+
+		getScrollOffset: function() {
+			return body(this)
+				? this.getWindow().getScrollOffset()
+			 	: getScrollOffset(this);
+		},
+
+		getScrollSize: function() {
+			return body(this)
+				? this.getWindow().getScrollSize()
+			 	: { width: this.$.scrollWidth, height: this.$.scrollHeight };
+		},
+
+		getBounds: function() {
+			if (body(this))
+				return this.getWindow().getBounds();
+			var off = this.getOffset(), el = this.$;
+			return {
+				left: off.x,
+				top: off.y,
+				right: off.x + el.offsetWidth,
+				bottom: off.y + el.offsetHeight,
+				width: el.offsetWidth,
+				height: el.offsetHeight
+			};
+		},
+
+		setBounds: bounds(['left', 'top', 'width', 'height', 'clip'], true),
+
+		setOffset: bounds(['left', 'top'], true),
+
+		setSize: bounds(['width', 'height', 'clip']),
+
+		setScrollOffset: function(x, y) {
+			if (body(this)) {
+				this.getWindow().setScrollOffset(x, y);
+			} else {
+				var off = typeof x == 'object' ? x : { x: x, y: y };
+				this.$.scrollLeft = off.x;
+				this.$.scrollTop = off.y;
+			}
+			return this;
+		},
+
+		scrollTo: function(x, y) {
+			return this.setScrollOffset(x, y);
+		},
+
+		contains: function(pos) {
+			var bounds = this.getBounds();
+			return pos.x >= bounds.left && pos.x < bounds.right &&
+				pos.y >= bounds.top && pos.y < bounds.bottom;
+		}
+	};
+
+	['left', 'top', 'right', 'bottom', 'width', 'height'].each(function(name) {
+		var part = name.capitalize();
+		fields['get' + part] = function() {
+			return this.$['offset' + part];
+		};
+		fields['set' + part] = function(value) {
+			this.$.style[name] = isNaN(value) ? value : value + 'px';
+		};
+	});
+
+	return fields;
+});
+
+[DomDocument, DomWindow].each(function(ctor) {
+	ctor.inject(this);
+}, {
+
+	getSize: function() {
+		var doc = this.getDocument().$, view = this.getWindow().$, html = doc.documentElement;
+		return Browser.WEBKIT2 && { width: view.innerWidth, height: view.innerHeight }
+			|| Browser.OPERA && { width: doc.body.clientWidth, height: doc.body.clientHeight }
+			|| { width: html.clientWidth, height: html.clientHeight };
+	},
+
+	getScrollOffset: function() {
+		var doc = this.getDocument().$, view = this.getWindow().$, html = doc.documentElement;
+		return {
+			x: view.pageXOffset || html.scrollLeft || doc.body.scrollLeft || 0,
+			y: view.pageYOffset || html.scrollTop || doc.body.scrollTop || 0
+		}
+	},
+
+	getScrollSize: function() {
+		var doc = this.getDocument().$, html = doc.documentElement;
+		return Browser.IE && { x: Math.max(html.clientWidth, html.scrollWidth), y: Math.max(html.clientHeight, html.scrollHeight) }
+			|| Browser.WEBKIT && { x: doc.body.scrollWidth, y: doc.body.scrollHeight }
+			|| { x: html.scrollWidth, y: html.scrollHeight };
+	},
+
+	getOffset: function() {
+		return { x: 0, y: 0 };
+	},
+
+	getBounds: function() {
+		var size = this.getSize();
+		return {
+			left: 0, top: 0,
+			right: size.width, bottom: size.height,
+			width: size.width, height: size.height
+		};
+	},
+
+	setScrollOffset: function(x, y) {
+		var off = typeof x == 'object' ? x : { x: x, y: y };
+		this.getWindow().$.scrollTo(off.x, off.y);
+		return this;
+	},
+
+	getElementAt: function(pos, exclude) {
+		var el = this.getDocument().getElement('body');
+		while (true) {
+			var max = -1;
+			var ch = el.getFirst();
+			while (ch) {
+				if (ch.contains(pos) && ch != exclude) {
+					var z = ch.$.style.zIndex.toInt() || 0;
+					if (z >= max) {
+						el = ch;
+						max = z;
+					}
+				}
+				ch = ch.getNext();
+			}
+			if (max < 0) break;
+		}
+		return el;
+	}
+});
 
 DomEvent = Base.extend(new function() {
 	var keys = {
@@ -2523,196 +2711,6 @@ HtmlElement.inject(new function() {
 	});
 
 	return fields;
-});
-
-HtmlElement.inject(new function() {
-	function cumulate(name, parent, iter) {
-		var left = name + 'Left', top = name + 'Top';
-		return function(that) {
-			var cur, next = that, x = 0, y = 0;
-			do {
-				cur = next;
-				x += cur.$[left] || 0;
-				y += cur.$[top] || 0;
-			} while((next = DomElement.wrap(cur.$[parent])) && (!iter || iter(cur, next)))
-			return { x: x, y: y };
-		}
-	}
-
-	function bounds(fields, offset) {
-		return function(values) {
-			var vals = /^(object|array)$/.test(Base.type(values)) ? values : arguments;
-			if (offset) {
-				if (vals.x) vals.left = vals.x;
-				if (vals.y) vals.top = vals.y;
-			}
-			var i = 0;
-			return fields.each(function(name) {
-				var val = vals.length ? vals[i++] : vals[name];
-				if (val != null) this.setStyle(name, val);
-			}, this);
-		}
-	}
-
-	function body(that) {
-		return that.getTag() == 'body';
-	}
-
-	var getCumulative = cumulate('offset', 'offsetParent', Browser.WEBKIT ? function(cur, next) {
-		return next.$ != document.body || cur.getStyle('position') != 'absolute';
-	} : null, true);
-
-	var getPositioned = cumulate('offset', 'offsetParent', function(cur, next) {
-		return next.$ != document.body && !/^(relative|absolute)$/.test(next.getStyle('position'));
-	});
-
-	var getScrollOffset = cumulate('scroll', 'parentNode');
-
-	var fields = {
-
-		getSize: function() {
-			return body(this)
-				? this.getWindow().getSize()
-				: { width: this.$.offsetWidth, height: this.$.offsetHeight };
-		},
-
-		getOffset: function(positioned) {
-			return body(this)
-				? this.getWindow().getOffset()
-			 	: (positioned ? getPositioned : getCumulative)(this);
-		},
-
-		getScrollOffset: function() {
-			return body(this)
-				? this.getWindow().getScrollOffset()
-			 	: getScrollOffset(this);
-		},
-
-		getScrollSize: function() {
-			return body(this)
-				? this.getWindow().getScrollSize()
-			 	: { width: this.$.scrollWidth, height: this.$.scrollHeight };
-		},
-
-		getBounds: function() {
-			if (body(this))
-				return this.getWindow().getBounds();
-			var off = this.getOffset(), el = this.$;
-			return {
-				left: off.x,
-				top: off.y,
-				right: off.x + el.offsetWidth,
-				bottom: off.y + el.offsetHeight,
-				width: el.offsetWidth,
-				height: el.offsetHeight
-			};
-		},
-
-		setBounds: bounds(['left', 'top', 'width', 'height', 'clip'], true),
-
-		setOffset: bounds(['left', 'top'], true),
-
-		setSize: bounds(['width', 'height', 'clip']),
-
-		setScrollOffset: function(x, y) {
-			if (body(this)) {
-				this.getWindow().setScrollOffset(x, y);
-			} else {
-				var off = typeof x == 'object' ? x : { x: x, y: y };
-				this.$.scrollLeft = off.x;
-				this.$.scrollTop = off.y;
-			}
-			return this;
-		},
-
-		scrollTo: function(x, y) {
-			return this.setScrollOffset(x, y);
-		},
-
-		contains: function(pos) {
-			var bounds = this.getBounds();
-			return pos.x >= bounds.left && pos.x < bounds.right &&
-				pos.y >= bounds.top && pos.y < bounds.bottom;
-		}
-	};
-
-	['left', 'top', 'right', 'bottom', 'width', 'height'].each(function(name) {
-		var part = name.capitalize();
-		fields['get' + part] = function() {
-			return this.$['offset' + part];
-		};
-		fields['set' + part] = function(value) {
-			this.$.style[name] = isNaN(value) ? value : value + 'px';
-		};
-	});
-
-	return fields;
-});
-
-[DomDocument, DomWindow].each(function(ctor) {
-	ctor.inject(this);
-}, {
-
-	getSize: function() {
-		var doc = this.getDocument().$, view = this.getWindow().$, html = doc.documentElement;
-		return Browser.WEBKIT2 && { width: view.innerWidth, height: view.innerHeight }
-			|| Browser.OPERA && { width: doc.body.clientWidth, height: doc.body.clientHeight }
-			|| { width: html.clientWidth, height: html.clientHeight };
-	},
-
-	getScrollOffset: function() {
-		var doc = this.getDocument().$, view = this.getWindow().$, html = doc.documentElement;
-		return {
-			x: view.pageXOffset || html.scrollLeft || doc.body.scrollLeft || 0,
-			y: view.pageYOffset || html.scrollTop || doc.body.scrollTop || 0
-		}
-	},
-
-	getScrollSize: function() {
-		var doc = this.getDocument().$, html = doc.documentElement;
-		return Browser.IE && { x: Math.max(html.clientWidth, html.scrollWidth), y: Math.max(html.clientHeight, html.scrollHeight) }
-			|| Browser.WEBKIT && { x: doc.body.scrollWidth, y: doc.body.scrollHeight }
-			|| { x: html.scrollWidth, y: html.scrollHeight };
-	},
-
-	getOffset: function() {
-		return { x: 0, y: 0 };
-	},
-
-	getBounds: function() {
-		var size = this.getSize();
-		return {
-			left: 0, top: 0,
-			right: size.width, bottom: size.height,
-			width: size.width, height: size.height
-		};
-	},
-
-	setScrollOffset: function(x, y) {
-		var off = typeof x == 'object' ? x : { x: x, y: y };
-		this.getWindow().$.scrollTo(off.x, off.y);
-		return this;
-	},
-
-	getElementAt: function(pos, exclude) {
-		var el = this.getDocument().getElement('body');
-		while (true) {
-			var max = -1;
-			var ch = el.getFirst();
-			while (ch) {
-				if (ch.contains(pos) && ch != exclude) {
-					var z = ch.$.style.zIndex.toInt() || 0;
-					if (z >= max) {
-						el = ch;
-						max = z;
-					}
-				}
-				ch = ch.getNext();
-			}
-			if (max < 0) break;
-		}
-		return el;
-	}
 });
 
 HtmlElement.inject({

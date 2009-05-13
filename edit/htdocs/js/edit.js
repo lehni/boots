@@ -421,6 +421,7 @@ EditForm = Base.extend({
 			if (!editForm) {
 				alert('Cannot find edit form for object ' + param.id);
 			} else if (!param.confirm || confirm(param.confirm)) {
+				var offset = target.getOffset(); // for scrolling
 				var elements = $('#edit-elements-' + param.id + '.edit-elements');
 				var progress = $('.edit-progress', elements);
 				var buttons = $('.edit-buttons', elements);
@@ -448,6 +449,8 @@ EditForm = Base.extend({
 							editForm.container.setStyle(param.style);
 						if (param['class'])
 							editForm.container.addClass(param['class']);
+						if (param.scroll)
+							$window.setScrollOffset(offset);
 					} else {
 						EditForm.close(param.id);
 						alert('Error: ' + values + ' Status: ' + this.status);

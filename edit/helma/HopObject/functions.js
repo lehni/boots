@@ -212,7 +212,7 @@ HopObject.inject({
 				}
 				if (item) {
 					items.push(item);
-					item.click = action == 'click';
+					item.click = item.scroll = action == 'click';
 				}
 			}
 			param.buttons = items;

@@ -15,7 +15,7 @@
 <% if (param.popup) %>
 EditForm.open('<%= param.url %>', <% json singleQuotes="true" include="mode,id,confirm,style,class,edit_item,edit_prototype,edit_back,width,height" param %>);<%-%>
 <% else %>
-EditForm.inline('<%= param.url %>', <% json singleQuotes="true" include="mode,id,target,confirm,style,class,edit_item,edit_prototype,edit_back" param %>);<%-%>
+EditForm.inline('<%= param.url %>', <% json singleQuotes="true" include="mode,id,target,confirm,style,class,edit_item,edit_prototype,edit_back,scroll" param %>);<%-%>
 <% end %>
 
 <% #button -%>
