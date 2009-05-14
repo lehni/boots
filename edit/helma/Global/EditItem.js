@@ -957,15 +957,17 @@ EditableListItem = ListItem.extend({
 				}
 			}
 		}
-		// Now produce the items
+		// Now produce the new items
+		// Determine prototype in case onCreate does not produce the item.
 		var prototypes = this.getPrototypes();
 		var proto = prototypes[0];
 		for (var id in create) {
-			var entry = create[id];
 			// Support an onCreate handler that can produce special types
-			// e.g. based on the file type
-			var obj = this.onCreate ? this.onCreate(entry) : new proto();
+			// e.g. based on the file type. That's also the only reason
+			// why we collect all values above, so that onCreate can analyse them.
+			var obj = this.onCreate ? this.onCreate(create[id]) : new proto();
 			if (obj) {
+				// Just like in the rest of edit lib, apply first, persist after
 				var form = this.getEditForm(obj, id);
 				if (form) {
 					form.applyItems();

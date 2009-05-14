@@ -193,7 +193,7 @@ EditForm.inject({
 			for (var i = 0; i < tabs.length; i++) {
 				var tab = tabs[i];
 				if (tab.type == 'tab') {
-					baseForm.renderTemplate('tabPage', {
+					baseForm.renderTemplate('tab#page', {
 						label: tab.groupForm.label,
 						items: tab.groupForm.renderItems(baseForm, param),
 						width: param.width
@@ -201,7 +201,7 @@ EditForm.inject({
 				}
 			}
 			param.tabs = out.pop();
-			baseForm.renderTemplate('tabPane', param, out);
+			baseForm.renderTemplate('tab#pane', param, out);
 		} else {
 			var rows = this.rows;
 			if (!param.itemsOnly)
@@ -209,11 +209,11 @@ EditForm.inject({
 			for (var i = 0; i < rows.length; i++)
 				this.renderItemRow(baseForm, rows[i], i, out);
 			if (!param.itemsOnly) {
-				param.tabs = baseForm.renderTemplate('tabPage', {
+				param.tabs = baseForm.renderTemplate('tab#page', {
 					items: out.pop(),
 					width: param.width
 				});
-				baseForm.renderTemplate('tabPane', param, out);
+				baseForm.renderTemplate('tab#pane', param, out);
 			}
 		}
 	}.toRender(),
