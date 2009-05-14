@@ -1,3 +1,4 @@
+<% #list %>
 <div id="edit-list-<%= param.name %>" class="edit-list">
 <%= param.entries %>
 </div>

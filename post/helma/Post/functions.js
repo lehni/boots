@@ -117,13 +117,15 @@ Post.inject({
 			this.node.populateFirstPostEditForm(form);
 
 		form.add({
-			label: 'Attachments', type: 'list', name: 'resources',
+			label: 'Attachments', type: 'formlist', name: 'resources',
 			collection: this.resources, prototypes: 'Resource',
 			button: 'Attach', autoRemove: true, sortable: true,
 			onCreate: function(values) {
 				// Create a resource type based on file mime type
-				if (values.file)
-					return Resource.create(values.file);
+				var resource = values.file && Resource.create(values.file);
+				if (resource)
+					resource.visible = true;
+				return resource;
 			}
 		}, {
 			type: 'help', text: this.renderTemplate('help')

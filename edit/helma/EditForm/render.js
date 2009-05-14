@@ -288,7 +288,7 @@ EditForm.inject({
 				// for the cell settings when arrays are passed, use row[i]
 				// pass param to renderItem so EditItems can access calculatedWidth
 				param.item = this.renderItem(baseForm, row[i], param);
-				baseForm.renderTemplate('item', param, out);
+				baseForm.renderTemplate('item#item', param, out);
 				// Collect the param here, so they can be used in itemRow
 				// bellow, for rendering the labels. It is optional to use this
 				// in itemRow.jstl. Labels can also be directly rendered in item.jstl
@@ -299,7 +299,7 @@ EditForm.inject({
 		var items = out.pop();
 		// at least one item needs to be rendered
 		if  (firstItem) {
-			baseForm.renderTemplate('itemRow', {
+			baseForm.renderTemplate('item#row', {
 				label: EditForm.LABEL_LEFT ? firstItem.label ?
 					firstItem.label + ':' : ' ' : null,
 				labels: labels,
@@ -312,7 +312,7 @@ EditForm.inject({
 	}.toRender(),
 
 	renderButton: function(button, out) {
-		var btn = this.renderTemplate('button', button);
+		var btn = this.renderTemplate('button#button', button);
 		if (out) out.write(btn);
 		return btn;
 	},

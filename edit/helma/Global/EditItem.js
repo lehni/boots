@@ -156,40 +156,9 @@ EditItem = Base.extend(new function() {
 			*/
 		},
 
-		/**
-		 * We are supporting two modes of sorting / hiding in lists and multiselects:
-		 *
-		 * - Index mode: visible items are sorted by index, hidden ones
-		 *   are defined by setting index to null
-		 *
-		 * - Position / Visible mode: position is used as an index for both
-		 *   visible and hidden items, in their respective lists. visible
-		 *   controlls the visibility.
-		 *
-		 * setPosition is here to fasciliate these modes
-		 */
-		setPosition: function(obj, position, visible) {
-			if (obj.position !== undefined && obj.visible !== undefined) {
-				// Position / Visible mode
-				if (obj.position != position || !obj.visible != !visible) {
-					obj.position = position;
-					obj.visible = visible;
-					return true;
-				}
-			} else if (object.index !== undefined) {
-				// Index mode: Set index to null to hide item
-				var index = visible ? position : null;
-				if (obj.index != index) {
-					obj.index = index;
-					return true;
-				}
-			}
-			return false;
-		},
-
 		statics: {
 			extend: function(src) {
-				return src._types.split(',').each(function(type) {
+				return (src._types || '').split(',').each(function(type) {
 					types[type] = this;
 				}, this.base(src));
 			},
@@ -236,7 +205,7 @@ StringItem = EditItem.extend(new function() {
 		},
 
 		renderLinkButtons: function(baseForm, name, out) {
-			return baseForm.renderTemplate('editButtons', {
+			return baseForm.renderTemplate('button#buttons', {
 				spacer: true,
 				buttons: baseForm.renderButtons([{
 					name: name + '_link',
@@ -422,7 +391,77 @@ FileItem = EditItem.extend({
 	}
 });
 
-SelectItem = EditItem.extend({
+// Abstract baes for SelectItem and FormListItem
+ListItem = EditItem.extend({
+
+	/**
+	 * We are supporting two modes of sorting / hiding in lists and multiselects:
+	 *
+	 * - Index mode: visible items are sorted by index, hidden ones
+	 *   are defined by setting index to null
+	 *
+	 * - Position / Visible mode: position is used as an index for both
+	 *   visible and hidden items, in their respective lists. visible
+	 *   controlls the visibility.
+	 *
+	 * setPosition is here to fasciliate these modes
+	 */
+	setPosition: function(obj, position, visible) {
+		if (obj.position !== undefined && obj.visible !== undefined) {
+			// Position / Visible mode
+			if (obj.position != position || !obj.visible != !visible) {
+				obj.position = position;
+				obj.visible = visible;
+				return true;
+			}
+		} else if (object.index !== undefined) {
+			// Index mode: Set index to null to hide item
+			var index = visible ? position : null;
+			if (obj.index != index) {
+				obj.index = index;
+				return true;
+			}
+		}
+		return false;
+	},
+
+	store: function(object) {
+		// This is called by handlers.js when a new object is created in the list
+		// Just add it to the collection and handle position and visible:
+		// Don't count on this.value to be set, use getValue instead, since it
+		// resolves this.name on the object as well.
+		var value = this.getValue();
+		if (this.collection) {
+			// Add it to the collection(s):
+			// Support for visible lists and hidden (all) lists. Since the 
+			// object might remain transient for a while, simulate the proper
+			// result of collection filtering here: A visible object appears both
+			// in value and collection, and hidden one only in collection:
+			var list = this.collection;
+			if (list.get(object.name))
+				throw 'This list already contains an item named "' + object.name + '".';
+			list.add(object);
+			// TODO: How to support index based position here? Can we use EditItem.setPosition 
+			// somehow too?
+			if (object.visible && value instanceof HopObject && value != list) {
+				// If visible, add it to this.value as well, and use that for
+				// position bellow
+				value.add(object);
+				list = value;
+			}
+			// Support for position:
+			if (object.position !== undefined)
+				object.position = list.count() - 1;
+		} else if (value instanceof HopObject) {
+			value.add(object);
+		} else {
+			return false;
+		}
+		return true;
+	}
+});
+
+SelectItem = ListItem.extend({
 	_types: 'select',
 	_scale: true,
 
@@ -455,43 +494,12 @@ SelectItem = EditItem.extend({
 		select.options = options;
 		Html.select(select, out);
 		if (editButtons)
-			baseForm.renderTemplate('editButtons', {
+			baseForm.renderTemplate('button#buttons', {
 				// for multi line items, add the buttons bellow,
 				// for pulldown, add them to the right
 				spacer: this.size,
 				buttons: editButtons
 			}, out);
-	},
-
-	store: function(object) {
-		// This is called by handlers.js when a new object is created in the list
-		// Just add it to the collection and handle position and visible:
-		// Don't count on this.value to be set, use getValue instead, since it
-		// resolves this.name on the object as well.
-		var value = this.getValue();
-		if (this.collection) {
-			// Add it to the collection(s):
-			// Support for visible lists and hidden (all) lists. Since the 
-			// object might remain transient for a while, simulate the proper
-			// result of collection filtering here: A visible object appears both
-			// in value and collection, and hidden one only in collection:
-			var list = this.collection;
-			list.add(object);
-			if (object.visible && value instanceof HopObject && value != list) {
-				// If visible, add it to this.value as well, and use that for
-				// position bellow
-				value.add(object);
-				list = value;
-			}
-			// Support for position:
-			if (object.position !== undefined)
-				object.position = list.count() - 1;
-		} else if (value instanceof HopObject) {
-			value.add(object);
-		} else {
-			return fale;
-		}
-		return true;
 	},
 
 	convert: function(value) {
@@ -847,8 +855,8 @@ HelpItem = EditItem.extend({
 	}
 });
 
-ListItem = EditItem.extend({
-	_types: 'list',
+FormListItem = ListItem.extend({
+	_types: 'formlist',
 
 	getEditForm: function(obj, id) {
 		var form = EditForm.get(obj);
@@ -897,7 +905,7 @@ ListItem = EditItem.extend({
 			var obj = list[i];
 			this.renderEditForm(baseForm, name, obj, param, out);
 		}
-		baseForm.renderTemplate('listItem', {
+		baseForm.renderTemplate('listItem#list', {
 			name: name,
 			entries: out.pop()
 		}, out);
@@ -958,13 +966,11 @@ ListItem = EditItem.extend({
 			// e.g. based on the file type
 			var obj = this.onCreate ? this.onCreate(entry) : new proto();
 			if (obj) {
-				// TODO: Handle position proberly
-				this.setPosition(obj, index++, true);
-				this.collection.add(obj);
 				var form = this.getEditForm(obj, id);
-				if (form)
+				if (form) {
 					form.applyItems();
-				changed = true;
+					changed = this.store(obj) || changed;
+				}
 			}
 		}
 		return changed;

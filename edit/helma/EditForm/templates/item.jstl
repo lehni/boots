@@ -1,3 +1,4 @@
+<% #item %>
 <% if param.spacer %>
 <td width="<%= param.spacerWidth %>"></td>
 <% end %>
@@ -6,4 +7,34 @@
 <%= param.calculatedWidth prefix=" width=\"" suffix="\"" -%>
 <% if param.scaleToFit %> class="edit-scale"<% end %>>
 <%= param.item -%>
+</td>
+
+<% #row %>
+<% if (param.index > 0) %>
+<tr><td class="edit-spacer"></td></tr>
+<% end %>
+<tr>
+<%= param.label prefix="<td nowrap class=\"edit-label\">" suffix="</td>" encoding="html" %>
+<tr>
+<% foreach ($label in param.labels) %>
+	<% this.template "#label" label=$label %>
+<% end %>
+</tr>
+<%= param.items %>
+<% if (param.addEmptyCell) %>
+<td width="100%"></td>
+<% end %>
+</tr>
+
+<% #label %>
+<% if (param.label.spacer) %>
+<td></td>
+<% end %>
+<td<%= param.label.span prefix=" colspan=\"" suffix="\"" -%>>
+<% if (param.label.label) %>
+<div class="edit-label"><%= param.label.label suffix=":" encoding="html" -%></div>
+<% end %>
+<% if (param.label.name) %>
+<div id="edit-error-<%= param.label.name %>" class="edit-error hidden"></div>
+<% end %>
 </td>

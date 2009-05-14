@@ -262,6 +262,7 @@ EditForm.register({
 			form = parentItem.groupForm;
 		// Erase cached edit stack titleas things might have changed during apply
 		delete node.title;
+		app.log('Applying');
 		try {
 			form.applyItems();
 			// Let the client know that things have been applied here, so the
@@ -271,6 +272,7 @@ EditForm.register({
 			});
 			return EditForm.COMMIT;
 		} catch (e) {
+			app.log('Catching ' + e);
 			if (e instanceof EditException) {
 				form.addResponse({
 					error: {
@@ -281,6 +283,7 @@ EditForm.register({
 				});
 				req.data.edit_back = 0;
 			} else {
+				app.log('Rethrowing' + e);
 				throw e;
 			}
 		}
