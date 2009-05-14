@@ -1,9 +1,9 @@
 EditSettings = {
 	objectLink: '<node @link>@text</node>',
-	unnamedObjectLink: '<node>@link</node>',
+	unnamedObjectLink: '<node @link />',
 	mailLink: '<mail @link>@text</mail>',
 	urlLink: '<url @link>@text</url>',
-	unnamedUrlLink: '<url>@link</url>',
+	unnamedUrlLink: '<url @link />',
 	useButtons: true,
 	hideButtons: true
 };
