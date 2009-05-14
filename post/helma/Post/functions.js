@@ -117,7 +117,7 @@ Post.inject({
 			this.node.populateFirstPostEditForm(form);
 
 		form.add({
-			label: 'Attachments', type: 'formlist', name: 'resources',
+			label: 'Attachments', type: 'list', name: 'resources',
 			collection: this.resources, prototypes: 'Resource',
 			button: 'Attach', autoRemove: true, sortable: true,
 			onCreate: function(values) {

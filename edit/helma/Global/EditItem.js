@@ -391,7 +391,7 @@ FileItem = EditItem.extend({
 	}
 });
 
-// Abstract baes for SelectItem and FormListItem
+// Abstract baes for SelectItem and EditableListItem
 ListItem = EditItem.extend({
 
 	/**
@@ -855,8 +855,8 @@ HelpItem = EditItem.extend({
 	}
 });
 
-FormListItem = ListItem.extend({
-	_types: 'formlist',
+EditableListItem = ListItem.extend({
+	_types: 'list',
 
 	getEditForm: function(obj, id) {
 		var form = EditForm.get(obj);
