@@ -839,6 +839,7 @@ Browser = new function() {
 		IE55: js == 5.5,
 		IE6: js == 5.6,
 		IE7: js == 5.7,
+		IE8: js == 5.8,
 		MACIE: js && name == 'MAC',
 		XPATH: xpath
 	};
@@ -1568,10 +1569,10 @@ DomElement.inject(new function() {
 			 	: { width: this.$.scrollWidth, height: this.$.scrollHeight };
 		},
 
-		getBounds: function() {
+		getBounds: function(positioned) {
 			if (body(this))
 				return this.getWindow().getBounds();
-			var off = this.getOffset(), el = this.$;
+			var off = this.getOffset(positioned), el = this.$;
 			return {
 				left: off.x,
 				top: off.y,
