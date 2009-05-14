@@ -2,9 +2,10 @@
 <div id="edit-list-<%= param.name %>" class="edit-list">
 <%= param.entries %>
 </div>
+<% input type="hidden" name=param.name value=param.ids %>
 
 <% #entry %>
-<table id="edit-list-entry-<%= param.name %>" border="0" cellpadding="0" cellspacing="0"  width="<%= param.calculatedWidth %>" class="edit-list-entry">
+<table id="edit-list-entry-<%= param.id %>" border="0" cellpadding="0" cellspacing="0"  width="<%= param.calculatedWidth %>" class="edit-list-entry">
 <tr class="edit-list-separator"><td></td></tr>
 <tr>
 <td width="100%">
@@ -13,9 +14,12 @@
 </table>
 </td>
 <td><% if (param.create) %>
-	<input type="button" value="remove" onclick="<% this.handle "list_remove" <%= param.name %> %>">
+	<input type="button" value="remove" onclick="<% this.handle "list_remove" <%= param.name %> <%= param.id %> %>">
 <% else %>
-	<% input type="checkbox" value="1" name=<%= param.name + '_delete' %> %>&nbsp;delete
+	<% input type="checkbox" value="1" name=<%= param.id + '_delete' %> %>&nbsp;delete
 <% end %></td>
+<% if (param.sortable) %>
+<td><a href="#" onclick="return false" onmousedown="<% this.handle "list_sort" <%= param.name %> <%= param.id %> %> return false;"><image src="/static/edit/media/grab.gif" width="16" height="12" border="0" alt=""></a></td>
+<% end %>
 </tr>
 </table>

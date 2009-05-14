@@ -873,11 +873,13 @@ EditableListItem = ListItem.extend({
 		return form;
 	},
 
-	renderEditForm: function(baseForm, name, obj, param, out) {
+	renderEditForm: function(baseForm, name, obj, out) {
 		var form = this.getEditForm(obj);
 		baseForm.renderTemplate('listItem#entry', {
-			name: name + '_' + form.entryId,
+			id: name + '_' + form.entryId,
+			name: name,
 			create: obj.isTransient(),
+			sortable: this.sortable,
 			items: form.renderItems(baseForm, {
 				itemsOnly: true
 			})
@@ -891,7 +893,7 @@ EditableListItem = ListItem.extend({
 			var proto = prototypes[0];
 			if (proto) {
 				// Create an empty instance in order to render small edit form:
-				var html = this.renderEditForm(baseForm, name, new proto(), param);
+				var html = this.renderEditForm(baseForm, name, new proto());
 				baseForm.addButtons({
 					value: this.button,
 					onClick: baseForm.renderHandle('list_add', name, html)
@@ -900,14 +902,17 @@ EditableListItem = ListItem.extend({
 			this.initialized = true;
 		}
 		out.push();
+		var ids = [];
 		var list = this.collection.list();
 		for (var i = 0; i < list.length; i++) {
 			var obj = list[i];
-			this.renderEditForm(baseForm, name, obj, param, out);
+			this.renderEditForm(baseForm, name, obj, out);
+			ids.push(obj._id);
 		}
 		baseForm.renderTemplate('listItem#list', {
 			name: name,
-			entries: out.pop()
+			entries: out.pop(),
+			ids: ids
 		}, out);
 	},
 
@@ -917,12 +922,15 @@ EditableListItem = ListItem.extend({
 	},
 
 	apply: function(value) {
+		// Produce positions
+		var positions = value.split(',').each(function(id, index) {
+			this[id] = index;
+		}, {});
 		var changed = false;
 		var name = this.getEditName();
 		// Scan through all values and group by id
 		var create = {};
 		var applied = {};
-		var index = 0;
 		for (var key in req.data) {
 			if (key.startsWith(name)) {
 				var rest = key.substring(name.length + 1);
@@ -948,10 +956,11 @@ EditableListItem = ListItem.extend({
 						if (req.data[name + '_' + id + '_delete']) {
 							changed = obj.remove();
 						} else {
-							index++;
 							var form = this.getEditForm(obj);
 							if (form)
 								changed = form.applyItems() || changed;
+							// Set the object's position
+							changed = this.setPosition(obj, positions[id], true) || changed;
 						}
 					}
 				}
@@ -972,6 +981,8 @@ EditableListItem = ListItem.extend({
 				if (form) {
 					form.applyItems();
 					changed = this.store(obj) || changed;
+					// Set the object's position
+					changed = this.setPosition(obj, positions[id], true) || changed;
 				}
 			}
 		}

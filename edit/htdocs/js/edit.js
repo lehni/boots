@@ -43,7 +43,7 @@ EditForm = Base.extend({
 					id: id, name: id,
 					value: el.getText(),
 					className: el.getClass(),
-					onmouseup: el.getProperty('onmouseup')
+					onclick: el.getProperty('onclick')
 				});
 			});
 		}
@@ -774,7 +774,7 @@ EditForm.register(new function() {
 
 		multiselect_update: function(editForm, name) {
 			var ids = $('#' + name + '_left', editForm.form).getOptions().getProperty('value');
-			$('#' + name, editForm.form).setValue(ids.join(','));
+			$('#' + name, editForm.form).setValue(ids);
 		}
 	};
 });
@@ -889,7 +889,7 @@ EditForm.register(new function() {
 // references
 EditForm.register({
 	references_remove: function(editForm, name) {
-		var el = $('#' + name + '_left');
+		var el = $('#' + name + '_left', editForm.form);
 		el.getSelected().remove();
 		this.multiselect_update(editForm, name);
 	}
@@ -932,16 +932,92 @@ EditForm.register(new function() {
 EditForm.register(new function() {
 	return {
 		list_add: function(editForm, name, html) {
-			var list = $('edit-list-' + name);
+			var list = $('#edit-list-' + name, editForm.form);
 			list.counter = list.counter || 0;
 			// Replace id placeholder with generated id, mark with 'n' for new
 			var entry = html.replace(/<%id%>/g, 'n' + list.counter++);
 			list.injectBottom(entry);
+			this.list_update(editForm, name);
 		},
 
-		list_remove: function(editForm, id) {
-			var entry = $('edit-list-entry-' + id);
+		list_remove: function(editForm, name, id) {
+			var entry = $('#edit-list-entry-' + id);
 			entry.remove();
+			this.list_update(editForm, name);
+		},
+
+		list_update: function(editForm, name) {
+			var list = $('#edit-list-' + name, editForm.form);
+			// Update ids list with the right sequence
+			var ids = list.getChildren().each(function(entry) {
+				var id = entry.getId();
+				this.push(id.substring(id.lastIndexOf('_') + 1));
+			}, []);
+			$('#' + name, editForm.form).setValue(ids);
+		},
+
+		list_sort: function(editForm, name, id) {
+			var that = this;
+			var list = $('#edit-list-' + name, editForm.form);
+			var entries = list.getChildren();
+			var listBounds = list.getBounds(true);
+			var entry = $('#edit-list-entry-' + id, editForm.form);
+			if (!entry.draggable) {
+				var bounds, dummy;
+				entry.addEvents({
+					dragstart: function(e) {
+						bounds = entry.getBounds(true);
+						// Insert dummy of same size behind, to keep space
+						dummy = this.injectAfter('div');
+						dummy.setSize(bounds);
+						entry.setStyle({
+							position: 'absolute',
+							opacity: 0.75,
+							zIndex: 1
+						});
+						entry.setBounds(bounds);
+					},
+					dragend: function(e) {
+						entry.insertAfter(dummy);
+						dummy.remove();
+						// Make relative again
+						entry.setStyle({
+							position: 'relative',
+							opacity: 1,
+							zIndex: 0
+						});
+						entry.setOffset(0, 0);
+						that.list_update(editForm, name);
+					},
+					drag: function(e) {
+						var y = this.getTop() + e.delta.y;
+						if (y < listBounds.top)
+							y = listBounds.top;
+						else if (y > listBounds.bottom - bounds.height)
+							y = listBounds.bottom - bounds.height;
+						this.setOffset(this.getLeft(), y);
+						// Find closest entry
+						var dist = bounds.height / 2, closest, above;
+						entries.each(function(entry) {
+							// Do not use the one that's moved but it's dummy
+							// instead
+							if (entry == this)
+								entry = dummy;
+							var diff = y - entry.getOffset(true).y;
+							if (Math.abs(diff) < dist) {
+								closest = entry;
+								dist =  Math.abs(diff);
+								above = diff > 0;
+							}
+						}, this);
+						if (closest)
+							dummy[above ? 'insertBefore' : 'insertAfter'](closest);
+					}
+				});
+				entry.draggable = true;
+				// Now make the fake drag event fire
+				entry.fireEvent('mousedown', [e]);
+			}
 		}
 	};
 });
