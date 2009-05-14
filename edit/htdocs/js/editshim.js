@@ -24,9 +24,10 @@ EditForm = {
 
 	inline: function(url, param) {
 		var callee = arguments.callee;
-		Asset.stylesheet('/static/edit/css/edit.css');
-		Asset.script('/static/base/js/tabs.js', { onLoad: function() {
-			Asset.script('/static/edit/js/edit.js', { onLoad: function() {
+		// TODO: Remove Math.random() hack after development has settled.
+		Asset.stylesheet('/static/edit/css/edit.css?' + Math.random());
+		Asset.script('/static/base/js/tabs.js?' + Math.random(), { onLoad: function() {
+			Asset.script('/static/edit/js/edit.js?' + Math.random(), { onLoad: function() {
 				// Avoid endless recursion if something went wrong
 				if (EditForm.inline != callee)
 					EditForm.inline(url, param);

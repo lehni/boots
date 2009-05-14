@@ -1,7 +1,7 @@
-<table border="0" cellpadding="0" cellspacing="0" width="<%= param.calculatedWidth %>" class="edit-nounderline">
+<table width="<%= param.calculatedWidth %>" class="edit-nounderline">
 	<tr>
 		<td width="<%= param.right ? '50%' : '100%' %>">
-			<table border="0" cellpadding="0" cellspacing="0" width="100%">
+			<table width="100%">
 				<tr>
 <% if (param.sortable) %>
 					<td>
@@ -17,7 +17,7 @@
 		</td>
 <% if (param.right) %>
 		<td width="50%">
-			<table border="0" cellpadding="0" cellspacing="0" width="100%">
+			<table width="100%">
 				<tr>
 					<td>
 						<div><a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "left" %>"><img src="/static/edit/media/arrow-left.gif" width="15" height="15" border="0"></a></div>
@@ -34,7 +34,7 @@
 	<tr>
 		<td colspan="2">
 			<div class="edit-spacer"></div>
-			<div class="edit-buttons-left"><% if (param.sortable) %><img src="/static/edit/media/spacer.gif" width="15" height="1" border="0"><% end %><%= param.buttons %></div>
+			<div class="edit-buttons-left"><% if (param.sortable) %><img src="/static/edit/media/spacer.gif" width="15" height="1"><% end %><%= param.buttons %></div>
 		</td>
 	</tr>
 </table>

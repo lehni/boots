@@ -50,11 +50,12 @@ EditForm = Base.extend({
 		this.form = $('form', this.container);
 		if (this.form) {
 			var that = this;
-			// Rememver focused elements and their last selection and scroll position,
+			// Remember focused elements and their last selection and scroll position,
 			// so they can be restored after previewing pages.
 			// Do not store direct references since the elements are replaced when
 			// saving before preview, therefore use ids instead.
-			$$('input[type=text],input[type=password],textarea', this.form).addEvents({
+			var fields = $$('input[type=text],input[type=password],textarea', this.form);
+			fields.addEvents({
 				focus: function() {
 					that.focus = { id: this.getId() };
 				},
@@ -66,15 +67,31 @@ EditForm = Base.extend({
 					}
 				} 
 			});
+			this.show(true);
+			// We're asking inputs and textareas to be a certain size, but they grow
+			// bigger due to their border and padding settings that differ from browser
+			// to browser.
+			// This can be fixed by calculating these widths now and subtracting them from 
+			// their resulting size (twice, in order to add them once again and end
+			// up with the desired width). Since we're using getWidth(), this needs
+			// to happen after this.show(true). Also, it needs to happen before
+			// TabPane.setup(), since that would hide tabs again, for which the fix
+			// won't work...
+			fields.each(function(field) {
+				function width(name) {
+					return field.getStyle(name + 'Left').toInt() + field.getStyle(name + 'Right').toInt();
+				}
+				field.setStyle('width', field.getWidth() - 2 * (width('border') + width('padding')));
+			});
+			TabPane.setup();
 			this.empty = false;
 			this.url = this.form.getAction();
 			var tab = $('div.tab-pane', this.form);
-			TabPane.setup();
 			this.tab = tab && tab.tabPane;
 			// Set a reference to the editForm so TabPane can call autoSize if needed (on Lineto)
 			if (this.tab)
 				this.tab.editForm = this;
-			this.show(true);
+
 		}
 	},
 
@@ -963,7 +980,7 @@ EditForm.register(new function() {
 			var entry = $('#edit-list-entry-' + id, editForm.form);
 			var handle = $('#edit-list-handle-' + id, editForm.form);
 			if (!handle.draggable) {
-				var bounds, listBounds, dummy;
+				var bounds, listBounds, dummy, position;
 				handle.addEvents({
 					dragstart: function(e) {
 						bounds = entry.getBounds(true);
@@ -977,6 +994,7 @@ EditForm.register(new function() {
 							zIndex: 1
 						});
 						entry.setBounds(bounds);
+						position = entry.getTop();
 					},
 					dragend: function(e) {
 						entry.insertAfter(dummy);
@@ -991,7 +1009,8 @@ EditForm.register(new function() {
 						that.list_update(editForm, name);
 					},
 					drag: function(e) {
-						var y = entry.getTop() + e.delta.y;
+						position += e.delta.y;
+						var y = position;
 						if (y < listBounds.top)
 							y = listBounds.top;
 						else if (y > listBounds.bottom - bounds.height)
@@ -1187,23 +1206,23 @@ ObjectChooser = EditChooser.extend({
 ColorChooser = EditChooser.extend({
 	initialize: function(size) {
 		this.base({ name: 'edit-color', padding: 1, html: '<form id="edit-color-form" target="" method="post" autocomplete="off">\
-			<table border="0" cellpadding="0" cellspacing="0">\
+			<table>\
 				<tr>\
 					<td rowspan="8">\
 						<div class="edit-element">\
 							<div style="position:absolute;clip:rect(0px,' + size + 'px,' + size + 'px,0px)"><div id="edit-color-cross" style="position:relative; width:12px; height:12px; background-image:url(/static/edit/media/color-cross.gif);"></div></div>\
-							<img id="edit-color-overlay" class="edit-color" src="/static/edit/media/color-overlay.png" width="' + size + '" height="' + size + '" border="0" alt="">\
+							<img id="edit-color-overlay" class="edit-color" src="/static/edit/media/color-overlay.png" width="' + size + '" height="' + size + '">\
 						</div>\
 					</td>\
 					<td rowspan="8">\
 						<div class="edit-element">\
 							<div style="position:absolute;clip:rect(0px,' + Math.round(size / 10 + 5) + 'px,' + size + 'px,-4px)"><div id="edit-color-slider" style="position:relative; left:-4px; width:25px; height:7px; background-image:url(/static/edit/media/color-slider.gif);"></div></div>\
-							<img id="edit-color-rainbow" class="edit-color" src="/static/edit/media/color-rainbow.png" width="' + Math.round(size / 10) + '" height="' + size + '" border="0" alt="">\
+							<img id="edit-color-rainbow" class="edit-color" src="/static/edit/media/color-rainbow.png" width="' + Math.round(size / 10) + '" height="' + size + '">\
 						</div>\
 					</td>\
 					<td colspan="2">\
 						<div class="edit-element">\
-							<img id="edit-color-preview" class="edit-color" src="/static/edit/media/spacer.gif" width="100%" height="' + Math.round(size / 4) + '" border="0" alt="">\
+							<img id="edit-color-preview" class="edit-color" src="/static/edit/media/spacer.gif" width="100%" height="' + Math.round(size / 4) + '">\
 						</div>\
 					</td>\
 				</tr>\

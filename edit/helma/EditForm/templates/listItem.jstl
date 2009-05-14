@@ -5,11 +5,11 @@
 <% input type="hidden" name=param.name value=param.ids %>
 
 <% #entry %>
-<table id="edit-list-entry-<%= param.id %>" border="0" cellpadding="0" cellspacing="0"  width="<%= param.calculatedWidth %>" class="edit-list-entry">
+<table id="edit-list-entry-<%= param.id %>" width="<%= param.calculatedWidth %>" class="edit-list-entry">
 <tr class="edit-list-separator"><td></td></tr>
 <tr>
 <td width="100%">
-<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<table width="100%">
 <%= param.items %>
 </table>
 </td>
@@ -19,7 +19,7 @@
 	<label><% input type="checkbox" value="1" name=<%= param.id + '_delete' %> %><span>delete</span></label>
 <% end %></td>
 <% if (param.sortable) %>
-<td><a id="edit-list-handle-<%= param.id %>" class="edit-list-handle" href="#" onclick="return false" onmousedown="<% this.handle "list_sort" <%= param.name %> <%= param.id %> %> return false;"><image src="/static/edit/media/list-handle.gif" width="16" height="12" border="0" alt=""></a></td>
+<td><a id="edit-list-handle-<%= param.id %>" class="edit-list-handle" href="#" onclick="return false" onmousedown="<% this.handle "list_sort" <%= param.name %> <%= param.id %> %> return false;"><image src="/static/edit/media/list-handle.gif" width="14" height="12"></a></td>
 <% end %>
 </tr>
 </table>

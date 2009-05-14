@@ -22,10 +22,20 @@
 	line-height: 17px;
 }
 
+#edit table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	margin: 0;
+	border: 0;
+}
+
 #edit td {
+	padding: 0;
 	white-space: nowrap;
 	vertical-align: top;
 }
+
+/* checkbox */
 
 #edit label {
     display: block;

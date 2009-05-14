@@ -521,7 +521,7 @@ EditForm.register({
 					res.write('<li>');
 					if (child.count()) {
 						res.write('<a href="javascript:' + form.renderHandle('choose_toggle', id) + '">' +
-							'<img id="edit-choose-arrow-' +  id + '" src="/static/edit/media/arrow-close.gif" width="8" height="8" border="0"></a>' + 
+							'<img id="edit-choose-arrow-' +  id + '" src="/static/edit/media/arrow-close.gif" width="8" height="8"></a>' + 
 							'<img src="/static/media/spacer.gif" width="6" height="1">');
 					} else {
 						res.write('<img src="/static/media/spacer.gif" width="14" height="1">');

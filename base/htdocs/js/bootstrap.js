@@ -1851,7 +1851,7 @@ DomElement.inject(new function() {
 				var that = this, bound = listener.getParameters().length == 0
 					? listener.bind(this)
 					: function(event) { 
-						event = new DomEvent(event);
+						event = event.event ? event : new DomEvent(event);
 						if (listener.call(that, event) === false)
 							event.stop();
 					};
@@ -2637,7 +2637,7 @@ HtmlElement.inject(new function() {
 						size += this.getStyle('border-' + val + '-width').toInt() + this.getStyle('padding-' + val).toInt();
 					}, this);
 					return (this.$['offset' + name.capitalize()] - size) + 'px';
-				} else if (name.test(/border(.+)Width|margin|padding/)) {
+				} else if (/border(.+)Width|margin|padding/.test(name)) {
 					return '0px';
 				}
 			}
