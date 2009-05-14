@@ -21,16 +21,31 @@ Markup = {
 						break;
 					}
 					var closing = text.charAt(start + 1) == '/';
-					var emtpy = !closing && text.charAt(end - 2) == '/';
-					var definition = text.substring(start + (closing ? 2 : 1), end - (emtpy ? 2 : 1));
-					if (!closing || emtpy)
+					// empty = contentless tag: <tag/>
+					var empty = !closing && text.charAt(end - 2) == '/';
+					var definition = text.substring(start + (closing ? 2 : 1), end - (empty ? 2 : 1));
+					// There is a special convention in place here for empty tags:
+					// These are interpretated as empty tags:
+					// <tag/>, <tag />, <tag param />
+					// Thes are not an empty tags. The / is regarded as part of the parameter instead:
+					// <tag param/ >, <tag param/>
+					// This is to make unnamed url parameters easy to handle, among other things.
+					// Detect this here:
+					// If the tag definition contains white space, we have parameters.
+					// If such a tag ended with / and the last char is not white, it's not actually an empty
+					// tag but the / is part of the parameter:
+					if (empty && /\s/.test(definition) && !/\s/.test(definition.charAt(definition.length - 1))) {
+						empty = false;
+						definition += '/';
+					}
+					if (!closing || empty)
 						// Opening tag, pass current tag as parent
 						tag = MarkupTag.create(definition, tag);
-					if (closing || emtpy) {
+					if (closing || empty) {
 						// Closing tag
 						var openTag = tag;
 						// Walk up hierarchy until we find opening tag:
-						if (!emtpy)
+						if (!empty)
 							while(openTag && openTag.name != definition)
 								openTag = openTag.parent;
 						if (openTag && openTag != rootTag) {
