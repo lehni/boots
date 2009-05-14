@@ -284,9 +284,10 @@ BooleanItem = EditItem.extend({
 	_types: 'boolean',
 
 	render: function(baseForm, name, value, param, out) {
-		Html.input({
-			type: 'checkbox', name: name, current: value ? 1 : 0,
-			className: this.className || 'edit-element'
+		baseForm.renderTemplate('booleanItem', {
+			name: name, current: value ? 1 : 0,
+			className: this.className || 'edit-element',
+			text: this.text
 		}, out);
 	},
 

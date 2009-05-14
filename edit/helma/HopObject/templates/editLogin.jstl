@@ -15,7 +15,7 @@
 		</tr>
 		<tr>
 			<td></td>
-			<td nowrap><% input type="checkbox" name="remember" %> Remember me</td>
+			<td><label><% input type="checkbox" name="remember" %><span>Remember me</span></label></td>
 		</tr>
 		<tr>
 			<td></td>

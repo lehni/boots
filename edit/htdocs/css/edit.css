@@ -27,6 +27,21 @@
 	vertical-align: top;
 }
 
+#edit label {
+    display: block;
+    float: left;
+    white-space: nowrap;
+}
+
+#edit input[type=checkbox] {
+    vertical-align: middle;
+}
+
+#edit label span {
+    padding-left: 4px;
+    vertical-align: middle;
+}
+
 /* a.edit-button needs #edit to force overriding of global a settings linked to certain layout ids. */
 #edit a.edit-button, #edit td a.edit-button {
 	white-space: nowrap;
@@ -184,6 +199,13 @@
 	display: inline;
 }
 
+#edit .edit-nounderline a {
+	border: none;
+	padding: 0px;
+}
+
+/* edit lists */
+
 /* hide edit-labels in edit-lists */
 #edit .edit-list .edit-label {
 	display: none;
@@ -191,18 +213,30 @@
 
 #edit .edit-list {
 	/* undo the first separator */
-	margin-top: -6px;
+	margin-top: -8px;
 }
 
 #edit .edit-list-separator {
-	height: 8px;
+	height: 10px;
 }
+
+#edit .edit-list-entry td {
+	vertical-align: middle;
+}
+
+#edit .edit-list-handle {
+	margin-left: 8px;
+}
+
+/* error */
 
 #edit .edit-error {
 	font-weight: normal;
 	color: #ff3300;
 	display: inline;
 }
+
+/* help */
 
 #edit .edit-help div {
 	border: 1px dotted #999;
@@ -215,11 +249,6 @@
 	font-size: 9px;
 	line-height: 13px;
 	white-space: normal;
-}
-
-#edit .edit-nounderline a {
-	border: none;
-	padding: 0px;
 }
 
 /* tab pane */

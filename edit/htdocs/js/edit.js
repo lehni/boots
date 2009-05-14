@@ -960,15 +960,16 @@ EditForm.register(new function() {
 			var that = this;
 			var list = $('#edit-list-' + name, editForm.form);
 			var entries = list.getChildren();
-			var listBounds = list.getBounds(true);
 			var entry = $('#edit-list-entry-' + id, editForm.form);
-			if (!entry.draggable) {
-				var bounds, dummy;
-				entry.addEvents({
+			var handle = $('#edit-list-handle-' + id, editForm.form);
+			if (!handle.draggable) {
+				var bounds, listBounds, dummy;
+				handle.addEvents({
 					dragstart: function(e) {
 						bounds = entry.getBounds(true);
+						listBounds = list.getBounds(true);
 						// Insert dummy of same size behind, to keep space
-						dummy = this.injectAfter('div');
+						dummy = entry.injectAfter('div');
 						dummy.setSize(bounds);
 						entry.setStyle({
 							position: 'absolute',
@@ -990,33 +991,32 @@ EditForm.register(new function() {
 						that.list_update(editForm, name);
 					},
 					drag: function(e) {
-						var y = this.getTop() + e.delta.y;
+						var y = entry.getTop() + e.delta.y;
 						if (y < listBounds.top)
 							y = listBounds.top;
 						else if (y > listBounds.bottom - bounds.height)
 							y = listBounds.bottom - bounds.height;
-						this.setOffset(this.getLeft(), y);
+						entry.setOffset(entry.getLeft(), y);
 						// Find closest entry
 						var dist = bounds.height / 2, closest, above;
-						entries.each(function(entry) {
+						entries.each(function(other) {
 							// Do not use the one that's moved but it's dummy
 							// instead
-							if (entry == this)
-								entry = dummy;
-							var diff = y - entry.getOffset(true).y;
+							if (other == entry)
+								other = dummy;
+							var diff = y - other.getOffset(true).y;
 							if (Math.abs(diff) < dist) {
-								closest = entry;
+								closest = other;
 								dist =  Math.abs(diff);
 								above = diff > 0;
 							}
-						}, this);
+						});
 						if (closest)
 							dummy[above ? 'insertBefore' : 'insertAfter'](closest);
 					}
 				});
-				entry.draggable = true;
-				// Now make the fake drag event fire
-				entry.fireEvent('mousedown', [e]);
+				handle.triggerEvent('dragstart');
+				handle.draggable = true;
 			}
 		}
 	};

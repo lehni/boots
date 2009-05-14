@@ -1,5 +1,5 @@
 <% #list %>
-<div id="edit-list-<%= param.name %>" class="edit-list">
+<div id="edit-list-<%= param.name %>" class="edit-list edit-nounderline">
 <%= param.entries %>
 </div>
 <% input type="hidden" name=param.name value=param.ids %>
@@ -16,10 +16,10 @@
 <td><% if (param.create) %>
 	<input type="button" value="remove" onclick="<% this.handle "list_remove" <%= param.name %> <%= param.id %> %>">
 <% else %>
-	<% input type="checkbox" value="1" name=<%= param.id + '_delete' %> %>&nbsp;delete
+	<label><% input type="checkbox" value="1" name=<%= param.id + '_delete' %> %><span>delete</span></label>
 <% end %></td>
 <% if (param.sortable) %>
-<td><a href="#" onclick="return false" onmousedown="<% this.handle "list_sort" <%= param.name %> <%= param.id %> %> return false;"><image src="/static/edit/media/grab.gif" width="16" height="12" border="0" alt=""></a></td>
+<td><a id="edit-list-handle-<%= param.id %>" class="edit-list-handle" href="#" onclick="return false" onmousedown="<% this.handle "list_sort" <%= param.name %> <%= param.id %> %> return false;"><image src="/static/edit/media/list-handle.gif" width="16" height="12" border="0" alt=""></a></td>
 <% end %>
 </tr>
 </table>

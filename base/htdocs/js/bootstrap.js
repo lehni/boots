@@ -1821,93 +1821,101 @@ DomEvent = Base.extend(new function() {
 	};
 });
 
-DomElement.inject({
-	addEvent: function(type, func) {
-		this.events = this.events || {};
-		var entries = this.events[type] = this.events[type] || [];
-		if (func && !entries.find(function(entry) { return entry.func == func })) {
-			var listener = func, name = type, pseudo = DomEvent.events[type];
-			if (pseudo) {
-				if (typeof pseudo == 'function') pseudo = pseudo.call(this, func);
-				listener = pseudo && pseudo.listener || listener;
-				name = pseudo && pseudo.type;
+DomElement.inject(new function() {
+	function callEvent(fire) {
+		return function(type, args, delay) {
+			var entries = (this.events || {})[type];
+			if (entries) {
+				var event = args && args[0];
+				if (event)
+					args[0] = event.event ? event : new DomEvent(event);
+				entries.each(function(entry) {
+					entry[fire ? 'func' : 'bound'].delay(delay, this, args);
+				}, this);
 			}
-			var that = this, bound = listener.getParameters().length == 0
-				? listener.bind(this)
-				: function(event) { 
-					event = new DomEvent(event);
-					if (listener.call(that, event) === false)
-						event.stop();
-				};
-			if (name) {
-				if (this.$.addEventListener) {
-					this.$.addEventListener(name, bound, false);
-				} else if (this.$.attachEvent) {
-					this.$.attachEvent('on' + name, bound);
-				}
-			}
-			entries.push({ func: func, name: name, bound: bound });
+			return !!entries;
 		}
-		return this;
-	},
+	}
 
-	removeEvent: function(type, func) {
-		var entries = (this.events || {})[type], entry;
-		if (func && entries) {
-			if (entry = entries.remove(function(entry) { return entry.func == func })) {
-				var name = entry.name, pseudo = DomEvent.events[type];
-				if (pseudo && pseudo.remove) pseudo.remove.call(this, func);
+	return {
+		addEvent: function(type, func) {
+			this.events = this.events || {};
+			var entries = this.events[type] = this.events[type] || [];
+			if (func && !entries.find(function(entry) { return entry.func == func })) {
+				var listener = func, name = type, pseudo = DomEvent.events[type];
+				if (pseudo) {
+					if (typeof pseudo == 'function') pseudo = pseudo.call(this, func);
+					listener = pseudo && pseudo.listener || listener;
+					name = pseudo && pseudo.type;
+				}
+				var that = this, bound = listener.getParameters().length == 0
+					? listener.bind(this)
+					: function(event) { 
+						event = new DomEvent(event);
+						if (listener.call(that, event) === false)
+							event.stop();
+					};
 				if (name) {
-					if (this.$.removeEventListener) {
-						this.$.removeEventListener(name, entry.bound, false);
-					} else if (this.$.detachEvent) {
-						this.$.detachEvent('on' + name, entry.bound);
+					if (this.$.addEventListener) {
+						this.$.addEventListener(name, bound, false);
+					} else if (this.$.attachEvent) {
+						this.$.attachEvent('on' + name, bound);
+					}
+				}
+				entries.push({ func: func, name: name, bound: bound });
+			}
+			return this;
+		},
+
+		removeEvent: function(type, func) {
+			var entries = (this.events || {})[type], entry;
+			if (func && entries) {
+				if (entry = entries.remove(function(entry) { return entry.func == func })) {
+					var name = entry.name, pseudo = DomEvent.events[type];
+					if (pseudo && pseudo.remove) pseudo.remove.call(this, func);
+					if (name) {
+						if (this.$.removeEventListener) {
+							this.$.removeEventListener(name, entry.bound, false);
+						} else if (this.$.detachEvent) {
+							this.$.detachEvent('on' + name, entry.bound);
+						}
 					}
 				}
 			}
-		}
-		return this;
-	},
+			return this;
+		},
 
-	addEvents: function(events) {
-		return Base.each(events || [], function(fn, type) {
-			this.addEvent(type, fn);
-		}, this);
-	},
-
-	removeEvents: function(type) {
-		if (this.events) {
-			if (type) {
-				(this.events[type] || []).each(function(fn) {
-					this.removeEvent(type, fn);
-				}, this);
-				delete this.events[type];
-			} else {
-				Base.each(this.events, function(ev, type) {
-					this.removeEvents(type);
-				}, this);
-				this.events = null;
-			}
-		}
-		return this;
-	},
-
-	fireEvent: function(type, args, delay) {
-		var entries = (this.events || {})[type];
-		if (entries) {
-			var event = args && args[0];
-			if (event)
-				args[0] = event.event ? event : new DomEvent(event);
-			entries.each(function(entry) {
-				entry.func.delay(delay, this, args);
+		addEvents: function(events) {
+			return Base.each(events || [], function(fn, type) {
+				this.addEvent(type, fn);
 			}, this);
-		}
-		return !!entries;
-	},
+		},
 
-	dispose: function() {
-		this.removeEvents();
-	}
+		removeEvents: function(type) {
+			if (this.events) {
+				if (type) {
+					(this.events[type] || []).each(function(fn) {
+						this.removeEvent(type, fn);
+					}, this);
+					delete this.events[type];
+				} else {
+					Base.each(this.events, function(ev, type) {
+						this.removeEvents(type);
+					}, this);
+					this.events = null;
+				}
+			}
+			return this;
+		},
+
+		fireEvent: callEvent(true),
+
+		triggerEvent: callEvent(false),
+
+		dispose: function() {
+			this.removeEvents();
+		}
+	};
 });
 
 DomEvent.add(new function() {

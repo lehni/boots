@@ -31,7 +31,7 @@ Post.inject({
 		});
 		var notifyItem = {
 			type: 'boolean', name: 'notify', value: !!this.getNotification(),
-			suffix: 'Notify on subsequent posts',
+			text: 'Notify on subsequent posts',
 			onAfterApply: function(value) {
 				node.setNotification(value, this.creator, this.getUserEmail(), this.getUserName());
 			}
