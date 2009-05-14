@@ -1,6 +1,0 @@
-<div class="edit-buttons-left">
-<% if (param.spacer) %>
-<div class="edit-spacer"></div>
-<% end %>
-<%= param.buttons %>
-</div>
