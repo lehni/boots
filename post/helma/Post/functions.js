@@ -121,10 +121,9 @@ Post.inject({
 			collection: this.resources, prototypes: 'Resource',
 			button: 'Attach', autoRemove: true, sortable: true,
 			onCreate: function(values) {
+				// Create a resource type based on file mime type
 				if (values.file)
-					var resource = Resource.create(values.file);
-				app.log(resource);
-				return resource;
+					return Resource.create(values.file);
 			}
 		}, {
 			type: 'help', text: this.renderTemplate('help')
