@@ -81,7 +81,11 @@ EditForm = Base.extend({
 				function width(name) {
 					return field.getStyle(name + 'Left').toInt() + field.getStyle(name + 'Right').toInt();
 				}
-				field.setStyle('width', field.getWidth() - 2 * (width('border') + width('padding')));
+				var width = (field.getWidth() - 2 * (width('border') + width('padding'))) + 'px';
+				field.setStyles({
+					width: width,
+					maxWidth: width // Prevent textareas from resizing horizontally
+				});
 			});
 			TabPane.setup();
 			this.empty = false;
