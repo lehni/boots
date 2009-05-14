@@ -858,10 +858,10 @@ ListItem = EditItem.extend({
 		// the same form elsewhere at the same time.
 		if (id == null)
 			id = obj.isTransient() ? '<%id%>' : obj._id;
+		form.entryId = id;
 		form.variablePrefix = this.getEditName() + '_' + id + '_';
 		// Change with settings to relative size
 		form.setWidth('100%');
-		form.entryId = id;
 		return form;
 	},
 
@@ -870,7 +870,7 @@ ListItem = EditItem.extend({
 		baseForm.renderTemplate('listItem#entry', {
 			name: name + '_' + form.entryId,
 			create: obj.isTransient(),
-			items: form.renderItems(form, {
+			items: form.renderItems(baseForm, {
 				itemsOnly: true
 			})
 		}, out);
