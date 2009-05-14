@@ -777,10 +777,6 @@ ReferenceItem = EditItem.extend({
 
 	convert: function(value) {
 		return HopObject.get(value);
-	},
-
-	apply: function(value) {
-		this.base(value);
 	}
 });
 
@@ -863,16 +859,22 @@ ListItem = EditItem.extend({
 		if (id == null)
 			id = obj.isTransient() ? '<%id%>' : obj._id;
 		form.variablePrefix = this.getEditName() + '_' + id + '_';
+		// Change with settings to relative size
+		form.setWidth('100%');
+		form.entryId = id;
 		return form;
 	},
 
-	renderSimpleForm: function(obj, param, out) {
+	renderEditForm: function(baseForm, name, obj, param, out) {
 		var form = this.getEditForm(obj);
-		return form.renderItems(form, {
-			itemsOnly: true,
-			width: param.width
+		baseForm.renderTemplate('listItem#entry', {
+			name: name + '_' + form.entryId,
+			create: obj.isTransient(),
+			items: form.renderItems(form, {
+				itemsOnly: true
+			})
 		}, out);
-	},
+	}.toRender(),
 
 	render: function(baseForm, name, value, param, out) {
 		if (this.button && !this.initialized) {
@@ -881,7 +883,7 @@ ListItem = EditItem.extend({
 			var proto = prototypes[0];
 			if (proto) {
 				// Create an empty instance in order to render small edit form:
-				var html = this.renderSimpleForm(new proto(), param);
+				var html = this.renderEditForm(baseForm, name, new proto(), param);
 				baseForm.addButtons({
 					value: this.button,
 					onClick: baseForm.renderHandle('list_add', name, html)
@@ -893,11 +895,11 @@ ListItem = EditItem.extend({
 		var list = this.collection.list();
 		for (var i = 0; i < list.length; i++) {
 			var obj = list[i];
-			this.renderSimpleForm(obj, param, out);
+			this.renderEditForm(baseForm, name, obj, param, out);
 		}
 		baseForm.renderTemplate('listItem', {
 			name: name,
-			rows: out.pop()
+			entries: out.pop()
 		}, out);
 	},
 
@@ -907,6 +909,7 @@ ListItem = EditItem.extend({
 	},
 
 	apply: function(value) {
+		var changed = false;
 		var name = this.getEditName();
 		// Scan through all values and group by id
 		var create = {};
@@ -927,17 +930,21 @@ ListItem = EditItem.extend({
 						entry = create[id] = {};
 					entry[variable] = req.data[key];
 				} else if (!applied[id]) { // Apply
-					// Just pass this through the form. No further
-					// grouping is needed.
 					// Mark this object as applied once one field was found,
 					// since form handles the rest.
 					applied[id] = true;
+					// Just pass this through the form. No further
+					// grouping is needed.
 					var obj = this.collection.getById(id);
 					if (obj) {
-						index++;
-						var form = this.getEditForm(obj);
-						if (form)
-							form.applyItems();
+						if (req.data[name + '_' + id + '_delete']) {
+							changed = obj.remove();
+						} else {
+							index++;
+							var form = this.getEditForm(obj);
+							if (form)
+								changed = form.applyItems() || changed;
+						}
 					}
 				}
 			}
@@ -957,7 +964,9 @@ ListItem = EditItem.extend({
 				var form = this.getEditForm(obj, id);
 				if (form)
 					form.applyItems();
+				changed = true;
 			}
 		}
+		return changed;
 	}
 });

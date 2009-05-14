@@ -107,6 +107,7 @@ EditForm.inject(new function() {
 		},
 
 		applyItems: function() {
+			var changed = false;
 			var root = this.root;
 			// in some cases (e.g. group items), applyItems is only called on
 			// a group form, not the main form. reflect this here
@@ -126,7 +127,7 @@ EditForm.inject(new function() {
 					if (item.name != null) {
 						var value = req.data[item.getEditName()];
 						if (this.applyItem(item, value)) {
-							root.itemsChanged = true;
+							root.itemsChanged = changed = true;
 							root.changedItems[item.name] = item;
 						}
 					}
@@ -137,6 +138,7 @@ EditForm.inject(new function() {
 				delete root.changedItems;
 				delete root.itemsChanged;
 			}
+			return changed;
 		},
 
 		applyItem: function(item, value) {

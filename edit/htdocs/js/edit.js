@@ -586,7 +586,7 @@ EditForm.inject(new function() {
 				handlers.merge(items);
 			},
 
-			handle: function(id, handler) {
+			handle: function(id) {
 				var form = EditForm.get(id);
 				if (form)
 					return form.handle.apply(form, Array.slice(arguments, 1));
@@ -932,10 +932,16 @@ EditForm.register(new function() {
 EditForm.register(new function() {
 	return {
 		list_add: function(editForm, name, html) {
-			var table = $('edit-list-' + name);
-			table.counter = table.counter || 0;
-			html = html.replace(/<%id%>/g, 'n' + table.counter++);
-			table.injectBottom(html);
+			var list = $('edit-list-' + name);
+			list.counter = list.counter || 0;
+			// Replace id placeholder with generated id, mark with 'n' for new
+			var entry = html.replace(/<%id%>/g, 'n' + list.counter++);
+			list.injectBottom(entry);
+		},
+
+		list_remove: function(editForm, id) {
+			var entry = $('edit-list-entry-' + id);
+			entry.remove();
 		}
 	};
 });

@@ -1,3 +1,20 @@
-<table id="edit-list-<%= param.name %>" border="0" cellpadding="0" cellspacing="0" width="<%= param.calculatedWidth %>" class="edit-list">
-<%= param.rows %>
+<div id="edit-list-<%= param.name %>" class="edit-list">
+<%= param.entries %>
+</div>
+
+<% #entry %>
+<table id="edit-list-entry-<%= param.name %>" border="0" cellpadding="0" cellspacing="0"  width="<%= param.calculatedWidth %>" class="edit-list-entry">
+<tr class="edit-list-separator"><td></td></tr>
+<tr>
+<td width="100%">
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+<%= param.items %>
+</table>
+</td>
+<td><% if (param.create) %>
+	<input type="button" value="remove" onclick="<% this.handle "list_remove" <%= param.name %> %>">
+<% else %>
+	<% input type="checkbox" value="1" name=<%= param.name + '_delete' %> %>&nbsp;delete
+<% end %></td>
+</tr>
 </table>

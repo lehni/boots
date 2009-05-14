@@ -259,10 +259,15 @@ EditForm.inject(new function() {
 			this.allGroups = {};
 			// the width of the table, defaults to 100 percent, but can
 			// be specified in pixels too
-			var width = this.width || EditForm.WIDTH_TOTAL;
+			this.setWidth(EditForm.WIDTH_TOTAL);
+		},
+
+		setWidth: function(width) {
 			this.width = parseFloat(width);
-			this.spacerWidth = parseFloat(this.spacerWidth || EditForm.WIDTH_SPACER);
 			this.widthInPercent = /%$/.test(width);
+			this.spacerWidth = parseFloat(EditForm.WIDTH_SPACER);
+			if (this.widthInPercent)
+				this.spacerWidth = Math.round(100 * this.spacerWidth / EditForm.WIDTH_TOTAL);
 		},
 
 		setParent: function(parent) {

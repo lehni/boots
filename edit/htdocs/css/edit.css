@@ -189,6 +189,15 @@
 	display: none;
 }
 
+#edit .edit-list {
+	/* undo the first separator */
+	margin-top: -8px;
+}
+
+#edit .edit-list-separator {
+	height: 8px;
+}
+
 #edit .edit-error {
 	font-weight: normal;
 	color: #ff3300;
