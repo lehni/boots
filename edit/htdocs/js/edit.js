@@ -956,7 +956,7 @@ EditForm.register(new function() {
 			$('#' + name, editForm.form).setValue(ids);
 		},
 
-		list_sort: function(editForm, name, id) {
+		list_sort: function(editForm, name, id, event) {
 			var that = this;
 			var list = $('#edit-list-' + name, editForm.form);
 			var entries = list.getChildren();
@@ -1015,7 +1015,7 @@ EditForm.register(new function() {
 							dummy[above ? 'insertBefore' : 'insertAfter'](closest);
 					}
 				});
-				handle.triggerEvent('dragstart');
+				handle.triggerEvent('dragstart', [event]);
 				handle.draggable = true;
 			}
 		}

@@ -1,7 +1,7 @@
-<% #button %>
+<% #button -%>
 <span><a href="#" onclick="<%= param.onClick encoding="all" %>" class="edit-button<%= param.className prefix=" " %>" id="<%= param.name %>"><%= param.value %></a></span><%-%>
 
-<% #buttons %>
+<% #buttons -%>
 <div class="edit-buttons-left">
 <% if (param.spacer) %>
 <div class="edit-spacer"></div>

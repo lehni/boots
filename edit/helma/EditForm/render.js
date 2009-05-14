@@ -128,7 +128,7 @@ EditForm.inject({
 		// Encode with single quotes since it goes into html attributes with doubles
 		var str = Json.encode(args, true);
 		// Remove [] from string:
-		return "EditForm.handle(" + str.substring(1, str.length - 1) + ");";
+		return "EditForm.handle(" + str.substring(1, str.length - 1) + ", event);";
 	},
 
 	renderTitle: function(node, mode) {
@@ -161,11 +161,8 @@ EditForm.inject({
 	renderItem: function(baseForm, item, param, out) {
 		param = param || {};
 		if (item instanceof Array) {
-			for (var i = 0; i < item.length; i++) {
-				if (i > 0 && item[i].type != 'hidden')
-					out.write('&nbsp;');
+			for (var i = 0; i < item.length; i++)
 				this.renderItem(baseForm, item[i], param, out);
-			}
 		} else {
 			var value = item.getValue();
 			if (value == null && item.form.object.isCreating() && item.defaultValue)
@@ -312,16 +309,15 @@ EditForm.inject({
 	}.toRender(),
 
 	renderButton: function(button, out) {
-		var btn = this.renderTemplate('button#button', button);
-		if (out) out.write(btn);
-		return btn;
+		return this.renderTemplate('button#button', button, out);
 	},
 
 	renderButtons: function(buttons, out) {
-		var first = true;
-		for (var i = 0; i < buttons.length; i++)
-			if (buttons[i])
-				this.renderButton(buttons[i], out);
+		for (var i = 0; i < buttons.length; i++) {
+			var button = buttons[i];
+			if (button)
+				this.renderButton(button, out);
+		}
 	}.toRender(),
 
 	addResponse: function(data) {
