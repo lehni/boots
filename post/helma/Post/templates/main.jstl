@@ -22,8 +22,8 @@
 <% foreach ($resource in param.resources) %>
 <% $resource.thumbnail %>
 <% end %>
-</div>
 <div class="clear"></div>
+</div>
 <% end %>
 <%= param.nodeFooter -%>
 </div>
