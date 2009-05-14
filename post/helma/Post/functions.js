@@ -92,12 +92,12 @@ Post.inject({
 			requirements: {
 				notNull: { value: true, message: 'Please write a text.' }
 			}
-		}, {
+		}/*, {
 			label: 'Resources', type: 'multiselect', name: 'resources',
 			showOptions: true, collection: this.allResources, value: this.resources,
 			prototypes: 'Resource,Medium,Picture', movable: true,
 			size: 6, autoRemove: true, sortable: true
-		});
+		}*/);
 		if (User.hasRole(User.ADMINISTRATOR) && !this.isCreating()) {
 			form.add({
 				type: 'ruler'
@@ -203,12 +203,6 @@ Post.inject({
 		var title = encode(this.title);
 		var param = {
 			id: this.getEditId(),
-		/* This happens from template now
-			text: Markup.render(this.text, {
-				resources: resources, removeUsedResources: true,
-				inline: true, encoding: 'all'
-			}),
-		*/
 			title: withLink ? this.node.renderLink(title) : title,
 			isEditable: User.canEdit(this),
 			resources: resources,

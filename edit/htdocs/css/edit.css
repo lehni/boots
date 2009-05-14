@@ -191,7 +191,7 @@
 
 #edit .edit-list {
 	/* undo the first separator */
-	margin-top: -8px;
+	margin-top: -6px;
 }
 
 #edit .edit-list-separator {
