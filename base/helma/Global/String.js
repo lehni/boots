@@ -33,7 +33,7 @@ String.inject({
 	},
 
 	/**
-	 * TODO: wordwrap is not quite right, since all it does is forcing too long
+	 * The name wordwrap is not quite right, since all it does is forcing too long
 	 * words appart with a space. The wrapping is then done by the HTML engine...
 	 */
 	wordwrap: function(width) {

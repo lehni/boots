@@ -88,8 +88,14 @@ new function() {
 					res._version = true;
 					proto.onCodeUpdate = res;
 				}
-				if (proto.initialize)
-					proto.constructor = proto.initialize;
+				if (proto.initialize) {
+					var ctor = proto.constructor;
+					ctor.dont = {};
+					proto.constructor = function(dont) {
+						if (proto.initialize && dont !== ctor.dont)
+							return proto.initialize.apply(this, arguments);
+					}
+				}
 			}
 			for (var i = 1, l = arguments.length; i < l; i++)
 				this.inject(arguments[i]);

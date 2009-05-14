@@ -27,8 +27,8 @@ EditNode = Base.extend({
 
 	/** 
 	 * Instead of directly storing the form in EditNode.get, use getForms to
-	 * retrieve it late. Like this, we have time to call onAfterInitialize
-	 * before getEditForm is called. 
+	 * retrieve it late. Like this, we have time to call initialize and do things
+	 * there before getEditForm is called. 
 	 */
 	getForm: function(force) {
 		// Use versioning so even when dontCache is true, the form is only created

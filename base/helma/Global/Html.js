@@ -76,10 +76,6 @@ Html = new function() {
 			out.write('<select');
 			this.attributes(attributes, out);
 			out.write('>');
-			// TODO: still needed? avoid eval....
-			// if (typeof options == 'string')
-			//		eval('options=' + options);
-
 			for (var i = 0; i < options.length; i++) {
 				var option = options[i];
 				if (typeof option == 'object') {

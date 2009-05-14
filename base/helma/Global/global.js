@@ -136,11 +136,9 @@ renderLink = function(param, out) {
 		if (!/;$/.test(onClick))
 			onClick += ';';
 	} else if (param.update) {
-		// TODO: This is BootStrap specific. Is that ok? How to handle this?
 		onClick = "$('" + param.update + "').load('" + url + "');";
 		url = '#';
 	} else if (param.popup) {
-		// TODO: This is BootStrap specific. Is that ok? How to handle this?
 		onClick = 'new Window(' 
 				+ Json.encode(Hash.merge({ url: url }, param.popup), true) + ');';
 		url = '#';

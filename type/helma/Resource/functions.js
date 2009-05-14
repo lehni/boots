@@ -139,9 +139,6 @@ Resource.inject({
 			param = { content: param };
 		// override default href (this.href())
 		if (!param.href && !param.object) {
-			// Do not use getUri here since for images we wont the popup link, not
-			// the bare file resource.
-			param.object = this;
 			// Open in blank window if it's not forcing a download
 			if (!this.forceDownload()) {
 				if (!param.attributes)

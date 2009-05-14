@@ -143,13 +143,15 @@ Post.inject({
 		}
 	},
 
-	onAfterInitialize: function() {
+	initialize: function() {
 		var node = this.getNode();
-		var count = node.posts.count();
-		if (node.AUTO_POST_TITLE && count > 0 || !node.AUTO_POST_TITLE && count > 1) {
-			var lastTitle = node.posts.get(count - 1).title;
-			if (lastTitle)
-				this.title = /^Re: /.test(lastTitle) ? lastTitle : 'Re: ' + lastTitle;
+		if (node) {
+			var count = node.posts.count();
+			if (node.AUTO_POST_TITLE && count > 0 || !node.AUTO_POST_TITLE && count > 1) {
+				var lastTitle = node.posts.get(count - 1).title;
+				if (lastTitle)
+					this.title = /^Re: /.test(lastTitle) ? lastTitle : 'Re: ' + lastTitle;
+			}
 		}
 	},
 

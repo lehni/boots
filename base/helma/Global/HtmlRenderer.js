@@ -1,22 +1,14 @@
 HtmlRenderer = Base.extend({
 	initialize: function(stylesheet) {
-		// create a HTMLEditorKit that turns of asynchronous loading:
-		// Weird: We cannot set createDefaultDocument in kitObj before creating the 
-		// JavaAdapter because that throws an error, and if we set it afterwards,
-		// super$createDefaultDocument is not defined. So the whole content of it
-		// is reproduced here... TODO: find a way to get around that?
-		var kitObj = {};
-		this.kit = new JavaAdapter(javax.swing.text.html.HTMLEditorKit, kitObj);
-		kitObj.createDefaultDocument = function() {
-			var styles = this.getStyleSheet();
-			var ss = new javax.swing.text.html.StyleSheet();
-			ss.addStyleSheet(styles);
-			var doc = new javax.swing.text.html.HTMLDocument(ss);
-			doc.setParser(this.getParser());
-			doc.setAsynchronousLoadPriority(-1);
-			doc.setTokenThreshold(java.lang.Integer.MAX_VALUE);
-			return doc;
-		}
+		// Create a HTMLEditorKit that turns of asynchronous loading:
+		this.kit = new JavaAdapter(javax.swing.text.html.HTMLEditorKit, {
+			createDefaultDocument: function() {
+				var doc = this.super$createDefaultDocument();
+				doc.setAsynchronousLoadPriority(-1);
+				doc.setTokenThreshold(java.lang.Integer.MAX_VALUE);
+				return doc;
+			}
+		});
 		if (stylesheet) {
 			var ss = new javax.swing.text.html.StyleSheet();
 			var reader = new java.io.BufferedReader(new java.io.FileReader(stylesheet));
@@ -35,7 +27,7 @@ HtmlRenderer = Base.extend({
 			pane.setEditable(false);
 			pane.setMargin(this.margin);
 
-			// see if src is a URL, otherwise treat it as HTML code
+			// See if src is a URL, otherwise treat it as HTML code
 			try {
 				var url = new java.net.URL(src);
 				pane.setPage(url);
@@ -45,14 +37,14 @@ HtmlRenderer = Base.extend({
 				src = src.replaceAll('/>', '>');
 				pane.setText(src);
 			}
-			// determine width?
+			// Determine width
 			if (width == -1) {
 				var size = pane.getPreferredSize();
 				width = size.width;
 			}
-			// determine height?
+			// Determine height
 			if (height == -1) {
-				// height depends on width
+				// Height depends on width
 				pane.setSize(width, 1);
 				var size = pane.getPreferredSize();
 				height = size.height;
@@ -60,7 +52,6 @@ HtmlRenderer = Base.extend({
 			img = new Image(width, height);
 			var g = img.getGraphics();
 			Packages.javax.swing.SwingUtilities.paintComponent(g, pane, new java.awt.Container(), 0, 0, width, height);
-	//		img.saveAs(app.appDir + '/' + encodeMD5(src) + '.gif');
 			g.dispose();
 		} catch (e) {
 			User.logError('renderHtmlImage()', e);

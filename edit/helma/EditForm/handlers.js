@@ -146,19 +146,28 @@ EditForm.register({
 				// get the prototype constructor and create an instance:
 				var ctor = typeof prototype == 'string' ? global[prototype] : prototype;
 				if (ctor) {
-					var object = new ctor();
+					// Creating with ctor.dont parameter causes initialize not to be called.
+					// We call it manually here, after creating the node through EditNode.get,
+					// so getEditParent will work in initialize already.
+					// This is hackish and rooted deep down in Bootstraps,
+					// but also works if bootstraps is not used
+					var object = new ctor(ctor.dont);
 					object.setCreating(true);
 					// Make sure the object is editable even in anonymous mode.
 					User.makeEditable(object);
 					node = EditNode.get(object, item);
-					// Call onAfterInitialize between EditNode.get that creates the edit node
-					// structure and getForm that fills in the form, since only then
-					// getEditParent will work, and we rely on it.
-					// This is the reason why onAfterInitialize was introduced, since
-					// getEditParent will not work in initialize
-					// TODO: Find a better name!
-					if (object.onAfterInitialize)
-						object.onAfterInitialize();
+					// Now call initialize that we suppressed above when creating ctor:
+					if (object.initialize) {
+						var ret = object.initialize();
+						if (ret && ret != object) {
+							// TODO: Check if this really works?
+							object = ret;
+							object.setCreating(true);
+							// Make sure the object is editable even in anonymous mode.
+							User.makeEditable(object);
+							node = EditNode.get(object, item);
+						}
+					}
 					form = node.getForm();
 					if (!form) {
 						EditForm.alert('Unable to retrieve edit form from object:\n' + EditForm.getEditName(object));
