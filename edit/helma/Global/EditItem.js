@@ -874,11 +874,12 @@ EditableListItem = ListItem.extend({
 		return form;
 	},
 
-	renderEditForm: function(baseForm, name, obj, out) {
+	renderEditForm: function(baseForm, name, obj, param, out) {
 		var form = this.getEditForm(obj);
 		baseForm.renderTemplate('listItem#entry', {
 			id: name + '_' + form.entryId,
 			name: name,
+			width: param.calculatedWidth,
 			create: obj.isTransient(),
 			sortable: this.sortable,
 			items: form.renderItems(baseForm, {
@@ -894,7 +895,7 @@ EditableListItem = ListItem.extend({
 			var proto = prototypes[0];
 			if (proto) {
 				// Create an empty instance in order to render small edit form:
-				var html = this.renderEditForm(baseForm, name, new proto());
+				var html = this.renderEditForm(baseForm, name, new proto(), param);
 				baseForm.addButtons({
 					value: this.button,
 					onClick: baseForm.renderHandle('list_add', name, html)
@@ -907,7 +908,7 @@ EditableListItem = ListItem.extend({
 		var list = this.collection.list();
 		for (var i = 0; i < list.length; i++) {
 			var obj = list[i];
-			this.renderEditForm(baseForm, name, obj, out);
+			this.renderEditForm(baseForm, name, obj, param, out);
 			ids.push(obj._id);
 		}
 		baseForm.renderTemplate('listItem#list', {

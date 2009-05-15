@@ -89,6 +89,13 @@ EditForm = Base.extend({
 					'max-width': width
 				});
 			});
+			if (Browser.GECKO) {
+				// Fix weird Firefox resizing problem when dragging edit-list-entries
+				// TODO: Check again in future and remove if not needed any longer
+				$$('div.edit-list-entry', this.form).each(function(entry) {
+					entry.setBounds(entry.getBounds());
+				});
+			}
 			TabPane.setup();
 			this.empty = false;
 			this.url = this.form.getAction();

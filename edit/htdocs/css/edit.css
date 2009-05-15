@@ -221,7 +221,7 @@
 }
 
 #edit .edit-list {
-	/* undo the first separator */
+	/* undo the 10px separator */
 	margin-top: -8px;
 }
 
@@ -229,12 +229,12 @@
 	height: 10px;
 }
 
-#edit .edit-list-entry td {
-	vertical-align: middle;
-}
-
 #edit .edit-list-handle {
 	margin-left: 8px;
+}
+
+#edit .edit-list-entry td {
+	vertical-align: middle;
 }
 
 /* error */
