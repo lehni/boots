@@ -84,7 +84,9 @@ EditForm = Base.extend({
 				var width = (field.getWidth() - 2 * (width('border') + width('padding'))) + 'px';
 				field.setStyles({
 					width: width,
-					maxWidth: width // Prevent textareas from resizing horizontally
+					// Prevent textareas from resizing horizontally. 
+					// Setting maxWidth instead of max-width breaks Firefox. Why?
+					'max-width': width
 				});
 			});
 			TabPane.setup();
