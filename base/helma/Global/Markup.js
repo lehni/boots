@@ -34,7 +34,7 @@ Markup = {
 					// If the tag definition contains white space, we have parameters.
 					// If such a tag ended with / and the last char is not white, it's not actually an empty
 					// tag but the / is part of the parameter:
-					if (empty && /\s/.test(definition) && !/\s/.test(definition.charAt(definition.length - 1))) {
+					if (empty && /\s.*[^\s]$/.test(definition)) {
 						empty = false;
 						definition += '/';
 					}
