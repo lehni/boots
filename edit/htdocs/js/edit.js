@@ -964,9 +964,15 @@ EditForm.register(new function() {
 		list_add: function(editForm, name, html) {
 			var list = $('#edit-list-' + name, editForm.form);
 			list.counter = list.counter || 0;
+			var id = 'n' + list.counter++;
 			// Replace id placeholder with generated id, mark with 'n' for new
-			var entry = html.replace(/<%id%>/g, 'n' + list.counter++);
-			list.injectBottom(entry);
+			html = html.replace(/<%id%>/g, id);
+			list.injectBottom(html);
+			if (Browser.GECKO) {
+				// This is part of the GECKO height resizing fix described above
+				var entry = $('#edit-list-entry-' + name + '_' + id);
+				entry.setBounds(entry.getBounds());
+			}
 			this.list_update(editForm, name);
 		},
 
