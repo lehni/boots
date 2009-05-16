@@ -88,7 +88,6 @@ Property = Base.extend({
 				for (var name in properties) {
 					var property = properties[name];
 					property._set.call(object, property._get.call(object));
-					app.log('Commiting ' + name + ' on ' + object + ': ' + object[name]);
 				}
 			}
 			this.objects = {};

@@ -545,6 +545,35 @@ EditForm.inject(new function() {
 				}
 			},
 
+			// Helpers for creation of object within the editing framework
+			/**
+			 * Creates an instance of a given gconstructor and sets up structures
+			 * so it can work within the editing framework.
+			 * Also makes sure that when the instance's initialize is called,
+			 * the object already knows its edit parent.
+			 */ 
+			createObject: function(ctor, item) {
+				// Creating with ctor.dont parameter causes initialize not to be called.
+				// We call it manually here, after creating the node through EditNode.get,
+				// so getEditParent will work in initialize already.
+				// This is hackish and rooted deep down in Bootstraps,
+				// but also works if bootstraps is not used
+				var object = new ctor(ctor.dont);
+				object.setCreating(true);
+				// Now get the node. This gets getEditParent to work.
+				node = EditNode.get(object, item);
+				// Now call initialize that we suppressed above when creating ctor:
+				if (object.initialize) {
+					var ret = object.initialize();
+					// TODO: Check if this really works?
+					if (ret && ret != object) {
+						object = ret;
+						object.setCreating(true);
+					}
+				}
+				return object;
+			},
+
 			// Constants
 
 			// A constant object for item.convert to return when nothing should be

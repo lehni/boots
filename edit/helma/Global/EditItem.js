@@ -925,9 +925,9 @@ EditableListItem = ListItem.extend({
 
 	apply: function(value) {
 		// Produce positions
-		var positions = value.split(',').each(function(id, index) {
+		var positions = value ? value.split(',').each(function(id, index) {
 			this[id] = index;
-		}, {});
+		}, {}) : {};
 		var changed = false;
 		var name = this.getEditName();
 		// Scan through all values and group by id
@@ -976,7 +976,14 @@ EditableListItem = ListItem.extend({
 			// Support an onCreate handler that can produce special types
 			// e.g. based on the file type. That's also the only reason
 			// why we collect all values above, so that onCreate can analyse them.
-			var obj = this.onCreate ? this.onCreate(create[id]) : new proto();
+			var obj = this.onCreate && this.onCreate(create[id]);
+			if (obj) {
+				// Make sure all additional things are setup correctly
+				obj.setCreating(true);
+			} else {
+				// Use createObject to handle all the special editing stuff
+				obj = EditForm.createObject(proto, this);
+			}
 			if (obj) {
 				// Just like in the rest of edit lib, apply first, persist after
 				var form = this.getEditForm(obj, id);

@@ -33,6 +33,7 @@ HopObject.inject({
 			// not setCreating(false), since they might still be transient after.
 			if (id)
 				HopObject.registerById(id, this);
+			User.makeEditable(this);
 		} else {
 			if (this.cache.id)
 				HopObject.unregisterById(this.cache.id);

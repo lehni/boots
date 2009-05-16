@@ -156,28 +156,8 @@ EditForm.register({
 				// get the prototype constructor and create an instance:
 				var ctor = typeof prototype == 'string' ? global[prototype] : prototype;
 				if (ctor) {
-					// Creating with ctor.dont parameter causes initialize not to be called.
-					// We call it manually here, after creating the node through EditNode.get,
-					// so getEditParent will work in initialize already.
-					// This is hackish and rooted deep down in Bootstraps,
-					// but also works if bootstraps is not used
-					var object = new ctor(ctor.dont);
-					object.setCreating(true);
-					// Make sure the object is editable even in anonymous mode.
-					User.makeEditable(object);
-					node = EditNode.get(object, item);
-					// Now call initialize that we suppressed above when creating ctor:
-					if (object.initialize) {
-						var ret = object.initialize();
-						if (ret && ret != object) {
-							// TODO: Check if this really works?
-							object = ret;
-							object.setCreating(true);
-							// Make sure the object is editable even in anonymous mode.
-							User.makeEditable(object);
-							node = EditNode.get(object, item);
-						}
-					}
+					var object = EditForm.createObject(ctor, item);
+					var node = EditNode.get(object);
 					form = node.getForm();
 					if (!form) {
 						EditForm.alert('Unable to retrieve edit form from object:\n' + EditForm.getEditName(object));
@@ -281,7 +261,6 @@ EditForm.register({
 			form = parentItem.groupForm;
 		// Erase cached edit stack titleas things might have changed during apply
 		delete node.title;
-		app.log('Applying');
 		try {
 			form.applyItems();
 			// Let the client know that things have been applied here, so the
@@ -291,7 +270,6 @@ EditForm.register({
 			});
 			return EditForm.COMMIT;
 		} catch (e) {
-			app.log('Catching ' + e);
 			if (e instanceof EditException) {
 				form.addResponse({
 					error: {
@@ -302,7 +280,6 @@ EditForm.register({
 				});
 				req.data.edit_back = 0;
 			} else {
-				app.log('Rethrowing' + e);
 				throw e;
 			}
 		}

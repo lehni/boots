@@ -1,11 +1,4 @@
 Post.inject({
-	isEditableBy: function(user) {
-		// remain editable from the same session for 15 minutes
-		return user != null && this.creator == user ||
-			this.cache.sessionId == session._id &&
-			new Date().getTime() - this.modificationDate.getTime() < 1000 * 60 * 15;
-	},
-
 	getEditName: function() {
 		if (this.title)
 			return this.title.truncate(28, '...') + ' [' + this._id + ']';

@@ -219,6 +219,7 @@ User.inject({
 		makeEditable: function(object) {
 			// Make the object editable in anonymous mode, by adding it to 
 			// sesssion.data.createdObjets. See User.canEdit
+			// TODO: Implement a configurable time limit for this?
 			if (!session.user) {
 				if (!session.data.createdObjects)
 					session.data.createdObjects = [];
