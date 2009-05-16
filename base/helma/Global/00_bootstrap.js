@@ -12,8 +12,6 @@ new function() {
 			}
 			if (val !== (src.__proto__ || Object.prototype)[name]) {
 				if (func) {
-					if (/\[native code/.test(val))
-						return;
 					if ((prev = dest[name]) && /\bthis\.base\b/.test(val)) {
 						if (prev._version && prev._version != version)
 							prev = prev._previous;
@@ -123,7 +121,6 @@ new function() {
 
 	Base = Object.inject({
 		_hide: true,
-
 		has: function(name) {
 			return visible(this, name);
 		},

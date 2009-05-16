@@ -82,7 +82,6 @@ new function() {
 	});
 
 	Base = Object.extend({
-
 		has: function(name) {
 			return visible(this, name);
 		},
