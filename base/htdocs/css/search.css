@@ -1,0 +1,30 @@
+.apple-search {
+	background: white url('/static/base/media/search_bg.gif') repeat-x top left;
+	font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif;
+	font-size: 11px;
+	float: left;
+	border: 0;
+	height: 19px;
+	padding: 3px;
+	color: #000;
+}
+
+.apple-search-left {
+	background: white url('/static/base/media/search_left.gif') no-repeat top left;
+	float: left;
+	width: 19px; height: 19px;
+}
+
+.apple-search-right {
+	background: white url('/static/base/media/search_right.gif') no-repeat top left;
+	float: left;
+	width: 19px; height: 19px;
+}
+
+.apple-search-clear {
+	background: white url('/static/base/media/search_clear.gif') no-repeat top left;
+}
+
+.apple-search-placeholder {
+	color: #888;
+}
