@@ -47,33 +47,43 @@ EditForm.inject(new function() {
 						var node = EditNode.get(fullId);
 						// check again that we have the rights to edit:
 						if (node) {
-							// call the handler and commit changes if there are any
+							// Call the handler and commit changes if there are any
 							// use handlers as the object, so the handler can other handlers by using "this".
 							node.log(mode);
 							// Make sure a new form is produced each time when editing
 							var form = node.getForm(mode == 'edit');
+							var oldHref = base.href();
 							var result = handler.call(handlers, base, node.object, node, form);
 							if (result == EditForm.COMMIT) {
 								res.commit();
-								var renderAction = EditForm.ACTION_RENDER + '_action';
-								if (base[renderAction]) {
-									if (base.isTransient()) {
-										// The object has been removed in the meantime
-										// Redirect to its parent.
-										var parent = base._parent;
-										if (!parent) {
-											// Find parent in path:
-											for (var i = path.length - 1; i > 0; i--) {
-												var obj = path[i];
-												if (obj == base) {
-													parent = path[i - 1];
-													break;
-												}
+								var redirect = null;
+								if (base.isTransient()) {
+									// The object has been removed in the meantime
+									// Redirect to its parent.
+									redirect = base._parent;
+									if (!redirect) {
+										// Find parent in path:
+										for (var i = path.length - 1; i > 0; i--) {
+											var obj = path[i];
+											if (obj == base) {
+												redirect = path[i - 1];
+												break;
 											}
 										}
-										if (parent)
-											res.data.editResponse.redirect = parent.href();
-									} else {
+									}
+								} else if (base.href() != oldHref) {
+									// A renaming has lead to a changing href. We
+									// need to redirect to the new place in order
+									// to be able to continue editing.
+									redirect = base;
+								}
+								if (redirect) {
+									res.data.editResponse.redirect = redirect.href();
+								} else {
+									// Render the updated html and cause edit.js
+									// to update on the fly.
+									var renderAction = EditForm.ACTION_RENDER + '_action';
+									if (base[renderAction]) {
 										// Render the page into res.data.editResponse.page:
 										res.push();
 										base[renderAction]();

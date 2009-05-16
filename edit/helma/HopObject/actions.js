@@ -3,7 +3,7 @@ HopObject.inject({
 	edit_action: function() {
 		// sleep(1000);
 		EditForm.handle(this);
-		/*
+		/* TODO: What to do with this?
 		if (!EditForm.handle(this) && this.login_action)
 			this.login_action();
 		*/
