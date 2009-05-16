@@ -45,6 +45,10 @@ Html = new function() {
 			}
 		}.toRender(),
 
+		script: function(attributes, out) {
+			return this.element('script', attributes, null, out);
+		},
+
 		image: function(attributes, out) {
 			if (attributes.title == null) {
 				attributes.title = attributes.alt ? encode(attributes.alt) : '';
@@ -126,27 +130,35 @@ Html = new function() {
 
 // Macros
 
-function input_macro(params) {
-	if (params.name) {
-		var value = req.data[params.name];
+function input_macro(param) {
+	if (param.name) {
+		var value = req.data[param.name];
 		if (value) {
 			value = value.toString();
-			if (params.type == 'radio' || params.type == 'checkbox')
-				params.current = value;
-			else params.value = value;
+			if (param.type == 'radio' || param.type == 'checkbox')
+				param.current = value;
+			else param.value = value;
 		}
 	}
-	Html.input(params, res);
+	Html.input(param, res);
 }
 
-function textarea_macro(params) {
-	Html.textarea(params, res);
+function textarea_macro(param) {
+	Html.textarea(param, res);
 }
 
-function select_macro(params) {
-	Html.select(params, res);
+function select_macro(param) {
+	Html.select(param, res);
+}
+
+function script_macro(param) {
+	// TODO: Find a way to find file locally and add lastModified header?
+	// or use request and etag?
+	if (param.src)
+		param.src += '?' + Math.random();
+	Html.script(param, res);
 }
 
 // dummy macro named __ in order to create comments in skins like this: <%__ comment %>
-function ___macro(params) {
+function ___macro(param) {
 }
