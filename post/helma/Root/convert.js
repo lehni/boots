@@ -1,6 +1,6 @@
 Root.inject({
 	convert_action: function() {
-	//	if (User.canEdit(this)) {
+		if (User.canEdit(this)) {
 			var con = getDBConnection("main");
 			var nodeId = con.executeRetrieval("SELECT MAX(id) + 1 FROM nodes;");
 			if (nodeId.next())
@@ -37,6 +37,6 @@ Root.inject({
 				con.executeCommand('UPDATE resources SET node_id = ' + nodeId + ' WHERE topic_id = ' + topicId + ';');
 				nodeId++;
 			}
-	//	}
+		}
 	}
 });
