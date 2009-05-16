@@ -987,7 +987,6 @@ DomElement = Base.extend(new function() {
 				elements[elements.length] = el;
 			} catch (e) {} 
 			if (props) this.set(props);
-			return this;
 		},
 
 		statics: {
@@ -1472,7 +1471,7 @@ Window = DomWindow = DomElement.extend({
 	initialize: function(param) {
 		var win;
 		if (param.location && param.frames && param.history) {
-			win = this.base(param);
+			win = this.base(param) || this;
 		} else {
 			if (typeof param == 'string')
 				param = { url: param };
@@ -1489,7 +1488,7 @@ Window = DomWindow = DomElement.extend({
 				if (!/^(focus|confirm|url|name)$/.test(key))
 					this.push(key + '=' + (val + 0));
 			}, []).join();
-			win = this.base(window.open(param.url, param.name.replace(/\s+|\.+|-+/gi, ''), str));
+			win = this.base(window.open(param.url, param.name.replace(/\s+|\.+|-+/gi, ''), str)) || this;
 			if (win && param.focus)
 				win.focus();
 		}
