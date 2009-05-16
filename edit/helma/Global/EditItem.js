@@ -704,11 +704,15 @@ MultiSelectItem = SelectItem.extend({
 			var obj = HopObject.get(id);
 			// See if the object is an instance of any of the allowed
 			// prototypes, and if so, add its id to the list
-			if (obj
-				&& (!prototypes || prototypes.find(function(proto) {
+			if (obj) {
+				if (prototypes && !prototypes.find(function(proto) {
 					return obj instanceof proto;
-				})))
-				this.push(stringIds ? obj._id : obj);
+				})) {
+					app.log('Filtering out ' + obj);
+				} else {
+					this.push(stringIds ? obj._id : obj);
+				}
+			}
 		}, []);
 
 		// Create a string for string id lists:
@@ -722,23 +726,20 @@ MultiSelectItem = SelectItem.extend({
 				// The code bellow automatically decides which mode to use by
 				// looking at the first available option.
 				var options = this.collection.list();
-				var first = options.first;
-				if (first) {
-					// Look-up table for used items
-					var used = {};
-					for (var i = 0; i < value.length; i++) {
-						var obj = value[i];
-						used[obj._id] = true;
-						if (obj)
-							changed = this.setPosition(obj, i, true) || changed;
-					}
-					// Now make the unused items invisible:
-					for (var i = 0; i < options.length; i++) {
-						var obj = options[i];
-						var pos = value.length + i;
-						if (!used[obj._id])
-							changed = this.setPosition(obj, pos, false) || changed;
-					}
+				// Look-up table for used items
+				var used = {};
+				for (var i = 0; i < value.length; i++) {
+					var obj = value[i];
+					used[obj._id] = true;
+					if (obj)
+						changed = this.setPosition(obj, i, true) || changed;
+				}
+				// Now make the unused items invisible:
+				for (var i = 0; i < options.length; i++) {
+					var obj = options[i];
+					var pos = value.length + i;
+					if (!used[obj._id])
+						changed = this.setPosition(obj, pos, false) || changed;
 				}
 			}
 		} else {
