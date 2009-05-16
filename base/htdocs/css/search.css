@@ -28,3 +28,7 @@
 .apple-search-placeholder {
 	color: #888;
 }
+
+input[type=search] {
+	font-size: 11px;
+}

@@ -23,7 +23,7 @@ SearchField = Input.extend({
 			this.injectBefore('span', { 'class': 'apple-search-left' });
 			var right = this.injectAfter('span', { 'class': 'apple-search-right' });
 			this.addClass('apple-search');
-			this.setWidth(this.getWidth() - 48);
+			this.setWidth(this.getWidth() - 50); // 2 * 19 + 4 * 3
 			if (!this.getValue()) {
 				showPlaceholder(true);
 			} else {
