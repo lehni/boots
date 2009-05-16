@@ -3,8 +3,8 @@
 <% else %>
 <p>Please enter your username and password.</p>
 <% end %>
-<form method="post" action="<%= this.href(req.action) %>" autocomplete="off">
-	<table border="0" cellspacing="0" cellpadding="3">
+<form class="edit-login" method="post" action="<%= this.href(req.action) %>" autocomplete="off">
+	<table>
 		<tr>
 			<td>Username:</td>
 			<td><% input type="text" name="username" size="15" %></td>

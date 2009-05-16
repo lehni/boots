@@ -1,6 +1,6 @@
 <%-- Use an id for form here, so css styles can be overridden in inline editors, even when other styles are forced through ids --%>
-<form id="edit" class="edit" action="<% param.action %>" target="" method="post" enctype="multipart/form-data" action="javascript:return false;" onSubmit="return false;" autocomplete="off">
-<table class="edit">
+<form id="edit" action="<% param.action %>" target="" method="post" enctype="multipart/form-data" action="javascript:return false;" onSubmit="return false;" autocomplete="off">
+<table>
 <tr><td colspan="2"><%= param.items %></td></tr>	
 <tr class="edit-footer"><td class="edit-buttons-left"><%= param.leftButtons %></td><td class="edit-buttons-right"><%= param.rightButtons %></td></tr>
 </table>

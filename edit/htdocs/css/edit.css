@@ -1,4 +1,4 @@
-/* Use an id #edit for form here, so css can be overridden in inline editors, even when other styles are forced through ids */
+/* Use an id #edit for form here instead of a class, so css can be overridden in inline editors, even when other styles are forced through ids */
 
 #edit {
 	margin: 0px;
