@@ -48,23 +48,24 @@ Post.inject({
 		} else {
 			form.add([ 
 				{
-					label: 'Name', type: 'string', name: 'username', trim: true,
+					label: 'Name', type: 'string', name: 'username', length: 32, trim: true,
 					requirements: {
-						notNull: true, maxLength: 32,
+						notNull: true,
 						uniqueIn: { 
 							value: root.users, message:
 							'\nThis user already exists.\nChoose a different name.'
 						}
 					}
-				}, 	{
+				},
+				{
 					label: 'Website', type: 'string', name: 'website',
 					requirements: {
 						uri: true
 					}
 				}
-			], [			
+			], [
 				{
-					label: 'Email', type: 'string', name: 'email',  trim: true,
+					label: 'Email', type: 'string', name: 'email', length: 255, trim: true,
 					requirements: {
 						notNull: {
 							value: true, message: 'Needs to be specified.\nYour address will not be published.'
@@ -80,10 +81,9 @@ Post.inject({
 			]);
 		}
 		form.add({
-			label: node.POST_TITLE, type: 'string', name: 'title', trim: true,
+			label: node.POST_TITLE, type: 'string', name: 'title', length: 64, trim: true,
 			requirements: {
 				notNull: { value: true, message: 'Please specify a title.' },
-				maxLength: 64
 			}
 		});
 		form.add({
@@ -207,7 +207,6 @@ Post.inject({
 		var param = {
 			id: this.getEditId(),
 			title: withLink ? this.node.renderLink(title) : title,
-			isEditable: User.canEdit(this),
 			resources: resources,
 			postClass: this.node.POST_CLASS,
 			styleClass: asFirst ? this.node.POST_CLASS_FIRST : this.node.POST_CLASS_OTHERS
