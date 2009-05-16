@@ -107,7 +107,7 @@ renderLink = function(param, out) {
 	} else { // object / id ; action
 		var object = param.object || param.id && HopObject.get(param.id);
 		if (object)
-			url = param.object.href(param.action);
+			url = object.href(param.action);
 	}
 	if (param.query)
 		url += (param.query[0] == '?' ? '' : url.indexOf('?') != -1 ? '&' : '?')
