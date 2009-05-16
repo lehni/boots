@@ -1,6 +1,8 @@
 Root.inject({
 	checkNotifications: function() {
 		var notifications = this.notifications.list();
+		var notificationTitle = getProperty('notificationTitle')
+				|| getProperty('serverName') + ': Discussion Notification';
 		for (var i = 0; i < notifications.length; i++) {
 			// notifications are grouped, so walk through the subgroup and find the topics
 			var notifications = notifications[i].list();
@@ -31,7 +33,7 @@ Root.inject({
 						var mail = new Mail();
 						mail.setFrom(getProperty('serverEmail'));
 						mail.setTo(username + ' <' + email + '>');
-						mail.setSubject(getProperty('notificationTitle'));
+						mail.setSubject();
 						mail.addPart(text);
 						mail.send();
 					} catch (e) {
