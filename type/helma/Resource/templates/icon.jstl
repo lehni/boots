@@ -1,5 +1,5 @@
 <div class="<%= param.small ? "icon-small" : "icon" %>">
-<%= this.renderLink($icon) %><%= param.details %>
+<% this.link $icon %><%= param.details %>
 </div>
 
 <% $icon %>
