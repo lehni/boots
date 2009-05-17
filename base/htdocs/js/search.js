@@ -4,11 +4,7 @@ SearchField = Input.extend({
 	initialize: function() {
 		this.removeClass('hidden');
 		if (Browser.WEBKIT) {
-			this.setProperties({
-				type: 'search',
-				autosave: 'apple_search',
-				results: 5
-			});
+			this.setProperty('type', 'search');
 		} else {
 			var that = this, clear = false;
 			var placeholder = this.getProperty('placeholder');
