@@ -214,10 +214,13 @@ Function.inject(new function() {
 Enumerable = new function() {
 	Base.iterate = function(fn) {
 		return function(iter, bind) {
-			if (!iter) iter = function(val) { return val };
-			else if (typeof iter != 'function') iter = function(val) { return val == iter };
+			var func = !iter
+				? function(val) { return val }
+				: typeof iter != 'function'
+					? function(val) { return val == iter }
+					: iter;
 			if (!bind) bind = this;
-			return fn.call(this, iter, bind, this);
+			return fn.call(this, func, bind, this);
 		};
 	};
 
@@ -380,7 +383,6 @@ $type = Base.type;
 
 Hash = Base.extend(Enumerable, {
 	_hide: true,
-	_beans: true,
 	_generics: true,
 
 	initialize: function() {
@@ -585,8 +587,12 @@ Array.inject(new function() {
 		shuffle: function() {
 			var res = this.clone();
 			var i = this.length;
-			while (i--) res.swap(i, Math.rand(0, i + 1));
+			while (i--) res.swap(i, Math.rand(i + 1));
 			return res;
+		},
+
+		pick: function() {
+			return this[Math.rand(this.length)];
 		},
 
 		statics: {
@@ -722,8 +728,10 @@ RegExp.inject({
 	_type: 'regexp'
 });
 
-Math.rand = function(min, max) {
-	return Math.floor(Math.random() * (max - min) + min);
+Math.rand = function(first, second) {
+	return second == undefined
+		? Math.rand(0, first)
+		: Math.floor(Math.random() * (max - min) + min);
 }
 
 Array.inject({

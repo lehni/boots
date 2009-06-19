@@ -165,10 +165,13 @@ Function.inject(new function() {
 Enumerable = new function() {
 	Base.iterate = function(fn) {
 		return function(iter, bind) {
-			if (!iter) iter = function(val) { return val };
-			else if (typeof iter != 'function') iter = function(val) { return val == iter };
+			var func = !iter
+				? function(val) { return val }
+				: typeof iter != 'function'
+					? function(val) { return val == iter }
+					: iter;
 			if (!bind) bind = this;
-			return fn.call(this, iter, bind, this);
+			return fn.call(this, func, bind, this);
 		};
 	};
 
@@ -558,8 +561,12 @@ Array.inject(new function() {
 		shuffle: function() {
 			var res = this.clone();
 			var i = this.length;
-			while (i--) res.swap(i, Math.rand(0, i + 1));
+			while (i--) res.swap(i, Math.rand(i + 1));
 			return res;
+		},
+
+		pick: function() {
+			return this[Math.rand(this.length)];
 		},
 
 		statics: {
@@ -700,8 +707,10 @@ RegExp.inject({
 	_type: 'regexp'
 });
 
-Math.rand = function(min, max) {
-	return Math.floor(Math.random() * (max - min) + min);
+Math.rand = function(first, second) {
+	return second == undefined
+		? Math.rand(0, first)
+		: Math.floor(Math.random() * (max - min) + min);
 }
 
 Array.inject({
@@ -915,7 +924,7 @@ DomElement = Base.extend(new function() {
 				(!el.parentNode || !el.offsetParent))) {
 	            if (el) {
 					var obj = el._wrapper;
-					if (obj && obj.dispose) obj.dispose();
+					if (obj && obj.finalize) obj.finalize();
 					el._wrapper = el._unique = null;
 				}
 				if (!force) elements.splice(i, 1);
@@ -1109,7 +1118,7 @@ DomElement.inject(new function() {
 	}, [ 
 		'value', 'accessKey', 'cellPadding', 'cellSpacing', 'colSpan',
 		'frameBorder', 'maxLength', 'readOnly', 'rowSpan', 'tabIndex',
-		'useMap'
+		'useMap', 'width', 'height'
 	].associate(function(name) {
 		return name.toLowerCase();
 	}), bools);
@@ -1289,9 +1298,9 @@ DomElement.inject(new function() {
 		},
 
 		removeChildren: function() {
-			var children = this.getChildren();
-			children.remove();
-			return children;
+			var nodes = this.getChildNodes();
+			nodes.remove();
+			return nodes;
 		},
 
 		replaceWith: function(el) {
@@ -1910,7 +1919,7 @@ DomElement.inject(new function() {
 
 		triggerEvent: callEvent(false),
 
-		dispose: function() {
+		finalize: function() {
 			this.removeEvents();
 		}
 	};
