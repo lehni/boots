@@ -194,7 +194,7 @@ Function.inject(new function() {
 		bind: function(bind, args) {
 			var that = this;
 			return function() {
-				return that.apply(bind, args && args.concat(Array.create(arguments)) || arguments);
+				return that.apply(bind, args);
 			}
 		},
 
@@ -202,7 +202,7 @@ Function.inject(new function() {
 			var that = this;
 			return function() {
 				try {
-					return that.apply(bind, args && args.concat(Array.create(arguments)) || arguments);
+					return that.apply(bind, args);
 				} catch (e) {
 					return e;
 				}
@@ -726,6 +726,9 @@ Number.inject({
 
 RegExp.inject({
 	_type: 'regexp'
+});
+
+Date.inject({
 });
 
 Math.rand = function(first, second) {
