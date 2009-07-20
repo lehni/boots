@@ -953,15 +953,15 @@ DomElement = Base.extend(new function() {
 	function dispose(force) {
 		for (var i = elements.length - 1; i >= 0; i--) {
 			var el = elements[i];
-	        if (force || (!el || el != window && el != document &&
+			if (force || (!el || el != window && el != document &&
 				(!el.parentNode || !el.offsetParent))) {
-	            if (el) {
+				if (el) {
 					var obj = el._wrapper;
 					if (obj && obj.finalize) obj.finalize();
 					el._wrapper = el._unique = null;
 				}
 				if (!force) elements.splice(i, 1);
-	        }
+			}
 		}
 	}
 
@@ -1839,7 +1839,7 @@ DomEvent = Base.extend(new function() {
 							(function() {
 								try {
 									temp.$.doScroll('left');
-                                    temp.insertBottom(DomElement.get('body')).setHtml('temp').remove();
+									temp.insertBottom(DomElement.get('body')).setHtml('temp').remove();
 									doc.onDomReady();
 								} catch (e) {
 									arguments.callee.delay(50);
