@@ -435,6 +435,6 @@ ListTag = MarkupTag.extend({
 	_tags: 'list',
 
 	render: function(content) {
-		return '<ul>' + content + '</ul>';
+		return '<ul><li>' + content.replaceAll('<br />', '').trim().split(/\r\n|\n|\r/mg).join('</li>\n<li>') + '</li></ul>';
 	}
 });
