@@ -1,6 +1,7 @@
 Root.inject({
 	convert_action: function() {
 		if (User.canEdit(this)) {
+			return;
 			var con = getDBConnection('main');
 			/*
 			// Scripts
