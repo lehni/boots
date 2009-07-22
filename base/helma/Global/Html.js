@@ -51,9 +51,9 @@ Html = new function() {
 
 		image: function(attributes, out) {
 			if (attributes.title == null) {
-				attributes.title = attributes.alt ? encode(attributes.alt) : '';
+				attributes.title = attributes.alt || '';
 			} else {
-				attributes.title = encode(attributes.title);
+				attributes.title = attributes.title;
 			}
 			if (attributes.border == null)
 				attributes.border = 0;
