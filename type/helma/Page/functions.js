@@ -13,7 +13,8 @@ Page.inject({
 				if (this == root) {
 					this.name = 'root';
 				} else {
-					this.name = this.getEditParent().getUniqueChildName(this, value, 32);
+					this.name = this.getEditParent().getUniqueChildName(this,
+							value, getProperty('maxNameLength', 64).toInt());
 				}
 			}
 		});

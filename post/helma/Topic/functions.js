@@ -68,7 +68,8 @@ Topic.inject({
 
 	setTitle: function(title) {
 		// If the title of the first post was changed, update the unique name of the node
-		this.name  = this.getEditParent().getUniqueChildName(this, title, 32);
+		this.name  = this.getEditParent().getUniqueChildName(this,
+				title, getProperty('maxNameLength', 64).toInt());
 	},
 
 	getDisplayName: function() {
