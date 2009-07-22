@@ -498,11 +498,12 @@ EditForm.register({
 			var isRoot = obj == root;
 
 			res.contentType = 'text/html';
+			// TODO: Use template
 			res.write('<ul id="edit-choose-children-' + objId + '">');
 			var children = obj.list();
 			for (var i = 0; i < children.length; i++) {
 				var child = children[i];
-				if (child != null) {
+				if (child) {
 					var name = EditForm.getEditName(child);
 					var id = child.getFullId();
 					res.write('<li>');
