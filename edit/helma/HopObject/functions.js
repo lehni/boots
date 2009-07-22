@@ -201,7 +201,9 @@ HopObject.inject({
 				case 'remove':
 					item = {
 						mode: 'remove', title: title || 'Delete',
-						confirm: 'Do you really want to delete "' + EditForm.getEditName(this) + '"' + '?',
+						// Can't use double quotes here since they break html attributes.
+						// TODO: Find a way around this, e.g. using encodeAttributes
+						confirm: 'Do you really want to delete \'' + EditForm.getEditName(this) + '\'' + '?',
 						edit_item: param.item, edit_back: 1
 					};
 					break;

@@ -41,9 +41,22 @@ function encodeJs(str, singleQuotes) {
 function encodeHex(str) {
 	var hex = '';
 	// two \\ needed because it's javascript encoded (for the client side)
-	for (var i = 0; i < str.length; i++)
-		hex += '\\u' + str.charCodeAt(i).toPaddedString(4, 16);
+	for (var i = 0; i < str.length; i++) {
+		var ch = str.charCodeAt(i);
+		hex += ch < 256
+			? '\\x' + ch.toPaddedString(2, 16)
+			: '\\u' + ch.toPaddedString(4, 16);
+	}
 	return hex;
+}
+
+/**
+ * Encodes strings for html attributes, replacing quotes with their hex values
+ */
+function encodeAttribute(str) {
+	return str.replace(/['"]/gm, function(match) {
+		return encodeHex(match);
+	});
 }
 
 // encodeSql is the same as encodeJs:
