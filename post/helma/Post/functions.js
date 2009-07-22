@@ -202,7 +202,16 @@ Post.inject({
 			title: withLink ? this.node.renderLink(title) : title,
 			resources: resources,
 			postClass: this.node.POST_CLASS,
-			styleClass: asFirst ? this.node.POST_CLASS_FIRST : this.node.POST_CLASS_OTHERS
+			styleClass: asFirst ? this.node.POST_CLASS_FIRST : this.node.POST_CLASS_OTHERS,
+			// We need to process this before all the renderFields / Footer / Outer
+			// methods since Markup modified param.resources already.
+			// Therefore it canneot be moved to main.jstl until these render*
+			// methods are converted to macros that can be called from there too.
+			text: Markup.render(this.text, {
+				resources: resources,
+				removeUsedResources: true,
+				encoding: 'all'
+			})
 		};
 		// first posts in nodes also can show fields of the node (e.g. for scripts, gallery)
 		if (this.isFirst) {
