@@ -321,8 +321,11 @@ ResourceTag = MarkupTag.extend({
 			param.resourceLookup = {};
 			if (param.resources) {
 				for (var i = 0; i < param.resources.length; i++) {
-					var resource = param.resources[i]
-					param.resourceLookup[resource.name] = { resource: resource, index: i };
+					var resource = param.resources[i];
+					param.resourceLookup[resource.name] = {
+						resource: resource,
+						index: i
+					};
 				}
 			}
 		}
@@ -342,7 +345,6 @@ ResourceTag = MarkupTag.extend({
 				if (param.resourceLookup[param.resources[i].name].used)
 					param.resources.splice(i, 1);
 		}
-		delete param.resourceLookup;
 	},
 
 	// Defined outside render() so it can be overridden by applications.
@@ -353,6 +355,7 @@ ResourceTag = MarkupTag.extend({
 
 	render: function(content, param) {
 		var resource = this.getResource(content, param);
+		app.log('resource ' + content + ' ' + param.resources);
 		if (resource)
 			return this.renderIcon(resource, param);
 	}
