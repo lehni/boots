@@ -2,6 +2,21 @@ Root.inject({
 	convert_action: function() {
 		if (User.canEdit(this)) {
 			var con = getDBConnection('main');
+			/*
+			// Scripts
+			var scripts = con.executeRetrieval('SELECT id, name FROM resources where name like "%.js"');
+			while (scripts.next()) {
+				var id = scripts.getColumnItem('id');
+				var name = scripts.getColumnItem('name').match(/(.*)\.js/)[1];
+				if (/\s/.test(name)) name += ' ';
+				else if (/-/.test(name)) name += '-';
+				else if (/_/.test(name)) name += '_';
+				else name += '-';
+				name += 'previous.js';
+				con.executeCommand('UPDATE resources SET name = "' + name + '" WHERE id = ' + id + ';');
+				res.write(name + '<br>');
+			}
+			*/
 			// User role flags
 			var users = con.executeRetrieval('SELECT id, roles FROM users');
 			while (users.next()) {
