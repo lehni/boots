@@ -6,22 +6,8 @@ ALTER TABLE resources ADD visible TINYINT UNSIGNED NULL AFTER name;
 
 UPDATE nodes SET visible = 1 WHERE position IS NOT NULL;
 UPDATE topics SET visible = 1 WHERE position IS NOT NULL;
-UPDATE resources SET visible = 1 WHERE position IS NOT NULL;
-
-# all resources that are attached to nodes should be visible (only thumbnails for now)
-UPDATE resources SET visible = 1 WHERE topic_id IS NOT NULL;
-
-#UPDATE nodes SET visible = 1;
-#UPDATE topics SET visible = 1;
-#UPDATE resources SET visible = 1;
-
-#UPDATE nodes SET position = null where visible <=> 1;
-#UPDATE topics SET position = null where visible <=> 1;
-#UPDATE resources SET position = null where visible <=> 1;
-
-#ALTER TABLE nodes DROP visible;
-#ALTER TABLE topics DROP visible;
-#ALTER TABLE resources DROP visible;
+# all resources should be visible (only thumbnails for now)
+UPDATE resources SET visible = 1 ;
 
 # 2. add related_ids to general nodes
 
