@@ -145,7 +145,7 @@ Function.inject(new function() {
 		bind: function(bind, args) {
 			var that = this;
 			return function() {
-				return that.apply(bind, args || []);
+				return that.apply(bind, args || arguments);
 			}
 		},
 
@@ -153,7 +153,7 @@ Function.inject(new function() {
 			var that = this;
 			return function() {
 				try {
-					return that.apply(bind, args || []);
+					return that.apply(bind, args || arguments);
 				} catch (e) {
 					return e;
 				}
@@ -1127,7 +1127,7 @@ DomElement = Base.extend(new function() {
 			isAncestor: function(el, parent) {
 				return !el ? false : el.ownerDocument == parent ? true
 					: Browser.WEBKIT && Browser.VERSION < 420
-						? Array.create(parent.getElementsByTagName(el.tagName)).indexOf(el) != -1
+						? Array.indexOf(parent.getElementsByTagName(el.tagName), el) != -1
 						: parent.contains 
 							? parent != el && parent.contains(el)
 							: !!(parent.compareDocumentPosition(el) & 16)

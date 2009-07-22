@@ -194,7 +194,7 @@ Function.inject(new function() {
 		bind: function(bind, args) {
 			var that = this;
 			return function() {
-				return that.apply(bind, args || []);
+				return that.apply(bind, args || arguments);
 			}
 		},
 
@@ -202,7 +202,7 @@ Function.inject(new function() {
 			var that = this;
 			return function() {
 				try {
-					return that.apply(bind, args || []);
+					return that.apply(bind, args || arguments);
 				} catch (e) {
 					return e;
 				}
