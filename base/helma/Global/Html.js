@@ -154,8 +154,10 @@ function select_macro(param) {
 function script_macro(param) {
 	// TODO: Find a way to find file locally and add lastModified header?
 	// or use request and etag?
+	/*
 	if (param.src)
 		param.src += '?' + Math.random();
+	*/
 	Html.script(param, res);
 }
 
