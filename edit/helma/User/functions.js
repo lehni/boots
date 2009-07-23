@@ -4,6 +4,11 @@
 // Flags to check single attributes. A role consists of more of one of these
 // e.g. the superuser has all the flags set.
 
+// TODO: Consider separating flags from combined roles for easier management,
+// e.g. User.READ / POST / EDIT / DISABLED / UNVERIFIED
+// vs   User.READER / POSTER (includes READER), EDITOR (includes POSTER), etc.
+// Maybe separate with prefix... UserRole.READ, UserRole.POST, vs. User.READER
+
 User.NONE = 			0x0000;
 User.READER =			0x0001;
 User.POSTER =			0x0002;
@@ -48,11 +53,12 @@ User.inject({
 			tab.add({ label: 'Password', name: 'password', type: 'password', length: 16, onApply: this.onApplyPassword });
 		if (isAdmin && !isSameUser && !editSuperuser) {
 			var roles = [
-				{ name: 'Editor', value: User.READER | User.EDITOR },
-				{ name: 'Admin', value: User.READER | User.EDITOR | User.ADMINISTRATOR }
+				{ name: 'Poster', value: User.READER | User.POSTER },
+				{ name: 'Editor', value: User.READER | User.POSTER | User.EDITOR },
+				{ name: 'Admin', value: User.READER | User.POSTER | User.EDITOR | User.ADMINISTRATOR }
 			];
 			if (isSuperuser)
-				roles.push({ name: 'Superuser', value: User.READER | User.EDITOR | User.ADMINISTRATOR | User.SUPERUSER });
+				roles.push({ name: 'Superuser', value: User.READER | User.POSTER | User.EDITOR | User.ADMINISTRATOR | User.SUPERUSER });
 			tab.add({ label: 'Role', name: 'roles', type: 'select', options: roles });
 		}
 		return form;
@@ -77,13 +83,22 @@ User.inject({
 		return !!(this.roles & role);
 	},
 
-	// call with object = null just to see wether the user is an editor or an admin,
+	// Call with object = null just to see wether the user is an editor or an admin,
 	// otherwise it checks the write access to the object.
-	canEdit: function(object) {
-		return true;
+	canEdit: function(object, item) {
+		if (this.hasRole(User.ADMINISTRATOR)) {
+			// Admins can edit everything
+			return true;
+		} else if (this.hasRole(User.EDITOR)) {
+			// Editors can edit all the objects that are editable by them
+			return !object || 
+				(object.isCreating() && session.user == this) ||
+				object.isEditableBy(this);
+		}
+		return false;
 	},
 
-	isEditableBy: function(user) {
+	isEditableBy: function(user, item) {
 		return user && this == user;
 	},
 
@@ -191,17 +206,16 @@ User.inject({
 			return false;
 		},
 
-		canEdit: function(object) {
+		canEdit: function(object, item) {
 			var user = session.user;
-			if (user && (user.canEdit && user.canEdit(object) ||
-				object.isEditableBy && object.isEditableBy(user))) {
+			if (user && (user.canEdit(object, item) || object.isEditableBy(user, item))) {
 				if (User.isLoginAllowed() || user.hasRole(User.SUPERUSER)) {
 					return true;
 				} else {
 					User.setMessage('loginDisabled');
 					user.logout(false);
 				}
-			} 
+			}
 			if (session.data.createdObjects) {
 				// If in anonymous mode, see if the object or its parent(s) where added
 				// to session.data.createdObjects. Allow editing if they were.

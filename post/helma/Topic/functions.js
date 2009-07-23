@@ -56,9 +56,9 @@ Topic.inject({
 		this.modificationDate = post.modificationDate;
 	},
 
-	isEditableBy: function(user) {
+	isEditableBy: function(user, item) {
 		// delegate to the first post as this is just a container for it
-		return this.getFirstPost().isEditableBy(user);
+		return this.getFirstPost().isEditableBy(user, item);
 	},
 
 	getTitle: function() {

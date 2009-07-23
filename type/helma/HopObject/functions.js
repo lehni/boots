@@ -56,8 +56,12 @@ HopObject.inject({
 		if (!param.href && !param.object)
 			param.object = this;
 		// Default content = encoded display name
-		if (!param.content)
+		if (!param.content) {
 			param.content = encode(this.getDisplayName());
+			// Do not render items with no display name, such as root.downloads
+			if (!param.content)
+				return null;
+		}
 		return renderLink(param, out);
 	},
 

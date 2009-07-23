@@ -117,9 +117,11 @@ Node.inject({
 	renderPostButton: function(param, out) {
 		// If the button is required to be clicked, pass the click action
 		// as a third parameter to the editButtons macro
-		return this.renderTemplate('postButton', {
-			buttons: 'create:' + param.title + (param.click ? ':click' : ''),
-			id: 'new'
-		}, out);
+		if (User.canEdit(this, this.POST_COLLECTION)) {
+			return this.renderTemplate('postButton', {
+				buttons: 'create:' + param.title + (param.click ? ':click' : ''),
+				id: 'new'
+			}, out);
+		}
 	}
 });

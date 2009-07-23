@@ -11,12 +11,8 @@ HopObject.inject({
 		User.autoLogin();
 	},
 
-	isEditableBy: function(user) {
+	isEditableBy: function(user, item) {
 		return false;
-	},
-
-	isEditable: function() {
-		return User.canEdit(this);
 	},
 
 	isCreating: function() {
@@ -178,8 +174,8 @@ HopObject.inject({
 	},
 
 	renderEditButtons: function(param, out) {
-		if (!res.data.preview && (!session.user && param.allowAnonymous || User.canEdit(this))) {
-			var buttons = param.buttons ? param.buttons.split(',') : [];
+		var buttons = param.buttons ? param.buttons.split(',') : [];
+		if (!res.data.preview) {
 			var items = [];
 			for (var i = 0; i < buttons.length; i++) {
 				var button = buttons[i].split(':');
@@ -213,24 +209,26 @@ HopObject.inject({
 					};
 					break;
 				}
-				if (item) {
+				if (item && (!session.user && param.allowAnonymous || User.canEdit(this, item.edit_item))) {
 					items.push(item);
 					item.click = item.scroll = action == 'click';
 				}
 			}
-			param.buttons = items;
-			if (!param.id)
-				param.id = this.getFullId();
-			if (!param.target)
-				param.target = this.getEditId();
-			param.url = path.href('edit');
-			param.popup = param.popup == 'true';
-			if (param.popup) {
-				if (!param.width) param.width = 400;
-				if (!param.height) param.height = 400;
+			if (items.length) {
+				param.buttons = items;
+				if (!param.id)
+					param.id = this.getFullId();
+				if (!param.target)
+					param.target = this.getEditId();
+				param.url = path.href('edit');
+				param.popup = param.popup == 'true';
+				if (param.popup) {
+					if (!param.width) param.width = 400;
+					if (!param.height) param.height = 400;
+				}
+				param.showProgress = EditForm.SHOW_PROGRESS;
+				return this.renderTemplate('editButtons', param, out);
 			}
-			param.showProgress = EditForm.SHOW_PROGRESS;
-			return this.renderTemplate('editButtons', param, out);
 		}
 	},
 

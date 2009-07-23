@@ -35,7 +35,7 @@ Node.inject({
 		return form;
 	},
 
-	isEditableBy: function(user) {
+	isEditableBy: function(user, item) {
 		return user && this.creator == user;
 	},
 

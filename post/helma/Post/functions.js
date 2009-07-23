@@ -29,8 +29,7 @@ Post.inject({
 				node.setNotification(value, this.creator, this.getUserEmail(), this.getUserName());
 			}
 		};
-		// TODO: add POSTER, and cosider renaming from name to role (EDITOR -> EDIT...)
-		if (User.hasRole(User.EDITOR)) {
+		if (User.hasRole(User.POSTER)) {
 			form.add([
 				{
 					suffix: '<b>Posting as: </b>' +

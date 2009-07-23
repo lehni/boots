@@ -25,7 +25,7 @@ Root.inject({
 				var roles = users.getColumnItem('roles');
 				var oldRoles = {
 					1: User.READER,
-					2: User.EDITOR | User.POSTER,
+					2: /* User.EDITOR | */ User.POSTER, // Degrade old Editors to Posters on SG
 					4: User.ADMINISTRATOR,
 					8: User.SUPERUSER,
 					16: User.DISABLED,
