@@ -22,19 +22,29 @@ HopObject.inject({
 	setCreating: function(creating, id) {
 		if (creating) {
 			this.cache.creating = true;
-			this.cache.id = id;
 			// Make sure the modified getById finds this:
 			HopObject.registerById(this._id, this);
 			// Unregistering for the above happens when onStore is called,
 			// not setCreating(false), since they might still be transient after.
-			if (id)
+			if (id) {
+				this.cache.id = id;
 				HopObject.registerById(id, this);
+			} else {
+				// Also set the fake id to _id since there are things during apply 
+				// that can force an object to become persited prematurely.
+				// This would prevent it from finding its edit parent since the
+				// fullId would change and the EditNode could not be found.
+				this.cache.id = this._id;
+			}
 			User.makeEditable(this);
 		} else {
-			if (this.cache.id)
+			if (id)
+				HopObject.unregisterById(id);
+			if (this.cache.id) {
 				HopObject.unregisterById(this.cache.id);
+				delete this.cache.id;
+			}
 			delete this.cache.creating;
-			delete this.cache.id;
 		}
 	},
 
@@ -51,26 +61,21 @@ HopObject.inject({
 		return this.getFullId();
 	},
 
-	getParent: function() {
-		// to be used wherever _parent is accessed, so apps can override
-		// the way parents are handled (e.g. liento)
-		return this._parent; // default is returning _parent
-	},
-
 	// getEditParent returns the correct parent for both newly created object's that
 	// are still to be inserted into the database
 	// and already existing ones by determining the parent from the edit stack for 
 	// items about to be created and this.getParent() for the others.
 	// this parent can also be overridden by realParent
 	getEditParent: function(realParent) {
-		if (this.isTransient()) {
+		var parent = realParent || this.getParent();
+		if (!parent) {
 			// See if there is a cached edit node, and if so, determine future
 			// parent from it:
 			var node = EditNode.getCached(this);
 			if (node && node.parent)
-				return node.parent.object;
+				parent = node.parent.object;
 		}
-		return realParent ? realParent : this.getParent();
+		return parent;
 	},
 
 	// remove deletes an object and its subnodes according to the values set
@@ -110,7 +115,7 @@ HopObject.inject({
 									for (var j = 0; j < list.length; j++) {
 										var child = list[j];
 										User.log('Auto Removing ' + child + ' ' +
-											EditForm.getEditName(child));
+											EditForm.getEditName(child, true));
 										item.collection.removeChild(child);
 										child.remove();
 									}
@@ -118,7 +123,7 @@ HopObject.inject({
 									var value = item.getValue();
 									if (value) {
 										User.log('Auto Removing ' + value + ' ' +
-											EditForm.getEditName(value));
+											EditForm.getEditName(value, true));
 										value.remove();
 									}
 								}
@@ -199,7 +204,7 @@ HopObject.inject({
 						mode: 'remove', title: title || 'Delete',
 						// Can't use double quotes here since they break html attributes.
 						// TODO: Find a way around this, e.g. using encodeAttributes
-						confirm: 'Do you really want to delete \'' + EditForm.getEditName(this) + '\'' + '?',
+						confirm: 'Do you really want to delete\n\'' + EditForm.getEditName(this) + '\'' + '?',
 						edit_item: param.item, edit_back: 1
 					};
 					break;

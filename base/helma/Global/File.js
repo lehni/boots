@@ -29,7 +29,6 @@ File = Base.extend(new function() {
 			this._eof = false;
 		},
 
-		/** @ignore */
 		toString: function() {
 			return this._file.toString();
 		},

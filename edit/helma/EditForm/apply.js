@@ -6,6 +6,9 @@ EditForm.inject(new function() {
 	// each requirements setting can either be a simple value
 	// defining the condition,  or a hash containing both a value
 	// and a message that overrides the default message:
+	
+	// TODO: Create global EditRequirements object that allows registering
+	// of other types. through functions
 	function checkRequirement(item, name, value) {
 		var req = item.requirements[name], message = null;
 		if (req) {
@@ -69,23 +72,8 @@ EditForm.inject(new function() {
 
 		afterApply: function(itemsChanged, changedItems) {
 			var obj = this.object;
-
-			// Helma returns null for unset existing properties and undefined for
-			// not existing properties. Make sure we're only setting modifier and date
-			// if the properties are actually defined in type.properties
-
-			if (obj.modifier !== undefined)
-				obj.modifier = session.user;
-
-			if (obj.modificationDate !== undefined)
-				obj.modificationDate = new Date();
-
-			// Set creator and creation date if it was not set yet.
-			if (obj.creator === null)
-				obj.creator = session.user;
-
-			if (obj.creationDate === null)
-				obj.creationDate = obj.modificationDate;
+			// Make sure creator and modifiers are set
+			EditForm.initializeEditFields(obj);
 
 			// Now call onAfterApply on each item, if defined:
 			if (itemsChanged) {
@@ -109,7 +97,7 @@ EditForm.inject(new function() {
 		applyItems: function() {
 			var changed = false;
 			var root = this.root;
-			// in some cases (e.g. group items), applyItems is only called on
+			// In some cases (e.g. group items), applyItems is only called on
 			// a group form, not the main form. reflect this here
 			if (this == root || !root.changedItems) {
 				root.beforeApply();
@@ -146,31 +134,31 @@ EditForm.inject(new function() {
 				item.groupForm.applyItems();
 			} else {
 				try {
-					// empty strings -> null
+					// Empty strings -> null
 					if (!value) {
 						value = null;
 					} else if (item.trim) {
 						value = value.trim();
 					}
-					// convert values:
+					// Convert values:
 					value = item.convert(value);
-					// check any defined requirements for this item and throw exceptions
-					// if requirements are not met.
-					if (item.requirements) {
-						// first we allways check for notNull:
-						checkRequirement(item, 'notNull', value);
-						// now all the others:
-						for (var name in item.requirements)
-							if (name != 'notNull')
-								checkRequirement(item, name, value);
-					}
 					// Setting onApply to EditForm.DO_NOTHING prevents execution
 					// of EditItem#apply
 					// if onApply is set, execute it even if convert returned DONT_APPLY
 					// DONT_APPLY is just ot prevent item.apply being called.
 					var dontApply = value == EditForm.DONT_APPLY;
-					if (dontApply)
+					if (dontApply) {
 						value = null;
+					} else if (item.requirements) {
+						// Check any defined requirements for this item and throw exceptions
+						// if requirements are not met.
+						// First we allways check for notNull:
+						checkRequirement(item, 'notNull', value);
+						// Now all the others:
+						for (var name in item.requirements)
+							if (name != 'notNull')
+								checkRequirement(item, name, value);
+					}
 					// Set the newly applied value, so onAfterApply can pass it
 					// too. This is cleared again in #afterApply.
 					item.appliedValue = value;

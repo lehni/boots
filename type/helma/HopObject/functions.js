@@ -27,12 +27,12 @@ HopObject.inject({
 	getChildElement: function(name) {
 		var obj = this.get(name);
 		if (!obj) {
-			var parent = this._parent;
+			var parent = this.getParent();
 			if (parent instanceof Node && User.canEdit(parent)) {
 				// For collection HopObjects, this._id points to the collection's
 				// name. 'all' + this._id.capitalize() therefore should return the
 				// corresponding 'all' collection. Try to fetch from there:
-				var all = this._parent['all' + this._id.capitalize()];
+				var all = parent['all' + this._id.capitalize()];
 				if (all)
 					obj = all.get(name);
 			}

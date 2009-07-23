@@ -37,15 +37,15 @@ Node.inject({
 		var notifications = this.notifications.list();
 		for (var i = 0; i < notifications.length; i++) {
 			var notification = notifications[i];
-			// TODO: support anonymous users!
-			if (notification.user != session.user)
+			// TODO: Detect anonymous users as authors somehow for eclusion in counting?
+			if (notification.user != session.user || !session.user)
 				notification.counter++;
 		}
 
-		// TODO: Scriptographer specific!
-		// Notify main user:
-		var user = root.users.get('Lehni');
-		if (user != null)
+		// Always notify main user, if defined
+		var user = getProperty('notficationUser');
+		user = user && root.users.get('Lehni');
+		if (user)
 			this.setNotification(true, user);
 	},
 

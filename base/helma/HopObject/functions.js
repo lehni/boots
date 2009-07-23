@@ -44,6 +44,7 @@ HopObject.inject({
 	 * and set if it's undefined.
 	 * param.maxPerPage specifies the amount of items per page
 	 * ...
+	 * TODO: Consider moving elsewhere?
 	 */
 	renderPagination: function(param, out) {
 		var last = Math.max(0, Math.floor((param.count - 1) / param.maxPerPage));
@@ -96,7 +97,7 @@ HopObject.inject({
 		}
 	},
 
-	/** 
+	/**
 	 * Returns the object's fulLId. This is the object's prototype and id
 	 * seperated by a dash. This id can be used again to retrieve the object
 	 * Through HopObject.get(fullId);
@@ -106,6 +107,12 @@ HopObject.inject({
 		// nodes can pretend to be another node. Used when transient nodes
 		// are lost in the cache. See EditNode#initialize
 		return this._prototype + '-' + (this.cache.id || this._id);
+	},
+
+	getParent: function() {
+		// to be used wherever _parent is accessed, so apps can override
+		// the way parents are handled (e.g. liento)
+		return this._parent; // default is returning _parent
 	},
 
 	/**

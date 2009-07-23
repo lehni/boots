@@ -86,16 +86,12 @@ User.inject({
 	// Call with object = null just to see wether the user is an editor or an admin,
 	// otherwise it checks the write access to the object.
 	canEdit: function(object, item) {
-		if (this.hasRole(User.ADMINISTRATOR)) {
-			// Admins can edit everything
-			return true;
-		} else if (this.hasRole(User.EDITOR)) {
-			// Editors can edit all the objects that are editable by them
-			return !object || 
-				(object.isCreating() && session.user == this) ||
-				object.isEditableBy(this);
-		}
-		return false;
+		// Admins can edit everything
+		return this.hasRole(User.ADMINISTRATOR)
+				// Editors can create new things anywhere as well
+				|| !object && this.hasRole(User.EDITOR)
+				|| object && ((object.isCreating() && session.user == this) ||
+						object.isEditableBy(this, item));
 	},
 
 	isEditableBy: function(user, item) {
@@ -195,8 +191,8 @@ User.inject({
 				var parts = req.data.autoLogin.split(':');
 				if (parts.length > 0) {
 					var user = root.users.getById(parts[0]);
-					if (user != null &&  parts[1] == user.getCookieHash() &&
-						session.login(user)) {
+					if (user != null && parts[1] == user.getCookieHash() &&
+							session.login(user)) {
 						if (session.user.onLogin)
 							session.user.onLogin();
 						return true;
@@ -208,7 +204,8 @@ User.inject({
 
 		canEdit: function(object, item) {
 			var user = session.user;
-			if (user && (user.canEdit(object, item) || object.isEditableBy(user, item))) {
+			if (user && user.canEdit(object, item) 
+					|| !user && object && object.isEditableBy(null, item)) {
 				if (User.isLoginAllowed() || user.hasRole(User.SUPERUSER)) {
 					return true;
 				} else {
@@ -216,7 +213,8 @@ User.inject({
 					user.logout(false);
 				}
 			}
-			if (session.data.createdObjects) {
+			// If login is not allowed, also do not allow anonymous posts...
+			if (session.data.createdObjects && User.isLoginAllowed()) {
 				// If in anonymous mode, see if the object or its parent(s) where added
 				// to session.data.createdObjects. Allow editing if they were.
 				// TODO: add timeout for session.data. e.g. 15 minutes.

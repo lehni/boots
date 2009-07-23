@@ -160,7 +160,7 @@ EditForm.register({
 					var node = EditNode.get(object);
 					form = node.getForm();
 					if (!form) {
-						EditForm.alert('Unable to retrieve edit form from object:\n' + EditForm.getEditName(object));
+						EditForm.alert('Unable to retrieve edit form from object:\n' + EditForm.getEditName(object, true));
 					} else if (form.hasItems()) {
 						node.render(base, 'create');
 					} else {
@@ -198,8 +198,9 @@ EditForm.register({
 
 			// Clear the creating flag both the node object and the form object,
 			// As they might be two different ones! (e.g. Topic / Post)
-			object.setCreating(false);
-			form.object.setCreating(false);
+			object.setCreating(false, transientId);
+			if (form.object != object)
+				form.object.setCreating(false);
 
 			// Only call onStore if the object stoped being transient through
 			// the above. If there is a change of transient objects, they become

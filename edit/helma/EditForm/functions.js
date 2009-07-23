@@ -2,6 +2,7 @@
 // Basic setup
 
 EditForm.inject(new function() {
+
 	/**
 	 * Private functions, taking a reference to the form in "that"
 	 */
@@ -227,6 +228,24 @@ EditForm.inject(new function() {
 	 * Public functions
 	 */
 	return {
+		// Since EditForm is a HopObject, setting object relations on it to
+		// other HopObjects messes with their _parent setting, so EditForm
+		// in fact becomes their parent simply by setting this.object = object
+		// on them. The workaround is to define a getter / setter property
+		// that redirects to a non peristent field that is ignored (starting
+		// with _).
+		// TODO: Find an elegant way to define EditForm, allow apps to override
+		// it, have template files and not rely on it being a HopObject.
+		object: {
+			_get: function() {
+				return this._object;
+			},
+
+			_set: function(object) {
+				this._object = object;
+			}
+		},
+
 		/**
 		 * Constructor
 		 */
@@ -511,11 +530,11 @@ EditForm.inject(new function() {
 			 * HopObjects can define a function getEditName that overrides
 			 * the default name.
 			 */
-			getEditName: function(obj) {
+			getEditName: function(obj, detailed) {
 				if (obj == null) return 'null';
 				var name;
 				if (obj.getEditName)
-					name = obj.getEditName();
+					name = obj.getEditName(detailed);
 				else if (obj.getDisplayName)
 					name = obj.getDisplayName();
 				if (!name) {
@@ -558,20 +577,40 @@ EditForm.inject(new function() {
 				// so getEditParent will work in initialize already.
 				// This is hackish and rooted deep down in Bootstraps,
 				// but also works if bootstraps is not used
-				var object = new ctor(ctor.dont);
-				object.setCreating(true);
+				var obj = new ctor(ctor.dont);
+				obj.setCreating(true);
 				// Now get the node. This gets getEditParent to work.
-				node = EditNode.get(object, item);
+				node = EditNode.get(obj, item);
+				// First initialize the standard fields
+				EditForm.initializeEditFields(obj);
 				// Now call initialize that we suppressed above when creating ctor:
-				if (object.initialize) {
-					var ret = object.initialize();
+				if (obj.initialize) {
+					var ret = obj.initialize();
 					// TODO: Check if this really works?
-					if (ret && ret != object) {
-						object = ret;
-						object.setCreating(true);
+					if (ret && ret != obj) {
+						obj = ret;
+						obj.setCreating(true);
 					}
 				}
-				return object;
+				return obj;
+			},
+
+			initializeEditFields: function(obj) {
+				// Helma returns null for unset existing properties and undefined for
+				// not existing properties. Make sure we're only setting modifier and date
+				// if the properties are actually defined in type.properties
+				if (obj.modifier !== undefined)
+					obj.modifier = session.user;
+
+				if (obj.modificationDate !== undefined)
+					obj.modificationDate = new Date();
+
+				// Set creator and creation date if it was not set yet.
+				if (obj.creator === null)
+					obj.creator = session.user;
+
+				if (obj.creationDate === null)
+					obj.creationDate = obj.modificationDate || new Date();
 			},
 
 			// Constants

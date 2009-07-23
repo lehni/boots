@@ -1,12 +1,15 @@
 Topic.inject({
 	initialize: function() {
 		// A node cannot be created without a first post.
-		var post = new Post();
-		// mark the post as creating, as we'll be returning it from getEditForm...
-		post.setCreating(true);
+		// Use EditForm.createObject instead of new Post, to make sure that 
+		// all editing related fields are properly set up on it.
+		// TODO: Could there not be a way that any HopObject that defines initialize
+		// is doing this automatically behind the scene, through some bootstrap
+		// magic?
+		var post = EditForm.createObject(Post);
 		// tell it that it's the first post in a node
 		post.isFirst = true;
-		// add it
+		// Add it
 		this.posts.add(post);
 		// make it visible
 		this.visible = true;
@@ -52,13 +55,16 @@ Topic.inject({
 	 * This is called from Post#onCreate
 	 */
 	onAddPost: function(post) {
+		app.log('onAddPost ' + this.modificationDate);
 		// Update the modification date of the topic when a post is added
 		this.modificationDate = post.modificationDate;
+		this.base();
 	},
 
 	isEditableBy: function(user, item) {
 		// delegate to the first post as this is just a container for it
-		return this.getFirstPost().isEditableBy(user, item);
+		return item == 'posts' && (user && user.hasRole(User.POSTER) || !user && this.POST_ANONYMOUS)
+				|| this.getFirstPost().isEditableBy(user, item);
 	},
 
 	getTitle: function() {

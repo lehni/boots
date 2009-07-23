@@ -31,6 +31,8 @@ EditNode = Base.extend({
 	 * there before getEditForm is called. 
 	 */
 	getForm: function(force) {
+		if (!this.object)
+			return null;
 		// Use versioning so even when dontCache is true, the form is only created
 		// once every request.
 		var data = EditNode.getEditData();

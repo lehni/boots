@@ -1,7 +1,7 @@
 Post.inject({
-	getEditName: function() {
+	getEditName: function(detailed) {
 		if (this.title)
-			return this.title.truncate(28, '...') + ' [' + this._id + ']';
+			return this.title.truncate(28, '...') + (detailed ? ' [' + this._id + ']' : '');
 	},
 
 	getDisplayName: function() {
@@ -29,7 +29,9 @@ Post.inject({
 				node.setNotification(value, this.creator, this.getUserEmail(), this.getUserName());
 			}
 		};
-		if (User.hasRole(User.POSTER)) {
+		// If this post was anomyous and now edited by the same user who logged in, 
+		// do still show anomyous editor.
+		if (!this.username && User.hasRole(User.POSTER)) {
 			form.add([
 				{
 					suffix: '<b>Posting as: </b>' +
@@ -38,7 +40,7 @@ Post.inject({
 				notifyItem
 			]);
 		} else {
-			form.add([ 
+			form.add([
 				{
 					label: 'Name', type: 'string', name: 'username', length: 32, trim: true,
 					requirements: {
@@ -127,11 +129,19 @@ Post.inject({
 
 	onAfterApply: function(changedItems) {
 		var node = this.getNode();
-		if (changedItems && this.isFirst) {
-			if (node.onUpdateFirstPost)
-				node.onUpdateFirstPost(this, changedItems);
-			// store remote host
-			this.host = Net.getHost();
+		if (changedItems) {
+			if (this.isFirst) {
+				if (node.onUpdateFirstPost)
+					node.onUpdateFirstPost(this, changedItems);
+				// store remote host
+				this.host = Net.getHost();
+			}
+			// If we're posting anonymously, store the values for next time
+			if (!User.hasRole(User.POSTER)) {
+				res.setCookie('post_username', this.username, 90);
+				res.setCookie('post_email', this.email, 90);
+				res.setCookie('post_website', this.website, 90);
+			}
 		}
 	},
 
@@ -144,6 +154,11 @@ Post.inject({
 				if (lastTitle)
 					this.title = /^Re: /.test(lastTitle) ? lastTitle : 'Re: ' + lastTitle;
 			}
+		}
+		if (!User.hasRole(User.POSTER)) {
+			this.username = req.data.post_username;
+			this.email = req.data.post_email;
+			this.website = req.data.post_website;
 		}
 	},
 
@@ -158,16 +173,25 @@ Post.inject({
 		// Check if this is a first post, and if so only allow removal
 		// if there are no others
 		var node = this.getNode();
-		if (this.isFirst && node.posts.count() > 1) {
-			throw 'There are other posts reacting to this one.\nTherefore it cannot be removed any longer.'
+		if (!User.hasRole(User.EDITOR) && this.isFirst && node.posts.count() > 1) {
+			var other = node.posts.get(1);
+			throw other.getUserName() + (node.posts.count() > 2 ? ' and others have' : ' has')
+					+ ' already answered this post, therefore it cannot be removed.';
 		}
 	},
 
 	onRemove: function() {
 		var node = this.getNode();
+		// If we're removing the first post, remove all.
+		if (this.isFirst)
+			node.remove();
 		// If it's the last post, let the node know.
 		if (node.onRemoveLastPost && !node.isRemoving() && node.posts.count() == 1)
 			node.onRemoveLastPost();
+	},
+
+	isEditableBy: function(user, item) {
+		return user && this.creator == user;
 	},
 
 	// Used by feed lib:
@@ -225,19 +249,7 @@ Post.inject({
 	},
 
 	getNotification: function() {
-		// Let the temporary post display notification state correctly for logged in users:
-		var node = this.getNode();
-		if (this.isTransient()) {
-			var email;
-			if (node.POST_USERS && session.user) {
-				email = session.user.email;
-			} else if (node.POST_ANONYMOUS) {
-				email = req.data.post_email;
-			}
-			return node.getNotification(email);		
-		} else {
-			return node.getNotification(this.getUserEmail());
-		}
+		return this.getNode().getNotification(this.getUserEmail());
 	},
 
 	getUserEmail: function() {

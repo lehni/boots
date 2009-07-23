@@ -126,13 +126,13 @@ EditItem = Base.extend(new function() {
 			// it.
 			var editName = this.getEditName();
 			var editParam = this.getEditParam();
-			var prototypes = this.prototypes.map(function(proto) {
+			var prototypes = this.prototypes && this.prototypes.map(function(proto) {
 				return {
 					name: proto.uncamelize(),
 					href: baseForm.renderHandle('select_new', editName, proto,
 						Hash.merge({ edit_prototype: proto }, editParam))
 				};
-			});
+			}) || [];
 			return Hash.merge({
 				name: editName + '_new',
 				onClick: prototypes.length == 1
@@ -377,8 +377,8 @@ FileItem = EditItem.extend({
 	_types: 'file',
 
 	render: function(baseForm, name, value, param, out) {
-		if (value)
-			out.write(value + '<br />');
+		if (this.preview)
+			out.write(this.preview + '<br />');
 		Html.input({
 			type: 'file', name: name, size: this.size || '20',
 			className: this.className || 'edit-element'
@@ -388,7 +388,13 @@ FileItem = EditItem.extend({
 	convert: function(value) {
 		// TODO: Fix in Helma: even if no file was attached, we seem to get a
 		// mime type object. The solution is to test name too:
-		return value && (!value.getName || !value.getName()) ? EditForm.DONT_APPLY : value;
+		if (value && value.name) {
+			return value;
+		} else {
+			// If there is no file, return EditForm.DONT_APPLY if we already
+			// have one set, null otherwise, to make requirements work
+			return this.getValue() ? EditForm.DONT_APPLY : null;
+		}
 	}
 });
 
@@ -567,7 +573,7 @@ SelectItem = ListItem.extend({
 					var obj = list[i];
 					if (obj) {
 						options.push({
-							name: EditForm.getEditName(obj),
+							name: EditForm.getEditName(obj, true),
 							value: obj.getFullId()
 						});
 					}
@@ -575,9 +581,8 @@ SelectItem = ListItem.extend({
 				/*
 				options = param.list().each(function(obj) {
 					if (obj) {
-						var name = EditForm.getEditName(obj);
 						this.push({
-							name: EditForm.getEditName(obj),
+							name: EditForm.getEditName(obj, true),
 							value: obj.getFullId()
 						});
 					}

@@ -66,7 +66,7 @@ Resource.inject({
 			form.add({ label: 'Name', name: 'name', type: 'string', length: 64 });
 		var file = { label: 'File', name: 'file', type: 'file', onApply: this.setFile };
 		if (this.name)
-			file.value = this.renderIcon({ small: true, details: true });
+			file.preview = this.renderIcon({ small: true, details: true });
 		form.add(file);
 		return form;
 	},
