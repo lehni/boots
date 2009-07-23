@@ -11,9 +11,11 @@ Root.inject({
 		// try properties too (e.g. resources, etc)
 		var obj = this.children.get(name);
 		if (!obj) {
-			obj = this.base(name);
+			// Try url routes first, this.base as last, to really offer multiple
+			// ways to interfere with Helma returning internal mappings.
+			obj = UrlRouting.handle(this, name);
 			if (!obj)
-				obj = UrlRouting.handle(this, name);
+				obj = this.base(name);
 		}
 		return obj;
 	}
