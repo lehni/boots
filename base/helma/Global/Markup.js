@@ -355,7 +355,6 @@ ResourceTag = MarkupTag.extend({
 
 	render: function(content, param) {
 		var resource = this.getResource(content, param);
-		app.log('resource ' + content + ' ' + param.resources);
 		if (resource)
 			return this.renderIcon(resource, param);
 	}
@@ -406,12 +405,12 @@ UrlTag = MarkupTag.extend({
 		var url = this.attributes.url || content;
 		var title = content || url;
 		var str = '<a href="';
-		var isLocal = /^\//.test(url);
 		// allways write domain part of url for simple rendering (e.g. in rss feeds)
+		var isLocal = Net.isLocal(url);
 		if (param.simple && isLocal)
 			str += getProperty('serverUri');
 		// Make sure the non-local url has a protocol, http is default:
-		if (!isLocal && !Net.parseUrl(url).protocol)
+		if (!isLocal && !Net.isRemote(url))
 			url = 'http://' + url;
 		str += url;
 		// links to local pages do not need to open blank

@@ -126,10 +126,13 @@ renderLink = function(param, out) {
 		url += (param.query[0] == '?' ? '' : url.indexOf('?') != -1 ? '&' : '?')
 				+ param.query;
 
-	// TODO: make handling of this an app wide switch?
-	if (!/^\//.test(url)) { // Not a local page -> target = '_blank'
+	if (!Net.isLocal(url)) { // Not a local page -> target = '_blank'
+		// Make sure the non-local url has a protocol, http is default:
+		if (!Net.isRemote(url))
+			url = 'http://' + url;
+		// TODO: make handling of this an app wide switch?
 		if (!param.attributes)
-			param.attributes = {}
+			param.attributes = {};
 		if (!param.attributes.target)
 			param.attributes.target = '_blank';
 	}
