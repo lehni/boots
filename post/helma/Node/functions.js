@@ -51,11 +51,15 @@ Node.inject({
 					|| !session.user && notification.email != req.data.post_email)
 				notification.counter++;
 		}
-		// Always notify main user, if defined
-		var user = getProperty('notficationUser');
-		user = user && root.users.get(user);
-		if (user)
-			this.setNotification(true, user);
+		// Get the list of standard users to notify and go through them.
+		var users = root.getNotificationUsers(post);
+		for (var i = 0, l = users.length; i < l; i++) {
+			var user = users[i];
+			if (!(user instanceof User))
+				user = root.users.get(user);
+			if (user)
+				this.setNotification(true, user);
+		}
 	},
 
 	getNotification: function(email) {

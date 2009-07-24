@@ -42,5 +42,15 @@ Root.inject({
 				}
 			}
 		}
+	},
+
+	/**
+	 * Returns a list of users to notify for a certain post. This for example
+	 * allows notifying standard users for every post, based on the app 
+	 * property 'notificationUsers'.
+	 */
+	getNotificationUsers: function(post) {
+		var users = getProperty('notificationUsers');
+		return users && users.split(',');
 	}
 });

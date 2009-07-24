@@ -107,8 +107,8 @@ Post.inject({
 		// Allow the parent node of the first post to add things to the post's
 		// edit form, for scripts, gallery entires, etc, which are nothing more
 		// than a stick first post.
-		if (this.isFirst && this.node.populateFirstPostEditForm)
-			this.node.populateFirstPostEditForm(form);
+		if (this.isFirst && node.populateFirstPostEditForm)
+			node.populateFirstPostEditForm(form);
 
 		form.add({
 			label: 'Attachments', type: 'list', name: 'resources',
@@ -248,6 +248,10 @@ Post.inject({
 
 	getNotification: function() {
 		return this.getNode().getNotification(this.getUserEmail());
+	},
+
+	setNotification: function(notify, user, email, username) {
+		this.getNode().setNotification(notify, user, email, username);
 	},
 
 	getUserEmail: function() {

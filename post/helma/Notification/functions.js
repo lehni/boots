@@ -4,6 +4,6 @@ Notification.inject({
 		this.username = username;
 		this.email = email;
 		this.counter = 0;
-		this.hash = encodeMD5(email + " " + new Date() + req.data.http_remotehost);
+		this.hash = encodeMD5(email + ' ' + new Date() + req.data.http_remotehost);
 	}
 });
