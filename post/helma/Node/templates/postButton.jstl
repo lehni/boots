@@ -1,5 +1,5 @@
-<div id="post-<%= param.id %>" class="block block-interact">
-<a name="post-<%= param.id %>"></a>
+<div class="block block-interact">
+<a name="<%= param.id %>"></a>
 <div id="<%= param.id %>" class="block block-padded">
 <% this.editButtons buttons=param.buttons target=param.id item=<%= this.POST_COLLECTION %> allowAnonymous="true" %>
 <div class="clear"></div>

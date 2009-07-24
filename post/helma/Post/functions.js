@@ -273,7 +273,7 @@ Post.inject({
 			pos = Math.floor(pos / this.node.POST_PER_PAGE);
 			if (pos >= 0)
 				query = '?pos=' + pos;
-			query += '#post-' + this.getEditId();
+			query += '#' + this.getEditId();
 		}
 		res.redirect(this.node.href(this.node.POST_REDIRECT_ACTION) + query);
 	}
