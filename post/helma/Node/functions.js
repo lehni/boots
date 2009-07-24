@@ -27,8 +27,7 @@ Node.inject({
 			form.addTab('Posts', {
 				label: param.posts.label || 'Posts', type: 'select', name: 'posts',
 				prototypes: 'Post', size: Base.pick(param.posts.size, 10),
-				collection: this.posts, autoRemove: true,
-				allowAnonymous: this.POST_ANONYMOUS
+				collection: this.posts, autoRemove: true
 			});
 		}
 		return form;

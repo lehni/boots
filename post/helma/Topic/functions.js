@@ -52,8 +52,10 @@ Topic.inject({
 	},
 
 	isEditableBy: function(user, item) {
-		// delegate to the first post as this is just a container for it
+		// Allow anonymous users to edit posts if POST_ANONYMOUS is set to true
+		// for this node.
 		return item == 'posts' && (user && user.hasRole(User.POSTER) || !user && this.POST_ANONYMOUS)
+				// Otherwise delegate to the first post as this is just a container for it
 				|| this.getFirstPost().isEditableBy(user, item);
 	},
 

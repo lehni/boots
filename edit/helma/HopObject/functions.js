@@ -214,7 +214,7 @@ HopObject.inject({
 					};
 					break;
 				}
-				if (item && (!session.user && param.allowAnonymous || User.canEdit(this, item.edit_item))) {
+				if (item && User.canEdit(this, item.edit_item)) {
 					items.push(item);
 					item.click = item.scroll = action == 'click';
 				}

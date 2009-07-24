@@ -151,8 +151,7 @@ EditForm.register({
 			} else {
 				User.log('More than one prototype available, no choice was made: ' + prototypes);
 			}
-			// Creation can be allowed to anonymous users, by setting item.allow to true:
-			if (prototype && (User.canEdit(form.object, item && item.name) || !session.user && item.allowAnonymous)) {
+			if (prototype && (User.canEdit(form.object, item.name))) {
 				// get the prototype constructor and create an instance:
 				var ctor = typeof prototype == 'string' ? global[prototype] : prototype;
 				if (ctor) {
@@ -342,6 +341,7 @@ EditForm.register({
 	},
 
 	move: function(object) {
+		// TODO: Make sure this works
 		// TODO: canEdit()!
 		if (req.data.edit_object_ids && req.data.edit_object_id && req.data.edit_item) {
 			// first determine sourceItem:

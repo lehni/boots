@@ -1,7 +1,7 @@
 <div class="block block-interact">
 <a name="<%= param.id %>"></a>
 <div id="<%= param.id %>" class="block block-padded">
-<% this.editButtons buttons=param.buttons target=param.id item=<%= this.POST_COLLECTION %> allowAnonymous="true" %>
+<% this.editButtons buttons=param.buttons target=param.id item=<%= this.POST_COLLECTION %> %>
 <div class="clear"></div>
 </div>
 </div>

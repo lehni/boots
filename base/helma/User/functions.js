@@ -25,7 +25,6 @@ User.inject({
 			if (from && to) {
 				try {
 					// Send an error mail:
-					// TODO: make these addresses configurable through app.properties
 					var mail = new Mail();
 					mail.setFrom(from);
 					mail.setTo(to);
