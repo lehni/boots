@@ -51,16 +51,6 @@ Topic.inject({
 		this.remove();
 	},
 
-	/**
-	 * This is called from Post#onCreate
-	 */
-	onAddPost: function(post) {
-		app.log('onAddPost ' + this.modificationDate);
-		// Update the modification date of the topic when a post is added
-		this.modificationDate = post.modificationDate;
-		this.base();
-	},
-
 	isEditableBy: function(user, item) {
 		// delegate to the first post as this is just a container for it
 		return item == 'posts' && (user && user.hasRole(User.POSTER) || !user && this.POST_ANONYMOUS)

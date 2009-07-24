@@ -15,6 +15,7 @@ Node.inject({
 	POST_ALLOW: true, // Deactivate posting alltogether,
 	POST_USERS: true, // Turn on to support system users
 	POST_ANONYMOUS: true, // Turn on for anonymous users
+	POST_UPDATE_DATE: false, // Wether adding new posts should modify the node's modification date 
 
 	HAS_FEED: true, // Show RSS feeds. Used by feed lib
 
@@ -33,18 +34,26 @@ Node.inject({
 		return form;
 	},
 
+	/**
+	 * This is called from Post#onCreate
+	 */
 	onAddPost: function(post) {
+		// Update the modification date of the topic when a post is added
+		if (this.POST_UPDATE_DATE)
+			this.modificationDate = post.modificationDate;
+		// Called whenever a post is added to this node / topic.
 		var notifications = this.notifications.list();
-		for (var i = 0; i < notifications.length; i++) {
+		// Count up amount of new posts for each of the waiting notifications.
+		// Do not count the one for the user who posted this.
+		for (var i = 0, l = notifications.length; i < l; i++) {
 			var notification = notifications[i];
-			// TODO: Detect anonymous users as authors somehow for eclusion in counting?
-			if (notification.user != session.user || !session.user)
+			if (notification.user != session.user
+					|| !session.user && notification.email != req.data.post_email)
 				notification.counter++;
 		}
-
 		// Always notify main user, if defined
 		var user = getProperty('notficationUser');
-		user = user && root.users.get('Lehni');
+		user = user && root.users.get(user);
 		if (user)
 			this.setNotification(true, user);
 	},

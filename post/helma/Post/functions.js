@@ -130,12 +130,8 @@ Post.inject({
 	onAfterApply: function(changedItems) {
 		var node = this.getNode();
 		if (changedItems) {
-			if (this.isFirst) {
-				if (node.onUpdateFirstPost)
-					node.onUpdateFirstPost(this, changedItems);
-				// store remote host
-				this.host = Net.getHost();
-			}
+			if (this.isFirst && node.onUpdateFirstPost)
+				node.onUpdateFirstPost(this, changedItems);
 			// If we're posting anonymously, store the values for next time
 			if (!User.hasRole(User.POSTER)) {
 				res.setCookie('post_username', this.username, 90);
@@ -165,6 +161,8 @@ Post.inject({
 	onCreate: function() {
 		var node = this.getNode();
 		this.isFirst = node.posts.count() == 0;
+		// Store remote host
+		this.host = Net.getHost();
 		if (node.onAddPost)
 			node.onAddPost(this);
 	},
