@@ -135,7 +135,7 @@ Root.inject({
 					var mail = new Mail();
 					mail.setFrom(app.properties.serverEmail);
 					mail.setTo(user.name + ' <' + user.email + '>');
-					mail.setSubject("// Scriptographer.com: New Login Information //");
+					mail.setSubject("// Scriptographer.org: New Login Information //");
 					mail.addPart(this.renderTemplate("emailPassword", {
 						username: user.name,
 						password: password,
