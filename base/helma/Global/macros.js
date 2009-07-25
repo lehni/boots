@@ -32,3 +32,12 @@ function renderText_macro(param) {
 		}
 	}
 }
+
+function random_macro(param, first, second) {
+	if (param.min !== undefined || param.max !== undefined)
+		res.write(Math.rand(param.min, param.max));
+	else if (first !== undefined || second !== undefined)
+		res.write(Math.rand(first, second));
+	else
+		res.write(Math.random());
+}
