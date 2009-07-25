@@ -255,13 +255,15 @@ Template.prototype = {
 			var data = param.match(/^(param|response|request|session|properties)\.(.*)$/);
 			if (data) {
 				if (!/^session\.user\b/.test(data)) {
-					var buf = {
-						response: ['res.data.'], request: ['req.data.'], 
-						session: ['session.data.'], param: ['param.'],
-						properties: ['getProperty("', '")']
-					}[data[1]];
-					buf.splice(1, 0, data[2]);
-					return buf.join('');
+					return {
+						response: 'res.data',
+						request: 'req.data', 
+						session: 'session.data',
+						param: 'param',
+						properties: 'app.properties'
+					}[data[1]] + data[2].split('.').map(function(part) {
+						return '["' + part + '"]';
+					}).join('');
 				}
 			}
 			return param;
@@ -298,13 +300,17 @@ Template.prototype = {
 				};
 				if (isMain) {
 					macro.isControl = allowControls && /^(foreach|if|elseif|else|end)$/.test(next);
-					var param = parseParam(macro.command);
-					macro.isData = isEqualTag || param != macro.command;
-					macro.command = param;
-					macro.isSetter = next[0] == '$'; 
-					var match = macro.isSetter && next.match(/(\$\w*)=$/);
-					if (match)
-						macro.command = match[1];
+					macro.isData = isEqualTag;
+					macro.isSetter = !isEqualTag && next[0] == '$'; 
+					if (macro.isSetter) {
+						var match = next.match(/(\$\w*)=$/);
+						if (match)
+							macro.command = match[1];
+					} else if (!isEqualTag) {
+						var param = parseParam(macro.command);
+						macro.isData = param != macro.command;
+						macro.command = param;
+					}
 				}
 			}
 		}
@@ -343,11 +349,13 @@ Template.prototype = {
 			} else if (part == '|') { 
 				isFirst = true;
 			} else { 
-				if (!macro.isData && !macro.isControl) {
-					if (!macro.isSetter || part != '=') {
-						part = nestedMacro(this, part, code, stack);
+
+				if (macro.isSetter) {
+					if (part != '=')
 						macro.unnamed.push(part);
-					}
+					append = false;
+				} else if (!macro.isData && !macro.isControl) {
+					macro.unnamed.push(nestedMacro(this, part, code, stack));
 					append = false;
 				} else if (append) { 
 					macro.opcode.push(part);
@@ -643,7 +651,7 @@ Template.prototype = {
 		try {
 			var lines;
 			if  (this.resource) {
-				var charset = getProperty('skinCharset');
+				var charset = app.properties.skinCharset;
 				var reader = new java.io.BufferedReader(
 					charset ? new java.io.InputStreamReader(this.resource.getInputStream(), charset) :
 						new java.io.InputStreamReader(this.resource.getInputStream())
