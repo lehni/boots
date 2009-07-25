@@ -86,12 +86,7 @@ Post.inject({
 			requirements: {
 				notNull: { value: true, message: 'Please write a text.' }
 			}
-		}/*, {
-			label: 'Resources', type: 'multiselect', name: 'resources',
-			showOptions: true, collection: this.allResources, value: this.resources,
-			prototypes: 'Resource,Medium,Picture', movable: true,
-			size: 6, autoRemove: true, sortable: true
-		}*/);
+		});
 		if (User.hasRole(User.ADMINISTRATOR) && !this.isCreating()) {
 			form.add({
 				type: 'ruler'
@@ -205,13 +200,12 @@ Post.inject({
 	},
 
 	renderUser: function(out) {
-		var node = this.getNode();
-		if (node.POST_USERS && !this.username && this.creator) {
-			return this.creator.renderLink(null, out);
-		} else if (node.POST_ANONYMOUS) {
+		if (this.username) {
 			var name = encode(this.username);
 			out.write(this.website ? '<a href="' + this.website 
 				+ '" target="_blank">' + name + '</a>' : name);
+		} else if (this.creator) {
+			this.creator.renderLink(null, out);
 		}
 	}.toRender(),
 
