@@ -22,10 +22,12 @@ Font = Base.extend({
 				// Use BaseFont from itext to read kerning tables
 				var BaseFont = Packages.com.lowagie.text.pdf.BaseFont;
 				var input = new java.io.FileInputStream(file);
-				var nativeFont = java.awt.Font.createFont(java.awt.Font.TRUETYPE_FONT, input);
+				var nativeFont = java.awt.Font.createFont(
+						java.awt.Font.TRUETYPE_FONT, input);
 				input.close();
 				// Don't use the internal font cache!
-				var kernedFont = BaseFont.createFont(filename, BaseFont.WINANSI, false, false, null, null);
+				var kernedFont = BaseFont.createFont(filename, BaseFont.WINANSI,
+						false, false, null, null);
 				fontObj = Font.fontObjects[filename] = {
 					nativeFont: nativeFont,
 					kernedFont: kernedFont,
@@ -98,7 +100,8 @@ Font = Base.extend({
 
 	processGlyphLine: function(text, maxWidth, layout) {
 		if (this.nativeFont) {
-			var glyphs = this.nativeFont.createGlyphVector(this.renderInfo.context, text);
+			var glyphs = this.nativeFont.createGlyphVector(
+					this.renderInfo.context, text);
 			// Call getCharSpacing with a the text, so subclasses of Font
 			// can alter spacing depending on the case of the chars (used in Lineto)
 			var charSpacing = this.getCharSpacing(text);
@@ -115,15 +118,18 @@ Font = Base.extend({
 				}
 				x += glyphs.getGlyphMetrics(i).getAdvance();
 				if (i < num - 1)
-					x += (charSpacing + this.getKerning(text.charAt(i), text.charAt(i + 1))) * 0.001 * size;
+					x += (charSpacing + this.getKerning(
+							text.charAt(i), text.charAt(i + 1))) * 0.001 * size;
 				// This is only used by cutStringAt right now:
 				if (maxWidth && x >= maxWidth) {
 					text = text.substring(0, i);
 					if (layout) {
 						// Reproduce glyph vector
-						var newGlyphs = this.nativeFont.createGlyphVector(this.renderInfo.context, text);
+						var newGlyphs = this.nativeFont.createGlyphVector(
+								this.renderInfo.context, text);
 						for (var j = 0; j < i; j++)
-							newGlyphs.setGlyphPosition(j, glyphs.getGlyphPosition(j));
+							newGlyphs.setGlyphPosition(j,
+									glyphs.getGlyphPosition(j));
 						glyphs = newGlyphs;
 					}
 					break;
@@ -155,11 +161,13 @@ Font = Base.extend({
 	},
 	
 	drawGlyphs: function(g2d, desc, x, y) {
-		if (!this.antialias) g2d.drawGlyphVector(desc.glyphs, x, y + desc.height - desc.baseLine);
+		if (!this.antialias) g2d.drawGlyphVector(desc.glyphs,
+				x, y + desc.height - desc.baseLine);
 		else g2d.fill(this.getOutline(desc, x, y));
 	},
 
-	// getUniqueString returns a string that represents this font identically. this is used for the image rendering
+	// getUniqueString returns a string that represents this font identically.
+	// This is used for the image rendering
 	getUniqueString: function() {
 		return this.uniqueString || (this.uniqueString =
 			this.kernedFont.getPostscriptFontName() +
@@ -196,9 +204,9 @@ Font = Base.extend({
 	},
 
 	/**
-	 * This cuts a string at maxWidth and appends '...' so the string fits into the widht
-	 * This can be used to cut client sided strings, if a web TTF file is used for calculation
-	 * of the width of the string.
+	 * This cuts a string at maxWidth and appends '...' so the string fits into
+	 * the width. This can be used to cut client sided strings, if a web TTF
+	 * file is used for calculation of the width of the string.
 	 */
 	truncate: function(text, maxWidth, suffix) {
 		// Cache the results of this process for speed improvements
@@ -233,8 +241,9 @@ Font = Base.extend({
 		this.setCharSpacing(param.charSpacing ? parseFloat(param.charSpacing) : 0);
 		var color = param.color || '#000000';
 		var bgColor = param.bgColor || '#ffffff';
-		var filename = encodeMD5(text + color + bgColor + param.maxWidth + param.lineHeight + this.getUniqueString()) + '.gif';
-		var file = new File(getProperty('fontRenderDir'), filename);
+		var filename = encodeMD5(text + color + bgColor + param.maxWidth
+				+ param.lineHeight + this.getUniqueString()) + '.gif';
+		var file = new File(app.properties.fontRenderDir, filename);
 
 		if (!file.exists()) {
 			var lines = this.breakIntoLines(text, param.maxWidth);
@@ -250,7 +259,9 @@ Font = Base.extend({
 			g2d.setRenderingHints(this.getRenderingHints());
 
 			for (var i = 0; i < lines.length; i++)
-				this.drawGlyphs(g2d, i == 0 ? desc : this.layoutGlyphLine(lines[i]), 0, i * lineHeight);
+				this.drawGlyphs(g2d, i == 0
+					? desc
+					: this.layoutGlyphLine(lines[i]), 0, i * lineHeight);
 
 			image.reduceColors(16, false, true);
 			image.setTransparentPixel(image.getPixel(0, 0));
@@ -264,7 +275,7 @@ Font = Base.extend({
 			}
 		}
 		var image = param.attributes || {};
-		image.src = getProperty('fontRenderUri') + filename;
+		image.src = app.properties.fontRenderUri + filename;
 		image.width = width;
 		image.height = height;
 		if (!image.alt)
@@ -284,9 +295,13 @@ Font = Base.extend({
 
 		getInstance: function(filename, antialias, fractionalMetrics) {
 			return filename ? new Font(
-				getProperty('fontDir') + filename,
-				antialias != null ? antialias : getProperty('fontAntialias', 'true') == 'true',
-				fractionalMetrics != null ? fractionalMetrics : getProperty('fontFractionalMetrics', 'true') == 'true'
+				app.properties.fontDir + filename,
+				antialias != null
+					? antialias
+					: (app.properties.fontAntialias || 'true') == 'true',
+				fractionalMetrics != null
+					? fractionalMetrics
+					: (app.properties.fontFractionalMetrics || 'true') == 'true'
 			) : null;
 		},
 
@@ -306,14 +321,23 @@ Font = Base.extend({
 			if (!infos) {
 				var RenderingHints = java.awt.RenderingHints;
 				var map = new java.util.HashMap();
-				map.put(RenderingHints.KEY_DITHERING, RenderingHints.VALUE_DITHER_DISABLE);
-				map.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-				map.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-				map.put(RenderingHints.KEY_TEXT_ANTIALIASING, antialias ? RenderingHints.VALUE_TEXT_ANTIALIAS_ON : RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
-				map.put(RenderingHints.KEY_FRACTIONALMETRICS, fractionalMetrics ? RenderingHints.VALUE_FRACTIONALMETRICS_ON : RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
-				map.put(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+				map.put(RenderingHints.KEY_DITHERING,
+					RenderingHints.VALUE_DITHER_DISABLE);
+				map.put(RenderingHints.KEY_ANTIALIASING,
+					RenderingHints.VALUE_ANTIALIAS_ON);
+				map.put(RenderingHints.KEY_RENDERING,
+					RenderingHints.VALUE_RENDER_QUALITY);
+				map.put(RenderingHints.KEY_TEXT_ANTIALIASING, antialias
+					? RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+					: RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+				map.put(RenderingHints.KEY_FRACTIONALMETRICS, fractionalMetrics
+					? RenderingHints.VALUE_FRACTIONALMETRICS_ON
+					: RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+				map.put(RenderingHints.KEY_COLOR_RENDERING,
+					RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 				infos = this.renderInfos[id] = {
-					context: new java.awt.font.FontRenderContext(null, !!antialias, !!fractionalMetrics),
+					context: new java.awt.font.FontRenderContext(null,
+							!!antialias, !!fractionalMetrics),
 					hints: new RenderingHints(map)
 				};
 			}
