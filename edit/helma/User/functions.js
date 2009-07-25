@@ -106,14 +106,14 @@ User.inject({
 	// otherwise login will allways succeed!!!!
 	encryptPassword: function(password) {
 	    if (password) {
-			return User.encrypt(getProperty('passwordSalt') + this._id + password);
+			return User.encrypt(app.properties.passwordSalt + this._id + password);
 		} else {
 			return '';
 		}
 	},
 
 	getCookieHash: function() {
-		// this.password is already encrypted, so this hash does not lead
+		// This.password is already encrypted, so this hash does not lead
 		// to the original pw in any way:
 		return User.encrypt(req.data.http_remotehost + this.password);
 	},
@@ -146,19 +146,10 @@ User.inject({
 		},
 
 		encrypt: function(str) {
-			// for md5:
-			// return Packages.helma.util.MD5Encoder.encode(str);
-
-			// for sha-1:
-		    var algorithm = java.security.MessageDigest.getInstance('SHA-1');
-		    var digest = algorithm.digest(new java.lang.String(str).getBytes());
-		    res.push();
-		    for (var i = 0; i < digest.length; i++) {
-		        var b = digest[i] & 0xff;
-		        if (b < 0x10) res.write('0');
-		        res.write(java.lang.Integer.toHexString(b));
-		    }
-		    return res.pop();
+			// for MD5:
+			// return encodeMD5(str);
+			// for SHA-1:
+			return encodeSHA1(str);
 		},
 
 		login: function(username, password, remember) {

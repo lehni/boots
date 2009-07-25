@@ -38,9 +38,9 @@ Messages = Base.extend({
 		if (message) {
 			// Find skin:
 			var entry = this.skins[key];
-			// Update if necessary. Use a md5 hash to compare content, and
+			// Update if necessary. Use a MD5 hash to compare content, and
 			// parse skins again if content changed.
-			var hash = Packages.helma.util.MD5Encoder.encode(message);
+			var hash = encodeMD5(message);
 			if (!entry || entry.hash != hash) {
 				entry = {
 					skin: createSkin(message),
