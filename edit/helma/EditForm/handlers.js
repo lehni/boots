@@ -322,7 +322,7 @@ EditForm.register({
 			var obj = null;
 			var item = form.getItem(req.data.edit_item, req.data.edit_group);
 			if (item) {
-				if (req.data.edit_object_id != null) {
+				if (req.data.edit_object_id) {
 					obj = HopObject.get(req.data.edit_object_id);
 				} else {
 					obj = item.getValue();
@@ -342,23 +342,24 @@ EditForm.register({
 
 	move: function(object) {
 		// TODO: Make sure this works
-		// TODO: canEdit()!
 		if (req.data.edit_object_ids && req.data.edit_object_id && req.data.edit_item) {
 			// first determine sourceItem:
 			var sourceItem = EditForm.get(object).getItem(req.data.edit_item, req.data.edit_group);
-			if (sourceItem != null) {
-				// the prototype of the destination can be specified. if not, it's the same as source
-				var prototype = req.data.edit_prototype;
-				if (!prototype)
-					prototype = sourceItem.form.object._prototype;
-				// now destObj:
-				var destObj = HopObject.getById(req.data.edit_object_id, prototype);
-				if (destObj != null) {
+			if (sourceItem) {
+				if (!User.canEdit(object, sourceItem.name))
+					return EditForm.NOT_ALLOWED;
+				// The prototype of the destination can be specified.
+				// if not, it's the same as source
+				var destObj = HopObject.getById(req.data.edit_object_id,
+							req.data.edit_prototype || sourceItem.form.object._prototype);
+				if (destObj) {
 					// destObj's editForm needs a item with the name req.data.edit_item which defines a field 'prototypes'
 					var noChildren = true;
 					var notAllowed = [];
 					var destItem = EditForm.get(destObj).getItem(req.data.edit_item, req.data.edit_group);
-					if (destItem != null) {
+					if (destItem) {
+						if (!User.canEdit(destObj, destItem.name))
+							return EditForm.NOT_ALLOWED;
 						// get destObj's allowed prototypes
 						var allowedPrototypes = destItem.prototypes;
 						var sourceColl = sourceItem.collection;
@@ -367,8 +368,9 @@ EditForm.register({
 						// the hidden ones need to be moved before
 						// the reason for this is that like this, all the updading (specimens, usw) is hanndeled correctly by the handlers through form.applyItem:
 						var move = false;
-						if (allowedPrototypes != null && sourceColl != null && destColl != null) {
+						if (allowedPrototypes && sourceColl && destColl) {
 							noChildren = false;
+							// TODO: IdList is missing!
 							var sourceIds = new IdList(sourceItem.value);
 							var destIds = new IdList(destItem.value);
 							allowedPrototypes = allowedPrototypes.split(',');
@@ -379,7 +381,7 @@ EditForm.register({
 							for (var i in ids) {
 								var obj = sourceColl.getById(ids[i]);
 								// is the obj valid and has it an allowed prototype?
-								if (obj != null) {
+								if (obj) {
 									if (prototypeLookup[obj._prototype] && obj != destObj) {
 										if (destColl.indexOf(obj) == -1) {
 											destColl.add(obj);
@@ -399,20 +401,28 @@ EditForm.register({
 							}
 						}
 						if (move) {
-							// now apply the children of the current and the destObj, as they have changed:
-							var objs = [[sourceItem, sourceIds], [destItem, destIds]];
+							// Now apply the children of the current and the destObj, as they have changed:
+							var objs = [{
+								item: sourceItem,
+								ids: sourceIds
+							}, {
+								item: destItem,
+								ids: destIds
+							}];
 							for (var i in objs) {
-								var item = objs[i][0];
-								var ids = objs[i][1].toString(); // IdList needs to be passed to applyItem as string
+								var item = objs[i].item;
+								// IdList needs to be passed to applyItem as string
+								var ids = objs[i].ids.toString();
 								var form = item.form;
 								form.beforeApply();
 								form.applyItem(item, ids);
-								// update the colleciton so that visibilities don't get mixed up
+								// Update the colleciton so that visibilities don't get mixed up
 								item.value.invalidate();
 								var changed = new Hash();
 								changed[item.name] = item;
 								form.afterApply(true, changed);
 							}
+							// TODO: What's this called now?
 							EditStack.remember(true);
 							return EditForm.COMMIT;
 						} else {
@@ -448,20 +458,18 @@ EditForm.register({
 	},
 
 	group: function(base, object, node, form) {
-		// TODO: canEdit!
 		if (req.data.edit_item) {
 			var group = form.getItem(req.data.edit_item, req.data.edit_group);
-			if (group != null && group.groupForm != null) {
+			if (group && group.groupForm && User.canEdit(group.groupForm.object)) {
 				node.render(base, 'edit', group);
 			}
 		}
 	},
 
 	click: function(base, object, node, form) {
-		// TODO: canEdit!
 		if (req.data.edit_item) {
 			var item = form.getItem(req.data.edit_item, req.data.edit_group);
-			if (item && item.onClick) {
+			if (item && item.onClick && User.canEdit(object, item.name)) {
 				if (item.onClick.call(object, item))
 					return EditForm.COMMIT
 			}
@@ -477,6 +485,7 @@ EditForm.register({
 			var item = form.getItem(req.data.edit_item, req.data.edit_group);
 			req.data.edit_object_ids.split(',').each(function(id) {
 				var obj = HopObject.get(id);
+				// No need to check canEdit since obj.remove does it for us
 				if (obj && obj.remove())
 					removed = true;
 			});
@@ -492,8 +501,7 @@ EditForm.register({
 	},
 
 	choose: function(base, object, node, form) {
-		// TODO: canEdit?!
-//		if (User.canEdit()) {
+		if (User.canEdit(object)) {
 			var obj = HopObject.get(req.data.edit_root_id) || root;
 			var objId = obj.getFullId();
 			var isRoot = obj == root;
@@ -519,7 +527,7 @@ EditForm.register({
 				}
 			}
 			res.write('</ul>');
-//		}
+		}
 	},
 
 	upload_status: function(base, object, node, form) {
