@@ -116,7 +116,7 @@ Resource.inject({
 	},
 
 	getFile: function(id) {
-		return new File(getProperty('resourceDir'), this.getFilename(id));
+		return new File(app.properties.resourceDir, this.getFilename(id));
 	},
 
 	/**
@@ -150,14 +150,15 @@ Resource.inject({
 	},
 
 	getVersionFile: function(versionId, extension) {
-		return new File(getProperty('resourceDir'), 'versions/' + this._id +
+		return new File(app.properties.resourceDir, 'versions/' + this._id +
 			(versionId ? '_' + versionId : '') + '.' + (extension || this.extension));
 	},
 
 	removeVersionFiles: function() {
 		if (this.extension) {
 			// Remove all thumbnails of this image through java.io.File filtering
-			var versions = new File(getProperty('resourceDir'), 'versions').list(new RegExp('^' + this._id + '[_.]'));
+			var versions = new File(app.properties.resourceDir, 'versions').list(
+					new RegExp('^' + this._id + '[_.]'));
 			for each (file in versions) {
 				User.log('Erasing ' + file);
 				file.remove();
@@ -188,10 +189,11 @@ Resource.inject({
 		res.contentType = file.getContentType();
 		if (req.data.download || this.forceDownload()) {
 			this.counter++;	
-			res.getServletResponse().setHeader('Content-Disposition', 'attachment; filename="' + this.name + '"');
+			res.getServletResponse().setHeader('Content-Disposition',
+					'attachment; filename="' + this.name + '"');
 		}
 		// res.forward takes the filename relative to the protectedStatic, so resolve here.
-		res.forward(file.getRelativePath(getProperty('protectedDir')));
+		res.forward(file.getRelativePath(app.properties.protectedDir));
 	},
 
 	getContentType: function() {
@@ -201,7 +203,7 @@ Resource.inject({
 	renderIcon: function(param, out) {
 		if (!param.name)
 			param.name = encode(this.name);
-		param.src = getProperty('iconUri') + this.getIcon(param.small);
+		param.src = app.properties.iconUri + this.getIcon(param.small);
 		if (param.details)
 			param.details = ' (' +
 				// Display image / video size for media

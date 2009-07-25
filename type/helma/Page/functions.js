@@ -14,7 +14,7 @@ Page.inject({
 					this.name = 'root';
 				} else {
 					this.name = this.getEditParent().getUniqueChildName(this,
-							value, getProperty('maxNameLength', 64).toInt());
+							value, (app.properties.maxNameLength || 64).toInt());
 				}
 			}
 		});

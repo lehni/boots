@@ -20,8 +20,8 @@ User.inject({
 				longDesc += '\nStacktrace:\n' + sw.toString();
 			}
 			User.log(title + ':\n' + longDesc);
-			var from = getProperty('errorFromAddress') || getProperty('serverAddress');
-			var to = getProperty('errorToAddress');
+			var from = app.properties.errorFromAddress || app.properties.serverAddress;
+			var to = app.properties.errorToAddress;
 			if (from && to) {
 				try {
 					// Send an error mail:

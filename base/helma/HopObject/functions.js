@@ -1,6 +1,6 @@
 HopObject.inject({
 	absoluteHref: function(action) {
-		return getProperty("serverUri") + this.href(action);
+		return app.properties.serverUri + this.href(action);
 	},
 
 	/**

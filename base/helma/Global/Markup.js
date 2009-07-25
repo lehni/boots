@@ -408,7 +408,7 @@ UrlTag = MarkupTag.extend({
 		// allways write domain part of url for simple rendering (e.g. in rss feeds)
 		var isLocal = Net.isLocal(url);
 		if (param.simple && isLocal)
-			str += getProperty('serverUri');
+			str += app.properties.serverUri;
 		// Make sure the non-local url has a protocol, http is default:
 		if (!isLocal && !Net.isRemote(url))
 			url = 'http://' + url;

@@ -1,8 +1,8 @@
 Root.inject({
 	checkNotifications: function() {
 		var notifications = this.notifications.list();
-		var notificationTitle = getProperty('notificationTitle')
-				|| getProperty('serverName') + ': Discussion Notification';
+		var notificationTitle = app.properties.notificationTitle
+				|| app.properties.serverName + ': Discussion Notification';
 		for (var i = 0; i < notifications.length; i++) {
 			// notifications are grouped, so walk through the subgroup and find the topics
 			var notifications = notifications[i].list();
@@ -31,7 +31,7 @@ Root.inject({
 					});
 					try {
 						var mail = new Mail();
-						mail.setFrom(getProperty('serverEmail'));
+						mail.setFrom(app.properties.serverEmail);
 						mail.setTo(username + ' <' + email + '>');
 						mail.setSubject();
 						mail.addPart(text);
@@ -50,7 +50,7 @@ Root.inject({
 	 * property 'notificationUsers'.
 	 */
 	getNotificationUsers: function(post) {
-		var users = getProperty('notificationUsers');
+		var users = app.properties.notificationUsers;
 		return users && users.split(',');
 	}
 });

@@ -129,7 +129,7 @@ EditForm.inject({
 		var str = Json.encode(args, true);
 		// Remove [] from string:
 		// Always pass event object last, in case we need mouse position
-		return "EditForm.handle(" + str.substring(1, str.length - 1) + ", event);";
+		return "EditForm.handle(" + str.substring(1, str.length - 1) + ", window.event);";
 	},
 
 	renderTitle: function(node, mode) {

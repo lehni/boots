@@ -289,8 +289,8 @@ UrlRouteHandler.prototype = {
 		}
 		if (!found) {
 			res.status = 404;
-			// simulate error handling behavior in RequestEvaluator.java
-			var action = root[getProperty('notfound', 'notfound') + '_action'];
+			// Simulate error handling behavior in RequestEvaluator.java
+			var action = root[(app.properties.notfound || 'notfound') + '_action'];
 			if (action) {
 				action.apply(root);
 			} else {

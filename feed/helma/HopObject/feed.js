@@ -3,8 +3,8 @@ HopObject.inject({
 
 	rss_action: function() {
 		if (this.HAS_FEED) {
-			res.contentType = "text/xml";
-			this.renderFeed("rss", 10);
+			res.contentType = 'text/xml';
+			this.renderFeed('rss', 10);
 		}
 	},
 
@@ -20,10 +20,10 @@ HopObject.inject({
 		if (items.length > 0) {
 			res.push();
 			this.renderTemplate(type, {
-				title: getProperty("feedTitle") + " - " + this.getDisplayName(),
-				description: getProperty("feedDescription"),
-				language: getProperty("feedLanguage"),
-				generator: getProperty("feedGenerator"),
+				title: app.properties.feedTitle + ' - ' + this.getDisplayName(),
+				description: app.properties.feedDescription,
+				language: app.properties.feedLanguage,
+				generator: app.properties.feedGenerator,
 				link: this.absoluteHref(),
 				date: items[0].modificationDate,
 				items: items

@@ -128,7 +128,7 @@ Picture.inject({
 				}
 				if (image) {
 					// A new image version was produced, save it to a file now:
-					var quality = parseFloat(getProperty('imageQuality'));
+					var quality = parseFloat(app.properties.imageQuality);
 					if (!quality) quality = 0.8;
 
 					var numColors = info.getNumColors();

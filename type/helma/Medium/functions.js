@@ -1,6 +1,6 @@
 Medium.inject({
 	// MANUAL: Set MAX_WIDTH, MAX_HEIGHT to your value in your app!
-	// TODO: consider getProperty("maxMediumWidth");
+	// TODO: consider app.properties.maxMediumWidth;
 	MAX_WIDTH: 640,
 	MAX_HEIGHT: 480,
 
