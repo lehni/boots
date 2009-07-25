@@ -12,66 +12,6 @@ function getResource(name) {
 	return null;
 }
 
-function encodeMD5(str) {
-	return Packages.helma.util.MD5Encoder.encode(str);
-}
-
-function encodeHSA1(str) {
-	var algorithm = java.security.MessageDigest.getInstance('SHA-1');
-	var digest = algorithm.digest(new java.lang.String(str).getBytes());
-	res.push();
-	for (var i = 0; i < digest.length; i++) {
-		var b = digest[i] & 0xff;
-		if (b < 0x10) res.write('0');
-		res.write(java.lang.Integer.toHexString(b));
-	}
-	return res.pop();
-}
-
-function encodeUrl(str) {
-	return str ? Packages.helma.util.UrlEncoded.encode(str, 'UTF-8').replace('%20', '+') : str;
-}
-
-function encodeJs(str, singleQuotes) {
-	// We cannot use uneval unfortunately since we want to be able to replace ' or ", depending on singleQuotes
-	return str ? (str = Json.encode(str, singleQuotes)).substring(1, str.length - 1) : str;
-	// return str ? (str = uneval(str)).substring(1, str.length - 1) : str;
-}
-
-function encodeHex(str) {
-	var hex = '';
-	// two \\ needed because it's javascript encoded (for the client side)
-	for (var i = 0; i < str.length; i++) {
-		var ch = str.charCodeAt(i);
-		hex += ch < 256
-			? '\\x' + ch.toPaddedString(2, 16)
-			: '\\u' + ch.toPaddedString(4, 16);
-	}
-	return hex;
-}
-
-/**
- * Encodes strings for html attributes, replacing quotes with their hex values
- */
-function encodeAttribute(str) {
-	return str.replace(/['"]/gm, function(match) {
-		return encodeHex(match);
-	});
-}
-
-// encodeSql is the same as encodeJs:
-var encodeSql = encodeJs;
-
-function decodeUrl(str) {
-	return str ? Packages.helma.util.UrlEncoded.decode(str, 'UTF-8') : str;
-}
-
-// the opposite of encode:
-function decode(str) {
-	str = Packages.org.htmlparser.util.Translate.decode(str);
-	return str.replaceAll('<br />', '\n');
-}
-
 function executeProcess() {
 	if (arguments.length == 1) {
 		var command = arguments[0];
