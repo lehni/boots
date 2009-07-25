@@ -11,8 +11,18 @@ HopObject.inject({
 		User.autoLogin();
 	},
 
+	/**
+	 * Te be called by User.canEdit, not directly to check editability
+	 */
 	isEditableBy: function(user, item) {
 		return false;
+	},
+
+	/**
+	 * Te be called directly, as a shortcut to User.canEdit(this)
+	 */
+	isEditable: function(item) {
+		return User.canEdit(this, item);
 	},
 
 	isCreating: function() {
@@ -96,12 +106,8 @@ HopObject.inject({
 				// Do not get form through EditNode, as we need to pass true
 				// for the remove parameter, and do not want things to be cached.
 				var form = this.getEditForm({ removing: true });
-				// only remove objects that are also allowed to remove directly and
-				// don't override the base object
-				// TODO: Is it bad not to check for object match? In case of Topic / Post
-				// this would not work, as editing a node returns the editor for the
-				// first post....
-				if (form.removable/* && form.object == this*/) {
+				// Only remove objects that are removable
+				if (form.removable) {
 					User.log('Removing ' + this.getFullId());
 					remove = true;
 					// Now check all the form's items to see wether
