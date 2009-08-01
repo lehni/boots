@@ -52,7 +52,7 @@ Node.inject({
 		}
 		// Get the list of standard users to notify and go through them.
 		var users = root.getNotificationUsers(post);
-		for (var i = 0, l = users.length; i < l; i++) {
+		for (var i = 0, l = users && users.length; i < l; i++) {
 			var user = users[i];
 			if (!(user instanceof User))
 				user = root.users.get(user);
