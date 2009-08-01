@@ -1,28 +1,16 @@
-/**
- * A global container for different edit handlers.
- * EditForm.register() allows the registration of new hanlers for your application.
- */
-
-EditForm.inject(new function() {
+EditHandler = Base.extend(new function() {
 	var handlers = new Hash();
 
 	return {
 		statics: {
-			// Constants
-			COMMIT: {},
-			NOT_ALLOWED: {},
-
-			/**
-			 * Allows registration of additional handlers or overriding of existing ones
-			 */
-			register: function(items) {
-				handlers.merge(items);
+			extend: function(src) {
+				var ctor = this.base(src), handler = new ctor();
+				return (src._types || '').split(',').each(function(type) {
+					handlers[type] = handler;
+				});
+				return ctor;
 			},
 
-			/*
-			 * handle returns the object to handle the further editing when the content was modified
-			 * if "this" was removed in handleEditMode, it returns its parent to take of the next steps
-			 */
 			handle: function(base) {
 				var editObj = null;
 				// default for response content-type is javascript, set only if 
@@ -48,12 +36,11 @@ EditForm.inject(new function() {
 						// check again that we have the rights to edit:
 						if (node) {
 							// Call the handler and commit changes if there are any
-							// use handlers as the object, so the handler can other handlers by using "this".
 							node.log(mode);
 							// Make sure a new form is produced each time when editing
 							var form = node.getForm(mode == 'edit');
 							var oldHref = base.href();
-							var result = handler.call(handlers, base, node.object, node, form);
+							var result = handler.handle(base, node.object, node, form);
 							if (result == EditForm.COMMIT) {
 								res.commit();
 								var redirect = null;
@@ -126,16 +113,20 @@ EditForm.inject(new function() {
 				}
 				res.write(out);
 				return handled;
+			},
+
+			call: function(mode, base, object, node, form) {
+				var handler = handlers[mode];
+				return handler && handler.call(mode, base, object, node, form);
 			}
 		}
-	};
+	}
 });
 
-////////////////////////////////////////////////////////////////////////
-// handlers
+NewHandler = EditHandler.extend({
+	_types: 'new',
 
-EditForm.register({
-	'new': function(base, object, node, form) {
+	handle: function(base, object, node, form) {
 		// req.data.value_item and req.data.value_group are set
 		// if a prototype chooser is used bellow:
 		var item = form.getItem(req.data.edit_item, req.data.edit_group);
@@ -163,27 +154,31 @@ EditForm.register({
 					} else if (form.hasItems()) {
 						node.render(base, 'create');
 					} else {
-						return this.create(base, object, node, form);
+						return EditHandler.call('create', base, object, node, form);
 					}
 				} else {
 					EditForm.alert('Unknown Prototype: ' + prototype);
 				}
 			} else return EditForm.NOT_ALLOWED;
 		}
-	},
+	}
+});
 
-	create: function(base, object, node, form) {
+CreateHandler = EditHandler.extend({
+	_types: 'create',
+
+	handle: function(base, object, node, form) {
 		// Apply all changes first, add it to the db only at the end
 		if (!User.canEdit(object))
 			return EditForm.NOT_ALLOWED;
-		if (this.apply(base, object, node, form)) {
+		if (EditHandler.call('apply', base, object, node, form)) {
 			// If onCreate returns an object, this object is added instead of our temporary one.
 			if (object.onCreate) {
 				var ret = object.onCreate();
 				if (ret !== undefined && ret != object) {
 					object = ret;
-					// Call this.apply() again on the new object, as it differs from object.
-					if (!this.apply(object))
+					// Call 'apply' again on the new object, as it differs from object.
+					if (!EditHandler.call('apply', base, object, node, form))
 						return;
 				}
 			}
@@ -246,9 +241,13 @@ EditForm.register({
 				parentItem.onStore.call(parentItem.form.object, object, parentItem);
 			return EditForm.COMMIT;
 		}
-	},
+	}
+});
 
-	apply: function(base, object, node, form) {
+ApplyHandler = EditHandler.extend({
+	_types: 'apply',
+
+	handle: function(base, object, node, form) {
 		// Get the form description and save the values of all items:
 		// Use the object from form, which might differ from the one in node!
 		// e.g. in Topic / Post, where editing a Topic actually returns the
@@ -283,9 +282,13 @@ EditForm.register({
 				throw e;
 			}
 		}
-	},
+	}
+});
 
-	preview: function(base, object, node, form) {
+PreviewHandler = EditHandler.extend({
+	_types: 'preview',
+
+	handle:	function(base, object, node, form) {
 		// Apply changes first:
 		// First either apply or create the object.
 		var result = this[req.data.edit_create == 1 ? 'create' : 'apply'](base, object, node, form);
@@ -315,9 +318,13 @@ EditForm.register({
 		// We would not need to return COMMIT since that's already taken care of above,
 		// but we need to make sure page gets rendered too!
 		return result;
-	},
+	}
+});
 
-	edit: function(base, object, node, form) {
+EditObjectHandler = EditHandler.extend({
+	_types: 'edit',
+
+	handle: function(base, object, node, form) {
 		if (req.data.edit_item) {
 			var obj = null;
 			var item = form.getItem(req.data.edit_item, req.data.edit_group);
@@ -338,9 +345,13 @@ EditForm.register({
 				EditForm.alert('Unable to edit object');
 			}
 		}
-	},
+	}
+});
 
-	move: function(object) {
+MoveHandler = EditHandler.extend({
+	_types: 'move',
+
+	handle:	function(object) {
 		// TODO: Make sure this works
 		if (req.data.edit_object_ids && req.data.edit_object_id && req.data.edit_item) {
 			// first determine sourceItem:
@@ -455,18 +466,26 @@ EditForm.register({
 				}
 			}
 		}
-	},
+	}
+});
 
-	group: function(base, object, node, form) {
+GroupHandler = EditHandler.extend({
+	_types: 'group',
+
+	handle:	function(base, object, node, form) {
 		if (req.data.edit_item) {
 			var group = form.getItem(req.data.edit_item, req.data.edit_group);
 			if (group && group.groupForm && User.canEdit(group.groupForm.object)) {
 				node.render(base, 'edit', group);
 			}
 		}
-	},
+	}
+});
 
-	click: function(base, object, node, form) {
+ClickHandler = EditHandler.extend({
+	_types: 'click',
+
+	handle:	function(base, object, node, form) {
 		if (req.data.edit_item) {
 			var item = form.getItem(req.data.edit_item, req.data.edit_group);
 			if (item && item.onClick && User.canEdit(object, item.name)) {
@@ -474,9 +493,13 @@ EditForm.register({
 					return EditForm.COMMIT
 			}
 		}
-	},
+	}
+});
 
-	remove: function(base, object, node, form) {
+RemoveHandler = EditHandler.extend({
+	_types: 'remove',
+
+	handle:	function(base, object, node, form) {
 		// If ids and collection are set, delete the objects of the collection with these ids.
 		// Otherwise remove the object itself:
 		var removed = false;
@@ -498,16 +521,20 @@ EditForm.register({
 		} else {
 			EditForm.alert('Nothing was removed!');
 		}
-	},
+	}
+});
 
-	choose: function(base, object, node, form) {
+ChooseHandler = EditHandler.extend({
+	_types: 'choose',
+
+	handle:	function(base, object, node, form) {
 		if (User.canEdit(object)) {
 			var obj = HopObject.get(req.data.edit_root_id) || root;
 			var objId = obj.getFullId();
 			var isRoot = obj == root;
 
 			res.contentType = 'text/html';
-			// TODO: Use template
+			// TODO: Use Template
 			res.write('<ul id="edit-choose-children-' + objId + '">');
 			var children = obj.list();
 			for (var i = 0; i < children.length; i++) {
@@ -528,9 +555,13 @@ EditForm.register({
 			}
 			res.write('</ul>');
 		}
-	},
+	}
+});
 
-	upload_status: function(base, object, node, form) {
+UploadStatusHandler = EditHandler.extend({
+	_types: 'upload_status',
+
+	handle: function(base, object, node, form) {
 		res.write(session.getUploadStatus(req.data.upload_id) || '{}');
 	}
 });

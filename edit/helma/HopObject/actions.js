@@ -2,9 +2,9 @@ HopObject.inject({
 	// edit_action is only used in the non-dhtml editor.
 	edit_action: function() {
 		// sleep(1000);
-		EditForm.handle(this);
+		EditHandler.handle(this);
 		/* TODO: What to do with this?
-		if (!EditForm.handle(this) && this.login_action)
+		if (!EditHandler.handle(this) && this.login_action)
 			this.login_action();
 		*/
 	},

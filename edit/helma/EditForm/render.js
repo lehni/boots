@@ -1,5 +1,5 @@
 ////////////////////////////////////////////////////////////////////////
-// rendering
+// Rendering
 
 EditForm.inject({
 	render: function(base, mode, node) {
@@ -144,6 +144,7 @@ EditForm.inject({
 		var parts = [];
 		nodes.each(function(node, index) {
 			if (node.visible) {
+				// TODO: Template
 				var title = '<span class="edit-node-title">' + node.getTitle() + '</span>', form = node.getForm();
 				if (EditForm.SHOW_PROTOTYPE && form && !form.title
 					&& mode == 'edit' && this.object != root)

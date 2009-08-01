@@ -619,8 +619,12 @@ EditForm.inject(new function() {
 			// done afterwards. Used by items of type "button" and "hidden".
 			DONT_APPLY: {},
 
+			COMMIT: {},
+
+			NOT_ALLOWED: {},
+
 			// Setting onApply to EditForm.DO_NOTHING prevents execution of onApply
-			DO_NOTHING: function() {}
+			DO_NOTHING: function() {},
 		}
 	}
 });

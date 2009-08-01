@@ -597,6 +597,10 @@ EditForm = Base.extend({
 });
 
 // handlers
+//
+// TODO: Clean up similar to way Markup and EditHandler is handled on 
+// server side?
+
 EditForm.inject(new function() {
 	var handlers = new Hash();
 

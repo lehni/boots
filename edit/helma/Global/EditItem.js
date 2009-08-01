@@ -144,16 +144,10 @@ EditItem = Base.extend(new function() {
 		toString: function() {
 			var out = [];
 			['type', 'name', 'index', 'row', 'groupForm'].each(function(val) {
-				if (this[val] != undefined) {
+				if (this[val] !== undefined)
 					out.push(val + ': ' + (val == 'row' ? this.row.index : this[val]));
-				}
 			}, this);
 			return '{ ' + out.join(', ') + ' }';
-			/*
-			return '{ ' + Base.each(this, function(val, key) {
-				this.push(key + ': ' + val);
-			}, []).join(', ') + ' }';
-			*/
 		},
 
 		statics: {
