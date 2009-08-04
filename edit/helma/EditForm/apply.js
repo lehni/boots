@@ -8,6 +8,8 @@ EditForm.inject({
 	},
 
 	afterApply: function(itemsChanged, changedItems) {
+		// Update edit properties, (creator and modifier related properties)
+		this.object.updateEditProperties();
 		// Call onAfterApply on each item, if defined:
 		if (itemsChanged) {
 			changedItems.each(function(item) {

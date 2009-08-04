@@ -11,7 +11,7 @@ EditHandler = Base.extend(new function() {
 				return ctor;
 			},
 
-			handle: function(base) {
+			handle: function(base, mode) {
 				var editObj = null;
 				// default for response content-type is javascript, set only if 
 				// other type is needed
@@ -19,7 +19,7 @@ EditHandler = Base.extend(new function() {
 				EditNode.onRequest();
 				res.data.editResponse = new Hash();
 				var parent = base.getParent();
-				var mode = req.data.edit_mode || 'edit';
+				var mode = req.data.edit_mode || mode || 'edit';
 				var fullId = req.data.edit_id || base.getFullId();
 				var handler = handlers[mode];
 				var out = null;
@@ -140,7 +140,8 @@ NewHandler = EditHandler.extend({
 			} else if (prototypes.length == 1) {
 				prototype = prototypes[0];
 			} else {
-				User.log('More than one prototype available, no choice was made: ' + prototypes);
+				User.log('More than one prototype available, no choice was made: '
+						+ prototypes);
 			}
 			if (prototype && (User.canEdit(form.object, item.name))) {
 				// get the prototype constructor and create an instance:
@@ -155,7 +156,8 @@ NewHandler = EditHandler.extend({
 					var node = EditNode.get(object);
 					form = node.getForm();
 					if (!form) {
-						EditForm.alert('Unable to retrieve edit form from object:\n' + EditForm.getEditName(object, true));
+						EditForm.alert('Unable to retrieve edit form from object:\n'
+								+ EditForm.getEditName(object, true));
 					} else if (form.hasItems()) {
 						node.render(base, 'create');
 					} else {
@@ -376,11 +378,11 @@ MoveHandler = EditHandler.extend({
 					if (destItem) {
 						if (!User.canEdit(destObj, destItem.name))
 							return EditForm.NOT_ALLOWED;
-						// get destObj's allowed prototypes
+						// Get destObj's allowed prototypes
 						var allowedPrototypes = destItem.prototypes;
 						var sourceColl = sourceItem.collection;
 						var destColl = destItem.collection;
-						// for the visible children, a string list is modified that is passed to form.applyItem in the end (they're moved there)
+						// For the visible children, a string list is modified that is passed to form.applyItem in the end (they're moved there)
 						// the hidden ones need to be moved before
 						// the reason for this is that like this, all the updading (specimens, usw) is hanndeled correctly by the handlers through form.applyItem:
 						var move = false;
@@ -402,7 +404,7 @@ MoveHandler = EditHandler.extend({
 										if (destColl.indexOf(obj) == -1) {
 											destColl.add(obj);
 											if (obj.index != null) {
-												// see description above on how exactly hidden and visible objects are handeled:
+												// See description above on how exactly hidden and visible objects are handeled:
 												obj.index = null;
 												// just modify the string lists here:
 												sourceIds.remove(obj._id);

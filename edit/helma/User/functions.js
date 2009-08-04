@@ -1,45 +1,8 @@
-	////////////////////////////////////////////////////////////////////////
-// Roles
-
-// Flags to check single attributes. A role consists of more of one of these
-// e.g. the superuser has all the flags set.
-
-// TODO: Consider separating flags from combined roles for easier management,
-// e.g. User.READ / POST / EDIT / DISABLED / UNVERIFIED
-// vs   User.READER / POSTER (includes READER), EDITOR (includes POSTER), etc.
-// Maybe separate with prefix... UserRole.READ, UserRole.POST, vs. User.READER
-
-User.NONE = 			0x0000;
-User.READER =			0x0001;
-User.POSTER =			0x0002;
-User.EDITOR =			0x0004;
-// Define your own, e.g.:
-//User.ROLE1 = 			0x0008;
-//User.ROLE2 = 			0x0010;
-//User.ROLE3 = 			0x0020;
-//User.ROLE4 = 			0x0040;
-//User.ROLE5 = 			0x0080;
-
-User.DISABLED =			0x0100;
-User.UNVERIFIED =		0x0200;
-
-User.ADMINISTRATOR =	0x1000;
-User.SUPERUSER =		0x2000;
-
-////////////////////////////////////////////////////////////////////////
-// Needed for EditForm:
-//
-// User#canEdit
-// User.canEdit
-
-////////////////////////////////////////////////////////////////////////
-// Edit
-
 User.inject({
 	getEditForm: function() {
-		var isAdmin = User.hasRole(User.ADMINISTRATOR);
-		var isSuperuser = User.hasRole(User.SUPERUSER);
-		var editSuperuser = this.hasRole(User.SUPERUSER);
+		var isAdmin = User.hasRole(UserRole.ADMIN);
+		var isSuperuser = User.hasRole(UserRole.ROOT);
+		var editSuperuser = this.hasRole(UserRole.ROOT);
 		var isSameUser = session.user == this;
 		var form = new EditForm(this, { removable: isAdmin && !editSuperuser && !isSameUser });
 		var tab = form.addTab('User');
@@ -53,12 +16,13 @@ User.inject({
 			tab.add({ label: 'Password', name: 'password', type: 'password', length: 16, onApply: this.onApplyPassword });
 		if (isAdmin && !isSameUser && !editSuperuser) {
 			var roles = [
-				{ name: 'Poster', value: User.READER | User.POSTER },
-				{ name: 'Editor', value: User.READER | User.POSTER | User.EDITOR },
-				{ name: 'Admin', value: User.READER | User.POSTER | User.EDITOR | User.ADMINISTRATOR }
+				{ name: 'Reader', value: User.READER },
+				{ name: 'Poster', value: User.POSTER },
+				{ name: 'Editor', value: User.EDITOR },
+				{ name: 'Administrator', value: User.ADMINISTRATOR }
 			];
 			if (isSuperuser)
-				roles.push({ name: 'Superuser', value: User.READER | User.POSTER | User.EDITOR | User.ADMINISTRATOR | User.SUPERUSER });
+				roles.push({ name: 'Superuser', value: User.SUPERUSER });
 			tab.add({ label: 'Role', name: 'roles', type: 'select', options: roles });
 		}
 		return form;
@@ -87,10 +51,10 @@ User.inject({
 	// otherwise it checks the write access to the object.
 	canEdit: function(object, item) {
 		// Admins can edit everything
-		return this.hasRole(User.ADMINISTRATOR)
+		return this.hasRole(UserRole.ADMIN)
 				// Editors can create new things anywhere as well
-				|| !object && this.hasRole(User.EDITOR)
-				|| object && ((object.isCreating() && session.user == this) ||
+				|| !object && this.hasRole(UserRole.EDIT)
+				|| object && ((object.isCreating() && this == session.user) ||
 						object.isEditableBy(this, item));
 	},
 
@@ -139,9 +103,15 @@ User.inject({
 		this.lastLogin = new Date();
 	},
 
+	// Override to allow turning of login (and editing) per user
+	isLoginAllowed: function() {
+		return true;
+	},
+
 	statics: {
-		// Override to globally turn of login, e.g. by setting a flag on the root object...
-		isLoginAllowed: function() {
+		// Override to globally turn of editing,
+		// e.g. by setting a flag on the root object.
+		isEditingAllowed: function() {
 			return true;
 		},
 
@@ -154,11 +124,11 @@ User.inject({
 
 		login: function(username, password, remember) {
 			var user = root.users.get(username);
-			if (user != null) {
-				if (user.hasRole(User.DISABLED)) {
+			if (user) {
+				if (user.hasRole(UserRole.DISABLED)) {
 					User.setMessage('loginDisabled');
 					return false;
-				} else if (!User.isLoginAllowed() && !(user.hasRole(User.SUPERUSER))) {
+				} else if (!user.isLoginAllowed() && !(user.hasRole(UserRole.ROOT))) {
 					User.setMessage('loginTemporarilyDisabled');
 					return false;
 				}
@@ -197,11 +167,13 @@ User.inject({
 			var user = session.user;
 			if (user && user.canEdit(object, item) 
 					|| !user && object && object.isEditableBy(null, item)) {
-				if (User.isLoginAllowed() || user.hasRole(User.SUPERUSER)) {
+				if (User.isEditingAllowed() && (!user || user.isLoginAllowed()
+						|| user.hasRole(UserRole.ROOT))) {
 					return true;
 				} else {
 					User.setMessage('loginDisabled');
-					user.logout(false);
+					if (user)
+						user.logout(false);
 				}
 			}
 			// If login is not allowed, also do not allow anonymous posts...
@@ -231,7 +203,7 @@ User.inject({
 		},
 
 		getRoles: function() {
-			return session.user ? session.user.getRoles() : User.NONE;
+			return session.user ? session.user.getRoles() : UserRole.NONE;
 		},
 
 		hasRole: function(role) {
@@ -239,3 +211,11 @@ User.inject({
 		}
 	}
 });
+
+// Commonly used combined Roles
+
+User.READER = UserRole.READ;
+User.POSTER = User.READER | UserRole.POST;
+User.EDITOR = User.POSTER | UserRole.EDIT;
+User.ADINISTRATOR = User.EDITOR | UserRole.ADMIN;
+User.SUPERUSER = User.ADINISTRATOR | UserRole.ROOT;

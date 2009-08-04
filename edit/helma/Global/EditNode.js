@@ -9,7 +9,8 @@ EditNode = Base.extend({
 			// object that will be stored in the nodes cache under the
 			// transient id of the old one.
 			if (id[0] == 't') {
-				User.log('WARNING: Lost transient object, producing new one (' + prototype + ', ' + id + ')');
+				User.log('WARNING: Lost transient object, producing new one ('
+						+ prototype + ', ' + id + ')');
 				object = new global[prototype]();
 				// Pass previously associated id, so this object's node can
 				// still be found in EditNode.get. See HopObject#getFullId
@@ -36,10 +37,13 @@ EditNode = Base.extend({
 		// Use versioning so even when dontCache is true, the form is only created
 		// once every request.
 		var data = EditNode.getEditData();
-		if (!this.form || force || this.form.dontCache || this.form.version != data.version) {
+		if (!this.form || force || this.form.dontCache
+				|| this.form.version != data.version) {
 			try {
 				if (!this.object.getEditForm)
-					throw "The '" + this.object._prototype + "' prototype does not define #getEditForm (" + this.object + ")";
+					throw "The '" + this.object._prototype
+							+ "' prototype does not define #getEditForm ("
+							+ this.object + ")";
 				// Pass empty param object, default mode
 				this.form = this.object.getEditForm({});
 				this.form.id = this.id;
@@ -184,8 +188,12 @@ EditNode = Base.extend({
 				}, {});
 				// Now make sure all client nodes exist, and create if necessary
 				clientData.nodes.each(function(clientNode, fullId) {
+					// Get the parentItem from the client's parent description
 					var parent = clientNode.parent;
-					var node = EditNode.get(fullId, parent && EditNode.get(parent.id).getItem(parent.item, parent.group));
+					var parentItem = parent && EditNode.get(parent.id).getItem(
+							parent.item, parent.group);
+					// Now use this to get the node
+					var node = EditNode.get(fullId, parentItem);
 					node.visible = clientNode.visible;
 				});
 				editData.version = clientData.version;

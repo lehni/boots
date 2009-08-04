@@ -24,12 +24,12 @@ Root.inject({
 				var id = users.getColumnItem('id');
 				var roles = users.getColumnItem('roles');
 				var oldRoles = {
-					1: User.READER,
-					2: /* User.EDITOR | */ User.POSTER, // Degrade old Editors to Posters on SG
-					4: User.ADMINISTRATOR,
-					8: User.SUPERUSER,
-					16: User.DISABLED,
-					32: User.UNVERIFIED
+					1: UserRole.READ,
+					2: /* UserRole.EDIT | */ UserRole.POST, // Degrade old Editors to Posters on SG
+					4: UserRole.ADMIN,
+					8: UserRole.ROOT,
+					16: UserRole.DISABLED,
+					32: UserRole.UNVERIFIED
 				};
 				var newRoles = 0;
 				oldRoles.each(function(newFlag, oldFlag) {

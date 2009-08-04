@@ -109,6 +109,8 @@ EditForm.inject({
 		var response = {
 			id: node.id, html: html, visible: node.visible
 		};
+		// Produce parent information for the client side, including
+		// information about the parentItem
 		if (node.parent) {
 			var parent = { id: node.parent.id };
 			var parentItem = node.parentItem;

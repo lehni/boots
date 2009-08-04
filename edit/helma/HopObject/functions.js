@@ -1,13 +1,5 @@
 HopObject.inject({
 	onRequest: function() {
-		/*
-		var buffer = [];
-		for (var i in req.data) {
-			if (i != 'http_browser')
-				buffer.push(i + '=' + req.data[i]);
-		}
-		User.log('REQUEST: ' + req.path + ' ' + buffer.join(';'));
-		*/
 		User.autoLogin();
 	},
 
@@ -26,55 +18,60 @@ HopObject.inject({
 	},
 
 	isCreating: function() {
-		return !!this.cache.creating;
+		return !!this.cache.creationId;
 	},
 
 	setCreating: function(creating, id) {
 		if (creating) {
-			this.cache.creating = true;
 			// Make sure the modified getById finds this:
 			HopObject.registerById(this._id, this);
 			// Unregistering for the above happens when onStore is called,
 			// not setCreating(false), since they might still be transient after.
 			if (id) {
-				this.cache.id = id;
+				this.cache.creationId = id;
 				HopObject.registerById(id, this);
 			} else {
 				// Also set the fake id to _id since there are things during apply 
 				// that can force an object to become persited prematurely.
 				// This would prevent it from finding its edit parent since the
 				// fullId would change and the EditNode could not be found.
-				this.cache.id = this._id;
+				this.cache.creationId = this._id;
 			}
-			// Initialise the creator / modifier fields on this new object,
-			// if they are defined as fields.
-			// Helma returns null for unset existing properties and undefined for
-			// not existing properties. Make sure we're only setting modifier and
-			// date if the properties are actually defined in type.properties
-			if (this.modifier !== undefined)
-				this.modifier = session.user;
-
-			if (this.modificationDate !== undefined)
-				this.modificationDate = new Date();
-
-			// Set creator and creation date if it was not set yet.
-			if (this.creator === null)
-				this.creator = session.user;
-
-			if (this.creationDate === null)
-				this.creationDate = this.modificationDate || new Date();
-
+			// Update the object's edit properties as it is about to be created.
+			this.updateEditProperties();
 			// Make sure the object is editable even if there is no registered user.
 			User.makeEditable(this);
 		} else {
 			if (id)
 				HopObject.unregisterById(id);
-			if (this.cache.id) {
-				HopObject.unregisterById(this.cache.id);
-				delete this.cache.id;
+			if (this.cache.creationId) {
+				HopObject.unregisterById(this.cache.creationId);
+				delete this.cache.creationId;
 			}
-			delete this.cache.creating;
 		}
+	},
+
+	/**
+	 * A helper to initalise and update creator and modifier fields if they are
+	 * defined as fields.
+	 */
+	updateEditProperties: function() {
+		// Initialise the creator and update the modifier fields on the object,
+		// Helma returns null for unset existing properties and undefined for
+		// not existing properties. Make sure we're only setting modifier and
+		// date if the properties are actually defined in type.properties
+		if (this.modifier !== undefined)
+			this.modifier = session.user;
+
+		if (this.modificationDate !== undefined)
+			this.modificationDate = new Date();
+
+		// Set creator and creation date if it was not set yet.
+		if (this.creator === null)
+			this.creator = session.user;
+
+		if (this.creationDate === null)
+			this.creationDate = this.modificationDate || new Date();
 	},
 
 	isRemoving: function() {
@@ -176,7 +173,7 @@ HopObject.inject({
 			var user = root.users.get(req.data.username);
 			var login = true;
 			if (user) {
-				if (user.hasRole(User.UNVERIFIED)) {
+				if (user.hasRole(UserRole.UNVERIFIED)) {
 					User.setMessage('loginUnverified');
 					login = false;
 				}

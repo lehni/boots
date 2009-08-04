@@ -103,10 +103,13 @@ HopObject.inject({
 	 * Through HopObject.get(fullId);
 	 */
 	getFullId: function() {
-		// Use this.cache.id instead of real _if if set, so transient
+		// Use this.cache.creationId instead of real _if if set, so transient
 		// nodes can pretend to be another node. Used when transient nodes
-		// are lost in the cache. See EditNode#initialize
-		return this._prototype + '-' + (this.cache.id || this._id);
+		// about to be created are lost in the cache, or when transient nodes
+		// or forced to become persisted early, e.g. by adding a reference
+		// to another persisted node before creation is finished.
+		// See EditNode#initialize
+		return this._prototype + '-' + (this.cache.creationId || this._id);
 	},
 
 	getParent: function() {

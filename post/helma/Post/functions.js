@@ -31,7 +31,7 @@ Post.inject({
 		};
 		// If this post was anomyous and now edited by the same user who logged in, 
 		// do still show anomyous editor.
-		if (!this.username && User.hasRole(User.POSTER)) {
+		if (!this.username && User.hasRole(UserRole.POST)) {
 			form.add([
 				{
 					suffix: '<b>Posting as: </b>' +
@@ -87,7 +87,7 @@ Post.inject({
 				notNull: { value: true, message: 'Please write a text.' }
 			}
 		});
-		if (User.hasRole(User.ADMINISTRATOR) && !this.isCreating()) {
+		if (User.hasRole(UserRole.ADMIN) && !this.isCreating()) {
 			form.add({
 				type: 'ruler'
 			}, { 
@@ -128,7 +128,7 @@ Post.inject({
 			if (this.isFirst && node.onUpdateFirstPost)
 				node.onUpdateFirstPost(this, changedItems);
 			// If we're posting anonymously, store the values for next time
-			if (!User.hasRole(User.POSTER)) {
+			if (!User.hasRole(UserRole.POST)) {
 				res.setCookie('post_username', this.username, 90);
 				res.setCookie('post_email', this.email, 90);
 				res.setCookie('post_website', this.website, 90);
@@ -146,7 +146,7 @@ Post.inject({
 					this.title = /^Re: /.test(lastTitle) ? lastTitle : 'Re: ' + lastTitle;
 			}
 		}
-		if (!User.hasRole(User.POSTER)) {
+		if (!User.hasRole(UserRole.POST)) {
 			this.username = req.data.post_username;
 			this.email = req.data.post_email;
 			this.website = req.data.post_website;
@@ -166,7 +166,7 @@ Post.inject({
 		// Check if this is a first post, and if so only allow removal
 		// if there are no others
 		var node = this.getNode();
-		if (!User.hasRole(User.EDITOR) && this.isFirst && node.posts.count() > 1) {
+		if (!User.hasRole(UserRole.EDIT) && this.isFirst && node.posts.count() > 1) {
 			var other = node.posts.get(1);
 			throw other.getUserName() + (node.posts.count() > 2 ? ' and others have' : ' has')
 					+ ' already answered this post, therefore it cannot be removed.';

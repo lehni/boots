@@ -399,12 +399,13 @@ EditForm = Base.extend({
 	execute: function(mode, params) {
 		if (!params) params = {};
 		if (!params.confirm || confirm(params.confirm)) {
-			// this is necessay for mozilla browsers, because otherwise form focus
+			// This is necessay for mozilla browsers, because otherwise form focus
 			// gets messed up (because the input that still has the focus gets
 			// deleted by innerHTML....)
 			this.form.blur();
 			var post = params.post;
 			var enable = !!params.enable;
+			// Filter out all parameters that do not start with edit_
 			Base.each(params, function(val, key) {
 				if (!/^edit_/.test(key))
 					delete params[key];
