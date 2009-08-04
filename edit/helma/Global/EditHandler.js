@@ -117,7 +117,7 @@ EditHandler = Base.extend(new function() {
 
 			call: function(mode, base, object, node, form) {
 				var handler = handlers[mode];
-				return handler && handler.call(mode, base, object, node, form);
+				return handler && handler.handle(base, object, node, form);
 			}
 		}
 	}
@@ -146,7 +146,12 @@ NewHandler = EditHandler.extend({
 				// get the prototype constructor and create an instance:
 				var ctor = typeof prototype == 'string' ? global[prototype] : prototype;
 				if (ctor) {
-					var object = EditForm.createObject(ctor, item);
+					// Pass the item through which the object is created to the
+					// constructor, so it can determine the editing parent.
+					// This all happens automatically, by the time initialize
+					// is called, getEditParent works as expected.
+					// See edit/Global/Function.js for further explanations.
+					var object = new ctor(item);
 					var node = EditNode.get(object);
 					form = node.getForm();
 					if (!form) {
