@@ -8,11 +8,7 @@ EditForm.inject({
 	},
 
 	afterApply: function(itemsChanged, changedItems) {
-		var obj = this.object;
-		// Make sure creator and modifiers are set
-		EditForm.initializeEditFields(obj);
-
-		// Now call onAfterApply on each item, if defined:
+		// Call onAfterApply on each item, if defined:
 		if (itemsChanged) {
 			changedItems.each(function(item) {
 				if (item.onAfterApply) {
@@ -24,9 +20,9 @@ EditForm.inject({
 		// Forces clearing of cache.
 		delete this.version;
 		// The same on the form / object
-		var onAfterApply = obj.onAfterApply || this.onAfterApply;
+		var onAfterApply = this.object.onAfterApply || this.onAfterApply;
 		if (onAfterApply)
-			onAfterApply.call(obj, itemsChanged ? changedItems : null);
+			onAfterApply.call(this.object, itemsChanged ? changedItems : null);
 	},
 
 	applyItems: function() {

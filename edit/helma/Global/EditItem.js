@@ -892,10 +892,10 @@ EditableListItem = ListItem.extend({
 		if (this.button && !this.initialized) {
 			// Add the button only once to the form!
 			var prototypes = this.getPrototypes();
-			var proto = prototypes[0];
-			if (proto) {
+			var ctor = prototypes[0];
+			if (ctor) {
 				// Create an empty instance in order to render small edit form:
-				var html = this.renderEditForm(baseForm, name, new proto(), param);
+				var html = this.renderEditForm(baseForm, name, new ctor(ctor.dont), param);
 				baseForm.addButtons({
 					value: this.button,
 					onClick: baseForm.renderHandle('list_add', name, html)
@@ -971,19 +971,14 @@ EditableListItem = ListItem.extend({
 		// Now produce the new items
 		// Determine prototype in case onCreate does not produce the item.
 		var prototypes = this.getPrototypes();
-		var proto = prototypes[0];
+		var ctor = prototypes[0];
 		for (var id in create) {
 			// Support an onCreate handler that can produce special types
 			// e.g. based on the file type. That's also the only reason
 			// why we collect all values above, so that onCreate can analyse them.
 			var obj = this.onCreate && this.onCreate(create[id]);
-			if (obj) {
-				// Make sure all additional things are setup correctly
-				obj.setCreating(true);
-			} else {
-				// Use createObject to handle all the special editing stuff
-				obj = EditForm.createObject(proto, this);
-			}
+			if (!obj)
+				obj = new ctor(this); // Pass the edit item for editing parent stuff.
 			if (obj) {
 				// Just like in the rest of edit lib, apply first, persist after
 				var form = this.getEditForm(obj, id);

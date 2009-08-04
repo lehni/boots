@@ -1,12 +1,7 @@
 Topic.inject({
 	initialize: function() {
-		// A node cannot be created without a first post.
-		// Use EditForm.createObject instead of new Post, to make sure that 
-		// all editing related fields are properly set up on it.
-		// TODO: Could there not be a way that any HopObject that defines initialize
-		// is doing this automatically behind the scene, through some bootstrap
-		// magic?
-		var post = EditForm.createObject(Post);
+		// A topic cannot be created without a first post.
+		var post = new Post();
 		// tell it that it's the first post in a node
 		post.isFirst = true;
 		// Add it

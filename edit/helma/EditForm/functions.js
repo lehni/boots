@@ -564,55 +564,6 @@ EditForm.inject(new function() {
 				}
 			},
 
-			// Helpers for creation of object within the editing framework
-			/**
-			 * Creates an instance of a given gconstructor and sets up structures
-			 * so it can work within the editing framework.
-			 * Also makes sure that when the instance's initialize is called,
-			 * the object already knows its edit parent.
-			 */ 
-			createObject: function(ctor, item) {
-				// Creating with ctor.dont parameter causes initialize not to be called.
-				// We call it manually here, after creating the node through EditNode.get,
-				// so getEditParent will work in initialize already.
-				// This is hackish and rooted deep down in Bootstraps,
-				// but also works if bootstraps is not used
-				var obj = new ctor(ctor.dont);
-				obj.setCreating(true);
-				// Now get the node. This gets getEditParent to work.
-				node = EditNode.get(obj, item);
-				// First initialize the standard fields
-				EditForm.initializeEditFields(obj);
-				// Now call initialize that we suppressed above when creating ctor:
-				if (obj.initialize) {
-					var ret = obj.initialize();
-					// TODO: Check if this really works?
-					if (ret && ret != obj) {
-						obj = ret;
-						obj.setCreating(true);
-					}
-				}
-				return obj;
-			},
-
-			initializeEditFields: function(obj) {
-				// Helma returns null for unset existing properties and undefined for
-				// not existing properties. Make sure we're only setting modifier and date
-				// if the properties are actually defined in type.properties
-				if (obj.modifier !== undefined)
-					obj.modifier = session.user;
-
-				if (obj.modificationDate !== undefined)
-					obj.modificationDate = new Date();
-
-				// Set creator and creation date if it was not set yet.
-				if (obj.creator === null)
-					obj.creator = session.user;
-
-				if (obj.creationDate === null)
-					obj.creationDate = obj.modificationDate || new Date();
-			},
-
 			// Constants
 
 			// A constant object for item.convert to return when nothing should be

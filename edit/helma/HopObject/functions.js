@@ -46,6 +46,25 @@ HopObject.inject({
 				// fullId would change and the EditNode could not be found.
 				this.cache.id = this._id;
 			}
+			// Initialise the creator / modifier fields on this new object,
+			// if they are defined as fields.
+			// Helma returns null for unset existing properties and undefined for
+			// not existing properties. Make sure we're only setting modifier and
+			// date if the properties are actually defined in type.properties
+			if (this.modifier !== undefined)
+				this.modifier = session.user;
+
+			if (this.modificationDate !== undefined)
+				this.modificationDate = new Date();
+
+			// Set creator and creation date if it was not set yet.
+			if (this.creator === null)
+				this.creator = session.user;
+
+			if (this.creationDate === null)
+				this.creationDate = this.modificationDate || new Date();
+
+			// Make sure the object is editable even if there is no registered user.
 			User.makeEditable(this);
 		} else {
 			if (id)
