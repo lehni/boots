@@ -19,6 +19,10 @@ zipLib "post"
 zipLib "wiki"
 zipLib "feed"
 
+if [ -f boots.zip ]
+then
+	rm boots.zip
+fi
 zip -9 -r boots.zip boots/* -x "*/.DS_Store" "*/.svn/*"
 
 rm -fr boots
