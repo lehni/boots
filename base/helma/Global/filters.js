@@ -70,19 +70,11 @@ function substring_filter(input, param, from, to) {
 }
 
 /**
- * input can be a number or a date object. For date, the locale parameter is
+ * input can be a Number or a Date object. For Dates, the locale parameter is
  * supported too.
  */
 function format_filter(input, param, format, locale) {
-	locale = param.locale || locale;
-	if (typeof locale == 'string') {
-		try {
-			locale = java.util.Locale[locale.toUpperCase()];
-		} catch (e) {
-			app.log('Unsupported Locale: ' + locale);
-		}
-	}
-	return input != null && input.format(param.format || format, locale);
+	return input != null && input.format(param.format || format, param.locale || locale);
 }
 
 function markup_filter(input, param) {
