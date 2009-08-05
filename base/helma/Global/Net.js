@@ -56,7 +56,7 @@ Net = new function() {
 			// Caching of url files, to speed up lookup
 			var file = urlFiles[url];
 			if (!file || !file.exists()) {
-				var mountpoint = app.appsProperties.staticMountpoint;
+				var mountpoint = app.appsProperties.staticMountpoint || '/static/';
 				if (url.startsWith(mountpoint)) {
 					file = new File(app.appsProperties['static']
 							+ '/' + url.substring(mountpoint.length));
