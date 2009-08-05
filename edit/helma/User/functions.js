@@ -176,8 +176,7 @@ User.inject({
 						user.logout(false);
 				}
 			}
-			// If login is not allowed, also do not allow anonymous posts...
-			if (session.data.createdObjects && User.isLoginAllowed()) {
+			if (session.data.createdObjects && User.isEditingAllowed()) {
 				// If in anonymous mode, see if the object or its parent(s) where added
 				// to session.data.createdObjects. Allow editing if they were.
 				// TODO: add timeout for session.data. e.g. 15 minutes.
