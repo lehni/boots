@@ -50,12 +50,8 @@ Resource.inject({
 	},
 
 	initialize: function(mimeObj) {
-		if (mimeObj && mimeObj.name) {
-			// in order to apply the file, the _id needs to be known, so let's
-			// persist the object first:
-			this.persist();
+		if (mimeObj && mimeObj.name)
 			this.setFile(mimeObj);
-		}
 		this.counter = 0;
 	},
 

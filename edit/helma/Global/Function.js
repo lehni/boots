@@ -11,14 +11,13 @@ Function.inject({
 		// bootstrap's initialize.
 		// Also, inject first through base and then modfiy after, since otherwise
 		// our constructor is overridden again.
-		this.base(src);
+		this.base.apply(this, arguments);
 		var proto = this.prototype, ctor = proto.constructor;
 		// Keep setting it each time, since  .constructor might be overridden
 		// by this.base again...
 		if (proto instanceof HopObject && proto.getEditForm) {
 			proto.constructor = function(param) {
 				if (param !== ctor.dont) {
-					app.log('Creating ' + this);
 					this.setCreating(true);
 					// Now get the node. This gets getEditParent to work.
 					// Support passing an EditItem to the constructor, so
@@ -37,9 +36,28 @@ Function.inject({
 					}
 				}
 			}
+			// We need to prevent wrapping of previously defined onPerist
+			// methods by marking ours to distinguish it from normal ones.
+			// This allows users still to define normal onPersist methods 
+			// without having to call base for support of onStore.
+			var onPersist = proto.onPersist;
+			if (!onPersist || !onPersist._wrapped) {
+				proto.onPersist = function() {
+					if (this.cache.transientId) {
+						// This was a transient node before, call onStore
+						// with the transient id, so for example resources
+						// can be renamed.
+						if (this.onStore)
+							this.onStore(this.cache.transientId);
+						// This marks the end of editing
+						this.setCreating(false);
+					}
+					if (onPersist)
+						onPersist.call(this);
+				}
+				proto.onPersist._wrapped = true;
+			}
 		}
-		for (var i = 1, l = arguments.length; i < l; i++)
-			this.inject(arguments[i]);
 		return this;
 	}
 });

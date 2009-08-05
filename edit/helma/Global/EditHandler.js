@@ -192,57 +192,9 @@ CreateHandler = EditHandler.extend({
 			// Create it:
 			// The new obj has to be added to the object it belongs to:
 			// Find the parent's item through which it is created
-			var transientId = object._id;
 			var parentItem = node.parentItem;
 			if (!parentItem || !parentItem.store(object))
 				EditForm.alert('Cannot store the object.');
-
-			// Clear the creating flag both the node object and the form object,
-			// As they might be two different ones! (e.g. Topic / Post)
-			object.setCreating(false, transientId);
-			if (form.object != object)
-				form.object.setCreating(false);
-
-			// Only call onStore if the object stoped being transient through
-			// the above. If there is a change of transient objects, they become
-			// persistent when the parent of them all becomes persistent:
-			if (object.isTransient()) {
-				// Walk up the change to the last object that is transient,
-				// then create an array of all the object that want onStore
-				// to be called there:
-				var parent = object.getEditParent();
-				while (true) {
-					var next = parent.getEditParent();
-					if (!next || !next.isTransient())
-						break;
-					parent = next;
-				}
-				if (!parent.cache.createdChildren)
-					parent.cache.createdChildren = [];
-				parent.cache.createdChildren.push({
-					object: object,
-					transientId: object._id
-				});
-			} else {
-				// First call children's onStore handlers:
-				var children = object.cache.createdChildren;
-				if (children) {
-					for (var i = 0; i < children.length; i++) {
-						var ch = children[i];
-						var obj = ch.object;
-						User.log('Created ' + obj.getFullId() + ' from: ' + ch.transientId);
-						if (obj.onStore)
-							obj.onStore(ch.transientId);
-						HopObject.unregisterById(ch.transientId);
-					}
-					delete object.cache.createdChildren;
-				}
-				User.log('Created ' + object.getFullId() + ' from: ' + transientId);
-				// Call the onStore handler:
-				if (object.onStore)
-					object.onStore(transientId);
-				HopObject.unregisterById(transientId);
-			}
 			// If the parent's edit item defines an onStore handler, call it now:
 			if (parentItem && parentItem.onStore)
 				parentItem.onStore.call(parentItem.form.object, object, parentItem);
