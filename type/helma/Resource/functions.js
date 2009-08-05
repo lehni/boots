@@ -133,7 +133,7 @@ Resource.inject({
 		// Convert to object param first:
 		if (!param || typeof param == 'string')
 			param = { content: param };
-		// override default href (this.href())
+		// Override default href (this.href())
 		if (!param.href && !param.object) {
 			// Open in blank window if it's not forcing a download
 			if (!this.forceDownload()) {
@@ -156,7 +156,7 @@ Resource.inject({
 			var versions = new File(app.properties.resourceDir, 'versions').list(
 					new RegExp('^' + this._id + '[_.]'));
 			for each (file in versions) {
-				User.log('Erasing ' + file);
+				User.log('Removing ' + file);
 				file.remove();
 			}
 		}

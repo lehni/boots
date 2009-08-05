@@ -18,6 +18,7 @@ Function.inject({
 		if (proto instanceof HopObject && proto.getEditForm) {
 			proto.constructor = function(param) {
 				if (param !== ctor.dont) {
+					app.log('Creating ' + this.getEditId());
 					this.setCreating(true);
 					// Now get the node. This gets getEditParent to work.
 					// Support passing an EditItem to the constructor, so
@@ -44,6 +45,7 @@ Function.inject({
 			if (!onPersist || !onPersist._wrapped) {
 				proto.onPersist = function() {
 					if (this.cache.transientId) {
+						var beforeId = this.getEditId();
 						// This was a transient node before, call onStore
 						// with the transient id, so for example resources
 						// can be renamed.
@@ -51,6 +53,7 @@ Function.inject({
 							this.onStore(this.cache.transientId);
 						// This marks the end of editing
 						this.setCreating(false);
+						app.log('Storing ' + beforeId + ', now: ' + this.getEditId());
 					}
 					if (onPersist)
 						onPersist.call(this);

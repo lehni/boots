@@ -99,7 +99,7 @@ EditNode = Base.extend({
 	},
 
 	log: function(mode) {
-		var str = mode.capitalize() + ': ' + this.id + ' (' + this.object;
+		var str = 'Edit Action: \'' + mode + '\', ' + this.id + ' (' + this.object;
 		var form = this.getForm();
 		if (form && form.object != this.object)
 			str += ', ' + form.object;
