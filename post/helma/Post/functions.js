@@ -1,9 +1,4 @@
 Post.inject({
-	getEditName: function(detailed) {
-		if (this.title)
-			return this.title.truncate(28, '...') + (detailed ? ' [' + this._id + ']' : '');
-	},
-
 	getDisplayName: function() {
 		return this.getTitle();
 	},

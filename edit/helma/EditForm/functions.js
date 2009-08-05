@@ -531,15 +531,16 @@ EditForm.inject(new function() {
 			 * the default name.
 			 */
 			getEditName: function(obj, detailed) {
-				if (obj == null) return 'null';
-				var name;
-				if (obj.getEditName)
-					name = obj.getEditName(detailed);
-				else if (obj.getDisplayName)
-					name = obj.getDisplayName();
+				if (obj == null)
+					return 'null';
+				var name = obj.getEditName ? obj.getEditName(detailed) : null;
 				if (!name) {
-					if (obj.name) name = obj.name;
-					else name = '[' + obj.getFullId() + ']';
+					name = obj.getDisplayName && obj.getDisplayName() || obj.name;
+					if (name) {
+						name = name.truncate(28, '...') + (detailed ? ' [' + obj._id + ']' : '');
+					} else {
+						name = '[' + obj.getFullId() + ']';
+					}
 				}
 				return name;
 			},

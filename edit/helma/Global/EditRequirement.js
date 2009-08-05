@@ -43,7 +43,6 @@ EditRequirement = Base.extend(new function() {
 				// Check any defined requirements for this item and throw exceptions
 				// if requirements are not met.
 				// First we allways check for notNull:
-				app.log(item +  ' ' + item.requirements);
 				check(item, 'notNull', value);
 				// Now all the others:
 				for (var name in item.requirements)
