@@ -95,6 +95,9 @@ Property = Base.extend({
 	}
 
 	/*
+	// To be defined in inheriting classes, to convert to and from the database 
+	// representation of the values, mostly strings.
+
 	get: function(obj, property, value) {
 		return value;
 	}
