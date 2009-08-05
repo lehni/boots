@@ -156,24 +156,18 @@ function select_macro(param) {
 }
 
 function script_macro(param) {
-	// TODO: Read static mount point from app.appsProperties.staticMountpoint
-	// but only if that works with mod-jd / rewrites too!
-	var match = param.src && param.src.match(/^\/static(\/.*)/);
-	if (match) {
-		// TODO: Caching, check only every app.properties.lastModifiedCheck seconds or so (0 for dev)
-		var file = new File(app.appsProperties['static'] + match[1]);
-		if (file.exists())
-			param.src += '?' + file.lastModified;
-	}
+	var lastModified = Net.getLastModified(param.src);
+	if (lastModified)
+		param.src += '?' + lastModified;
 	Html.script(param, res);
 }
 
 /* This clashes with the global link macro. TODO: Rename the link macro
  to something else, e.g.g anchor, a, etc.?
 function link_macro(param) {
-	// TODO: Find a way to find file locally and add lastModified header?
-	if (param.href && Net.isLocal(param.href))
-		param.href += '?' + Math.random();
+	var lastModified = Net.getLastModified(param.href);
+	if (lastModified)
+		param.href += '?' + lastModified;
 	Html.link(param, res);
 }
 */
