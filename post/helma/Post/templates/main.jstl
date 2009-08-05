@@ -8,7 +8,9 @@
 <% else %>
 		<% param.title prefix="<b>" suffix="</b><br />" %>
 		<b>From:</b>&nbsp;&nbsp;<% this.user %><br />
-		<b>Date:</b>&nbsp;&nbsp;<%= this.creationDate | format properties.dateLong %><br />
+<%-- "| format properties.dateTimeLong" is a Scriptographer dependency.
+TODO: Find a way to abstract this --%>
+		<b>Date:</b>&nbsp;&nbsp;<%= this.creationDate | format properties.dateTimeLong %><br />
 <% end %>
 	</div>
 	<% this.editButtons buttons="edit,remove" %>
