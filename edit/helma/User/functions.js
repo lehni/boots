@@ -216,5 +216,5 @@ User.inject({
 User.READER = UserRole.READ;
 User.POSTER = User.READER | UserRole.POST;
 User.EDITOR = User.POSTER | UserRole.EDIT;
-User.ADINISTRATOR = User.EDITOR | UserRole.ADMIN;
+User.ADMINISTRATOR = User.EDITOR | UserRole.ADMIN;
 User.SUPERUSER = User.ADINISTRATOR | UserRole.ROOT;
