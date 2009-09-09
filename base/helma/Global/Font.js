@@ -177,8 +177,8 @@ Font = Base.extend({
 
 	/**
 	 * This breaks text into lines based on the maxWidth
-	 * Breaking happens on newlines and spaces
-	 * Of a single word is wider then maxWidth, it will break on a character.
+	 * Breaking happens on newlines and spaces.
+	 * if a single word is wider then maxWidth, it will break on a character.
 	 */
 	breakIntoLines: function(text, maxWidth) {
 		var lines =[];
