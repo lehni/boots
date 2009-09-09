@@ -1,0 +1,31 @@
+<public:component lightWeight='true'>
+<public:attach event='onpropertychange' onevent='propertyChanged()' />
+<script>
+var blankSrc = '/static/base/media/spacer.gif';
+
+var supported/*@cc_on=@_jscript_version@*/;
+if (supported) fixImage();
+
+function propertyChanged() {
+	if (supported && event.propertyName == 'src' && !new RegExp(blankSrc).test(src))
+		fixImage();
+};
+
+var realSrc;
+function fixImage() {
+	var src = element.src;
+	if (src == realSrc && /\.png$/i.test(src)) {
+		element.src = blankSrc;
+	} else {
+		if (!new RegExp(blankSrc).test(src))
+			realSrc = src;
+		if (/\.png$/i.test(realSrc)) {
+			element.src = blankSrc;
+			element.runtimeStyle.filter = 'progid:DXImageTransform.Microsoft.AlphaImageLoader(src="' + src + '",sizingMethod="scale")';
+		} else {
+			element.runtimeStyle.filter = '';
+		}
+	}
+}
+</script>
+</public:component>
