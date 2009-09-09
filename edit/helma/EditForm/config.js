@@ -23,8 +23,8 @@ EditForm.PREVIEWABLE = true;
 // 		EditForm.BUTTON_MODE_BACK
 // 		EditForm.BUTTON_MODE_STAY
 //		EditForm.BUTTON_MODE_APPLY_CLOSE
-// 		EditForm.BUTTON_MODE_BACK | EditForm.BUTTON_MODE_STAY
-EditForm.BUTTON_MODE = EditForm.BUTTON_MODE_BACK;
+// 		EditForm.BUTTON_MODE_BACK | EditForm.BUTTON_MODE_APPLY_CLOSE
+EditForm.BUTTON_MODE = EditForm.BUTTON_MODE_BACK | EditForm.BUTTON_MODE_APPLY_CLOSE;
 
 // Global switch for making the title bar of the editor visible.
 // Overridden by EditForm#showTitle
