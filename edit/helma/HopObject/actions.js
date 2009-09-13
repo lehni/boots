@@ -18,5 +18,10 @@ HopObject.inject({
 
 	logout_action: function() {
 		this.handleLogout();
+	},
+
+	edit_js_action: function() {
+		res.contentType = 'text/javascript';
+		this.renderTemplate('edit_js', {}, res);
 	}
 });
