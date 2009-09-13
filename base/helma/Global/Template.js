@@ -36,7 +36,6 @@ function Template(object, name, parent) {
 			this.parent = parent;
 			this.pathName = parent.pathName + this.pathName;
 		}
-		this.macroParam = 0;
 		this.compile();
 	}
 }
@@ -130,7 +129,7 @@ Template.prototype = {
 							if (skipLineBreak)
 								skipLineBreak = false;
 							else
-								buffer.push(line.substring(end), Template.lineBreak);
+								buffer.push(line.substring(end), i < lines.length - 1 ? Template.lineBreak : null);
 							break;
 						}
 					} else {
@@ -649,6 +648,7 @@ Template.prototype = {
 
 	compile: function() {
 		try {
+			this.macroParam = 0;
 			var lines;
 			if  (this.resource) {
 				var charset = app.properties.skinCharset;
