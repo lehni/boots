@@ -920,7 +920,7 @@ DomElements = Array.extend(new function() {
 		statics: {
 			inject: function(src) {
 				var proto = this.prototype;
-				return this.base(Base.each(src || {}, function(val, key) {
+				this.base(Base.each(src || {}, function(val, key) {
 					if (typeof val == 'function') {
 						var func = val, prev = proto[key];
 						var count = func.getParameters().length, prevCount = prev && prev.getParameters().length;
@@ -941,6 +941,9 @@ DomElements = Array.extend(new function() {
 					}
 					this[key] = val; 
 				}, {}));
+				for (var i = 1, l = arguments.length; i < l; i++)
+					this.inject(arguments[i]);
+				return this;
 			}
 		}
 	};
@@ -1051,6 +1054,8 @@ DomElement = Base.extend(new function() {
 					delete src.toString;
 					proto._elements.inject(src);
 				}
+				for (var i = 1, l = arguments.length; i < l; i++)
+					this.inject(arguments[i]);
 				return this;
 			},
 
@@ -1897,7 +1902,7 @@ DomElement.inject(new function() {
 				var that = this, bound = listener.getParameters().length == 0
 					? listener.bind(this)
 					: function(event) { 
-						event = event.event ? event : new DomEvent(event);
+						event = event && event.event ? event : new DomEvent(event);
 						if (listener.call(that, event) === false)
 							event.stop();
 					};

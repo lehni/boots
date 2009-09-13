@@ -13,7 +13,7 @@ new function() {
 			if (val !== (src.__proto__ || Object.prototype)[name]) {
 				if (func) {
 					if ((prev = dest[name]) && /\bthis\.base\b/.test(val)) {
-						if (prev._version && prev._version != version)
+						while (prev._version && prev._version != version && prev._dest == dest)
 							prev = prev._previous;
 						var fromBase = base && base[name] == prev;
 						res = (function() {
@@ -25,6 +25,7 @@ new function() {
 						if (version) {
 							res._version = version;
 							res._previous = prev;
+							res._dest = dest;
 						}
 					}
 					if (src._beans && (bean = name.match(/^(get|is)(([A-Z])(.*))$/)))
@@ -73,17 +74,19 @@ new function() {
 	inject(Function.prototype, {
 		inject: function(src) {
 			var proto = this.prototype, base = proto.__proto__ && proto.__proto__.constructor;
-			var version = (this == HopObject || proto instanceof HopObject) && (proto.constructor._version || (proto.constructor._version = 1));
+			var version = (this == HopObject || proto instanceof HopObject)
+					&& (proto.constructor._version || (proto.constructor._version = 1));
 			inject(proto, src, base && base.prototype, src && src._generics && this, version);
 			inject(this, src && src.statics, base, null, version);
 			if (version) {
 				var update = proto.onCodeUpdate;
-				if (!update || !update._version) {
+				if (!update || !update._wrapped) {
 					var res = function(name) {
 						this.constructor._version = (this.constructor._version || 0) + 1;
-						if (update) update.call(this, name);
+						if (update)
+							update.call(this, name);
 					};
-					res._version = true;
+					res._wrapped = true;
 					proto.onCodeUpdate = res;
 				}
 				if (proto.initialize) {
