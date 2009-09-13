@@ -2,7 +2,7 @@ User.inject({
 	statics: {
 		log: function() {
 			var str = Array.create(arguments).join(' ');
-			if (session.user)
+			if (session && session.user)
 				str = '[' + session.user.name + '] ' + str;
 			app.log(str);
 		},
