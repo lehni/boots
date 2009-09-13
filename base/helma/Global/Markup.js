@@ -2,7 +2,7 @@ Markup = {
 	// Parses the passed markup text to a DOM tree contained in a RootTag object,
 	// which can be rendered through RootTag#render. This object can be used
 	// for caching. But that is not a necessity since parsing is very fast. 
-	parse: function(text) {
+	parse: function(text, param) {
 		if (text) {
 			// Create the root tag as a container for all the other bits
 			var rootTag = MarkupTag.create('root');
@@ -40,7 +40,7 @@ Markup = {
 					}
 					if (!closing || empty)
 						// Opening tag, pass current tag as parent
-						tag = MarkupTag.create(definition, tag);
+						tag = MarkupTag.create(definition, tag, param);
 					if (closing || empty) {
 						// Closing tag
 						var openTag = tag;
@@ -178,20 +178,23 @@ MarkupTag = Base.extend(new function() {
 				// parseDefinition contains special logic to produce an info object
 				// for attribute / argument parsing further down in MarkupTag.create
 				var attributes = src._attributes && parseDefinition(src._attributes, true);
+				var namespace = src._namespace || 'default';
+				var store = tags[namespace] = tags[namespace] || {};
 				return src._tags.split(',').each(function(tag) {
 					// Store attributes information and a reference to prototype in tags
-					tags[tag] = {
+					store[tag] = {
 						attributes: attributes,
 						proto: this.prototype
 					};
 				}, this.base(src));
 			},
 
-			create: function(definition, parent) {
+			create: function(definition, parent, param) {
 				// Parse tag definition for attributes (named) and arguments (unnamed).
 				var def = definition == 'root' ? { name: 'root' } : parseDefinition(definition);
 				// Render any undefined tag through the UndefinedTag.
-				var obj = tags[def.name] || tags['undefined'];
+				var store = param && tags[param.namespace] || tags['default'];
+				var obj = store[def.name] || store['undefined'] || tags['default']['undefined'];
 				if (obj.attributes) {
 					// If _attributes were defined, use the info object produced
 					// by parseDefinition in MarkupTag.extend now to scan through
@@ -261,9 +264,10 @@ RootTag = MarkupTag.extend({
 		if (!param)
 			param = {};
 		if (typeof param.allowedTags == 'string') {
-			var names = param.allowedTags.split(','), tags = param.allowedTags = {};
+			var names = param.allowedTags.split(',');
+			var allowed = param.allowedTags = {};
 			for (var i = 0, l = names.length; i < l; i++)
-				tags[names[i]] = true;
+				allowed[names[i]] = true;
 		}
 		// Determine encoder to be used, default is not encoding anything:
 		var encoder = param.encoding && global['encode' + param.encoding.capitalize()]
@@ -362,6 +366,7 @@ ResourceTag = MarkupTag.extend({
 
 ImageTag = ResourceTag.extend({
 	_tags: 'img',
+	_attributes: 'src',
 
 	// Defined outside render() so it can be overridden by applications.
 	renderImage: function(picture, param) {
@@ -369,12 +374,13 @@ ImageTag = ResourceTag.extend({
 	},
 
 	render: function(content, param) {
-		if (!/^http/.test(content)) {
-			var resource = this.getResource(content, param);
+		var src = this.attributes.src || content;
+		if (!Net.isRemote(src)) {
+			var resource = this.getResource(src, param);
 			if (resource && resource instanceof Picture)
 				return this.renderImage(resource, param);
 		} else {
-			return '<img src="' + content + '"/>';
+			return '<img src="' + src + '"/>';
 		}
 	}
 });
