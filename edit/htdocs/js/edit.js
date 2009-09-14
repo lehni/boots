@@ -20,22 +20,14 @@ EditForm = Base.extend({
 		}
 	},
 
-	set: function(values) {
-		if (values.applied)
-			this.applied = true;
-		this.html = values.html;
-		// On safari, remove buttons before setting of new html, to prevent
-		// the odd bug described bellow from happening.
-		if (EditSettings.useButtons && Browser.WEBKIT)
-			$$('input[type=button]', this.container).remove();
-		this.container.setHtml(this.html);
+	setup: function(obj) {
 		// On Safari, there is a very odd bug that very rarely mixes all the
 		// buttons on one page, as if they were all thrown into one container,
 		// and redistributed by picking blindy. The workaround is to not produce
 		// buttons in edit forms, but use <a> tags, and replace them with buttons
 		// here, if useButtons is set to true:
 		if (EditSettings.useButtons) {
-			$$('a.edit-button', this.container).each(function(el, index) {
+			$$('a.edit-button', obj).each(function(el, index) {
 				var id = el.getId();
 				// el.removeClass('button'); // For getClass bellow
 				el.replaceWith('input', {
@@ -47,55 +39,67 @@ EditForm = Base.extend({
 				});
 			});
 		}
+		var that = this;
+		// Remember focused elements and their last selection and scroll position,
+		// so they can be restored after previewing pages.
+		// Do not store direct references since the elements are replaced when
+		// saving before preview, therefore use ids instead.
+		var fields = $$('input[type=text],input[type=password],textarea', obj);
+		fields.addEvents({
+			focus: function() {
+				that.focus = { id: this.getId() };
+			},
+
+			blur: function() {
+				if (that.focus && this.getId() == that.focus.id) {
+					that.focus.selection = this.getSelection();
+					that.focus.offset = this.getScrollOffset();
+				}
+			} 
+		});
+		// We're asking inputs and textareas to be a certain size, but they grow
+		// bigger due to their border and padding settings that differ from browser
+		// to browser.
+		// This can be fixed by calculating these widths now and subtracting them from 
+		// their resulting size (twice, in order to add them once again and end
+		// up with the desired width). Since we're using getWidth(), this needs
+		// to happen after this.show(true). Also, it needs to happen before
+		// TabPane.setup(), since that would hide tabs again, for which the fix
+		// won't work...
+		fields.each(function(field) {
+			function width(name) {
+				return field.getStyle(name + 'Left').toInt() + field.getStyle(name + 'Right').toInt();
+			}
+			var width = (field.getWidth() - 2 * (width('border') + width('padding'))) + 'px';
+			field.setStyles({
+				width: width,
+				// Prevent textareas from resizing horizontally. 
+				// Setting maxWidth instead of max-width breaks Firefox. Why?
+				'max-width': width
+			});
+		});
+		if (Browser.GECKO) {
+			// Fix weird Firefox resizing problem when dragging edit-list-entries
+			// TODO: Check again in future and remove if not needed any longer
+			$$('div.edit-list-entry', obj).each(function(entry) {
+				entry.setBounds(entry.getBounds());
+			});
+		}
+	},
+
+	set: function(values) {
+		if (values.applied)
+			this.applied = true;
+		this.html = values.html;
+		// On safari, remove buttons before setting of new html, to prevent
+		// the odd bug described bellow from happening.
+		if (EditSettings.useButtons && Browser.WEBKIT)
+			$$('input[type=button]', this.container).remove();
+		this.container.setHtml(this.html);
 		this.form = $('form', this.container);
 		if (this.form) {
-			var that = this;
-			// Remember focused elements and their last selection and scroll position,
-			// so they can be restored after previewing pages.
-			// Do not store direct references since the elements are replaced when
-			// saving before preview, therefore use ids instead.
-			var fields = $$('input[type=text],input[type=password],textarea', this.form);
-			fields.addEvents({
-				focus: function() {
-					that.focus = { id: this.getId() };
-				},
-
-				blur: function() {
-					if (that.focus && this.getId() == that.focus.id) {
-						that.focus.selection = this.getSelection();
-						that.focus.offset = this.getScrollOffset();
-					}
-				} 
-			});
 			this.show(true);
-			// We're asking inputs and textareas to be a certain size, but they grow
-			// bigger due to their border and padding settings that differ from browser
-			// to browser.
-			// This can be fixed by calculating these widths now and subtracting them from 
-			// their resulting size (twice, in order to add them once again and end
-			// up with the desired width). Since we're using getWidth(), this needs
-			// to happen after this.show(true). Also, it needs to happen before
-			// TabPane.setup(), since that would hide tabs again, for which the fix
-			// won't work...
-			fields.each(function(field) {
-				function width(name) {
-					return field.getStyle(name + 'Left').toInt() + field.getStyle(name + 'Right').toInt();
-				}
-				var width = (field.getWidth() - 2 * (width('border') + width('padding'))) + 'px';
-				field.setStyles({
-					width: width,
-					// Prevent textareas from resizing horizontally. 
-					// Setting maxWidth instead of max-width breaks Firefox. Why?
-					'max-width': width
-				});
-			});
-			if (Browser.GECKO) {
-				// Fix weird Firefox resizing problem when dragging edit-list-entries
-				// TODO: Check again in future and remove if not needed any longer
-				$$('div.edit-list-entry', this.form).each(function(entry) {
-					entry.setBounds(entry.getBounds());
-				});
-			}
+			this.setup(this.form);
 			TabPane.setup();
 			this.empty = false;
 			this.url = this.form.getAction();
@@ -612,7 +616,9 @@ EditForm.inject(new function() {
 				var args = Array.slice(arguments, 1);
 				args.unshift(this);
 				return handler.apply(handlers, args);
-			} else alert('Handler missing: ' + action);
+			} else {
+				alert('Handler missing: ' + action);
+			}
 			return true;
 		},
 
@@ -703,13 +709,13 @@ EditForm.register(new function() {
 	var prototypeChooser = null;
 
 	return {
-		select_new: function(editForm, name, prototype, params) {
-			if (typeof prototype == 'string') {
+		select_new: function(editForm, name, prototypes, params) {
+			if (typeof prototypes == 'string') {
 				editForm.execute('new', params);
 			} else {
 				if (!prototypeChooser)
 					prototypeChooser = new PrototypeChooser();
-				prototypeChooser.choose(editForm, name + '_new', prototype);
+				prototypeChooser.choose(editForm, name + '_new', prototypes);
 			}
 		},
 
@@ -972,18 +978,24 @@ EditForm.register(new function() {
 			var id = 'n' + list.counter++;
 			// Replace id placeholder with generated id, mark with 'n' for new
 			html = html.replace(/<%id%>/g, id);
-			list.injectBottom(html);
-			if (Browser.GECKO) {
-				// This is part of the GECKO height resizing fix described above
-				var entry = $('#edit-list-entry-' + name + '_' + id);
-				entry.setBounds(entry.getBounds());
-			}
+			var obj = list.injectBottom(html);
+			// Make sure this newly inserted html gets initalised, e.g. buttons,
+			// width, gecko workaround, etc.
+			editForm.setup(obj);
 			this.list_update(editForm, name);
+			EditChooser.closeAll();
 		},
 
 		list_remove: function(editForm, name, id) {
 			var entry = $('#edit-list-entry-' + id);
-			entry.remove();
+			if (/_n[0-9]*$/.test(id)) {
+				entry.remove();
+			} else {
+				var value = $('#' + id + '_delete');
+				var remove = !value.getValue().toInt();
+				value.setValue(remove ? 1 : 0);
+				entry.setOpacity(remove ? 0.25 : 1);
+			}
 			this.list_update(editForm, name);
 		},
 
@@ -1027,7 +1039,11 @@ EditForm.register(new function() {
 						entry.setStyle({
 							position: 'relative',
 							opacity: 1,
-							zIndex: 0
+							zIndex: 0,
+							// Clear width and height again, so Textarea resizing
+							// can still work in Safari.
+							width: null,
+							height: null
 						});
 						entry.setOffset(0, 0);
 						that.list_update(editForm, name);

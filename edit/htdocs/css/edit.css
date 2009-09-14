@@ -214,26 +214,35 @@
 
 /* edit lists */
 
-/* hide edit-labels in edit-lists */
-#edit .edit-list .edit-label {
-	display: none;
-}
-
-#edit .edit-list {
-	/* undo the 10px separator */
-	margin-top: -8px;
-}
-
 #edit .edit-list-separator {
 	height: 10px;
 }
 
-#edit .edit-list-handle {
-	margin-left: 8px;
-}
-
 #edit .edit-list-entry td {
 	vertical-align: middle;
+}
+
+#edit .edit-list-header {
+	text-align: right;
+	height: 14px;
+}
+
+#edit .edit-list-handle {
+	margin-right: 4px;
+}
+
+#edit .edit-list-content {
+	margin-top: -16px;
+}
+
+#edit .edit-list-remove img {
+	width: 12px;
+	height: 13px;
+	background: url(/static/edit/media/remove.png);
+}
+
+#edit .edit-list-remove img:hover {
+	background: url(/static/edit/media/remove-over.png);
 }
 
 /* error */

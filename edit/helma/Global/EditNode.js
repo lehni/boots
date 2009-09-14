@@ -41,11 +41,13 @@ EditNode = Base.extend({
 				|| this.form.version != data.version) {
 			try {
 				if (!this.object.getEditForm)
-					throw "The '" + this.object._prototype
-							+ "' prototype does not define #getEditForm ("
-							+ this.object + ")";
+					throw "The prototype '" + this.object._prototype
+							+ "' does not define #getEditForm().";
 				// Pass empty param object, default mode
 				this.form = this.object.getEditForm({});
+				if (!this.form)
+					throw "The prototype '" + this.object._prototype
+							+ "' does not return a form in #getEditForm().";
 				this.form.id = this.id;
 				this.form.node = this;
 				// update version

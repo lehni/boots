@@ -7,21 +7,21 @@
 <% #entry %>
 <div id="edit-list-entry-<%= param.id %>" class="edit-list-entry">
 <div class="edit-list-separator"></div>
-<table width="<%= param.width %>">
-<tr>
-<td width="100%">
-<table width="100%">
+<div class="edit-list-background">
+<div class="edit-list-header">
+<% if (param.sortable) %>
+<a id="edit-list-handle-<%= param.id %>" class="edit-list-handle" href="#" onclick="return false" onmousedown="<% this.handle "list_sort" <%= param.name %> <%= param.id %> %>"><%-%>
+<image src="/static/edit/media/list-handle.png" width="14" height="12"></a><%-%>
+<% end %>
+<% if (param.create) %>
+<% input type="hidden" name=<%= param.id + '_proto' %> value=param.proto %><%-%>
+<% else %>
+<% input type="hidden" name=<%= param.id + '_delete' %> value=0 %><%-%>
+<% end %>
+<a id="edit-list-remove-<%= param.id %>" class="edit-list-remove" href="#" onclick="<% this.handle "list_remove" <%= param.name %> <%= param.id %> %> return false;"><img src="/static/edit/media/spacer.gif"></a><%-%>
+</div>
+<table width="<%= param.width %>" class="edit-list-content">
 <%= param.items %>
 </table>
-</td>
-<td><% if (param.create) %>
-	<input type="button" value="remove" onclick="<% this.handle "list_remove" <%= param.name %> <%= param.id %> %>">
-<% else %>
-	<label><% input type="checkbox" value="1" name=<%= param.id + '_delete' %> %><span>delete</span></label><span class="clear"></span>
-<% end %></td>
-<% if (param.sortable) %>
-<td><a id="edit-list-handle-<%= param.id %>" class="edit-list-handle" href="#" onclick="return false" onmousedown="<% this.handle "list_sort" <%= param.name %> <%= param.id %> %> return false;"><image src="/static/edit/media/list-handle.gif" width="14" height="12"></a></td>
-<% end %>
-</tr>
-</table>
+</div>
 </div>

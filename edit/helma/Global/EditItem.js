@@ -119,21 +119,27 @@ EditItem = Base.extend(new function() {
 			});
 		},
 
-		getPrototypeEditButton: function(baseForm, param) {
+		getPrototypeEditButton: function(baseForm, param, renderHref) {
 			// Pass an array containing name / creation handler href mappings
 			// if there are more than one prototype.
 			// If there's only one prototype, directly use the href that produces
 			// it.
 			var editName = this.getEditName();
 			var editParam = this.getEditParam();
-			var prototypes = this.prototypes && this.prototypes.map(function(proto) {
-				return {
-					name: proto.uncamelize(),
-					href: baseForm.renderHandle('select_new', editName, proto,
-						Hash.merge({ edit_prototype: proto }, editParam))
-				};
-			}) || [];
-			return Hash.merge({
+			var prototypes = this.prototypes && this.prototypes.map(function(name) {
+				var proto = global[name];
+				if (proto) {
+					return {
+						name: name.uncamelize(),
+						href: renderHref
+							? renderHref.call(this, proto)
+							: baseForm.renderHandle('select_new', editName, name,
+								Hash.merge({ edit_prototype: name }, editParam))
+					};
+				}
+				User.log("WARNING: Prototype '" + name + "' does not exist!");
+			}, this) || [];
+		 	return Hash.merge({
 				name: editName + '_new',
 				onClick: prototypes.length == 1
 					? prototypes[0].href
@@ -372,7 +378,7 @@ FileItem = EditItem.extend({
 
 	render: function(baseForm, name, value, param, out) {
 		if (this.preview)
-			out.write(this.preview + '<br />');
+			out.write('<div>' + this.preview + '</div>');
 		Html.input({
 			type: 'file', name: name, size: this.size || '20',
 			className: this.className || 'edit-element'
@@ -859,8 +865,8 @@ HelpItem = EditItem.extend({
 EditableListItem = ListItem.extend({
 	_types: 'list',
 
-	getEditForm: function(obj, id) {
-		var form = EditForm.get(obj);
+	getEditForm: function(obj, id, force) {
+		var form = EditForm.get(obj, force);
 		// Update the edit form's variablePrefix to group by this
 		// edit item.
 		// TODO: Since we're using cached forms, this means we cannot use
@@ -869,16 +875,16 @@ EditableListItem = ListItem.extend({
 			id = obj.isTransient() ? '<%id%>' : obj._id;
 		form.entryId = id;
 		form.variablePrefix = this.getEditName() + '_' + id + '_';
-		// Change with settings to relative size
-		form.setWidth('100%');
 		return form;
 	},
 
 	renderEditForm: function(baseForm, name, obj, param, out) {
-		var form = this.getEditForm(obj);
+		// Force a newly created form each time we're rendering
+		var form = this.getEditForm(obj, null, true);
 		baseForm.renderTemplate('listItem#entry', {
 			id: name + '_' + form.entryId,
 			name: name,
+			proto: obj._prototype,
 			width: param.calculatedWidth,
 			create: obj.isTransient(),
 			sortable: this.sortable,
@@ -889,18 +895,14 @@ EditableListItem = ListItem.extend({
 	}.toRender(),
 
 	render: function(baseForm, name, value, param, out) {
+		// Add the button only once to the form!
 		if (this.button && !this.initialized) {
-			// Add the button only once to the form!
-			var prototypes = this.getPrototypes();
-			var ctor = prototypes[0];
-			if (ctor) {
+			var button = this.getPrototypeEditButton(baseForm, { value: this.button }, function(ctor) {
 				// Create an empty instance in order to render small edit form:
 				var html = this.renderEditForm(baseForm, name, new ctor(ctor.dont), param);
-				baseForm.addButtons({
-					value: this.button,
-					onClick: baseForm.renderHandle('list_add', name, html)
-				});
-			}
+				return baseForm.renderHandle('list_add', name, html);
+			});
+			baseForm.addButtons(button);
 			this.initialized = true;
 		}
 		out.push();
@@ -943,10 +945,10 @@ EditableListItem = ListItem.extend({
 					// This is neede by the onCreate handler that
 					// can produce an object based on e.g. file type
 					var variable = rest.substring(pos + 1);
-					var entry = create[id];
-					if (!entry)
-						entry = create[id] = {};
-					entry[variable] = req.data[key];
+					var values = create[id];
+					if (!values)
+						values = create[id] = {};
+					values[variable] = req.data[key];
 				} else if (!applied[id]) { // Apply
 					// Mark this object as applied once one field was found,
 					// since form handles the rest.
@@ -955,7 +957,7 @@ EditableListItem = ListItem.extend({
 					// grouping is needed.
 					var obj = this.collection.getById(id);
 					if (obj) {
-						if (req.data[name + '_' + id + '_delete']) {
+						if (req.data[name + '_' + id + '_delete'] == 1) {
 							changed = obj.remove();
 						} else {
 							var form = this.getEditForm(obj);
@@ -973,10 +975,17 @@ EditableListItem = ListItem.extend({
 		var prototypes = this.getPrototypes();
 		var ctor = prototypes[0];
 		for (var id in create) {
+			var values = create[id];
+			// Pass prototype value extra, as ctor
+			var proto = values.proto;
+			delete values.proto;
+			var ctor = global[proto];
+			if (!prototypes.contains(ctor))
+				throw 'Unsupported prototype: ' + proto;
 			// Support an onCreate handler that can produce special types
 			// e.g. based on the file type. That's also the only reason
 			// why we collect all values above, so that onCreate can analyse them.
-			var obj = this.onCreate && this.onCreate(create[id]);
+			var obj = this.onCreate && this.onCreate(proto, values);
 			if (!obj)
 				obj = new ctor(this); // Pass the edit item for editing parent stuff.
 			if (obj) {
