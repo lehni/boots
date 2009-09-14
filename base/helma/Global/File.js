@@ -35,7 +35,7 @@ File = Base.extend(new function() {
 
 		/**
 		 * Returns the name of the file or directory represented by this File object.
-		 * <br /><br />
+		 *
 		 * This is just the last name in the pathname's name sequence. 
 		 * If the pathname's name sequence is empty, then the empty 
 		 * string is returned.
@@ -191,7 +191,7 @@ File = Base.extend(new function() {
 
 		/**
 		 * Tests whether this File object's pathname is absolute. 
-		 * <br /><br />
+		 *
 		 * The definition of absolute pathname is system dependent. 
 		 * On UNIX systems, a pathname is absolute if its prefix is "/". 
 		 * On Microsoft Windows systems, a pathname is absolute if its prefix 
@@ -206,9 +206,9 @@ File = Base.extend(new function() {
 
 		/**
 		 * List of all files within the directory represented by this File object.
-		 * <br /><br />
+		 *
 		 * You may pass a RegExp Pattern to return just files matching this pattern.
-		 * <br /><br />
+		 *
 		 * Example: var xmlFiles = dir.list(/.*\.xml/);
 		 *
 		 * @returns Array the list of File objects
@@ -289,7 +289,7 @@ File = Base.extend(new function() {
 
 		/**
 		 * Returns the pathname string of this File object. 
-		 * <br /><br />
+		 *
 		 * The resulting string uses the default name-separator character 
 		 * to separate the names in the name sequence.
 		 * 
@@ -323,7 +323,7 @@ File = Base.extend(new function() {
 
 		/**
 		 * Returns the absolute pathname string of this file.
-		 * <br /><br />
+		 *
 		 * If this File object's pathname is already absolute, then the pathname 
 		 * string is simply returned as if by the getPath() method. If this 
 		 * abstract pathname is the empty abstract pathname then the pathname 
@@ -345,7 +345,7 @@ File = Base.extend(new function() {
 
 		/**
 		 * Returns the size of the file represented by this File object. 
-		 * <br /><br />
+		 *
 		 * The return value is unspecified if this pathname denotes a directory.
 		 * 
 		 * @returns Number The length, in bytes, of the file, or 0L if the file does not exist
@@ -376,7 +376,7 @@ File = Base.extend(new function() {
 
 		/**
 		 * Tests whether the file represented by this File object is a normal file. 
-		 * <br /><br />
+		 *
 		 * A file is normal if it is not a directory and, in addition, satisfies 
 		 * other system-dependent criteria. Any non-directory file created by a 
 		 * Java application is guaranteed to be a normal file.
@@ -390,7 +390,7 @@ File = Base.extend(new function() {
 
 		/**
 		 * Tests whether the file represented by this File object is a hidden file.
-		 * <br /><br />
+		 *
 		 * What constitutes a hidden file may depend on the platform we are running on.
 		 *
 		 * @returns Boolean true if this File object is hidden
@@ -402,7 +402,7 @@ File = Base.extend(new function() {
 
 		/**
 		 * Returns the time when the file represented by this File object was last modified.
-		 * <br /><br />
+		 *
 		 * A number representing the time the file was last modified, 
 		 * measured in milliseconds since the epoch (00:00:00 GMT, January 1, 1970), 
 		 * or 0L if the file does not exist or if an I/O error occurs.
@@ -431,7 +431,7 @@ File = Base.extend(new function() {
 
 		/**
 		 * Renames the file represented by this File object.
-		 * <br /><br />
+		 *
 		 * Whether or not this method can move a file from one 
 		 * filesystem to another is platform-dependent. The return 
 		 * value should always be checked to make sure that the 
@@ -552,7 +552,7 @@ File = Base.extend(new function() {
 
 		/**
 		 * Returns file as ByteArray.
-		 * <br /><br />
+		 *
 		 * Useful for passing it to a function instead of an request object.
 		 */
 		toByteArray: function() {
