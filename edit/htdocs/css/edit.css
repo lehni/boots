@@ -37,18 +37,18 @@
 /* checkbox */
 
 #edit label {
-    display: block;
-    float: left;
-    white-space: nowrap;
+	display: block;
+	float: left;
+	white-space: nowrap;
 }
 
 #edit input[type=checkbox] {
-    vertical-align: middle;
+	vertical-align: middle;
 }
 
 #edit label span {
-    padding-left: 4px;
-    vertical-align: middle;
+	padding-left: 4px;
+	vertical-align: middle;
 }
 
 /* a.edit-button needs #edit to force overriding of global a settings linked to certain layout ids. */
@@ -218,10 +218,6 @@
 	height: 10px;
 }
 
-#edit .edit-list-entry td {
-	vertical-align: middle;
-}
-
 #edit .edit-list-header {
 	text-align: right;
 	height: 14px;
@@ -229,6 +225,7 @@
 
 #edit .edit-list-handle {
 	margin-right: 4px;
+	cursor: row-resize;
 }
 
 #edit .edit-list-content {
