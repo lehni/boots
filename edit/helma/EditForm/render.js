@@ -126,12 +126,17 @@ EditForm.inject({
 
 	renderHandle: function(handler) {
 		var args = handler instanceof Array ? handler : Array.create(arguments);
+		var name = args[0];
 		args.unshift(this.id);
 		// Encode with single quotes since it goes into html attributes with doubles
 		var str = Json.encode(args, true);
 		// Remove [] from string:
-		// Always pass event object last, in case we need mouse position
-		return "EditForm.handle(" + str.substring(1, str.length - 1) + ", window.event);";
+		str = str.substring(1, str.length - 1);
+		str = encodeAttribute(str);
+		// Pass event object last, e.g. in case we need mouse position
+		if (name == 'list_sort')
+			str += ', new DomEvent(arguments[0])';
+		return 'EditForm.handle(' + str + ');';
 	},
 
 	renderTitle: function(node, mode) {
@@ -221,7 +226,7 @@ EditForm.inject({
 
 	renderItemRow: function(baseForm, row, index, out) {
 		if (index == 0) {
-			// calculate maxRowLength, for creating span values in rows smaller
+			// Calculate maxRowLength, for creating span values in rows smaller
 			// than the maximum. This is only calculated once per edit form, when
 			this.maxRowLength = 0;
 			for (var i = 0; i < this.rows.length; i++)
@@ -233,31 +238,37 @@ EditForm.inject({
 			rowSpan = 2 * this.maxRowLength - 1;
 
 		var itemWidth, spacerWidth = this.spacerWidth;
-		// scan through each item and see if it sets with
-		var width = this.width;
-		var widths = {};
-		var cellCount = row.length;
+		// Scan through each item and see if it sets width
+		var availableWidth = this.width;
+		var definedWidths = {};
+		var cellCount = 0;
+		var autoLayoutCount = 0;
 		for (var i = 0; i < row.length; i++) {
 			var item = row[i];
-			// if there's an array of items to merge, just look at the first one
+			// If there's an array of items to merge, just look at the first one
 			// for the cell settings
 			if (item instanceof Array)
 				item = item[0];
-			if (item.type == 'hidden') {
-				cellCount--;
-			} else if (item.width) {
-				var w = parseFloat(item.width);
-				if (/%$/.test(item.width))
-					w = this.width * w / 100.0;
-				width -= w;
-				if (this.widthInPercent)
-					w += '%';
-				widths[i] = w;
+			if (item.type != 'hidden') {
+				cellCount++;
+				if (item.width) {
+					// If an item defines its width, remove it from the available with,
+					// and decrese the cellCount used for calculating automatic layouts
+					var width = parseFloat(item.width);
+					if (/%$/.test(item.width))
+						width = this.width * width / 100.0;
+					availableWidth -= width;
+					if (this.widthInPercent)
+						width += '%';
+					definedWidths[i] = width;
+				} else {
+					autoLayoutCount++;
+				}
 			}
 		}
-		// now calculate the default item width for all the others that do not
+		// Now calculate the default item width for all the others that do not
 		// set item.width:
-		itemWidth = Math.floor((width - spacerWidth * (cellCount - 1)) / cellCount);
+		itemWidth = Math.floor((availableWidth - spacerWidth * (cellCount - 1)) / autoLayoutCount);
 		if (this.widthInPercent) {
 			itemWidth += '%';
 			spacerWidth += '%';
@@ -267,25 +278,25 @@ EditForm.inject({
 		var labels = [];
 		for (var i = 0; i < row.length; i++) {
 			var item = row[i];
-			// if there's an array of items to merge, just look at the first one
+			// If there's an array of items to merge, just look at the first one
 			// for the cell settings
 			if (item instanceof Array)
 				item = item[0];
 			if (item.type != 'hidden') {
 				if (!firstItem)
 					firstItem = item;
-				var width = widths[i];
+				var definedWidth = definedWidths[i];
 				var param = {
 					name: item.getEditName(),
 					label: !EditForm.LABEL_LEFT ? item.label : null,
 					span: item.span ? item.span : rowSpan, align: item.align,
 					spacer: i > 0, spacerWidth: spacerWidth,
-					width: width, calculatedWidth: width || itemWidth,
-				 	// scale when item tells the renderer to scale it in,
+					width: definedWidth, calculatedWidth: definedWidth || itemWidth,
+				 	// Scale when item tells the renderer to scale it in,
 					// or if it defines a width
-					scaleToFit: item.scaleToFit || width != null
+					scaleToFit: item.scaleToFit || definedWidth != null
 				}
-				// don't use item here, as it might have been overriden above
+				// Don't use item here, as it might have been overriden above
 				// for the cell settings when arrays are passed, use row[i]
 				// pass param to renderItem so EditItems can access calculatedWidth
 				param.item = this.renderItem(baseForm, row[i], param);
@@ -298,7 +309,7 @@ EditForm.inject({
 			}
 		}
 		var items = out.pop();
-		// at least one item needs to be rendered
+		// At least one item needs to be rendered
 		if  (firstItem) {
 			baseForm.renderTemplate('item#row', {
 				label: EditForm.LABEL_LEFT ? firstItem.label ?
@@ -306,7 +317,7 @@ EditForm.inject({
 				labels: labels,
 				items: items,
 				index: index
-				// TODO: fix this
+				// TODO: Fix this
 				// addEmptyCell: firstItem.width != null
 			}, out);
 		}

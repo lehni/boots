@@ -285,8 +285,8 @@ EditForm.inject(new function() {
 			this.width = parseFloat(width);
 			this.widthInPercent = /%$/.test(width);
 			this.spacerWidth = parseFloat(EditForm.WIDTH_SPACER);
-			if (this.widthInPercent)
-				this.spacerWidth = Math.round(100 * this.spacerWidth / EditForm.WIDTH_TOTAL);
+			if (/%$/.test(EditForm.WIDTH_SPACER))
+				this.spacerWidth = Math.round(100 * this.spacerWidth / this.width);
 		},
 
 		setParent: function(parent) {
@@ -507,10 +507,6 @@ EditForm.inject(new function() {
 				for (var j = 0; j < items.length; j++) {
 					var item = items[j];
 					row.push('#' + j +': ' + item.toString());
-					/*
-					if (item.type == 'tab')
-						item.groupForm.formatString(out);
-					*/
 				}
 				out.push('[#' + i + ': ' + row.join(', ') + ' ]');
 			}
@@ -522,8 +518,8 @@ EditForm.inject(new function() {
 		},
 
 		statics: {
-			get: function(obj) {
-				return EditNode.get(obj).getForm();
+			get: function(obj, force) {
+				return EditNode.get(obj).getForm(force);
 			},
 
 			/**
