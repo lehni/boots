@@ -9,28 +9,24 @@ Node.inject({
 		if (param.resources === undefined)
 			param.resources = true;
 		form.addTab('node', param.tabLabel || 'Node',
-			param.children ? {
-				type: 'multiselect', name: 'children',
-				label: Base.pick(param.children.label, 'Sub Pages'),
-				sortable: Base.pick(param.children.sortable, true),
-				showOptions: Base.pick(param.children.showOptions, true),
+			form.createItem(param.children, {
+				type: 'multiselect', name: 'children', label: 'Sub Pages',
 				collection: this.all, value: this,
-				prototypes: Base.pick(param.children.prototypes, 'Node'),
-				movable: Base.pick(param.children.movable, true),
-				editable: true, autoRemove: true, // Always
-				size: Base.pick(param.children.size, 6)
-			} : null,
-			param.resources ? {
-				type: 'multiselect', name: 'resources',
-				label: Base.pick(param.resources.label, 'Resources'),
-				sortable: Base.pick(param.resources.sortable, true),
-				showOptions: Base.pick(param.resources.showOptions, true),
+				prototypes: 'Node',
+				sortable: true, showOptions: true,
+				editable: true, autoRemove: true,
+				movable: false,
+				size: 6
+			}),
+			form.createItem(param.resources, {
+				type: 'multiselect', name: 'resources', label: 'Resources',
 				collection: this.allResources, value: this.resources,
-				prototypes: Base.pick(param.resources.prototypes, 'Resource,Medium,Picture'),
-				movable: Base.pick(param.resources.movable, true),
-				editable: true, autoRemove: true, // Always
-				size: Base.pick(param.resources.size, 6)
-			} : null
+				prototypes: 'Resource,Medium,Picture',
+				sortable: true,	showOptions: true,
+				editable: true, autoRemove: true,
+				movable: false,
+				size: 6
+			})
 		);
 		return form;
 	},

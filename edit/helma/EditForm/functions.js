@@ -499,6 +499,20 @@ EditForm.inject(new function() {
 			}
 		},
 
+		/**
+		 * Creates an item by merging user defined item values with a hash of
+		 * default values.
+		 * item can also simply be set to true, meaning all default values
+		 * are to be used.
+		 */
+		createItem: function(item, defaults) {
+			return item
+					? item == true
+							? defaults
+							: Hash.merge(defaults, item)
+					: null;
+		},
+
 		toString: function() {
 			var out = [];
 			for (var i = 0; i < this.rows.length; i++) {

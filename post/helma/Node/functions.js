@@ -24,11 +24,10 @@ Node.inject({
 		if (param.posts == undefined)
 			param.posts = false;
 		if (param.posts) {
-			form.addTab('Posts', {
+			form.addTab('Posts', form.createItem(param.posts, {
 				type: 'select', name: 'posts', prototypes: 'Post', 
-				label: Base.pick(param.posts.label, 'Posts'),
-				size: Base.pick(param.posts.size, 10),
-				collection: this.posts, autoRemove: true
+				label: 'Posts', size: 10,
+				collection: this.posts, autoRemove: true,
 			});
 		}
 		return form;

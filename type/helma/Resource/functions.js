@@ -63,17 +63,17 @@ Resource.inject({
 			param.file = true;
 		// Allow sub-prototypes to display a name field easily through param
 		form.add(
-			param.name ? {
-				name: 'name', type: 'string',
-				label: Base.pick(param.name.label, 'Name'),
+			form.createItem(param.name, {
+				name: 'name', type: 'string', label: 'Name',
 				length: 64
-			} : null,
-			param.file ? {
-				name: 'file', type: 'file', 
-				label: Base.pick(param.file.label, 'File'),
+			}),
+			form.createItem(param.file, {
+				name: 'file', type: 'file', label: 'File',
 				onApply: this.setFile,
-				preview: this.name && this.renderIcon({ small: true, details: true })
-			} : null
+				preview: this.name && this.renderIcon({ 
+					small: true, details: true
+				})
+			})
 		);
 		return form;
 	},
