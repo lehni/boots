@@ -11,7 +11,7 @@ Node.inject({
 		form.addTab('node', param.tabLabel || 'Node',
 			param.children ? {
 				type: 'multiselect', name: 'children',
-				label: param.children.label || 'Sub Pages',
+				label: Base.pick(param.children.label, 'Sub Pages'),
 				sortable: Base.pick(param.children.sortable, true),
 				showOptions: Base.pick(param.children.showOptions, true),
 				collection: this.all, value: this,
@@ -22,7 +22,7 @@ Node.inject({
 			} : null,
 			param.resources ? {
 				type: 'multiselect', name: 'resources',
-				label: param.resources.label || 'Resources',
+				label: Base.pick(param.resources.label, 'Resources'),
 				sortable: Base.pick(param.resources.sortable, true),
 				showOptions: Base.pick(param.resources.showOptions, true),
 				collection: this.allResources, value: this.resources,

@@ -57,13 +57,24 @@ Resource.inject({
 
 	getEditForm: function(param) {
 		var form = new EditForm(this, { removable: true });
+		if (param.name === undefined)
+			param.name = false;
+		if (param.file === undefined)
+			param.file = true;
 		// Allow sub-prototypes to display a name field easily through param
-		if (param.hasName)
-			form.add({ label: 'Name', name: 'name', type: 'string', length: 64 });
-		var file = { label: 'File', name: 'file', type: 'file', onApply: this.setFile };
-		if (this.name)
-			file.preview = this.renderIcon({ small: true, details: true });
-		form.add(file);
+		form.add(
+			param.name ? {
+				name: 'name', type: 'string',
+				label: Base.pick(param.name.label, 'Name'),
+				length: 64
+			} : null,
+			param.file ? {
+				name: 'file', type: 'file', 
+				label: Base.pick(param.file.label, 'File'),
+				onApply: this.setFile,
+				preview: this.name && this.renderIcon({ small: true, details: true })
+			} : null
+		);
 		return form;
 	},
 

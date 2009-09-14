@@ -45,8 +45,7 @@ Post.inject({
 							'\nThis user already exists.\nChoose a different name.'
 						}
 					}
-				},
-				{
+				}, {
 					label: 'Website', type: 'string', name: 'website',
 					requirements: {
 						uri: true
@@ -104,7 +103,7 @@ Post.inject({
 			label: 'Attachments', type: 'list', name: 'resources',
 			collection: this.resources, prototypes: 'Resource',
 			button: 'Attach', autoRemove: true, sortable: true,
-			onCreate: function(values) {
+			onCreate: function(ctor, values) {
 				// Create a resource type based on file mime type
 				var resource = values.file && Resource.create(values.file);
 				if (resource)

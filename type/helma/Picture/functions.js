@@ -1,6 +1,6 @@
 Picture.inject({
 	getEditForm: function(param) {
-		return this.base(Hash.merge({ hasName: false, hasDimensions: false }, param));
+		return this.base(Hash.merge({ name: false, hasDimensions: false }, param));
 	},
 
 	setFile: function(mimeObj) {

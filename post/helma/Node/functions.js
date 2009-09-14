@@ -25,8 +25,9 @@ Node.inject({
 			param.posts = false;
 		if (param.posts) {
 			form.addTab('Posts', {
-				label: param.posts.label || 'Posts', type: 'select', name: 'posts',
-				prototypes: 'Post', size: Base.pick(param.posts.size, 10),
+				type: 'select', name: 'posts', prototypes: 'Post', 
+				label: Base.pick(param.posts.label, 'Posts'),
+				size: Base.pick(param.posts.size, 10),
 				collection: this.posts, autoRemove: true
 			});
 		}
