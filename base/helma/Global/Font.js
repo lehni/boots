@@ -59,6 +59,14 @@ Font = Base.extend({
 		return this.kernedFont != null ? this.kernedFont.getKerning(c1, c2) : 0;
 	},
 	
+	getFont: function() {
+		return this.nativeFont;
+	},
+	
+	getSize: function() {
+		return this.size;
+	},
+	
 	setSize: function(size) {
 		if (this.size != size) {
 			this.size = parseFloat(size);
@@ -66,14 +74,6 @@ Font = Base.extend({
 			if (this.nativeFont)
 				this.nativeFont = this.nativeFont.deriveFont(this.size);
 		}
-	},
-	
-	getFont: function() {
-		return this.nativeFont;
-	},
-	
-	getSize: function() {
-		return this.size;
 	},
 	
 	getAntialias: function() {
@@ -87,15 +87,15 @@ Font = Base.extend({
 		}
 	},
 	
+	getCharSpacing: function() {
+		return this.charSpacing;
+	},
+	
 	setCharSpacing: function(spacing) {
 		if (this.charSpacing != spacing) {
 			this.charSpacing = spacing;
 			this.uniqueString = null;
 		}
-	},
-	
-	getCharSpacing: function() {
-		return this.charSpacing;
 	},
 
 	processGlyphLine: function(text, maxWidth, layout) {
@@ -107,7 +107,6 @@ Font = Base.extend({
 			var charSpacing = this.getCharSpacing(text);
 			// Use the font's size, not this.size, as the font may be scaled (used in Lineto)
 			var size = this.nativeFont.getSize();
-	
 			var x = 0;
 			var num = glyphs.getNumGlyphs();
 			for (var i = 0; i < num; i++) {
@@ -118,15 +117,14 @@ Font = Base.extend({
 				}
 				x += glyphs.getGlyphMetrics(i).getAdvance();
 				if (i < num - 1)
-					x += (charSpacing + this.getKerning(
-							text.charAt(i), text.charAt(i + 1))) * 0.001 * size;
-				// This is only used by cutStringAt right now:
+					x += (charSpacing + this.getKerning(text.charAt(i),
+							text.charAt(i + 1))) * size / 1000;
 				if (maxWidth && x >= maxWidth) {
 					text = text.substring(0, i);
 					if (layout) {
 						// Reproduce glyph vector
 						var newGlyphs = this.nativeFont.createGlyphVector(
-								this.renderInfo.context, text);
+									this.renderInfo.context, text);
 						for (var j = 0; j < i; j++)
 							newGlyphs.setGlyphPosition(j,
 									glyphs.getGlyphPosition(j));
@@ -170,9 +168,9 @@ Font = Base.extend({
 	// This is used for the image rendering
 	getUniqueString: function() {
 		return this.uniqueString || (this.uniqueString =
-			this.kernedFont.getPostscriptFontName() +
-			(this.antialias ? '_1_' : '_0_') +
-			this.size.format('#0.00') + '_' + this.charSpacing);
+				this.kernedFont.getPostscriptFontName() +
+				(this.antialias ? '_1_' : '_0_') +
+				this.size.format('#0.00') + '_' + this.charSpacing);
 	},
 
 	/**
@@ -260,8 +258,8 @@ Font = Base.extend({
 
 			for (var i = 0; i < lines.length; i++)
 				this.drawGlyphs(g2d, i == 0
-					? desc
-					: this.layoutGlyphLine(lines[i]), 0, i * lineHeight);
+						? desc
+						: this.layoutGlyphLine(lines[i]), 0, i * lineHeight);
 
 			image.reduceColors(16, false, true);
 			image.setTransparentPixel(image.getPixel(0, 0));
@@ -297,11 +295,11 @@ Font = Base.extend({
 			return filename ? new Font(
 				app.properties.fontDir + filename,
 				antialias != null
-					? antialias
-					: (app.properties.fontAntialias || 'true') == 'true',
+						? antialias
+						: (app.properties.fontAntialias || 'true') == 'true',
 				fractionalMetrics != null
-					? fractionalMetrics
-					: (app.properties.fontFractionalMetrics || 'true') == 'true'
+						? fractionalMetrics
+						: (app.properties.fontFractionalMetrics || 'true') == 'true'
 			) : null;
 		},
 
@@ -322,19 +320,19 @@ Font = Base.extend({
 				var RenderingHints = java.awt.RenderingHints;
 				var map = new java.util.HashMap();
 				map.put(RenderingHints.KEY_DITHERING,
-					RenderingHints.VALUE_DITHER_DISABLE);
+						RenderingHints.VALUE_DITHER_DISABLE);
 				map.put(RenderingHints.KEY_ANTIALIASING,
-					RenderingHints.VALUE_ANTIALIAS_ON);
+						RenderingHints.VALUE_ANTIALIAS_ON);
 				map.put(RenderingHints.KEY_RENDERING,
-					RenderingHints.VALUE_RENDER_QUALITY);
+						RenderingHints.VALUE_RENDER_QUALITY);
 				map.put(RenderingHints.KEY_TEXT_ANTIALIASING, antialias
-					? RenderingHints.VALUE_TEXT_ANTIALIAS_ON
-					: RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
+						? RenderingHints.VALUE_TEXT_ANTIALIAS_ON
+						: RenderingHints.VALUE_TEXT_ANTIALIAS_OFF);
 				map.put(RenderingHints.KEY_FRACTIONALMETRICS, fractionalMetrics
-					? RenderingHints.VALUE_FRACTIONALMETRICS_ON
-					: RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+						? RenderingHints.VALUE_FRACTIONALMETRICS_ON
+						: RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
 				map.put(RenderingHints.KEY_COLOR_RENDERING,
-					RenderingHints.VALUE_COLOR_RENDER_QUALITY);
+						RenderingHints.VALUE_COLOR_RENDER_QUALITY);
 				infos = this.renderInfos[id] = {
 					context: new java.awt.font.FontRenderContext(null,
 							!!antialias, !!fractionalMetrics),
