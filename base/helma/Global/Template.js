@@ -11,6 +11,8 @@ if (!global.encodeHtml)
 	encodeHtml = format;
 if (!global.encodeAll)
 	encodeAll = encode;
+if (!global.encodeParagraphs)
+	encodeParagraphs = formatParagraphs;
 
 function Template(object, name, parent) {
 	if (object) {
@@ -350,7 +352,9 @@ Template.prototype = {
 			} else { 
 
 				if (macro.isSetter) {
-					if (part != '=')
+					if (part == '=')
+						macro.hasEquals = true;
+					else
 						macro.unnamed.push(part);
 					append = false;
 				} else if (!macro.isData && !macro.isControl) {
@@ -380,7 +384,7 @@ Template.prototype = {
 				values['default'] = /^'"/.test(def) ? '"' + global[values.encoder](def.substring(1, def.length - 1)) + '"'
 					: values.encoder + '(' + def + ')';
 		}
-		macro.isSetter = macro.isSetter && !!macro.unnamed.length;
+		macro.isSetter = macro.isSetter && macro.hasEquals && !!macro.unnamed.length;
 		macro.swallow = swallow || macro.isControl || macro.isSetter;
 		macro.tag = tag;
 		return macro;
