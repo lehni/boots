@@ -501,6 +501,10 @@ Array.inject(new function() {
 			return entry.value;
 		},
 
+		contains: function(obj) {
+			return this.indexOf(obj) != -1;
+		},
+
 		toArray: function() {
 			return this.concat([]);
 		},

@@ -471,6 +471,10 @@ Array.inject(new function() {
 			return entry.value;
 		},
 
+		contains: function(obj) {
+			return this.indexOf(obj) != -1;
+		},
+
 		toArray: function() {
 			var res = this.concat([]);
 			return res[0] == this ? Enumerable.toArray.call(this) : res;
@@ -1132,7 +1136,7 @@ DomElement = Base.extend(new function() {
 			isAncestor: function(el, parent) {
 				return !el ? false : el.ownerDocument == parent ? true
 					: Browser.WEBKIT && Browser.VERSION < 420
-						? Array.indexOf(parent.getElementsByTagName(el.tagName), el) != -1
+						? Array.contains(parent.getElementsByTagName(el.tagName), el)
 						: parent.contains 
 							? parent != el && parent.contains(el)
 							: !!(parent.compareDocumentPosition(el) & 16)
