@@ -224,7 +224,11 @@
 }
 
 #edit .edit-list-handle {
-	margin-right: 4px;
+	display: inline-block;
+	width: 14px;
+	height: 12px;
+	margin-left: 4px;
+	background: url(/static/edit/media/handle.png);
 	cursor: row-resize;
 }
 
@@ -232,14 +236,42 @@
 	margin-top: -16px;
 }
 
-#edit .edit-list-remove img {
+#edit .edit-list-button, #edit .edit-list-button .overlay {
 	width: 12px;
-	height: 13px;
+	height: 12px;
+}
+
+#edit .edit-list-button {
+	display: inline-block;
+	margin-left: 4px;
+}
+
+#edit .edit-list-remove {
 	background: url(/static/edit/media/remove.png);
 }
 
-#edit .edit-list-remove img:hover {
-	background: url(/static/edit/media/remove-over.png);
+#edit .edit-list-remove:hover {
+	background-position: 0 -12px; 
+}
+
+#edit .edit-list-remove .overlay {
+	background: url(/static/edit/media/remove-overlay.png);
+}
+
+#edit .edit-list-hide {
+	background: url(/static/edit/media/visible.png);
+}
+
+#edit .edit-list-hide:hover {
+	background-position: 0 -12px; 
+}
+
+#edit .edit-list-hide .overlay {
+	background: url(/static/edit/media/visible-overlay.png);
+}
+
+#edit .edit-list-entry.invisible {
+	opacity: 0.5;
 }
 
 /* error */

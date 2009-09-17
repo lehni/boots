@@ -651,6 +651,12 @@ EditForm.register({
 		});
 	},
 
+	apply: function(editForm, params) {
+		if ($$('.edit-list-remove input[value=1]').length)
+			params.confirm = 'Do you really want to delte the marked entries?';
+		this.execute(editForm, 'apply', params);
+	},
+
 	close: function(editForm) {
 		editForm.close();
 	},
@@ -971,6 +977,24 @@ EditForm.register(new function() {
 
 // list
 EditForm.register(new function() {
+	function updateEntry(id, toggle) {
+		var opacity = 1;
+		var entry = $('#edit-list-entry-' + id);
+		['remove', 'hide'].each(function(type) {
+			var obj = $('#' + id + '_' + type);
+			var value = obj.getValue().toInt();
+			if (toggle == type) {
+				value = value ? 0 : 1;
+				obj.setValue(value);
+			}
+			var overlay = $('#edit-list-' + type + '-' + id + ' .overlay');
+			overlay.modifyClass('hidden', !value);
+			if (value)
+				opacity = 0.5;
+		})
+		entry.setOpacity(opacity);
+	}
+
 	return {
 		list_add: function(editForm, name, html) {
 			var list = $('#edit-list-' + name, editForm.form);
@@ -987,16 +1011,17 @@ EditForm.register(new function() {
 		},
 
 		list_remove: function(editForm, name, id) {
-			var entry = $('#edit-list-entry-' + id);
+			/*
 			if (/_n[0-9]*$/.test(id)) {
 				entry.remove();
-			} else {
-				var value = $('#' + id + '_delete');
-				var remove = !value.getValue().toInt();
-				value.setValue(remove ? 1 : 0);
-				entry.setOpacity(remove ? 0.25 : 1);
 			}
+			*/
+			updateEntry(id, 'remove');
 			this.list_update(editForm, name);
+		},
+
+		list_hide: function(editForm, name, id) {
+			updateEntry(id, 'hide');
 		},
 
 		list_update: function(editForm, name) {
@@ -1016,7 +1041,7 @@ EditForm.register(new function() {
 			var entry = $('#edit-list-entry-' + id, editForm.form);
 			var handle = $('#edit-list-handle-' + id, editForm.form);
 			if (!handle.draggable) {
-				var bounds, listBounds, dummy, position;
+				var bounds, listBounds, dummy, position, opacity;
 				handle.addEvents({
 					dragstart: function(e) {
 						bounds = entry.getBounds(true);
@@ -1024,9 +1049,10 @@ EditForm.register(new function() {
 						// Insert dummy of same size behind, to keep space
 						dummy = entry.injectAfter('div');
 						dummy.setSize(bounds);
+						opacity = entry.getOpacity();
 						entry.setStyle({
 							position: 'absolute',
-							opacity: 0.75,
+							opacity: 0.75 * opacity,
 							zIndex: 1
 						});
 						entry.setBounds(bounds);
@@ -1038,7 +1064,7 @@ EditForm.register(new function() {
 						// Make relative again
 						entry.setStyle({
 							position: 'relative',
-							opacity: 1,
+							opacity: opacity,
 							zIndex: 0,
 							// Clear width and height again, so Textarea resizing
 							// can still work in Safari.

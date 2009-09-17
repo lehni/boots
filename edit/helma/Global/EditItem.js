@@ -885,6 +885,10 @@ EditableListItem = ListItem.extend({
 			id: name + '_' + form.entryId,
 			name: name,
 			proto: obj._prototype,
+			hide: obj.visible !== undefined
+					// Default for new items is visible.
+					? obj.visible == null || obj.visible ? 0 : 1
+					: null,
 			width: param.calculatedWidth,
 			create: obj.isTransient(),
 			sortable: this.sortable,
@@ -942,7 +946,7 @@ EditableListItem = ListItem.extend({
 				var id = rest.substring(0, pos);
 				if (/^n/.test(id)) { // Create
 					// Group values and process later.
-					// This is neede by the onCreate handler that
+					// This is needed by the onCreate handler that
 					// can produce an object based on e.g. file type
 					var variable = rest.substring(pos + 1);
 					var values = create[id];
@@ -957,14 +961,16 @@ EditableListItem = ListItem.extend({
 					// grouping is needed.
 					var obj = this.collection.getById(id);
 					if (obj) {
-						if (req.data[name + '_' + id + '_delete'] == 1) {
+						var prefix = name + '_' + id + '_';
+						if (req.data[prefix + 'remove'] == 1) {
 							changed = obj.remove();
 						} else {
 							var form = this.getEditForm(obj);
 							if (form)
 								changed = form.applyItems() || changed;
-							// Set the object's position
-							changed = this.setPosition(obj, positions[id], true) || changed;
+							// Set the object's visibility and position
+							var visible = Base.pick(req.data[prefix + 'hide'], 0) == 0;
+							changed = this.setPosition(obj, positions[id], visible) || changed;
 						}
 					}
 				}
@@ -976,26 +982,28 @@ EditableListItem = ListItem.extend({
 		var ctor = prototypes[0];
 		for (var id in create) {
 			var values = create[id];
-			// Pass prototype value extra, as ctor
-			var proto = values.proto;
-			delete values.proto;
-			var ctor = global[proto];
-			if (!prototypes.contains(ctor))
-				throw 'Unsupported prototype: ' + proto;
-			// Support an onCreate handler that can produce special types
-			// e.g. based on the file type. That's also the only reason
-			// why we collect all values above, so that onCreate can analyse them.
-			var obj = this.onCreate && this.onCreate(proto, values);
-			if (!obj)
-				obj = new ctor(this); // Pass the edit item for editing parent stuff.
-			if (obj) {
-				// Just like in the rest of edit lib, apply first, persist after
-				var form = this.getEditForm(obj, id);
-				if (form) {
-					form.applyItems();
-					changed = this.store(obj) || changed;
-					// Set the object's position
-					changed = this.setPosition(obj, positions[id], true) || changed;
+			if (values.remove != 1) {
+				// Pass prototype value extra, as ctor
+				var proto = values.proto;
+				delete values.proto;
+				var ctor = global[proto];
+				if (!prototypes.contains(ctor))
+					throw 'Unsupported prototype: ' + proto;
+				// Support an onCreate handler that can produce special types
+				// e.g. based on the file type. That's also the only reason
+				// why we collect all values above, so that onCreate can analyse them.
+				var obj = this.onCreate && this.onCreate(proto, values);
+				if (!obj)
+					obj = new ctor(this); // Pass the edit item for editing parent stuff.
+				if (obj) {
+					// Just like in the rest of edit lib, apply first, persist after
+					var form = this.getEditForm(obj, id);
+					if (form) {
+						form.applyItems();
+						changed = this.store(obj) || changed;
+						// Set the object's position
+						changed = this.setPosition(obj, positions[id], true) || changed;
+					}
 				}
 			}
 		}

@@ -101,8 +101,9 @@ Post.inject({
 
 		form.add({
 			label: 'Attachments', type: 'list', name: 'resources',
-			collection: this.resources, prototypes: 'Resource',
-			button: 'Attach', autoRemove: true, sortable: true,
+			collection: this.allResources, prototypes: 'Resource',
+			button: 'Attach',
+			autoRemove: true, sortable: true,
 			onCreate: function(ctor, values) {
 				// Create a resource type based on file mime type
 				var resource = values.file && Resource.create(values.file);

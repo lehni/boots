@@ -27,8 +27,8 @@ Node.inject({
 			form.addTab('Posts', form.createItem(param.posts, {
 				type: 'select', name: 'posts', prototypes: 'Post', 
 				label: 'Posts', size: 10,
-				collection: this.posts, autoRemove: true,
-			});
+				collection: this.posts, autoRemove: true
+			}));
 		}
 		return form;
 	},

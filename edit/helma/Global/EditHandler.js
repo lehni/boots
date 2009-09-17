@@ -250,7 +250,9 @@ PreviewHandler = EditHandler.extend({
 	handle:	function(base, object, node, form) {
 		// Apply changes first:
 		// First either apply or create the object.
-		var result = this[req.data.edit_create == 1 ? 'create' : 'apply'](base, object, node, form);
+		var result = EditHandler.call(
+				req.data.edit_create == 1 ? 'create' : 'apply',
+				base, object, node, form);
 		if (result == EditForm.COMMIT) {
 			// Commit before the html is rendered.
 			res.commit();

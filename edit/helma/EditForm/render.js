@@ -79,13 +79,13 @@ EditForm.inject({
 						rightButtons.push({
 							value: canGoBack ? this.titles.applyBack || EditForm.TITLE_APPLY_BACK
 								: this.titles.applyClose || EditForm.TITLE_APPLY_CLOSE,
-							onClick: this.renderHandle('execute', 'apply', { post: true, edit_back: 1 })
+							onClick: this.renderHandle('apply', { post: true, edit_back: 1 })
 						});
 					}
 					if (buttonStay) {
 						rightButtons.push({
 							value: this.titles.apply || EditForm.TITLE_APPLY,
-							onClick: this.renderHandle('execute', 'apply', { post: true })
+							onClick: this.renderHandle('apply', { post: true })
 						});
 					}
 				}
