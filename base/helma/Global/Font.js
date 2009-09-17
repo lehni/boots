@@ -240,31 +240,43 @@ Font = Base.extend({
 		var color = param.color || '#000000';
 		var bgColor = param.bgColor || '#ffffff';
 		var filename = encodeMD5(text + color + bgColor + param.maxWidth
-				+ param.lineHeight + this.getUniqueString()) + '.gif';
+				+ param.lineHeight + param.justification
+				+ this.getUniqueString()) + '.gif';
 		var file = new File(app.properties.fontRenderDir, filename);
 
 		if (!file.exists()) {
 			var lines = this.breakIntoLines(text, param.maxWidth);
-			var desc = this.layoutGlyphLine(lines[0]);
-			var lineHeight = param.lineHeight ? param.lineHeight : Math.ceil(desc.height);
-			var width = param.maxWidth || Math.round(desc.width);
-			var height = lineHeight * (lines.length - 1) + Math.round(desc.height);
-			var image = new Image(width, height);
-			var g2d = image.getGraphics();
-			g2d.setColor(java.awt.Color.decode(bgColor));
-			g2d.fillRect(0, 0, width, height);
-			g2d.setColor(java.awt.Color.decode(color));
-			g2d.setRenderingHints(this.getRenderingHints());
+			if (lines.length > 0) {
+				var width = 0;
+				for (var i = 0, l = lines.length; i < l; i++) {
+					var desc = lines[i] = this.layoutGlyphLine(lines[i]);
+					width = Math.max(width, desc.width);
+				}
+				var desc = lines[0];
+				var calcHeight = Math.ceil(desc.height);
+				var lineHeight = param.lineHeight ? param.lineHeight : calcHeight;
+				var height = lineHeight * (lines.length - 1) + calcHeight;
+				var image = new Image(width, height);
+				var g2d = image.getGraphics();
+				g2d.setColor(java.awt.Color.decode(bgColor));
+				g2d.fillRect(0, 0, width, height);
+				g2d.setColor(java.awt.Color.decode(color));
+				g2d.setRenderingHints(this.getRenderingHints());
 
-			for (var i = 0; i < lines.length; i++)
-				this.drawGlyphs(g2d, i == 0
-						? desc
-						: this.layoutGlyphLine(lines[i]), 0, i * lineHeight);
+				var multiplier = param.justification == 'right' ? 1 :
+						param.justification == 'centered' ? 0.5 : 0; // 0 == 'left' / default
+				for (var i = 0, l = lines.length; i < l; i++) {
+					var desc = lines[i];
+					this.drawGlyphs(g2d, desc,
+							(width - desc.width) * multiplier,
+							i * lineHeight);
+				}
 
-			image.reduceColors(16, false, true);
-			image.setTransparentPixel(image.getPixel(0, 0));
-			image.saveAs(file.getPath(), 1, true);
-			image.dispose();
+				image.reduceColors(16, false, true);
+				image.setTransparentPixel(image.getPixel(0, 0));
+				image.saveAs(file.getPath(), 1, true);
+				image.dispose();
+			}
 		} else {
 			var info = Image.getInfo(file);
 			if (info) {
