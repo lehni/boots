@@ -915,7 +915,7 @@ EditForm.register(new function() {
 			var field = $('#' + name, editForm.form);
 			if (field) {
 				var url = prompt('Enter link URL (email or internet address):\n' +
-					'Email addresses are encryption and protected against spam.');
+					'Email addresses are encrypted and protected against spam.');
 				if (url) {
 					var text = prompt('Enter link text (empty = same as URL):', field.getSelectedText());
 					if (text || text == '') {
