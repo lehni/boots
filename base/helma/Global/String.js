@@ -10,7 +10,8 @@ String.inject({
 	},
 
 	unaccent: function() {
-		str = encode(this);
+		// Use encodeForm instead of encode, so no <br /> are produced
+		str = encodeForm(this);
 		// Convert to html entities, replace them by the normal unnaccented chars and convert back
 		str = str.replace(/&(.)(?:uml);/gi, '$1e'); // replace ö with oe, ä with ae, etc.
 		str = str.replace(/&(.)(?:acute|grave|cedil|circ|ring|tilde);/gi, '$1'); // replace é with e, à with a, etc.
