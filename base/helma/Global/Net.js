@@ -23,7 +23,7 @@ Net = new function() {
 		 * Returns true if the url is remote, meaning it starts with a protocol.
 		 */
 		isRemote: function(url) {
-			return /^\w+:\/\/]/.test(url);
+			return /^\w+:\/\//.test(url);
 		},
 
 		/**
@@ -39,7 +39,7 @@ Net = new function() {
 		 * is not describing a protocol.
 		 */
 		isRelative: function(url) {
-			return /^\w+(?!:\/\/)/.test(url);
+			return /^\w+(?!\w*\:\/\/)/.test(url);
 		},
 
 		/**
