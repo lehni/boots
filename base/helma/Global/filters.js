@@ -96,3 +96,8 @@ function versioned_filter(input, param) {
 		input += '?' + lastModified;
 	return input;
 }
+
+function encode_filter(input, param, encoding) {
+	var encoder = global['encode' + (param.encoding || encoding || '').capitalize()];
+	return encoder ? encoder(input) : input;
+}
