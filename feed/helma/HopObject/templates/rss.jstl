@@ -8,6 +8,8 @@
 		<generator><%= param.generator %></generator>
 		<language><% param.language %></language>
 <% foreach ($item in param.items) %>
+	<%-- TODO: Make independent from post and introduce more general methods, e.g. renderCreator VS renderUser, renderSimple? getTitle, etc --%>
+	<% if $item.getTitle %>
 	<% $link = $item.absoluteHref() %>
 		<item>
 			<title><%= $item.getTitle() %></title> 
@@ -17,6 +19,7 @@
 			<dc:creator><%= $item.renderUser() %></dc:creator>
 			<description><%= encodeXml($item.renderSimple()) %></description>
 		</item>
+	<% end %>
 <% end %>
 	</channel>
 </rss>

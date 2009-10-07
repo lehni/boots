@@ -4,22 +4,23 @@ HopObject.inject({
 	rss_action: function() {
 		if (this.HAS_FEED) {
 			res.contentType = 'text/xml';
-			this.renderFeed('rss', 10);
+			this.renderFeed({
+				type: 'rss',
+				maxCount: 10
+			}, res);
 		}
 	},
 
-	getFeedList: function(maxCount) {
-		return this.list(0, maxCount);
+	getFeedList: function(length) {
+		return this.list(0, length);
 	},
 
-	renderFeed: function(type, maxCount) {
-		if (!maxCount)
-			maxCount = 10;
-
-		var items = this.getFeedList(maxCount);
+	renderFeed: function(param, out) {
+		if (!param)
+			param = {};
+		var items = this.getFeedList(param.maxCount || 10);
 		if (items.length > 0) {
-			res.push();
-			this.renderTemplate(type, {
+			return this.renderTemplate(param.type || 'rss', {
 				title: app.properties.feedTitle + ' - ' + this.getDisplayName(),
 				description: app.properties.feedDescription,
 				language: app.properties.feedLanguage,
@@ -27,7 +28,7 @@ HopObject.inject({
 				link: this.absoluteHref(),
 				date: items[0].modificationDate,
 				items: items
-			}, res);
+			}, out);
 		}
 	}
 });
