@@ -15,7 +15,6 @@ EditHandler = Base.extend(new function() {
 				var editObj = null;
 				// default for response content-type is javascript, set only if 
 				// other type is needed
-				res.contentType = 'text/javascript';
 				EditNode.onRequest();
 				res.data.editResponse = new Hash();
 				var parent = base.getParent();
@@ -111,7 +110,13 @@ EditHandler = Base.extend(new function() {
 						res.data.editResponse.alert = res.message;
 					out = Json.encode(res.data.editResponse);
 				}
-				res.write(out);
+				if (req.data.iframe) {
+					res.contentType = 'text/html';
+					res.write('<html><body><textarea>' + out + '</textarea></body></html>')
+				} else {
+					res.contentType = 'text/javascript';
+					res.write(out);
+				}
 				return handled;
 			},
 
