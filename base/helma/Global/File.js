@@ -657,7 +657,7 @@ File = Base.extend(new function() {
 			},
 
 			getExtension: function(name) {
-				var pos = name.lastIndexOf('.');
+				var pos = name && name.lastIndexOf('.') || -1;
 				return pos != -1 ? name.substring(pos + 1, name.length) : name;
 			},
 
