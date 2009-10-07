@@ -359,8 +359,14 @@ $type = Base.type;
 Hash = Base.extend(Enumerable, {
 	_generics: true,
 
-	initialize: function() {
-		return this.merge.apply(this, arguments);
+	initialize: function(arg) {
+		if (typeof arg == 'string') {
+			for (var i = 0, l = arguments.length; i < l; i += 2)
+				this[arguments[i]] = arguments[i + 1];
+		} else {
+			this.merge.apply(this, arguments);
+		}
+		return this;
 	},
 
 	merge: function() {
@@ -1192,12 +1198,11 @@ DomElement.inject(new function() {
 	}
 
 	function toElements(elements) {
-		if (Base.type(elements) != 'array')
-			elements = Array.create(arguments);
-		var created = elements.find(function(el) {
+		var els = Base.type(elements) == 'array' ? elements : Array.create(arguments);
+		var created = els.find(function(el) {
 			return Base.type(el) != 'element';
 		});
-		var result = elements.toElement(this.getDocument());
+		var result = els.toElement(this.getDocument());
 		return {
 			array: result ? (Base.type(result) == 'array' ? result : [result]) : [],
 			result: created && result
@@ -2918,12 +2923,13 @@ FormElement.inject({
 	},
 	getSelection: function() {
 		if(Browser.TRIDENT) {
-			this.focus();
 			var range = document.selection.createRange();
-			var tmp = range.duplicate();
-			tmp.moveToElementText(this.$);
-			tmp.setEndPoint('EndToEnd', range);
-			return { start: tmp.text.length - range.text.length, end: tmp.text.length };
+			if (!range || range.parentElement() != this.$)
+				return { start: 0, end: 0 };
+			var dup = range.duplicate();
+			dup.moveToElementText(this.$);
+			dup.setEndPoint('EndToEnd', range);
+			return { start: dup.text.length - range.text.length, end: dup.text.length };
 		}
 		return { start: this.$.selectionStart, end: this.$.selectionEnd };
 	},
@@ -3019,15 +3025,14 @@ Request = Base.extend(Chain, Callback, new function() {
 	}
 
 	function createFrame(that, form) {
-		var id = 'request_' + unique++, onLoad = that.onFrameLoad.bind(that);
+		var id = 'request_' + unique++, load = that.onFrameLoad.bind(that);
 		var div = DomElement.get('body').injectBottom('div', {
 				styles: {
 					position: 'absolute', top: '0', marginLeft: '-10000px'
 				}
 			}, [
 				'iframe', {
-					name: id, id: id, events: { load: onLoad },
-					onreadystatechange: onLoad
+					name: id, id: id, events: { load: load, readystatechange: load }
 				}
 			]
 		);
@@ -3216,11 +3221,12 @@ Request = Base.extend(Chain, Callback, new function() {
 					method = 'get';
 				}
 				if (data && method == 'get') {
-					url = url + (url.contains('?') ? '&' : '?') + data;
+					url += (url.contains('?') ? '&' : '?') + data;
 					data = null;
 				}
 			}
 			if (this.frame) {
+				url += (url.contains('?') ? '&' : '?') + 'iframe=1';
 				if (this.frame.form)
 					this.frame.form.set({
 						target: this.frame.id, action: url, method: method,
@@ -3316,7 +3322,12 @@ Asset = new function() {
 		script: function(src, props) {
 			var script = DomElement.get('head').injectBottom('script', Hash.merge({
 				events: {
-					load: props.onLoad,
+					load: props.onLoad && function() {
+						if (!this.loaded) {
+							this.loaded = true;
+							props.onLoad.call(this);
+						}
+					},
 					readystatechange: function() {
 						if (/loaded|complete/.test(this.$.readyState))
 							this.fireEvent('load');
@@ -3324,7 +3335,7 @@ Asset = new function() {
 				},
 				src: src
 			}, getProperties(props)));
-			if (Browser.WEBKIT2)
+			if (Browser.WEBKIT && Browser.VERSION < 420)
 				new Request({ url: src, method: 'get' }).addEvent('success', function() {
 					script.fireEvent.delay(1, script, ['load']);
 				}).send();

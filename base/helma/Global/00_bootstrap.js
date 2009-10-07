@@ -388,8 +388,14 @@ Hash = Base.extend(Enumerable, {
 	_hide: true,
 	_generics: true,
 
-	initialize: function() {
-		return this.merge.apply(this, arguments);
+	initialize: function(arg) {
+		if (typeof arg == 'string') {
+			for (var i = 0, l = arguments.length; i < l; i += 2)
+				this[arguments[i]] = arguments[i + 1];
+		} else {
+			this.merge.apply(this, arguments);
+		}
+		return this;
 	},
 
 	merge: function() {
