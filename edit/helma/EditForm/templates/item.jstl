@@ -32,7 +32,7 @@
 <% end %>
 <td<%= param.label.span prefix=" colspan=\"" suffix="\"" -%>>
 <% if (param.label.label) %>
-<div class="edit-label"><%= param.label.label suffix=":" encoding="html" -%></div>
+<div class="edit-label"><%= param.label.label suffix=":" encoding="html" -%></div><%-%>
 <% end %>
 <% if (param.label.name) %>
 <div id="edit-error-<%= param.label.name %>" class="edit-error hidden"></div>
