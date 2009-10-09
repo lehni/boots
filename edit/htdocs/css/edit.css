@@ -10,7 +10,7 @@
 	border-bottom: 1px solid #000;
 }
 
-/* default */
+/* Default */
 
 #edit td, #edit input, #edit select, #edit textarea, #edit a.edit-button, #edit .tab-pane .edit-title {
 	font-family: "Lucida Grande", Verdana, sans-serif;
@@ -34,7 +34,7 @@
 	vertical-align: top;
 }
 
-/* checkbox */
+/* Checkbox */
 
 #edit label {
 	display: block;
@@ -93,7 +93,7 @@
 	text-align: right;
 }
 
-/* only change padding within the main edit form, not in the choosers -> use #edit */
+/* Only change padding within the main edit form, not in the choosers -> use #edit */
 
 #edit .edit-footer .edit-buttons-left {
 	padding: 2px 0px 8px 8px;
@@ -103,7 +103,7 @@
 	padding: 2px 8px 8px 0px;
 }
 
-/* chooser */
+/* Chooser */
 
 .edit-chooser {
 	position: absolute;
@@ -155,7 +155,7 @@
 	background: #f7f7f7;
 }
 
-/* preview */
+/* Preview */
 
 .edit-preview {
 	position: fixed;
@@ -176,14 +176,14 @@
 	color: #f00;
 }
 
-/* elements */
+/* Elements */
 
 #edit .edit-progress {
 	float: right;
 	padding: 8px;
 }
 
-/* TODO: remove edit-spacer and handle like item spacer */
+/* TODO: Remove edit-spacer and handle like item spacer */
 #edit .edit-spacer {
 	height: 0px;
 }
@@ -205,6 +205,8 @@
 #edit .edit-label {
 	font-weight: bold;
 	display: inline;
+	/* Space to error */
+	padding-right: 4px;
 }
 
 #edit .edit-nounderline a {
@@ -212,7 +214,7 @@
 	padding: 0px;
 }
 
-/* edit lists */
+/* Edit Lists */
 
 #edit .edit-list-separator {
 	height: 10px;
@@ -221,6 +223,9 @@
 #edit .edit-list-header {
 	text-align: right;
 	height: 14px;
+	margin-bottom: -16px;
+	/* Needed to make mouse events work on ie when over a div, but it would break Safari, so use a css hack */
+	position: relative\9;
 }
 
 #edit .edit-list-handle {
@@ -230,10 +235,6 @@
 	margin-left: 4px;
 	background: url(/static/edit/media/handle.png);
 	cursor: row-resize;
-}
-
-#edit .edit-list-content {
-	margin-top: -16px;
 }
 
 #edit .edit-list-button, #edit .edit-list-button .overlay {
@@ -274,7 +275,7 @@
 	opacity: 0.5;
 }
 
-/* error */
+/* Error */
 
 #edit .edit-error {
 	font-weight: normal;
@@ -282,7 +283,7 @@
 	display: inline;
 }
 
-/* help */
+/* Help */
 
 #edit .edit-help div {
 	border: 1px dotted #999;
@@ -297,7 +298,7 @@
 	white-space: normal;
 }
 
-/* tab pane */
+/* Tab Pane */
 
 #edit .tab-pane {
 	position: relative;
@@ -352,7 +353,7 @@
 	height: 34px;
 }
 
-/* icons */
+/* Icons */
 
 #edit .icon a {
 	border-bottom: 0px;
