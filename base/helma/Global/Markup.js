@@ -177,10 +177,13 @@ MarkupTag = Base.extend(new function() {
 				// Parse _attributes definition through the same tag parsing mechanism
 				// parseDefinition contains special logic to produce an info object
 				// for attribute / argument parsing further down in MarkupTag.create
-				var attributes = src._attributes && parseDefinition(src._attributes, true);
+				// If no new attributes are defined, inherit from above.
+				// No merging sof far!
+				var attributes = src._attributes || this.prototype._attributes;
+				attributes = attributes && parseDefinition(attributes, true);
 				var namespace = src._namespace || 'default';
 				var store = tags[namespace] = tags[namespace] || {};
-				return src._tags.split(',').each(function(tag) {
+				return (src._tags && src._tags.split(',') || []).each(function(tag) {
 					// Store attributes information and a reference to prototype in tags
 					store[tag] = {
 						attributes: attributes,
@@ -446,3 +449,94 @@ ListTag = MarkupTag.extend({
 		return '<ul><li>' + content.replaceAll('<br />', '').trim().split(/\r\n|\n|\r/mg).join('</li>\n<li>') + '</li></ul>';
 	}
 });
+
+OEmbedTag = MarkupTag.extend({
+	_attributes: 'url maxwidth maxheight',
+	_endpoint: 'http://www.oembed.com/',
+	_prefix: '',
+	_suffix: '',
+	
+	render: function(content, param) {
+		// Check cache to see if we already have the embed html
+		var obj = OEmbedTag.cache[this.definition];
+		// Support cache control through cache_age
+		if ((!obj || obj.cache_age && (Date.now() - obj.time) / 1000 >= obj.cache_age)
+		 		&& this.attributes.url) {
+			// Get the embed html through the oEmbed API
+			var url = this.attributes.url;
+			// Support both urls and ids
+			if (!Net.isRemote(url))
+				url = this._prefix + url + this._suffix;
+			var href = this._endpoint + '?url=' + encodeUrl(url);
+			// Support global setting of maxWidth and maxHeight through param
+			['maxWidth', 'maxHeight'].each(function(name) {
+				var lower = name.toLowerCase();
+				if (!this.attributes[lower] && param[name])
+					this.attributes[lower] = param[name];
+			}, this);
+			for (var name in this.attributes)
+				if (name != 'url')
+					href += '&' + name + '=' + this.attributes[name];
+			// Request json
+			var json = Net.loadUrl(href + '&format=json');
+			var obj = Json.decode(json);
+			if (obj) {
+				if (!obj.html) {
+					switch (obj.type) {
+					case 'photo':
+						obj.html = Html.image({
+							width: obj.width,
+							height: obj.height,
+							src: obj.url,
+							alt: obj.title
+						});
+						if (param.linkPhotos)
+							obj.html = renderLink({ content: obj.html, href: url });
+						break;
+					default:
+						User.log('ERROR: Unsupported oEmbed result: ' + json);
+						return null;
+					}
+				}
+				// Default value for cache age is 1 hour.
+				if (!obj.cache_age)
+					obj.cache_age = 3600;
+				obj.time = Date.now();
+				// TODO: Implement a cron job that clears the cache once per hour,
+				// to remove tags that are not in use anymore and free memory?
+				OEmbedTag.cache[this.definition] = obj;
+			}
+		}
+		return obj.html;
+	},
+
+	statics: {
+		cache: {}
+	}
+});
+
+YouTubeTag = OEmbedTag.extend({
+	_tags: 'youtube',
+	_endpoint: 'http://www.youtube.com/oembed',
+	_prefix: 'http://www.youtube.com/watch?v='
+});
+
+VimeoTag = OEmbedTag.extend({
+	_tags: 'vimeo',
+	_endpoint: 'http://vimeo.com/api/oembed.json',
+	_prefix: 'http://vimeo.com/',
+	_suffix: '&color=ffffff&portrait=false&byline=false'
+});
+
+FlickrTag = OEmbedTag.extend({
+	_tags: 'flickr',
+	_endpoint: 'http://flickr.com/services/oembed',
+	_prefix: 'http://www.flickr.com/photos/'
+});
+
+BlipTag = OEmbedTag.extend({
+	_tags: 'blip',
+	_endpoint: 'http://blip.tv/oembed/',
+	_prefix: 'http://blip.tv/file/'
+});
+
