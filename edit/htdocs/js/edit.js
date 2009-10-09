@@ -45,17 +45,22 @@ EditForm = Base.extend({
 		// Do not store direct references since the elements are replaced when
 		// saving before preview, therefore use ids instead.
 		var fields = $$('input[type=text],input[type=password],textarea', obj);
+		function store() {
+			if (that.focus && this.getId() == that.focus.id) {
+				that.focus.selection = this.getSelection();
+				that.focus.offset = this.getScrollOffset();
+			}
+		}
 		fields.addEvents({
 			focus: function() {
 				that.focus = { id: this.getId() };
 			},
-
-			blur: function() {
-				if (that.focus && this.getId() == that.focus.id) {
-					that.focus.selection = this.getSelection();
-					that.focus.offset = this.getScrollOffset();
-				}
-			} 
+			// Since we cannot store getSelection in blur on IE (it relies on
+			// focus() which cannot be called in blur), store status in all of these
+			// occasions:
+			keyup: store,
+			mouseup: store,
+			change: store
 		});
 		// We're asking inputs and textareas to be a certain size, but they grow
 		// bigger due to their border and padding settings that differ from browser
@@ -117,8 +122,8 @@ EditForm = Base.extend({
 		this.setSelectedTab(error.tab);
 		var field = $('#' + error.name, this.form);
 		if (field && field.focus) {
-			field.focus();
 			field.setValue(error.value);
+			field.setCaret(0);
 		}
 	},
 
@@ -1433,7 +1438,7 @@ ColorChooser = EditChooser.extend({
 			if (value && !/^#/.test(value)) value = ('#' + value).substring(0, 7);
 			if (value != target.getValue()) {
 				target.setValue(value);
-				target.setCaretPosition(target.getCaretPosition() + 1);
+				target.setCaret(target.getCaret() + 1);
 			}
 			return value;
 		}
