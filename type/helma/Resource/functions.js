@@ -193,14 +193,18 @@ Resource.inject({
 	forwardFile: function(file) {
 		if (!file)
 			file = this.getFile();
-		res.contentType = file.getContentType();
-		if (req.data.download || this.forceDownload()) {
-			this.counter++;	
-			res.getServletResponse().setHeader('Content-Disposition',
-					'attachment; filename="' + this.name + '"');
+		if (file.exists()) {
+			res.contentType = file.getContentType();
+			if (req.data.download || this.forceDownload()) {
+				this.counter++;	
+				res.servletResponse.setHeader('Content-Disposition',
+						'attachment; filename="' + this.name + '"');
+			}
+			// res.forward takes the filename relative to the protectedStatic, so resolve here.
+			res.forward(file.getRelativePath(app.properties.protectedDir));
+		} else {
+			app.log('ERROR: Requesting inexisting file: ' + file);
 		}
-		// res.forward takes the filename relative to the protectedStatic, so resolve here.
-		res.forward(file.getRelativePath(app.properties.protectedDir));
 	},
 
 	getContentType: function() {
