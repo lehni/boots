@@ -67,6 +67,11 @@ Net = new function() {
 			}
 			if (file)
 				return file.lastModified;
+		},
+
+		loadUrl: function(url, etagOrDate) {
+			var res = getURL(url, etagOrDate);
+			return res ? new java.lang.String(res.content) : null;
 		}
 	};
 };
