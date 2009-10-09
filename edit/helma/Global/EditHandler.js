@@ -13,8 +13,11 @@ EditHandler = Base.extend(new function() {
 
 			handle: function(base, mode) {
 				var editObj = null;
-				// default for response content-type is javascript, set only if 
-				// other type is needed
+				// The default for response content-type is javascript for 
+				// outputing json data. If something else  is sent back,
+				// res.contentType needs to be changed accordingly.
+				// The code bellow handling iframes checks for this again.
+				res.contentType = 'text/javascript';
 				EditNode.onRequest();
 				res.data.editResponse = new Hash();
 				var parent = base.getParent();
@@ -110,11 +113,15 @@ EditHandler = Base.extend(new function() {
 						res.data.editResponse.alert = res.message;
 					out = Json.encode(res.data.editResponse);
 				}
-				if (req.data.iframe) {
+				// Prevent any caching at the remote server or any intermediate proxy 
+				// Tested on most browsers with http://www.mnot.net/javascript/xmlhttprequest/cache.html
+				res.servletResponse.setHeader("Cache-Control", "no-cache,max-age=0");
+				if (/^multipart\/form-data/.test(req.servletRequest.contentType)
+						&& res.contentType == 'text/javascript') {
+					// Unfortunately an iframe response needs to be inside a textarea...
 					res.contentType = 'text/html';
 					res.write('<html><body><textarea>' + out + '</textarea></body></html>')
 				} else {
-					res.contentType = 'text/javascript';
 					res.write(out);
 				}
 				return handled;
