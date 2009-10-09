@@ -305,8 +305,10 @@ Template.prototype = {
 					macro.isSetter = !isEqualTag && next[0] == '$'; 
 					if (macro.isSetter) {
 						var match = next.match(/(\$\w*)=$/);
-						if (match)
+						if (match) {
 							macro.command = match[1];
+							macro.hasEquals = true;
+						}
 					} else if (!isEqualTag) {
 						var param = parseParam(macro.command);
 						macro.isData = param != macro.command;
@@ -350,15 +352,11 @@ Template.prototype = {
 			} else if (part == '|') { 
 				isFirst = true;
 			} else { 
-
-				if (macro.isSetter) {
-					if (part == '=')
+				if (!macro.isData && !macro.isControl) {
+					if (macro.isSetter && part == '=')
 						macro.hasEquals = true;
 					else
-						macro.unnamed.push(part);
-					append = false;
-				} else if (!macro.isData && !macro.isControl) {
-					macro.unnamed.push(nestedMacro(this, part, code, stack));
+						macro.unnamed.push(nestedMacro(this, part, code, stack));
 					append = false;
 				} else if (append) { 
 					macro.opcode.push(part);
