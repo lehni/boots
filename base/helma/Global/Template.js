@@ -318,7 +318,7 @@ Template.prototype = {
 			}
 		}
 
-		function nestedMacro(that, value, code, stack) {
+		function nestedMacro(that, macro, value, code, stack) {
 			if (/<%/.test(value)) {
 				var nested = value;
 				value = 'param_' + (that.macroParam++);
@@ -332,7 +332,7 @@ Template.prototype = {
 					throw 'Syntax error: ' + nested;
 				}
 			}
-			return parseParam(value);
+			return macro.isSetter ? value : parseParam(value);
 		}
 
 		var part, isFirst = true, append;
@@ -344,7 +344,7 @@ Template.prototype = {
 			} else if (/\w=$/.test(part)) { 
 				macro.isSetter = false;
 				var key = part.substring(0, part.length - 1), value = nextPart();
-				value = nestedMacro(this, value, code, stack);
+				value = nestedMacro(this, macro, value, code, stack);
 				macro.param.push('"' + key + '": ' + value);
 				if (macro.values[key] !== undefined)
 					macro.values[key] = value;
@@ -356,7 +356,7 @@ Template.prototype = {
 					if (macro.isSetter && part == '=')
 						macro.hasEquals = true;
 					else
-						macro.unnamed.push(nestedMacro(this, part, code, stack));
+						macro.unnamed.push(nestedMacro(this, macro, part, code, stack));
 					append = false;
 				} else if (append) { 
 					macro.opcode.push(part);
