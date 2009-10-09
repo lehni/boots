@@ -992,6 +992,8 @@ DomElement = Base.extend(new function() {
 				return this.$[name];
 			}
 			src['set' + part] = function(value) {
+				if (value == null && typeof this.$[name] == 'string')
+					value = '';
 				this.$[name] = value;
 				return this;
 			}
@@ -2860,7 +2862,7 @@ Input = FormElement.extend({
 
 	setValue: function(val) {
 		if (/^(checkbox|radio)$/.test(this.$.type)) this.$.checked = this.$.value == val;
-		else this.$.value = val;
+		else this.$.value = val != null ? val : '';
 		return this;
 	}
 });
@@ -2912,29 +2914,45 @@ FormElement.inject({
 	setSelection: function(start, end) {
 		var sel = end == undefined ? start : { start: start, end: end };
 		this.focus();
-		if(Browser.TRIDENT) {
+		if(this.$.setSelectionRange) {
+			this.$.setSelectionRange(sel.start, sel.end);
+		} else {
+			var value = this.getValue();
+			var len = value.substring(sel.start, sel.end).replace(/\r/g, '').length;
+			var pos = value.substring(0, sel.start).replace(/\r/g, '').length;
 			var range = this.$.createTextRange();
 			range.collapse(true);
-			range.moveStart('character', sel.start);
-			range.moveEnd('character', sel.end - sel.start);
+			range.moveEnd('character', pos + len);
+			range.moveStart('character', pos);
 			range.select();
-		} else this.$.setSelectionRange(sel.start, sel.end);
+		}
 		return this;
 	},
-	getSelection: function() {
-		if(Browser.TRIDENT) {
-			var range = document.selection.createRange();
-			if (!range || range.parentElement() != this.$)
-				return { start: 0, end: 0 };
-			var dup = range.duplicate();
-			dup.moveToElementText(this.$);
-			dup.setEndPoint('EndToEnd', range);
-			return { start: dup.text.length - range.text.length, end: dup.text.length };
-		}
-		return { start: this.$.selectionStart, end: this.$.selectionEnd };
-	},
-	getSelectedText: function() {
 
+	getSelection: function() {
+		if (this.$.selectionStart !== undefined) {
+			return { start: this.$.selectionStart, end: this.$.selectionEnd };
+		} else {
+			this.focus();
+			var pos = { start: 0, end: 0 };
+			var range = this.getDocument().$.selection.createRange();
+			var dup = range.duplicate();
+			if (this.$.type == 'text') {
+				pos.start = 0 - dup.moveStart('character', -100000);
+				pos.end = pos.start + range.text.length;
+			} else {
+				var value = this.getValue();
+				dup.moveToElementText(this.$);
+				dup.setEndPoint('StartToEnd', range);
+				pos.end = value.length - dup.text.length;
+				dup.setEndPoint('StartToStart', range);
+				pos.start = value.length - dup.text.length;
+			}
+			return pos;
+		}
+	},
+
+	getSelectedText: function() {
  		var range = this.getSelection();
 		return this.getValue().substring(range.start, range.end);
 	},
@@ -2947,15 +2965,14 @@ FormElement.inject({
 			this.$.scrollTop = top + this.$.scrollHeight - height;
 		return select || select == undefined
 			? this.setSelection(range.start, range.start + value.length)
-			: this.setCaretPosition(range.start + value.length);
+			: this.setCaret(range.start + value.length);
 	},
 
-	getCaretPosition: function() {
+	getCaret: function() {
 		return this.getSelection().start;
 	},
-	setCaretPosition: function(pos) {
-		if(pos == -1)
-			pos = this.getValue().length;
+
+	setCaret: function(pos) {
 		return this.setSelection(pos, pos);
 	}
 });
@@ -3207,14 +3224,13 @@ Request = Base.extend(Chain, Callback, new function() {
 					data = data.toString();
 			}
 			this.running = true;
+			var query = typeof data == 'string';
 			if (opts.emulation && /^(put|delete)$/.test(method)) {
-				if (typeof data == 'string') data += '&_method=' + method;
+				if (query) data += '&_method=' + method;
 				else data.setValue('_method', method); 
 				method = 'post';
 			}
-			if (Base.type(data) == 'element') { 
-		 		createFrame(this, DomElement.wrap(data));
-			} else {
+			if (query) { 
 				createRequest(this);
 				if (!this.transport) {
 					createFrame(this);
@@ -3224,9 +3240,10 @@ Request = Base.extend(Chain, Callback, new function() {
 					url += (url.contains('?') ? '&' : '?') + data;
 					data = null;
 				}
+			} else {
+		 		createFrame(this, DomElement.wrap(data));
 			}
 			if (this.frame) {
-				url += (url.contains('?') ? '&' : '?') + 'iframe=1';
 				if (this.frame.form)
 					this.frame.form.set({
 						target: this.frame.id, action: url, method: method,
