@@ -1,6 +1,4 @@
 Topic.inject({
-	POST_ANONYMOUS: false,
-
 	initialize: function() {
 		// A topic cannot be created without a first post.
 		var post = new Post();
