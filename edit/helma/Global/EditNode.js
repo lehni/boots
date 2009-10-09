@@ -67,6 +67,8 @@ EditNode = Base.extend({
 	},
 
 	render: function(base, mode) {
+		if (!this.object)
+			return null;
 		var form = null;
 		if (this.object.getEditForm && User.canEdit(this.object)) {
 			// TODO: Does groupForm still work?
