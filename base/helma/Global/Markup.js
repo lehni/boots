@@ -482,6 +482,7 @@ OEmbedTag = MarkupTag.extend({
 			var obj = Json.decode(json);
 			if (obj) {
 				if (!obj.html) {
+					// Compose html from the other info
 					switch (obj.type) {
 					case 'photo':
 						obj.html = Html.image({
