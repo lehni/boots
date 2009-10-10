@@ -482,6 +482,10 @@ EditForm.inject(new function() {
 		getGroupForm: getGroupForm,
 		getTabForm: getGroupForm,
 
+		hasItem: function(name, group) {
+			return !!this.getItem(name, group);
+		},
+
 		hasItems: function() {
 			return this.rows.length > 0;
 		},

@@ -10,7 +10,7 @@
 	border-bottom: 1px solid #000;
 }
 
-/* Default */
+/* default */
 
 #edit td, #edit input, #edit select, #edit textarea, #edit a.edit-button, #edit .tab-pane .edit-title {
 	font-family: "Lucida Grande", Verdana, sans-serif;
@@ -34,7 +34,7 @@
 	vertical-align: top;
 }
 
-/* Checkbox */
+/* checkbox */
 
 #edit label {
 	display: block;
@@ -93,7 +93,7 @@
 	text-align: right;
 }
 
-/* Only change padding within the main edit form, not in the choosers -> use #edit */
+/* only change padding within the main edit form, not in the choosers -> use #edit */
 
 #edit .edit-footer .edit-buttons-left {
 	padding: 2px 0px 8px 8px;
@@ -103,7 +103,7 @@
 	padding: 2px 8px 8px 0px;
 }
 
-/* Chooser */
+/* chooser */
 
 .edit-chooser {
 	position: absolute;
@@ -124,7 +124,7 @@
 	height: 10px;
 }
 
-.edit-object-chooser {
+.edit-simple-chooser {
 	font-size: 10px;
 	line-height: 14px;
 	max-width: 200px;
@@ -132,7 +132,7 @@
 	overflow: auto;
 }
 
-.edit-object-chooser li {
+.edit-simple-chooser li {
 	list-style: none;
 	padding: 0;
 	margin-left: -14px;
@@ -140,22 +140,22 @@
 	white-space: nowrap;
 }
 
-.edit-object-chooser ul {
+.edit-simple-chooser ul {
 	padding: 0;
 	margin: 0 0 0 14px;
 }
 
-.edit-object-chooser a {
+.edit-simple-chooser a {
 	color: #000;
 	padding: 0;
 	margin: 0;
 }
 
-.edit-object-chooser a:hover {
+.edit-simple-chooser a:hover {
 	background: #f7f7f7;
 }
 
-/* Preview */
+/* preview */
 
 .edit-preview {
 	position: fixed;
@@ -176,14 +176,14 @@
 	color: #f00;
 }
 
-/* Elements */
+/* elements */
 
 #edit .edit-progress {
 	float: right;
 	padding: 8px;
 }
 
-/* TODO: Remove edit-spacer and handle like item spacer */
+/* TODO: remove edit-spacer and handle like item spacer */
 #edit .edit-spacer {
 	height: 0px;
 }
@@ -205,8 +205,6 @@
 #edit .edit-label {
 	font-weight: bold;
 	display: inline;
-	/* Space to error */
-	padding-right: 4px;
 }
 
 #edit .edit-nounderline a {
@@ -214,7 +212,7 @@
 	padding: 0px;
 }
 
-/* Edit Lists */
+/* edit lists */
 
 #edit .edit-list-separator {
 	height: 10px;
@@ -275,7 +273,7 @@
 	opacity: 0.5;
 }
 
-/* Error */
+/* error */
 
 #edit .edit-error {
 	font-weight: normal;
@@ -283,7 +281,7 @@
 	display: inline;
 }
 
-/* Help */
+/* help */
 
 #edit .edit-help div {
 	border: 1px dotted #999;
@@ -298,7 +296,7 @@
 	white-space: normal;
 }
 
-/* Tab Pane */
+/* tab pane */
 
 #edit .tab-pane {
 	position: relative;
@@ -353,7 +351,7 @@
 	height: 34px;
 }
 
-/* Icons */
+/* icons */
 
 #edit .icon a {
 	border-bottom: 0px;

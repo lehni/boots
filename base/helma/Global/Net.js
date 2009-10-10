@@ -70,8 +70,12 @@ Net = new function() {
 		},
 
 		loadUrl: function(url, etagOrDate) {
-			var res = getURL(url, etagOrDate);
-			return res ? new java.lang.String(res.content) : null;
+			try {
+				var res = getURL(url, etagOrDate);
+				return res ? new java.lang.String(res.content) : null;
+			} catch (e) {
+				User.logError("Net.loadUrl", e);
+			}
 		}
 	};
 };

@@ -455,10 +455,11 @@ OEmbedTag = MarkupTag.extend({
 	_endpoint: 'http://www.oembed.com/',
 	_prefix: '',
 	_suffix: '',
-	
+
 	render: function(content, param) {
 		// Check cache to see if we already have the embed html
-		var obj = OEmbedTag.cache[this.definition];
+		var id = this.definition + '_' + (param.maxWidth || '') + '_' + (param.maxHeight || '');
+		var obj = OEmbedTag.cache[id];
 		// Support cache control through cache_age
 		if ((!obj || obj.cache_age && (Date.now() - obj.time) / 1000 >= obj.cache_age)
 		 		&& this.attributes.url) {
@@ -505,10 +506,10 @@ OEmbedTag = MarkupTag.extend({
 				obj.time = Date.now();
 				// TODO: Implement a cron job that clears the cache once per hour,
 				// to remove tags that are not in use anymore and free memory?
-				OEmbedTag.cache[this.definition] = obj;
+				OEmbedTag.cache[id] = obj;
 			}
 		}
-		return obj.html;
+		return obj && obj.html;
 	},
 
 	statics: {

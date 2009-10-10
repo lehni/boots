@@ -484,6 +484,8 @@ EditForm = Base.extend({
 					form.enable(true);
 					if (values) {
 						EditForm.set(values);
+						if (values.id != param.id)
+							editForm = EditForm.get(values.id);
 						// Only set the style once the stuff is loaded and hidden
 						if (param.style)
 							editForm.container.setStyle(param.style);
@@ -657,8 +659,13 @@ EditForm.register({
 	},
 
 	apply: function(editForm, params) {
-		if ($$('.edit-list-remove input[value=1]').length)
+		if ($$('.edit-list-remove input[value=1]').find(function(item) {
+			// Only warn for items not newly created. (= not containing ids like _n10_)
+			if (!/_n\d*_/.test(item.getId()))
+				return true;
+		})) {
 			params.confirm = 'Do you really want to delte the marked entries?';
+		}
 		this.execute(editForm, 'apply', params);
 	},
 
@@ -697,7 +704,7 @@ EditForm.register({
 	}
 });
 
-// select
+// Select
 EditForm.register(new function() {
 	function getSelected(editForm, sels) {
 		var names = [];
@@ -1115,22 +1122,16 @@ EditForm.register(new function() {
 
 // Choosers:
 EditChooser = Base.extend({
-	initialize: function(params) {
-		this.element = $('body').injectBottom('div', {
-			id: params.name,
-			className: 'edit-chooser'
-		});
+	initialize: function(param) {
+		this.element = $('body').injectBottom('div', { className: 'edit-chooser' });
 		this.content = this.element.injectBottom('div', {
-			html: params.html || '',
-			padding: params.padding || 0,
-			className: params.className
+			html: param.html || '',
+			padding: param.padding || 0,
+			className: param.className
 		});
 		var that = this;
 
-		if (params.buttons == undefined)
-			params.buttons = true;
-
-		if (params.buttons) {
+		if (param.buttons) {
 			var ok = this.createButton('OK', function() {
 				if (that.onOK)
 					that.onOK();
@@ -1171,7 +1172,9 @@ EditChooser = Base.extend({
 	},
 
 	createButton: function(title, handler) {
-		return new Input({ type: 'button', value: title, className: 'edit-button' }).addEvent('mouseup', handler);
+		return new Input({
+			type: 'button', value: title, className: 'edit-button'
+		}).addEvent('mouseup', handler);
 	},
 
 	choose: function(editForm, name) {
@@ -1203,32 +1206,38 @@ EditChooser = Base.extend({
 	}
 });
 
-PrototypeChooser = EditChooser.extend({
+HtmlChooser = EditChooser.extend({
 	initialize: function() {
-		this.base({ name: 'edit-prototype', padding: 4, className: 'edit-object-chooser', buttons: false });
+		this.base({ padding: 4, className: 'edit-simple-chooser' });
 	},
 
-	choose: function(editForm, name, prototypes) {
-		this.content.setHtml('<ul>' + prototypes.map(function(proto) {
-			return '<li><a href="javascript:' + proto.href + '">' + proto.name + '</a></li>';
-		}).join('') + '</ul>');
+	choose: function(editForm, name, html) {
+		this.content.setHtml(html);
 		this.editForm = editForm;
 		this.base(editForm, name);
 	}
 });
 
+PrototypeChooser = HtmlChooser.extend({
+	choose: function(editForm, name, prototypes) {
+		this.base(editForm, name, '<ul>' + prototypes.map(function(proto) {
+				return '<li><a href="javascript:' + proto.href + '">' + proto.name + '</a></li>';
+			}).join('') + '</ul>');
+	}
+});
+
 ObjectChooser = EditChooser.extend({
 	initialize: function() {
-		this.base({ name: 'edit-choose', padding: 4, className: 'edit-object-chooser' });
+		this.base({ padding: 4, className: 'edit-simple-chooser', buttons: true });
 	},
 
-	choose: function(editForm, name, params) {
+	choose: function(editForm, name, param) {
 		this.editForm = editForm;
 		this.base(editForm, name);
-		this.buttons.modifyClass('hidden', !params.multiple);
+		this.buttons.modifyClass('hidden', !param.multiple);
 		this.show(false);
 		// Open the root list
-		this.toggle(params.root);
+		this.toggle(param.root);
 	},
 
 	close: function() {
@@ -1276,36 +1285,38 @@ ObjectChooser = EditChooser.extend({
 
 ColorChooser = EditChooser.extend({
 	initialize: function(size) {
-		this.base({ name: 'edit-color', padding: 1, html: '<form id="edit-color-form" target="" method="post" autocomplete="off">\
-			<table>\
-				<tr>\
-					<td rowspan="8">\
-						<div class="edit-element">\
-							<div style="position:absolute;clip:rect(0px,' + size + 'px,' + size + 'px,0px)"><div id="edit-color-cross" style="position:relative; width:12px; height:12px; background-image:url(/static/edit/media/color-cross.gif);"></div></div>\
-							<img id="edit-color-overlay" class="edit-color" src="/static/edit/media/color-overlay.png" width="' + size + '" height="' + size + '">\
-						</div>\
-					</td>\
-					<td rowspan="8">\
-						<div class="edit-element">\
-							<div style="position:absolute;clip:rect(0px,' + Math.round(size / 10 + 5) + 'px,' + size + 'px,-4px)"><div id="edit-color-slider" style="position:relative; left:-4px; width:25px; height:7px; background-image:url(/static/edit/media/color-slider.gif);"></div></div>\
-							<img id="edit-color-rainbow" class="edit-color" src="/static/edit/media/color-rainbow.png" width="' + Math.round(size / 10) + '" height="' + size + '">\
-						</div>\
-					</td>\
-					<td colspan="2">\
-						<div class="edit-element">\
-							<img id="edit-color-preview" class="edit-color" src="/static/edit/media/spacer.gif" width="100%" height="' + Math.round(size / 4) + '">\
-						</div>\
-					</td>\
-				</tr>\
-				<tr><td class="edit-element">&nbsp;R:</td><td align="right" class="edit-element"><input type="text" id="edit-color-red" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-element">&nbsp;G:</td><td align="right" class="edit-element"><input type="text" id="edit-color-green" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-element">&nbsp;B:</td><td align="right" class="edit-element"><input type="text" id="edit-color-blue" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-element">&nbsp;H:</td><td align="right" class="edit-element"><input type="text" id="edit-color-hue" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-element">&nbsp;S:</td><td align="right" class="edit-element"><input type="text" id="edit-color-saturation" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-element">&nbsp;B:</td><td align="right" class="edit-element"><input type="text" id="edit-color-brightness" size="3" maxlength="3"></td></tr>\
-				<tr><td class="edit-element" colspan="2"><input type="text" id="edit-color-hex" size="7" maxlength="7" class="edit-element"></td></tr>\
-			</table>\
-		</form>' });
+		this.base({ padding: 1, buttons: true, html: 
+'<form id="edit-color-form" target="" method="post" autocomplete="off">\
+	<table>\
+		<tr>\
+			<td rowspan="8">\
+				<div class="edit-element">\
+					<div style="position:absolute;clip:rect(0px,' + size + 'px,' + size + 'px,0px)"><div id="edit-color-cross" style="position:relative; width:12px; height:12px; background-image:url(/static/edit/media/color-cross.gif);"></div></div>\
+					<img id="edit-color-overlay" class="edit-color" src="/static/edit/media/color-overlay.png" width="' + size + '" height="' + size + '">\
+				</div>\
+			</td>\
+			<td rowspan="8">\
+				<div class="edit-element">\
+					<div style="position:absolute;clip:rect(0px,' + Math.round(size / 10 + 5) + 'px,' + size + 'px,-4px)"><div id="edit-color-slider" style="position:relative; left:-4px; width:25px; height:7px; background-image:url(/static/edit/media/color-slider.gif);"></div></div>\
+					<img id="edit-color-rainbow" class="edit-color" src="/static/edit/media/color-rainbow.png" width="' + Math.round(size / 10) + '" height="' + size + '">\
+				</div>\
+			</td>\
+			<td colspan="2">\
+				<div class="edit-element">\
+					<img id="edit-color-preview" class="edit-color" src="/static/edit/media/spacer.gif" width="100%" height="' + Math.round(size / 4) + '">\
+				</div>\
+			</td>\
+		</tr>\
+		<tr><td class="edit-element">&nbsp;R:</td><td align="right" class="edit-element"><input type="text" id="edit-color-red" size="3" maxlength="3"></td></tr>\
+		<tr><td class="edit-element">&nbsp;G:</td><td align="right" class="edit-element"><input type="text" id="edit-color-green" size="3" maxlength="3"></td></tr>\
+		<tr><td class="edit-element">&nbsp;B:</td><td align="right" class="edit-element"><input type="text" id="edit-color-blue" size="3" maxlength="3"></td></tr>\
+		<tr><td class="edit-element">&nbsp;H:</td><td align="right" class="edit-element"><input type="text" id="edit-color-hue" size="3" maxlength="3"></td></tr>\
+		<tr><td class="edit-element">&nbsp;S:</td><td align="right" class="edit-element"><input type="text" id="edit-color-saturation" size="3" maxlength="3"></td></tr>\
+		<tr><td class="edit-element">&nbsp;B:</td><td align="right" class="edit-element"><input type="text" id="edit-color-brightness" size="3" maxlength="3"></td></tr>\
+		<tr><td class="edit-element" colspan="2"><input type="text" id="edit-color-hex" size="7" maxlength="7" class="edit-element"></td></tr>\
+	</table>\
+</form>'
+		});
 		this.size = size;
 		this.hsb = [0, 0, 0];
 		this.target = null;

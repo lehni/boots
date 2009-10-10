@@ -52,5 +52,5 @@ UPDATE nodes SET name = LOWER(name);
 TRUNCATE TABLE search;
 
 # 10. position -> int
-ALTER TABLE  `nodes` CHANGE  `position`  `position` INT UNSIGNED NULL DEFAULT NULL
-ALTER TABLE  `resources` CHANGE  `position`  `position` INT UNSIGNED NULL DEFAULT NULL
+ALTER TABLE  `nodes` CHANGE  `position`  `position` INT UNSIGNED NULL DEFAULT NULL;
+ALTER TABLE  `resources` CHANGE  `position`  `position` INT UNSIGNED NULL DEFAULT NULL;
