@@ -30,13 +30,21 @@ User.inject({
 
 	onApplyPassword: function(value) {
 		if (value != null) {
-			value = this.encryptPassword(value);
+			// Do not store the password encrypted while the node is still
+			// transient, since the node id is part of the encryption mechanism
+			// and is not known yet. onStore is taking care of the first encryption.
+			if (!this.isTransient())
+				value = this.encryptPassword(value);
 			if (this.password != value) {
 				this.password = value;
 				return true;
 			}
 		}
 		return false;
+	},
+
+	onStore: function() {
+		this.password = this.encryptPassword(this.password);
 	},
 
 	getRoles: function() {
