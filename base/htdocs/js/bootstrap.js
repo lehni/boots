@@ -336,7 +336,7 @@ Base.inject({
 			return (obj || obj === 0) && (
 				(obj._type || obj.nodeName && (
 					obj.nodeType == 1 && 'element' ||
-					obj.nodeType == 3 && ((/\S/).test(obj.nodeValue) ? 'textnode' : 'whitespace') ||
+					obj.nodeType == 3 && 'textnode' ||
 					obj.nodeType == 9 && 'document'
 				)) || typeof obj) || null;
 		},
@@ -1230,7 +1230,7 @@ DomElement.inject(new function() {
 		},
 
 		getTag: function() {
-			return this.$.tagName.toLowerCase();
+			return (this.$.tagName || '').toLowerCase();
 		},
 
 		getId: function() {
@@ -1322,8 +1322,11 @@ DomElement.inject(new function() {
 		},
 
 		appendText: function(text) {
-			this.$.appendChild(this.getDocument().createTextNode(text));
-			return this;
+			return this.injectBottom(this.getDocument().createTextNode(text));
+		},
+
+		prependText: function(text) {
+			return this.injectTop(this.getDocument().createTextNode(text));
 		},
 
 		wrap: function() {
@@ -1625,6 +1628,12 @@ DomElement.inject(new function() {
 			return body(this)
 				? this.getWindow().getScrollSize()
 			 	: { width: this.$.scrollWidth, height: this.$.scrollHeight };
+		},
+
+		getInnerSize: function() {
+			return body(this)
+				? this.getWindow().getScrollSize()
+			 	: { width: this.getStyle('width').toInt(), height: this.getStyle('height').toInt() };
 		},
 
 		getBounds: function(positioned) {
@@ -2146,7 +2155,7 @@ DomElement.inject(new function() {
 		if (params.id && params.id != el.id)
 			return false;
 
-		if (params.tag && params.tag != '*' && params.tag != el.tagName.toLowerCase())
+		if (params.tag && params.tag != '*' && params.tag != (el.tagName || '').toLowerCase())
 			return false;
 
 		for (var i = params.classes.length; i--;)
@@ -2214,7 +2223,7 @@ DomElement.inject(new function() {
 			var el, type = Base.type(selector), match;
 			if (type == 'string' && (match = selector.match(/^#?([\w-]+)$/)))
 				el = this.getDocument().$.getElementById(match[1]);
-			else if (type == 'element')
+			else if (/^(element|textnode)$/.test(type))
 				el = DomElement.unwrap(selector);
 			if (el && !DomElement.isAncestor(el, this.$))
 				el = null;
@@ -2510,6 +2519,10 @@ HtmlElement.inject({
 		return this.$.className;
 	},
 
+	setClass: function(cls) {
+		this.$.className = cls;
+	},
+
 	modifyClass: function(name, add) {
 		if (!this.hasClass(name) ^ !add) 
 			this.$.className = (add ? this.$.className + ' ' + name : 
@@ -2698,7 +2711,7 @@ HtmlElement.inject(new function() {
 					(name == 'width' ? ['left', 'right'] : ['top', 'bottom']).each(function(val) {
 						size += this.getStyle('border-' + val + '-width').toInt() + this.getStyle('padding-' + val).toInt();
 					}, this);
-					return (this.$['offset' + name.capitalize()] - size) + 'px';
+					return this.$['offset' + name.capitalize()] - size + 'px';
 				}
 				if (Browser.PRESTO && /px/.test(style)) return style;
 				if (/border(.+)Width|margin|padding/.test(name)) return '0px';
@@ -3139,7 +3152,7 @@ Request = Base.extend(Chain, Callback, new function() {
 				if (this.options.update)
 					DomElement.wrap(this.options.update).setHtml(stripped.html);
 				if (this.options.evalScripts)
-					this.executeScript(stripped.javascript);
+					this.executeScript(stripped.script);
 				args = [ stripped.html, text ];
 			} else if (this.options.json) {
 				args = [ Json.decode(text, this.options.secure), text ];
@@ -3157,7 +3170,7 @@ Request = Base.extend(Chain, Callback, new function() {
 				script += arguments[1] + '\n';
 				return '';
 			});
-			return { html: html, javascript: script };
+			return { html: html, script: script };
 		},
 
 		processScripts: function(text) {
@@ -3167,7 +3180,7 @@ Request = Base.extend(Chain, Callback, new function() {
 			} else {
 				var stripped = this.stripScripts(text);
 				if (this.options.evalScripts)
-					this.executeScript(stripped.javascript);
+					this.executeScript(stripped.script);
 				return stripped.html;
 			}
 		},
