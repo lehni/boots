@@ -1,6 +1,6 @@
 <div class="<%= param.postClass %> <%= param.styleClass %>">
 <div id="<%= param.id %>">
-<a name="<%= param.id %>"></a>
+<a name="<%= param.id %>" class="anchor"></a>
 <div class="header">
 	<div class="title">
 <% if (param.nodeFields) %>

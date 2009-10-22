@@ -1,7 +1,8 @@
 <div class="block block-interact">
 <%--
-This messes up IE that returns this before the div, although it only sets name,
-not ID <a name="<%= param.id %>"></a>. TODO: Find out where this was needed.
+This messes up dom retrieval in IE that returns this before the div,
+although it only sets name, not ID <a name="<%= param.id %>" class="anchor"></a>.
+TODO: Find out where this was needed.
 --%>
 <div id="<%= param.id %>" class="block block-padded">
 <% this.editButtons buttons=param.buttons target=param.id item=<%= this.POST_COLLECTION %> %>
