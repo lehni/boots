@@ -65,17 +65,15 @@ EditForm = Base.extend({
 		// We're asking inputs and textareas to be a certain size, but they grow
 		// bigger due to their border and padding settings that differ from browser
 		// to browser.
-		// This can be fixed by calculating these widths now and subtracting them from 
-		// their resulting size (twice, in order to add them once again and end
-		// up with the desired width). Since we're using getWidth(), this needs
+		// This can be fixed by calculating these widths now and subtracting them
+		// from  their resulting size. Since we're using getWidth(), this needs
 		// to happen after this.show(true). Also, it needs to happen before
 		// TabPane.setup(), since that would hide tabs again, for which the fix
 		// won't work...
 		fields.each(function(field) {
-			function width(name) {
-				return field.getStyle(name + 'Left').toInt() + field.getStyle(name + 'Right').toInt();
-			}
-			var width = (field.getWidth() - 2 * (width('border') + width('padding'))) + 'px';
+			// padding + border = field.getWidth() - field.getInnerSize().width
+			// And we need to set to inner width - (padding + border).
+			var width = (2 * field.getInnerSize().width - field.getWidth()) + 'px';
 			field.setStyles({
 				width: width,
 				// Prevent textareas from resizing horizontally. 
