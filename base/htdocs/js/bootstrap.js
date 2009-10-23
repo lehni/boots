@@ -646,8 +646,8 @@ String.inject({
 	},
 
 	camelize: function(separator) {
-		return this.replace(new RegExp(separator || '\s-', 'g'), function(match) {
-			return match.charAt(1).toUpperCase();
+		return this.replace(separator ? new RegExp('[' + separator + '](\\w)', 'g') : /-(\w)/g, function(all, chr) {
+			return chr.toUpperCase();
 		});
 	},
 
@@ -1174,6 +1174,7 @@ DomElement.inject(new function() {
 	].associate(function(name) {
 		return name.toLowerCase();
 	}), bools);
+	var clones = { input: 'checked', option: 'selected', textarea: Browser.WEBKIT && Browser.VERSION < 420 ? 'innerHTML' : 'value' };
 
 	function handle(that, prefix, name, value) {
 		var ctor = that.__proto__.constructor;
@@ -1371,7 +1372,26 @@ DomElement.inject(new function() {
 		},
 
 		clone: function(contents) {
-			return DomElement.wrap(this.$.cloneNode(!!contents));
+			var clone = this.$.cloneNode(!!contents);
+			function clean(left, right) {
+				if (Browser.TRIDENT) {
+					left.clearAttributes();
+					left.mergeAttributes(right);
+					left.removeAttribute('_wrapper');
+					left.removeAttribute('_unique');
+					if (left.options)
+						for (var l = left.options, r = right.options, i = l.length; i--;)
+							l[i].selected = r[i].selected;
+				}
+				var name = clones[right.tagName.toLowerCase()];
+				if (name && right[name])
+					left[name] = right[name];
+			}
+			if (contents)
+				for (var l = clone.getElementsByTagName('*'), r = this.$.getElementsByTagName('*'), i = l.length; i--;)
+					clean(l[i], r[i]);
+			clean(clone, this.$);
+			return DomElement.wrap(clone);
 		},
 
 		getProperty: function(name) {
@@ -2677,10 +2697,9 @@ HtmlElement.inject(new function() {
 	var fields = {
 
 		getComputedStyle: function(name) {
-			var style;
-			return this.$.currentStyle && this.$.currentStyle[name.camelize()]
-				|| (style = this.getWindow().$.getComputedStyle(this.$, null)) && style.getPropertyValue(name.hyphenate())
-				|| null;
+			if (this.$.currentStyle) return this.$.currentStyle[name.camelize()];
+			var style = this.getWindow().$.getComputedStyle(this.$, null);
+			return style ? style.getPropertyValue(name.hyphenate()) : null;
 		},
 
 		getStyle: function(name) {
@@ -2716,7 +2735,7 @@ HtmlElement.inject(new function() {
 					return this.$['offset' + name.capitalize()] - size + 'px';
 				}
 				if (Browser.PRESTO && /px/.test(style)) return style;
-				if (/border(.+)Width|margin|padding/.test(name)) return '0px';
+				if (/border(.+)[wW]idth|margin|padding/.test(name)) return '0px';
 			}
 			return style;
 		},
