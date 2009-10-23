@@ -941,7 +941,7 @@ DomElements = Array.extend(new function() {
 							this.each(function(obj) {
 								var ret = (obj[key] || func).apply(obj, args);
 								if (ret !== undefined && ret != obj) {
-									values = values || (Base.type(ret) == 'element'
+									values = values || (/^(element|textnode)$/.test(Base.type(ret))
 										? new obj._elements() : []);
 									values.push(ret);
 								}
@@ -1202,7 +1202,7 @@ DomElement.inject(new function() {
 	function toElements(elements) {
 		var els = Base.type(elements) == 'array' ? elements : Array.create(arguments);
 		var created = els.find(function(el) {
-			return Base.type(el) != 'element';
+			return !/^(element|textnode)$/.test(Base.type(el));
 		});
 		var result = els.toElement(this.getDocument());
 		return {
@@ -1270,7 +1270,7 @@ DomElement.inject(new function() {
 		},
 
 		hasChild: function(match) {
-			return Base.type(match) == 'element'
+			return /^(element|textnode)$/.test(Base.type(match))
 				? DomElement.isAncestor(DomElement.unwrap(match), this.$)
 				: !!this.getFirst(match);
 		},
@@ -1284,7 +1284,7 @@ DomElement.inject(new function() {
 		},
 
 		hasParent: function(match) {
-			return Base.type(match) == 'element'
+			return /^(element|textnode)$/.test(Base.type(match))
 				? DomElement.isAncestor(this.$, DomElement.unwrap(match))
 				: !!this.getParent(match);
 		},
@@ -1490,7 +1490,7 @@ DomDocument = DomElement.extend({
 	},
 
 	createTextNode: function(text) {
-		return this.$.createTextNode(text);
+		return $(this.$.createTextNode(text));
 	},
 
 	getDocument: function() {
@@ -2568,14 +2568,16 @@ Array.inject({
 		doc = DomElement.wrap(doc || document);
 		var elements = new HtmlElements();
 		for (var i = 0; i < this.length;) {
-			var value = this[i++], element = null;
-			if (typeof value == 'string') {
+			var value = this[i++], element = null, type = Base.type(value);
+			if (type == 'string') {
 				var props = /^(object|hash)$/.test(Base.type(this[i])) && this[i++];
 				element = value.isHtml()
 					? value.toElement(doc).set(props)
 					: doc.createElement(value, props);
 				if (Base.type(this[i]) == 'array')
 					element.injectBottom(this[i++].toElement(doc));
+			} else if (/^(element|textnode)$/.test(type)) {
+				element = value;
 			} else if (value && value.toElement) {
 				element = value.toElement(doc);
 			}
