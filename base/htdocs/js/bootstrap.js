@@ -1453,7 +1453,7 @@ DomElement.inject(new function() {
 
 		after: function(source, dest) {
 			if (source && dest && dest.$.parentNode) {
-				var next = dest.getNext();
+				var next = dest.$.nextSibling;
 				if (next) source.insertBefore(next);
 				else dest.getParent().appendChild(source);
 			}
@@ -1466,7 +1466,7 @@ DomElement.inject(new function() {
 
 		top: function(source, dest) {
 			if (source && dest) {
-				var first = dest.getFirst();
+				var first = dest.$.firstChild;
 				if (first) source.insertBefore(first);
 				else dest.appendChild(source);
 			}
