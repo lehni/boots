@@ -942,7 +942,7 @@ DomElements = Array.extend(new function() {
 								var ret = (obj[key] || func).apply(obj, args);
 								if (ret !== undefined && ret != obj) {
 									values = values || (/^(element|textnode)$/.test(Base.type(ret))
-										? new obj._elements() : []);
+										? new obj._collection() : []);
 									values.push(ret);
 								}
 							});
@@ -1017,7 +1017,7 @@ DomElement = Base.extend(new function() {
 
 	return {
 		_type: 'element',
-		_elements: DomElements,
+		_collection: DomElements,
 		_initialize: true,
 
 		initialize: function(el, props, doc) {
@@ -1064,7 +1064,7 @@ DomElement = Base.extend(new function() {
 					}, src.statics || {});
 					inject.call(this, src);
 					delete src.toString;
-					proto._elements.inject(src);
+					proto._collection.inject(src);
 				}
 				for (var i = 1, l = arguments.length; i < l; i++)
 					this.inject(arguments[i]);
@@ -1100,7 +1100,7 @@ DomElement = Base.extend(new function() {
 			wrap: function(el) {
 				return el ? typeof el == 'string'
 					? DomElement.get(el)
-					: el._wrapper || el._elements && el || new (getConstructor(el))(el, dont)
+					: el._wrapper || el._collection && el || new (getConstructor(el))(el, dont)
 						: null;
 			},
 
@@ -1188,7 +1188,7 @@ DomElement.inject(new function() {
 	}
 
 	function walk(el, walk, start, match, all) {
-		var elements = all && new el._elements();
+		var elements = all && new el._collection();
 		el = el.$[start || walk];
 		while (el) {
 			if (el.nodeType == 1 && (!match || DomElement.match(el, match))) {
@@ -1299,7 +1299,7 @@ DomElement.inject(new function() {
 		},
 
 		getChildNodes: function() {
-		 	return new this._elements(this.$.childNodes);
+		 	return new this._collection(this.$.childNodes);
 		},
 
 		hasChildNodes: function() {
@@ -2227,7 +2227,7 @@ DomElement.inject(new function() {
 	return {
 
 		getElements: function(selectors, nowrap) {
-			var elements = nowrap ? [] : new this._elements();
+			var elements = nowrap ? [] : new this._collection();
 			selectors = !selectors ? ['*'] : typeof selectors == 'string'
 				? selectors.split(',')
 				: selectors.length != null ? selectors : [selectors];
@@ -2261,7 +2261,7 @@ DomElement.inject(new function() {
 		},
 
 		filter: function(elements, selector) {
-			return filter(elements, selector, this.$, new this._elements(), {});
+			return filter(elements, selector, this.$, new this._collection(), {});
 		},
 
 		statics: {
@@ -2528,7 +2528,7 @@ DomElement.pseudos = new function() {
 HtmlElements = DomElements.extend();
 
 HtmlElement = DomElement.extend({
-	_elements: HtmlElements
+	_collection: HtmlElements
 });
 
 HtmlElement.inject = DomElement.inject;
@@ -2655,7 +2655,7 @@ String.inject({
 });
 
 HtmlDocument = DomDocument.extend({
-	_elements: HtmlElements
+	_collection: HtmlElements
 });
 
 HtmlElement.inject(new function() {
@@ -2726,7 +2726,7 @@ HtmlElement.inject(new function() {
 				return /^(visible|inherit(|ed))$/.test(style);
 			var color = style && style.match(/rgb[a]?\([\d\s,]+\)/);
 			if (color) return style.replace(color[0], color[0].rgbToHex());
-			if (Browser.PRESTO || (Browser.TRIDENT && isNaN(parseInt(style)))) {
+			if (Browser.PRESTO || Browser.TRIDENT) {
 				if (/^(width|height)$/.test(name)) {
 					var size = 0;
 					(name == 'width' ? ['left', 'right'] : ['top', 'bottom']).each(function(val) {

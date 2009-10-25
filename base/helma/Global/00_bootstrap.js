@@ -34,7 +34,7 @@ new function() {
 							_set: src['set' + bean[2]]
 						});
 				}
-				if (type == 'object' && (val._get || val._set)) {
+				if (val && type == 'object' && (val._get || val._set)) {
 					if (val._get)
 						dest.__defineGetter__(name, val._get);
 					if (val._set)
