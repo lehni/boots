@@ -510,11 +510,13 @@ EditForm.inject(new function() {
 		 * are to be used.
 		 */
 		createItem: function(item, defaults) {
-			return item
-					? item == true
-							? defaults
-							: Hash.merge(defaults, item)
-					: null;
+			if (item) {
+				if (item == true)
+					return defaults;
+				else
+					return defaults.clone().inject(item);
+			}
+			return null;
 		},
 
 		toString: function() {
