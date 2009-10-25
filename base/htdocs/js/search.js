@@ -5,6 +5,13 @@ SearchField = Input.extend({
 		this.removeClass('hidden');
 		if (Browser.WEBKIT) {
 			this.setProperty('type', 'search');
+
+			this.clear = function() {
+				if (this.getValue()) {
+					this.setValue('');
+					this.fireEvent('search');
+				}
+			}
 		} else {
 			var that = this, clear = false;
 			var placeholder = this.getProperty('placeholder');
@@ -62,6 +69,13 @@ SearchField = Input.extend({
 						showPlaceholder(true);
 				}
 			});
+
+			this.clear = function() {
+				if (!this.focused && this.getValue() != placeholder) {
+					showPlaceholder(true);
+					this.fireEvent('search');
+				}
+			}
 		}
 		this.addEvents({
 			keydown: function(event) {
@@ -78,6 +92,6 @@ SearchField = Input.extend({
 				}).delay(500);
 				else this.fireEvent('search');
 			}			
-		})
+		});
 	}
 });
