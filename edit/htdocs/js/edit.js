@@ -71,9 +71,10 @@ EditForm = Base.extend({
 		// TabPane.setup(), since that would hide tabs again, for which the fix
 		// won't work...
 		fields.each(function(field) {
-			// padding + border = field.getWidth() - field.getInnerSize().width
-			// And we need to set to inner width - (padding + border).
-			var width = (2 * field.getInnerSize().width - field.getWidth()) + 'px';
+			function width(val) {
+				return field.getStyle('border-' + val + '-width').toInt() + field.getStyle('padding-' + val).toInt();
+			}
+			var width = field.getWidth() - 2 * (width('left') + width('right')) + 'px';
 			field.setStyles({
 				width: width,
 				// Prevent textareas from resizing horizontally. 
@@ -326,7 +327,7 @@ EditForm = Base.extend({
 						options.appendChild(new SelectOption(opt));
 				}
 			});
-			this.handle('multiselect_update', name);
+			this.updateMultiselects(name);
 		}, this);
 	},
 
@@ -615,12 +616,13 @@ EditForm.inject(new function() {
 	var handlers = new Hash();
 
 	return {
-		handle: function(action) {
+		handle: function(action, element) {
 			var handler = handlers[action];
 			if (handler) {
 				var args = Array.slice(arguments, 1);
-				args.unshift(this);
-				return handler.apply(handlers, args);
+				// Pass the wrapped element instead of the native one
+				args[0] = $(element);
+				return handler.apply(this, args);
 			} else {
 				alert('Handler missing: ' + action);
 			}
@@ -632,8 +634,8 @@ EditForm.inject(new function() {
 				handlers.merge(items);
 			},
 
-			handle: function(id) {
-				var form = EditForm.get(id);
+			handle: function(form, action, element) {
+				form = form instanceof EditForm ? form : EditForm.get(form);
 				if (form)
 					return form.handle.apply(form, Array.slice(arguments, 1));
 				else
@@ -645,18 +647,18 @@ EditForm.inject(new function() {
 
 // default:
 EditForm.register({
-	execute: function(editForm, mode, params) {
-		editForm.execute(mode, params);
+	execute: function(element, mode, params) {
+		this.execute(mode, params);
 	},
 
-	remove: function(editForm, title) {
-		editForm.execute('remove', {
+	remove: function(element, title) {
+		this.execute('remove', {
 			confirm: 'Do you really want to delete "' + title + '"?',
 			post: true
 		});
 	},
 
-	apply: function(editForm, params) {
+	apply: function(element, params) {
 		if ($$('.edit-list-remove input[value=1]').find(function(item) {
 			// Only warn for items not newly created. (= not containing ids like _n10_)
 			if (!/_n\d*_/.test(item.getId()))
@@ -664,19 +666,19 @@ EditForm.register({
 		})) {
 			params.confirm = 'Do you really want to delte the marked entries?';
 		}
-		this.execute(editForm, 'apply', params);
+		this.execute('apply', params);
 	},
 
-	close: function(editForm) {
-		editForm.close();
+	close: function(element) {
+		this.close();
 	},
 
-	back: function(editForm, count) {
-		editForm.back(count);
+	back: function(element, count) {
+		this.back(count);
 	},
 
-	number_format: function(editForm, name, type, def, min, max) {
-		var item = $('input#' + name, editForm.form);
+	number_format: function(element, name, type, def, min, max) {
+		var item = $('input#' + name, this.form);
 		var val = item.getValue();
 		var orig = val;
 		if (isNaN(val) || val == '') val = def;
@@ -690,25 +692,25 @@ EditForm.register({
 			item.setValue(val);
 	},
 
-	help_toggle: function(editForm) {
-		var el = $('.edit-help-button', editForm.container);
+	help_toggle: function(element) {
+		var el = $('.edit-help-button', this.container);
 		if (el instanceof Input) {
 			el.setValue(el.getValue() == 'Help' ? 'Close Help' : 'Help');
 		} else {
 			el.setText(el.getText() == 'Help' ? 'Close Help' : 'Help');
 		}
 		$$('.edit-help').toggleClass('hidden');
-		editForm.autoSize();
+		this.autoSize();
 	}
 });
 
 // Select
 EditForm.register(new function() {
-	function getSelected(editForm, sels) {
+	function getSelected(form, sels) {
 		var names = [];
 		var values = [];
 		sels.each(function(sel) {
-			sel = $('#' + sel, editForm.form);
+			sel = $('#' + sel, form.form);
 			if (sel) {
 				sel.getSelected().each(function(opt) {
 					if (opt.getValue()) {
@@ -725,56 +727,57 @@ EditForm.register(new function() {
 	var prototypeChooser = null;
 
 	return {
-		select_new: function(editForm, name, prototypes, params) {
+		select_new: function(element, name, prototypes, params) {
 			if (typeof prototypes == 'string') {
-				editForm.execute('new', params);
-			} else {
-				if (!prototypeChooser)
-					prototypeChooser = new PrototypeChooser();
-				prototypeChooser.choose(editForm, name + '_new', prototypes);
+				var str = $('#' + prototypes).getValue();
+				var id = element.getId().match(/(.*)_new$/)[1];
+				prototypes = Json.decode(str.replace(/<%entryId%>/g, id));
 			}
+			if (!prototypeChooser)
+				prototypeChooser = new PrototypeChooser();
+			prototypeChooser.choose(this, name, prototypes);
 		},
 
-		select_edit: function(editForm, sels, params) {
-			var sel = getSelected(editForm, sels);
+		select_edit: function(element, sels, params) {
+			var sel = getSelected(this, sels);
 			if (sel && sel.values.length == 1) {
 				var val = sel.values[0];
 				if (val != 'null') {
 					params.edit_object_id = val;
-					editForm.execute('edit', params);
+					this.execute('edit', params);
 				}
 			}
 		},
 
-		select_remove: function(editForm, sels, params) {
+		select_remove: function(element, sels, params) {
 			if (params) {
-				var sel = getSelected(editForm, sels);
+				var sel = getSelected(this, sels);
 				if (sel) {
 					params.confirm = 'Do you really want to delete ' + 
 						(sel.values.length > 1 ? 'these items: "' + 
 						sel.names : '"' + sel.names) + '"?';
 					params.edit_object_ids = sel.ids;
-					editForm.execute('remove', params);
+					this.execute('remove', params);
 				}
 			} else {
 				// Remove links from list
 				sels.each(function(sel) {
-					sel = $('#' + sel, editForm.form);
+					sel = $('#' + sel, this.form);
 					sel.getSelected().remove();
 				 	// Generate values
 					// TODO: replace substring with regexp
-					this.multiselect_update(editForm, el.name.substring(0, el.name.indexOf('_left')));
+					this.updateMultiselects(el.name.substring(0, el.name.indexOf('_left')));
 				}, this);
 			}
 		},
 
-		select_move: function(editForm, name, sels, params) {
-			var sel = getSelected(editForm, sels);
+		select_move: function(element, name, sels, params) {
+			var sel = getSelected(this, sels);
 			if (sel) {
 				sel.params = params;
 				sel.move = true;
 				// TODO: Finish porting. Pass sel, etc
-				editForm.handle('choose_move', name + '_move');
+				this.handle('choose_move', element, name);
 			}
 		}
 	};
@@ -805,9 +808,9 @@ EditForm.register(new function() {
 	}
 
 	return {
-		multiselect_arrange: function(editForm, name, dir) {
-			var left = $('#' + name + '_left', editForm.form);
-			var right = $('#' + name + '_right', editForm.form);
+		multiselect_arrange: function(element, name, dir) {
+			var left = $('#' + name + '_left', this.form);
+			var right = $('#' + name + '_right', this.form);
 			var options = left.getOptions();
 			switch(dir) {
 				case 'up':
@@ -826,14 +829,16 @@ EditForm.register(new function() {
 					break;
 			}
 			// After each change, update the value, in case the user submits
-			this.multiselect_update(editForm, name);
-		},
-
-		multiselect_update: function(editForm, name) {
-			var ids = $('#' + name + '_left', editForm.form).getOptions().getProperty('value');
-			$('#' + name, editForm.form).setValue(ids);
+			this.updateMultiselects(name);
 		}
 	};
+});
+
+EditForm.inject({
+	updateMultiselects: function(name) {
+		var ids = $('#' + name + '_left', this.form).getOptions().getProperty('value');
+		$('#' + name, this.form).setValue(ids);
+	}
 });
 
 // choose
@@ -846,16 +851,16 @@ EditForm.register(new function() {
 		return objectChooser;
 	}
 
-	function choose(editForm, name, params, onChoose) {
+	function choose(form, name, params, onChoose) {
 		var chooser = getChooser();
-		editForm.onChoose = onChoose;
-		chooser.choose(editForm, name, params);
+		form.onChoose = onChoose;
+		chooser.choose(form, name, params);
 	}
 
 	return {
-		choose_link: function(editForm, name, params) {
-			choose(editForm, name + '_link', params, function(id, title) {
-				var field = $('#' + name, editForm.form);
+		choose_link: function(element, name, params) {
+			choose(this, name + '_link', params, function(id, title) {
+				var field = $('#' + name, this.form);
 				if (field) {
 					var text = field.getSelectedText();
 					field.replaceSelectedText(
@@ -866,7 +871,7 @@ EditForm.register(new function() {
 			});
 		},
 
-		choose_reference: function(editForm, name, params) {
+		choose_reference: function(element, name, params) {
 			var that = this, element = null, backup = null;
 			// make sure the chooser is there:
 			var chooser = getChooser();
@@ -876,12 +881,12 @@ EditForm.register(new function() {
 				chooser.onCancel = function() {
 					element.removeChildren();
 					element.appendChildren(backup);
-					that.multiselect_update(editForm, name);
+					that.updateMultiselects(name);
 					this.onCancel = this.onOK;
 					this.close();
 				}
 			}
-			choose(editForm, name + '_choose', params, function(id, title) {
+			choose(this, name + '_choose', params, function(id, title) {
 				var match;
 				if (params.multiple) {
 					if (element.getElement('option[value="' + id + '"]')) {
@@ -893,7 +898,7 @@ EditForm.register(new function() {
 							opt.insertAfter(selected);
 						else
 							opt.insertInside(element);
-						that.multiselect_update(editForm, name);
+						that.updateMultiselects(name);
 					}
 					// Don't close yet, since we add multiples
 					return false;
@@ -905,24 +910,24 @@ EditForm.register(new function() {
 			});
 		},
 
-		choose_move: function(editForm, name, params) {
-			choose(editForm, name, params, function(id, title) {
+		choose_move: function(element, name, params) {
+			choose(this, name, params, function(id, title) {
 				return true;
 			});
 		},
 
-		choose_toggle: function(editForm, id) {
+		choose_toggle: function(element, id) {
 			objectChooser.toggle(id);
 		},
 
-		choose_select: function(editForm, id, title) {
+		choose_select: function(element, id, title) {
 			// only close if onChoose returns true.
-			if (editForm.onChoose && editForm.onChoose(id, title))
+			if (this.onChoose && this.onChoose(id, title))
 				EditChooser.closeAll();
 		},
 
-		choose_url: function(editForm, name) {
-			var field = $('#' + name, editForm.form);
+		choose_url: function(element, name) {
+			var field = $('#' + name, this.form);
 			if (field) {
 				var url = prompt('Enter link URL (email or internet address):\n' +
 					'Email addresses are encrypted and protected against spam.');
@@ -945,10 +950,10 @@ EditForm.register(new function() {
 
 // references
 EditForm.register({
-	references_remove: function(editForm, name) {
-		var el = $('#' + name + '_left', editForm.form);
+	references_remove: function(element, name) {
+		var el = $('#' + name + '_left', this.form);
 		el.getSelected().remove();
-		this.multiselect_update(editForm, name);
+		that.updateMultiselects(name);
 	}
 });
 
@@ -968,28 +973,28 @@ EditForm.register(new function() {
 	var colorChooser = null;
 
 	return {
-		color_choose: function(editForm, name) {
-			var target = $('#' + name, editForm.form);
+		color_choose: function(element, name) {
+			var target = $('#' + name, this.form);
 			updateColor(target);
 			target.onUpdate = function() {
 				updateColor(this);
 			};
 			if (!colorChooser)
 				colorChooser = new ColorChooser(168);
-			colorChooser.choose(editForm, name + '-color', target);
+			colorChooser.choose(this, name + '-color', target);
 		},
 
-		color_update: function(editForm, name) {
-			updateColor($('input#' + name, editForm.form));
+		color_update: function(element, name) {
+			updateColor($('input#' + name, this.form));
 		}
 	};
 });
 
 // list
 EditForm.register(new function() {
-	function updateEntry(id, toggle) {
+	function updateEntry(form, id, toggle) {
 		var opacity = 1;
-		var entry = $('#edit-list-entry-' + id);
+		var entry = $('#edit-list-entry-' + id, form.form);
 		['remove', 'hide'].each(function(type) {
 			var obj = $('#' + id + '_' + type);
 			var value = obj.getValue().toInt();
@@ -1002,54 +1007,54 @@ EditForm.register(new function() {
 			if (value)
 				opacity = 0.5;
 		})
-		entry.setOpacity(opacity);
+		$('div.edit-list-background', entry).setOpacity(opacity);
+	}
+
+	function updateList(form, name) {
+		var list = $('#edit-list-' + name, form.form);
+		// Update ids list with the right sequence
+		var ids = list.getChildren().each(function(entry) {
+			var id = entry.getId();
+			this.push(id.substring(id.lastIndexOf('_') + 1));
+		}, []);
+		$('#' + name, this.form).setValue(ids);
 	}
 
 	return {
-		list_add: function(editForm, name, html) {
-			var list = $('#edit-list-' + name, editForm.form);
+		list_add: function(element, name, html, entryId) {
+			var list = $('#edit-list-' + name, this.form);
 			list.counter = list.counter || 0;
-			var id = 'n' + list.counter++;
+			var id = 'n' + list.counter++, obj;
 			// Replace id placeholder with generated id, mark with 'n' for new
 			html = html.replace(/<%id%>/g, id);
-			var obj = list.injectBottom(html);
+			var entry = entryId && $('#edit-list-entry-' + entryId, this.form);
+			if (entry) {
+				obj = entry.injectBefore(html);
+			} else {
+				obj = list.injectBottom(html);
+			}
 			// Make sure this newly inserted html gets initalised, e.g. buttons,
 			// width, gecko workaround, etc.
-			editForm.setup(obj);
-			this.list_update(editForm, name);
+			this.setup(obj);
+			updateList(this, name);
 			EditChooser.closeAll();
 		},
 
-		list_remove: function(editForm, name, id) {
-			/*
-			if (/_n[0-9]*$/.test(id)) {
-				entry.remove();
-			}
-			*/
-			updateEntry(id, 'remove');
-			this.list_update(editForm, name);
+		list_remove: function(element, name, id) {
+			updateEntry(this, id, 'remove');
+			updateList(this, name);
 		},
 
-		list_hide: function(editForm, name, id) {
-			updateEntry(id, 'hide');
+		list_hide: function(element, name, id) {
+			updateEntry(this, id, 'hide');
 		},
 
-		list_update: function(editForm, name) {
-			var list = $('#edit-list-' + name, editForm.form);
-			// Update ids list with the right sequence
-			var ids = list.getChildren().each(function(entry) {
-				var id = entry.getId();
-				this.push(id.substring(id.lastIndexOf('_') + 1));
-			}, []);
-			$('#' + name, editForm.form).setValue(ids);
-		},
-
-		list_sort: function(editForm, name, id, event) {
+		list_sort: function(element, name, id, event) {
 			var that = this;
-			var list = $('#edit-list-' + name, editForm.form);
+			var list = $('#edit-list-' + name, this.form);
 			var entries = list.getChildren();
-			var entry = $('#edit-list-entry-' + id, editForm.form);
-			var handle = $('#edit-list-handle-' + id, editForm.form);
+			var entry = $('#edit-list-entry-' + id, this.form);
+			var handle = $('#edit-list-handle-' + id, this.form);
 			if (!handle.draggable) {
 				var bounds, listBounds, dummy, position, opacity;
 				handle.addEvents({
@@ -1082,7 +1087,7 @@ EditForm.register(new function() {
 							height: null
 						});
 						entry.setOffset(0, 0);
-						that.list_update(editForm, name);
+						updateList(that, name);
 					},
 					drag: function(e) {
 						position += e.delta.y;
@@ -1175,10 +1180,10 @@ EditChooser = Base.extend({
 		}).addEvent('mouseup', handler);
 	},
 
-	choose: function(editForm, name) {
+	choose: function(form, name) {
 		EditChooser.closeAll();
 		EditChooser.current = this;
-		var bounds = $('#' + name, editForm.container).getBounds();
+		var bounds = $('#' + name, form.container).getBounds();
 		this.element.setOffset({ x: bounds.left, y: bounds.bottom });
 		this.show(true);
 	},

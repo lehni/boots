@@ -1,11 +1,12 @@
-<% #list %>
+<% #list -%>
 <div id="edit-list-<%= param.name %>" class="edit-list edit-nounderline">
 <%= param.entries %>
 </div>
 <% input type="hidden" name=param.name value=param.ids %>
 
-<% #entry %>
+<% #entry -%>
 <div id="edit-list-entry-<%= param.id %>" class="edit-list-entry<%= ' invisible' if=<%= param.hide == 1 %> %>">
+<%= param.add prefix='<div class="edit-list-add">' suffix='</div>' %>
 <div class="edit-list-separator"></div>
 <div class="edit-list-background">
 <div class="edit-list-header">
@@ -31,3 +32,6 @@
 </table>
 </div>
 </div>
+
+<% #chooser -%>
+<% input type="hidden" name=<%= param.name %> value=<% json singleQuotes="true" param.chooser %> -%>

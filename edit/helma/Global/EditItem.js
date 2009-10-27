@@ -31,6 +31,9 @@ EditItem = Base.extend(new function() {
 					}
 				}
 			}
+			// Automatically prepend edit-element to the classname
+			this.className = this.className ? 'edit-element ' + this.className
+					: 'edit-element';
 		},
 
 		render: function(baseForm, name, value, param, out) {
@@ -119,32 +122,38 @@ EditItem = Base.extend(new function() {
 			});
 		},
 
-		getPrototypeEditButton: function(baseForm, param, renderHref) {
-			// Pass an array containing name / creation handler href mappings
-			// if there are more than one prototype.
-			// If there's only one prototype, directly use the href that produces
-			// it.
-			var editName = this.getEditName();
+		getPrototypeChooser: function(baseForm, renderHref) {
 			var editParam = this.getEditParam();
-			var prototypes = this.prototypes && this.prototypes.map(function(name) {
+			return this.prototypes && this.prototypes.map(function(name) {
 				var proto = global[name];
 				if (proto) {
 					return {
 						name: name.uncamelize(),
 						href: renderHref
 							? renderHref.call(this, proto)
-							: baseForm.renderHandle('select_new', editName, name,
+							: baseForm.renderHandle('execute', 'new',
 								Hash.merge({ edit_prototype: name }, editParam))
 					};
 				}
 				User.log("WARNING: Prototype '" + name + "' does not exist!");
 			}, this) || [];
-		 	return Hash.merge({
-				name: editName + '_new',
-				onClick: prototypes.length == 1
+		},
+
+		// TODO: Rename
+		getPrototypeEditButton: function(baseForm, param, prototypes) {
+			// Pass an array containing name / creation handler href mappings
+			// if there are more than one prototype.
+			// If there's only one prototype, directly use the href that produces
+			// it.
+			if (prototypes == null || typeof prototypes == 'function')
+				prototypes = this.getPrototypeChooser(baseForm, prototypes);
+			param = new Hash(param);
+			param.name = (param.name || this.getEditName()) + '_new';
+			param.onClick = param.onClick || prototypes.length == 1
 					? prototypes[0].href
-					: baseForm.renderHandle('select_new', editName, prototypes, editParam)
-			}, param);
+					: baseForm.renderHandle('select_new', param.name, prototypes,
+							this.getEditParam())
+			return param;
 		},
 
 		toString: function() {
@@ -189,7 +198,7 @@ StringItem = EditItem.extend(new function() {
 			Html.input({
 				type: this.type == 'password' ? 'password' : 'text',
 				name: name, value: value, size: this.size || '20',
-				maxlength: this.length, className: this.className || 'edit-element' 
+				maxlength: this.length, className: this.className 
 			}, out);
 			if (this.hasLinks && this.type == 'string')
 				this.renderLinkButtons(baseForm, name, out);
@@ -234,7 +243,7 @@ TextItem = StringItem.extend({
 			cols: this.cols || '40',
 			rows: this.rows || '5',
 			wrap: this.wrap || 'virtual',
-			className: this.className || 'edit-element' 
+			className: this.className 
 		}, out);
 		if (this.hasLinks)
 			this.renderLinkButtons(baseForm, name, out);
@@ -263,7 +272,7 @@ NumberItem = EditItem.extend({
 			type: 'text', name: name, size: this.size || '5', value: value, 
 			onChange: baseForm.renderHandle('number_format', name, this.type,
 				def, this.minValue, this.maxValue),
-			className: this.className || 'edit-element'
+			className: this.className
 		}, out);
 		if (this.length)
 			input.maxlength = this.length;
@@ -286,7 +295,7 @@ BooleanItem = EditItem.extend({
 	render: function(baseForm, name, value, param, out) {
 		baseForm.renderTemplate('booleanItem', {
 			name: name, current: value ? 1 : 0,
-			className: this.className || 'edit-element',
+			className: this.className,
 			text: this.text
 		}, out);
 	},
@@ -381,7 +390,7 @@ FileItem = EditItem.extend({
 			out.write('<div>' + this.preview + '</div>');
 		Html.input({
 			type: 'file', name: name, size: this.size || '20',
-			className: this.className || 'edit-element'
+			className: this.className
 		}, out);
 	},
 
@@ -490,7 +499,7 @@ SelectItem = ListItem.extend({
 				option.selected = true;
 		});
 		var select = {
-			name: name, className: this.className || 'edit-element'
+			name: name, className: this.className
 		};
 		if (this.size)
 			select.size = this.size;
@@ -542,10 +551,11 @@ SelectItem = ListItem.extend({
 			});
 		}
 		if (this.movable) {
+			var move =  name + '_move';
 			buttons.push({
 				value: 'Move',
-				name: name + '_move',
-				onClick: baseForm.renderHandle('select_move', name, selParam,
+				name: move,
+				onClick: baseForm.renderHandle('select_move', move, selParam,
 					Hash.merge({ edit_prototype: this.destPrototype || '' }, editParam))
 			});
 		}
@@ -678,13 +688,13 @@ MultiSelectItem = SelectItem.extend({
 		var editParam = param.buttons && this.getEditParam();
 		param.left = Html.select({
 			size: size, name: left, multiple: true,
-			options: values, className: this.className || 'edit-element',
+			options: values, className: this.className,
 			onDblClick: editParam && baseForm.renderHandle('select_edit', [left], editParam)
 		});
 		if (this.showOptions) {
 			param.right = Html.select({
 				size: size, name: right, multiple: true,
-				options: options, className: this.className || 'edit-element',
+				options: options, className: this.className,
 				onDblClick: editParam && baseForm.renderHandle('select_edit', [right], editParam)
 			});
 		}
@@ -827,7 +837,7 @@ ColorItem = EditItem.extend({
 		baseForm.renderTemplate('colorItem', {
 			name: name, value: value,
 			width: this.width,
-			className: this.className || 'edit-element'
+			className: this.className
 		}, out);
 	},
 
@@ -865,61 +875,95 @@ HelpItem = EditItem.extend({
 EditableListItem = ListItem.extend({
 	_types: 'list',
 
-	getEditForm: function(obj, id, force) {
-		var form = EditForm.get(obj, force);
+	getEditForm: function(object, id, force) {
+		var form = EditForm.get(object, force);
 		// Update the edit form's variablePrefix to group by this
 		// edit item.
 		// TODO: Since we're using cached forms, this means we cannot use
 		// the same form elsewhere at the same time.
 		if (id == null)
-			id = obj.isTransient() ? '<%id%>' : obj._id;
+			id = object.isTransient() ? '<%id%>' : object._id;
 		form.entryId = id;
 		form.variablePrefix = this.getEditName() + '_' + id + '_';
 		return form;
 	},
 
-	renderEditForm: function(baseForm, name, obj, param, out) {
+	renderEditForm: function(baseForm, name, object, param, out) {
 		// Force a newly created form each time we're rendering
-		var form = this.getEditForm(obj, null, true);
+		var form = this.getEditForm(object, null, true);
 		baseForm.renderTemplate('listItem#entry', {
 			id: name + '_' + form.entryId,
 			name: name,
-			proto: obj._prototype,
-			hide: obj.visible !== undefined
+			proto: object._prototype,
+			hide: object.visible !== undefined
 					// Default for new items is visible.
-					? obj.visible == null || obj.visible ? 0 : 1
+					? object.visible == null || object.visible ? 0 : 1
 					: null,
-			width: param.calculatedWidth,
-			create: obj.isTransient(),
+			width: param.width,
+			create: object.isTransient(),
 			sortable: this.sortable,
 			items: form.renderItems(baseForm, {
 				itemsOnly: true
-			})
+			}),
+			add: param.add ? baseForm.renderButton(this.getAddPrototypeButton(baseForm,
+					name, {
+						width: param.width,
+						value: 'Add',
+						entryId: form.entryId
+					})
+				) : null
 		}, out);
 	}.toRender(),
+
+	getAddPrototypeButton: function(baseForm, name, param) {
+		if (!this.chooser) {
+			this.chooser = this.getPrototypeChooser(baseForm, function(ctor) {
+				// Create an empty instance in order to render small edit form:
+				// TODO: Cache created instances and produced html somehow?
+				// Can we use bootstrap's internal version number?
+				// Should this be exposed through a method on Function even?
+				// Or simpy caching within 'this'...
+				var html = this.renderEditForm(baseForm, name, new ctor(ctor.dont), param);
+				return baseForm.renderHandle('list_add', name, html, '<%entryId%>');
+			});
+		}
+		return this.getPrototypeEditButton(baseForm, { 
+			name: name + (param.entryId ? '_' + param.entryId : ''),
+			value: param.value
+		}, name + '_chooser');
+	},
 
 	render: function(baseForm, name, value, param, out) {
 		// Add the button only once to the form!
 		if (this.button && !this.initialized) {
-			var button = this.getPrototypeEditButton(baseForm, { value: this.button }, function(ctor) {
-				// Create an empty instance in order to render small edit form:
-				var html = this.renderEditForm(baseForm, name, new ctor(ctor.dont), param);
-				return baseForm.renderHandle('list_add', name, html);
+			var button = this.getAddPrototypeButton(baseForm, name, {
+				width: param.calculatedWidth,
+				value: this.button,
+				add: true
 			});
 			baseForm.addButtons(button);
 			this.initialized = true;
 		}
-		out.push();
+		if (this.chooser) {
+			baseForm.renderTemplate('listItem#chooser', {
+				name: name + '_chooser',
+				chooser: this.chooser
+			}, out);
+		}
+		var entries = [];
 		var ids = [];
 		var list = this.collection.list();
 		for (var i = 0; i < list.length; i++) {
 			var obj = list[i];
-			this.renderEditForm(baseForm, name, obj, param, out);
+			entries.push(this.renderEditForm(baseForm, name, obj, {
+				width: param.calculatedWidth,
+				add: true
+			}));
 			ids.push(obj._id);
 		}
 		baseForm.renderTemplate('listItem#list', {
 			name: name,
-			entries: out.pop(),
+			entries: entries.join(''),
 			ids: ids
 		}, out);
 	},

@@ -257,6 +257,12 @@
 	background: url(/static/edit/media/remove-overlay.png);
 }
 
+#edit .edit-list-add {
+	float: right;
+	margin-top: -4px;
+	margin-right: -40px;
+}
+
 #edit .edit-list-hide {
 	background: url(/static/edit/media/visible.png);
 }
@@ -269,9 +275,10 @@
 	background: url(/static/edit/media/visible-overlay.png);
 }
 
-#edit .edit-list-entry.invisible {
+#edit .edit-list-entry.invisible .edit-list-background {
 	opacity: 0.5;
 }
+
 
 /* error */
 

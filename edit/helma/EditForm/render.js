@@ -126,16 +126,20 @@ EditForm.inject({
 
 	renderHandle: function(handler) {
 		var args = handler instanceof Array ? handler : Array.create(arguments);
-		var name = args[0];
-		args.unshift(this.id);
+		var action = args.shift();
 		// Encode with single quotes since it goes into html attributes with doubles
 		var str = Json.encode(args, true);
 		// Remove [] from string:
 		str = str.substring(1, str.length - 1);
 		str = encodeAttribute(str);
+		// Pass the element on which this handler is called and the form id to each call.
+		// Sequence: form, action, elment
+		str = "'" + this.id + "','"  + action + "',this," + str;
+		app.log(str);
 		// Pass event object last, e.g. in case we need mouse position
-		if (name == 'list_sort')
-			str += ', new DomEvent(arguments[0])';
+		// TODO: Try instead: arguments[0] && new DomEvent(arguments[0])
+		if (action == 'list_sort')
+			str += ',new DomEvent(arguments[0])';
 		return 'EditForm.handle(' + str + ');';
 	},
 
