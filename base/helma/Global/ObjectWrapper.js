@@ -14,7 +14,7 @@ ObjectWrapper = new function() {
 		// and calls a onChange handler if they happen. It also wraps returned
 		// values again, in order to detect modifications on any level down the
 		// hierarchy.
-		wrap: function(obj, param, dontUnwrap) {
+		wrap: synchronize(function(obj, param, dontUnwrap) {
 			// Packages.helma.scripting.rhino.wrapper.ObjectWrapper.wrap(obj, null);
 			if (obj === null) {
 				return null;
@@ -43,7 +43,10 @@ ObjectWrapper = new function() {
 				var adapter = adapters[hash];
 				if (adapter) {
 					// app.log('Reusing cached adapter: ' + adapter + ' @' + hash.toPaddedString(4, 16));
-					return adapter;
+					// Make sure this returned adapter makes it again through the
+					// JavaAdapter auto-unwrap mechanism.
+					adapter.dontUnwrap = dontUnwrap;
+					return adapter.object;
 				}
 				// Common fields among the different implementations.
 				var fields = {
@@ -82,8 +85,9 @@ ObjectWrapper = new function() {
 					unwrap: function() {
 						// Do not unwrap the first time unwrap is called 
 						// if dontUnwrap is set. See 'get' for an explanation.
-						if (dontUnwrap) {
-							dontUnwrap = false;
+						var entry = adapters[hash];
+						if (entry.dontUnwrap) {
+							entry.dontUnwrap = false;
 							return this;
 						}
 						return unwrappedObj;
@@ -181,7 +185,7 @@ ObjectWrapper = new function() {
 						// unwrapped the first time unwrap is called.
 						// This is to avoid an issue in JavaAdapter code that
 						// would lead to HopObjects being returned as Nodes
-						// otherwise. 
+						// otherwise.
 						return ObjectWrapper.wrap(value, param, true);
 					}
 
@@ -203,12 +207,15 @@ ObjectWrapper = new function() {
 
 					adapter = new JavaAdapter(ScriptableObject, Wrapper, fields);
 				}
-				adapters[hash] = adapter;
+				adapters[hash] = {
+					object: adapter,
+					dontUnwrap: dontUnwrap 
+				};
 				return adapter;
 			} else {
 				// Basic types, no wrapping needed to detect change
 				return obj;
 			}
-		}
+		})
 	};
 }
