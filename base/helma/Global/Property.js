@@ -19,7 +19,7 @@ Property = Base.extend({
 			var value = this[property];
 			if (that.get)
 				value = that.get(this, property, value);
-			if (that._wrap)
+			if (value != null && that._wrap)
 				value = that.wrap(this, property, value);
 			// Store in cache after conversion from native type
 			if (cache)
@@ -45,7 +45,7 @@ Property = Base.extend({
 				cache = this.cache._properties;
 				if (!cache)
 					cache = this.cache._properties = {};
-				if (that._wrap)
+				if (value != null && that._wrap)
 					value = that.wrap(this, property, value);
 				cache[property] = value;
 			}
@@ -58,10 +58,12 @@ Property = Base.extend({
 	wrap: function(obj, property, value) {
 		var that = this;
 		return ObjectWrapper.wrap(
-			value,
-			// onChange handler for the object and any of its children:
-			function() {
-				that.markDirty(obj, property);
+			value, {
+				// onChange handler for the object and any of its children:
+				onChange: function() {
+					that.markDirty(obj, property);
+				},
+				modifiers: that._modifiers
 			}
 		);
 	},
@@ -111,6 +113,48 @@ Property = Base.extend({
 function onBeforeCommit() {
 	Property.commit();
 }
+
+HopProperty = Property.extend(new function() {
+	// Use a different writeToString than the one from Xml object since we 
+	// do not want indentation.
+	function writeToString(obj) {
+		var out = new java.io.ByteArrayOutputStream();
+		var writer = new Packages.helma.objectmodel.dom.XmlWriter(out, 'UTF-8');
+		writer.setDatabaseMode(false);
+		writer.setIndent(0);
+		writer.write(toJava(obj));
+		writer.flush();
+		return out.toString('UTF-8');
+	}
+
+	var obj = new HopObject();
+	// Extract the xml prefix and suffix that is added around each hopobject
+	// tag when converting to / from xml:
+	var str = writeToString(obj);
+	var prefix = str.match(/^([\u0000-\uffff]*)\<hopobject/i)[1];
+	var suffix = str.match(/hopobject\>([\u0000-\uffff]*)$/i)[1];
+
+	return {
+		_cache: true,
+		_wrap: true,
+		// HopObject methods that change the object
+		_modifiers: ['add', 'addAt', 'remove', 'removeChild'],
+
+		get: function(obj, property, value) {
+//			app.log('HOP/XML GET ' + value);
+			return value ? Xml.readFromString(prefix + value + suffix) : null;
+		},
+
+		set: function(obj, property, value) {
+			if (value) {
+				value = writeToString(value);
+				value = value.substring(prefix.length, value.length - suffix.length);
+			}
+//			app.log('HOP/XML SET ' + value);
+			return value;
+		}
+	};
+});
 
 JsonProperty = Property.extend({
 	_cache: true,
