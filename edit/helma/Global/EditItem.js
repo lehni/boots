@@ -122,37 +122,33 @@ EditItem = Base.extend(new function() {
 			});
 		},
 
-		getPrototypeChooser: function(baseForm, renderHref) {
+		getPrototypeChooserList: function(baseForm, renderHandler) {
 			var editParam = this.getEditParam();
-			return this.prototypes && this.prototypes.map(function(name) {
+		 	return this.prototypes && this.prototypes.collect(function(name) {
 				var proto = global[name];
 				if (proto) {
 					return {
-						name: name.uncamelize(),
-						href: renderHref
-							? renderHref.call(this, proto)
+						name: proto.name.uncamelize(),
+						handler: renderHandler
+							? renderHandler.call(this, proto)
 							: baseForm.renderHandle('execute', 'new',
-								Hash.merge({ edit_prototype: name }, editParam))
+								Hash.merge({ edit_prototype: proto.name }, editParam))
 					};
 				}
 				User.log("WARNING: Prototype '" + name + "' does not exist!");
 			}, this) || [];
 		},
 
-		// TODO: Rename
-		getPrototypeEditButton: function(baseForm, param, prototypes) {
-			// Pass an array containing name / creation handler href mappings
-			// if there are more than one prototype.
-			// If there's only one prototype, directly use the href that produces
-			// it.
-			if (prototypes == null || typeof prototypes == 'function')
-				prototypes = this.getPrototypeChooser(baseForm, prototypes);
+		getPrototypeChooserButton: function(baseForm, param, chooser) {
+			// If a chooser object is passed, it contains the prerendered
+			// chooser values, to be reused for multiple list entries.
+			// In this case pass its name as a string, otherwise, render the
+			// chooser list now and pass it to the select_new function.
+			var value = chooser ? chooser.name : this.getPrototypeChooserList(baseForm);
 			param = new Hash(param);
 			param.name = (param.name || this.getEditName()) + '_new';
-			param.onClick = param.onClick || prototypes.length == 1
-					? prototypes[0].href
-					: baseForm.renderHandle('select_new', param.name, prototypes,
-							this.getEditParam())
+			param.onClick = param.onClick || baseForm.renderHandle(
+					'select_new', param.name, value, this.getEditParam())
 			return param;
 		},
 
@@ -243,8 +239,10 @@ TextItem = StringItem.extend({
 			cols: this.cols || '40',
 			rows: this.rows || '5',
 			wrap: this.wrap || 'virtual',
-			className: this.className 
+			className: this.className + (this.countWords ? ' edit-text-count' : ''),
+			onKeyUp: this.countWords ? baseForm.renderHandle('text_count') : null
 		}, out);
+		// TODO: Find a better way to more generally add buttons underneath
 		if (this.hasLinks)
 			this.renderLinkButtons(baseForm, name, out);
 	},
@@ -422,21 +420,28 @@ ListItem = EditItem.extend({
 	 *
 	 * setPosition is here to fasciliate these modes
 	 */
-	setPosition: function(obj, position, visible) {
-		if (obj.position !== undefined && obj.visible !== undefined) {
+	setPosition: function(object, position, visible) {
+//		app.log('POS: ' + (object.position + ' ' + (typeof object.position) + ' ' + (object.position === undefined) + ' ' + (object.position === null)))
+		if (object.position !== undefined && object.visible !== undefined) {
 			// Position / Visible mode
-			if (obj.position != position || !obj.visible != !visible) {
-				obj.position = position;
-				obj.visible = visible;
+			if (object.position != position || !object.visible != !visible) {
+				object.position = position;
+				object.visible = visible;
 				return true;
 			}
 		} else if (object.index !== undefined) {
 			// Index mode: Set index to null to hide item
 			var index = visible ? position : null;
-			if (obj.index != index) {
-				obj.index = index;
+			if (object.index != index) {
+				object.index = index;
 				return true;
 			}
+		} else {
+			// If we're not filtering by index or position, maybe it is memory only
+			// object that can be sorted through addAt.
+			app.log('Set Position ' + this.collection.indexOf(object) + ' ' + position + ' ' + object.url);
+			if (this.collection.indexOf(object) != position)
+			 	return this.collection.addAt(position, object);
 		}
 		return false;
 	},
@@ -490,10 +495,10 @@ SelectItem = ListItem.extend({
 		if (this.allowNull)
 			options.unshift({ name: '', value: 'null' });
 		
-		// convert to id
+		// Convert to id
 		if (value != null && value instanceof HopObject)
 			value = value.getFullId();
-		// mark the selected
+		// Mark the selected
 		options.each(function(option) {
 			if (option.value == value)
 				option.selected = true;
@@ -511,7 +516,7 @@ SelectItem = ListItem.extend({
 		Html.select(select, out);
 		if (editButtons)
 			baseForm.renderTemplate('button#buttons', {
-				// for multi line items, add the buttons bellow,
+				// For multi line items, add the buttons bellow,
 				// for pulldown, add them to the right
 				spacer: this.size,
 				buttons: editButtons
@@ -560,7 +565,7 @@ SelectItem = ListItem.extend({
 			});
 		}
 		if (this.prototypes)
-			buttons.push(this.getPrototypeEditButton(baseForm, { value: 'New '}), {
+			buttons.push(this.getPrototypeChooserButton(baseForm, { value: 'New '}), {
 				value: 'Delete',
 				onClick: baseForm.renderHandle('select_remove', selParam, editParam)
 			});
@@ -813,7 +818,7 @@ ObjectItem = EditItem.extend({
 		return baseForm.renderButton(value ? {
 				value: 'Edit' + title,
 				onClick: baseForm.renderHandle('execute', 'edit', this.getEditParam())
-			} : this.getPrototypeEditButton(baseForm, {
+			} : this.getPrototypeChooserButton(baseForm, {
 				value: 'Create' + title
 			}), out);
 	}
@@ -875,22 +880,54 @@ HelpItem = EditItem.extend({
 EditableListItem = ListItem.extend({
 	_types: 'list',
 
-	getEditForm: function(object, id, force) {
+	getEditForm: function(object, id, width, force) {
 		var form = EditForm.get(object, force);
 		// Update the edit form's variablePrefix to group by this
 		// edit item.
 		// TODO: Since we're using cached forms, this means we cannot use
 		// the same form elsewhere at the same time.
 		if (id == null)
-			id = object.isTransient() ? '<%id%>' : object._id;
+			id = object._id;
 		form.entryId = id;
+		form.setWidth(this.form.getInnerWidth(width, this.padding));
 		form.variablePrefix = this.getEditName() + '_' + id + '_';
 		return form;
 	},
 
-	renderEditForm: function(baseForm, name, object, param, out) {
+	getAddPrototypeButton: function(baseForm, name, param) {
+		if (!this.chooser) {
+			// In order to avoid endless recursion, we are first setting
+			// the chooser object to the valid name.
+			// Since getPrototypeChooserList calls getAddPrototypeButton through
+			// renderEntry again, this would lead to an endless recursion otherwise.
+			this.chooser = { name: name + '_chooser' };
+			this.chooser.list = this.getPrototypeChooserList(baseForm, function(ctor) {
+				// Create an empty instance in order to render small edit form:
+				// TODO: Cache created instances and produced html somehow?
+				// Can we use bootstrap's internal version number?
+				// Should this be exposed through a method on Function even?
+				// Or simpy caching within 'this'...
+				var html = this.renderEntry(baseForm, name, new ctor(), {
+					add: param.add, width: param.width,
+					id: '<%' + name + '_id%>'
+				});
+				return baseForm.renderHandle('list_add', name, html,
+					'<%' + name + '_entry_id%>');
+			});
+			/*
+			var t = Date().now();
+			app.log(Date().now() - t);
+			*/
+		}
+		return this.getPrototypeChooserButton(baseForm, { 
+			name: name + (param.entryId ? '_' + param.entryId : ''),
+			value: param.value
+		}, this.chooser);
+	},
+
+	renderEntry: function(baseForm, name, object, param, out) {
 		// Force a newly created form each time we're rendering
-		var form = this.getEditForm(object, null, true);
+		var form = this.getEditForm(object, param.id, param.width, true);
 		baseForm.renderTemplate('listItem#entry', {
 			id: name + '_' + form.entryId,
 			name: name,
@@ -905,64 +942,41 @@ EditableListItem = ListItem.extend({
 			items: form.renderItems(baseForm, {
 				itemsOnly: true
 			}),
-			add: param.add ? baseForm.renderButton(this.getAddPrototypeButton(baseForm,
-					name, {
-						width: param.width,
-						value: 'Add',
-						entryId: form.entryId
-					})
-				) : null
+			addHandler: this.addEntries && this.getAddPrototypeButton(baseForm, name, {
+				width: param.width,
+				entryId: form.entryId
+			}).onClick
 		}, out);
 	}.toRender(),
 
-	getAddPrototypeButton: function(baseForm, name, param) {
-		if (!this.chooser) {
-			this.chooser = this.getPrototypeChooser(baseForm, function(ctor) {
-				// Create an empty instance in order to render small edit form:
-				// TODO: Cache created instances and produced html somehow?
-				// Can we use bootstrap's internal version number?
-				// Should this be exposed through a method on Function even?
-				// Or simpy caching within 'this'...
-				var html = this.renderEditForm(baseForm, name, new ctor(ctor.dont), param);
-				return baseForm.renderHandle('list_add', name, html, '<%entryId%>');
-			});
-		}
-		return this.getPrototypeEditButton(baseForm, { 
-			name: name + (param.entryId ? '_' + param.entryId : ''),
-			value: param.value
-		}, name + '_chooser');
-	},
-
 	render: function(baseForm, name, value, param, out) {
 		// Add the button only once to the form!
-		if (this.button && !this.initialized) {
+		// TODO: Rename addButton to better name?
+		if (this.addButton && !this.initialized) {
 			var button = this.getAddPrototypeButton(baseForm, name, {
 				width: param.calculatedWidth,
-				value: this.button,
-				add: true
+				value: this.addButton
 			});
 			baseForm.addButtons(button);
 			this.initialized = true;
-		}
-		if (this.chooser) {
-			baseForm.renderTemplate('listItem#chooser', {
-				name: name + '_chooser',
-				chooser: this.chooser
-			}, out);
 		}
 		var entries = [];
 		var ids = [];
 		var list = this.collection.list();
 		for (var i = 0; i < list.length; i++) {
 			var obj = list[i];
-			entries.push(this.renderEditForm(baseForm, name, obj, {
-				width: param.calculatedWidth,
-				add: true
+			entries.push(this.renderEntry(baseForm, name, obj, {
+				width: param.calculatedWidth
 			}));
 			ids.push(obj._id);
 		}
 		baseForm.renderTemplate('listItem#list', {
 			name: name,
+			addEntries: this.addEntries,
+			addHandler: this.addEntries && this.getAddPrototypeButton(baseForm, name, {
+				width: param.calculatedWidth
+			}).onClick,
+			chooser: this.chooser, // needs to come after getAddPrototypeButton!
 			entries: entries.join(''),
 			ids: ids
 		}, out);
@@ -974,15 +988,13 @@ EditableListItem = ListItem.extend({
 	},
 
 	apply: function(value) {
-		// Produce positions
-		var positions = value ? value.split(',').each(function(id, index) {
-			this[id] = index;
-		}, {}) : {};
 		var changed = false;
 		var name = this.getEditName();
 		// Scan through all values and group by id
 		var create = {};
 		var applied = {};
+		// Link ids to entries, also for newly created ones (n*)
+		var entries = {};
 		for (var key in req.data) {
 			if (key.startsWith(name)) {
 				var rest = key.substring(name.length + 1);
@@ -1014,7 +1026,7 @@ EditableListItem = ListItem.extend({
 								changed = form.applyItems() || changed;
 							// Set the object's visibility and position
 							var visible = Base.pick(req.data[prefix + 'hide'], 0) == 0;
-							changed = this.setPosition(obj, positions[id], visible) || changed;
+							entries[id] = { object: obj, visible: visible };
 						}
 					}
 				}
@@ -1045,12 +1057,18 @@ EditableListItem = ListItem.extend({
 					if (form) {
 						form.applyItems();
 						changed = this.store(obj) || changed;
-						// Set the object's position
-						changed = this.setPosition(obj, positions[id], true) || changed;
+						entries[id] = { object: obj, visible: true };
 					}
 				}
 			}
 		}
+		// Now set positions. It is important that this happens in proper sequence,
+		// in case we're modifying memory-only HopObjects through addAt...
+		(value || '').split(',').each(function(id, index) {
+			var entry = entries[id];
+			if (entry)
+				changed = this.setPosition(entry.object, index, entry.visible) || changed;
+		}, this);
 		return changed;
 	}
 });

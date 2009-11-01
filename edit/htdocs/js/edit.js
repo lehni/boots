@@ -82,13 +82,10 @@ EditForm = Base.extend({
 				'max-width': width
 			});
 		});
-		if (Browser.GECKO) {
-			// Fix weird Firefox resizing problem when dragging edit-list-entries
-			// TODO: Check again in future and remove if not needed any longer
-			$$('div.edit-list-entry', obj).each(function(entry) {
-				entry.setBounds(entry.getBounds());
-			});
-		}
+		// Initialize word counts
+		$$('textarea.edit-text-count', obj).each(function(text) {
+			this.handle('text_count', text);
+		}, this);
 	},
 
 	set: function(values) {
@@ -117,7 +114,7 @@ EditForm = Base.extend({
 	},
 
 	reportError: function(error) {
-		$('#edit-error-' + error.name, this.form).setHtml(error.message).removeClass('hidden');
+		$('#edit-label-' + error.name + ' > .edit-error', this.form).setHtml(error.message).removeClass('hidden');
 		this.setSelectedTab(error.tab);
 		var field = $('#' + error.name, this.form);
 		if (field && field.focus) {
@@ -664,7 +661,7 @@ EditForm.register({
 			if (!/_n\d*_/.test(item.getId()))
 				return true;
 		})) {
-			params.confirm = 'Do you really want to delte the marked entries?';
+			params.confirm = 'Do you really want to delete the marked entries?';
 		}
 		this.execute('apply', params);
 	},
@@ -690,6 +687,19 @@ EditForm.register({
 		}
 		if (val != orig)
 			item.setValue(val);
+	},
+
+	text_count: function(element) {
+		// TODO: Use special char for ponctuation?
+		var count = element.getValue().trim().split(/[\S.,:;!?-]*/g).length;
+		if (count)
+			count--;
+		var name = element.getId();
+		var label = $('#edit-label-' + name);
+		var element = $('.edit-count', label);
+		if (!element)
+			element = label.getFirst().injectAfter('div', { className: 'edit-count' });
+		element.setHtml(count + (count == 1 ? ' Word' : ' Words'));
 	},
 
 	help_toggle: function(element) {
@@ -730,12 +740,15 @@ EditForm.register(new function() {
 		select_new: function(element, name, prototypes, params) {
 			if (typeof prototypes == 'string') {
 				var str = $('#' + prototypes).getValue();
-				var id = element.getId().match(/(.*)_new$/)[1];
-				prototypes = Json.decode(str.replace(/<%entryId%>/g, id));
+				// name: listId_entryId_new
+				var match = name.match(/((.*)_(?:[^_]*))_new$/);
+				var entryId = match[1], listId = match[2];
+				prototypes = Json.decode(str.replace(
+					new RegExp('<%' + listId + '_entry_id%>', 'g'), entryId));
 			}
 			if (!prototypeChooser)
 				prototypeChooser = new PrototypeChooser();
-			prototypeChooser.choose(this, name, prototypes);
+			prototypeChooser.choose(this, name, prototypes, element);
 		},
 
 		select_edit: function(element, sels, params) {
@@ -991,52 +1004,75 @@ EditForm.register(new function() {
 });
 
 // list
+
 EditForm.register(new function() {
-	function updateEntry(form, id, toggle) {
-		var opacity = 1;
-		var entry = $('#edit-list-entry-' + id, form.form);
-		['remove', 'hide'].each(function(type) {
-			var obj = $('#' + id + '_' + type);
-			var value = obj.getValue().toInt();
-			if (toggle == type) {
-				value = value ? 0 : 1;
-				obj.setValue(value);
-			}
-			var overlay = $('#edit-list-' + type + '-' + id + ' .overlay');
-			overlay.modifyClass('hidden', !value);
-			if (value)
-				opacity = 0.5;
-		})
-		$('div.edit-list-background', entry).setOpacity(opacity);
+	function getList(form, name) {
+		if (typeof name == 'object')
+			return name;
+		var list =  $('#edit-list-' + name, form.form);
+		return {
+			name: name, element: list,
+			entries: $('.edit-list-entries', list)
+		};
 	}
 
-	function updateList(form, name) {
-		var list = $('#edit-list-' + name, form.form);
+	function getEntry(form, entry) {
+		return $('#edit-list-entry-' + entry, form.form);
+	}
+
+	function updateEntry(form, id, toggle) {
+		var opacity = 1;
+		var entry = getEntry(form, id);
+		['remove', 'hide'].each(function(type) {
+			var obj = $('#' + id + '_' + type);
+			if (obj) {
+				var value = obj.getValue().toInt();
+				if (toggle == type) {
+					value = value ? 0 : 1;
+					obj.setValue(value);
+				}
+				var overlay = $('#edit-list-' + type + '-' + id + ' .overlay');
+				overlay.modifyClass('hidden', !value);
+				if (value)
+					opacity = 0.5;
+			}
+		})
+		$('div.edit-list-entry-background', entry).setOpacity(opacity);
+	}
+
+	function updateList(form, list) {
+		var list = getList(form, list);
 		// Update ids list with the right sequence
-		var ids = list.getChildren().each(function(entry) {
+		var ids = list.entries.getChildren().each(function(entry) {
 			var id = entry.getId();
 			this.push(id.substring(id.lastIndexOf('_') + 1));
 		}, []);
-		$('#' + name, this.form).setValue(ids);
+		$('#' + list.name, this.form).setValue(ids);
 	}
 
 	return {
+		// TODO: Instead of passing names and using ids excessively, rely
+		// on the new element, class names and dom query functions, to produce
+		// shorter html.
 		list_add: function(element, name, html, entryId) {
-			var list = $('#edit-list-' + name, this.form);
-			list.counter = list.counter || 0;
-			var id = 'n' + list.counter++, obj;
+			var list = getList(this, name);
+			list.element.counter = list.element.counter || 0;
+			var id = 'n' + list.element.counter++, obj;
 			// Replace id placeholder with generated id, mark with 'n' for new
-			html = html.replace(/<%id%>/g, id);
-			var entry = entryId && $('#edit-list-entry-' + entryId, this.form);
+			html = html.replace(new RegExp('<%' + name + '_id%>', 'g'), id);
+			var entry = entryId && getEntry(this, entryId);
+			var top = list.element.hasClass('edit-list-insert-top');
 			if (entry) {
-				obj = entry.injectBefore(html);
+				// When inserting at the bottom, use the + buttons of entries
+				// to insert above them, to cover all gaps
+				obj = entry[top ? 'injectAfter' : 'injectBefore'](html);
 			} else {
-				obj = list.injectBottom(html);
+				obj = list.entries[top ? 'injectTop' : 'injectBottom'](html);
 			}
 			// Make sure this newly inserted html gets initalised, e.g. buttons,
 			// width, gecko workaround, etc.
 			this.setup(obj);
-			updateList(this, name);
+			updateList(this, list);
 			EditChooser.closeAll();
 		},
 
@@ -1051,16 +1087,16 @@ EditForm.register(new function() {
 
 		list_sort: function(element, name, id, event) {
 			var that = this;
-			var list = $('#edit-list-' + name, this.form);
-			var entries = list.getChildren();
-			var entry = $('#edit-list-entry-' + id, this.form);
+			var list = getList(this, name);
+			var entries = list.entries.getChildren();
+			var entry = getEntry(this, id);
 			var handle = $('#edit-list-handle-' + id, this.form);
 			if (!handle.draggable) {
 				var bounds, listBounds, dummy, position, opacity;
 				handle.addEvents({
 					dragstart: function(e) {
 						bounds = entry.getBounds(true);
-						listBounds = list.getBounds(true);
+						listBounds = list.entries.getBounds(true);
 						// Insert dummy of same size behind, to keep space
 						dummy = entry.injectAfter('div');
 						dummy.setSize(bounds);
@@ -1087,7 +1123,7 @@ EditForm.register(new function() {
 							height: null
 						});
 						entry.setOffset(0, 0);
-						updateList(that, name);
+						updateList(that, list);
 					},
 					drag: function(e) {
 						position += e.delta.y;
@@ -1127,6 +1163,8 @@ EditForm.register(new function() {
 EditChooser = Base.extend({
 	initialize: function(param) {
 		this.element = $('body').injectBottom('div', { className: 'edit-chooser' });
+		// Create link from dom object to chooser, as needed by PrototypeChooser
+		this.element.chooser = this;
 		this.content = this.element.injectBottom('div', {
 			html: param.html || '',
 			padding: param.padding || 0,
@@ -1205,6 +1243,10 @@ EditChooser = Base.extend({
 			this.choosers.each(function(chooser) {
 				chooser.close();
 			});
+		},
+
+		getChooser: function(element) {
+			return $(element).getParent('.edit-chooser').chooser;
 		}
 	}
 });
@@ -1222,10 +1264,22 @@ HtmlChooser = EditChooser.extend({
 });
 
 PrototypeChooser = HtmlChooser.extend({
-	choose: function(editForm, name, prototypes) {
-		this.base(editForm, name, '<ul>' + prototypes.map(function(proto) {
-				return '<li><a href="javascript:' + proto.href + '">' + proto.name + '</a></li>';
-			}).join('') + '</ul>');
+	choose: function(editForm, name, prototypes, target) {
+		this.prototypes = prototypes;
+		this.target = target;
+		if (prototypes.length == 1) {
+			// Call the href function directl on element, so 'this' is still right
+			this.handle(0);
+		} else {
+			this.base(editForm, name, '<ul>' + prototypes.map(function(proto, index) {
+					return '<li><a href="#" onclick="EditChooser.getChooser(this).handle('
+						+ index + '); return false;">' + proto.name + '</a></li>';
+				}).join('') + '</ul>');
+		}
+	},
+
+	handle: function(index) {
+		new Function(this.prototypes[index].handler).call(this.target);
 	}
 });
 

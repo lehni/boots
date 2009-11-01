@@ -1,7 +1,7 @@
 /* Use an id #edit for form here instead of a class, so css can be overridden in inline editors, even when other styles are forced through ids */
 
 #edit {
-	margin: 0px;
+	margin: 0;
 }
 
 #edit a {
@@ -96,11 +96,11 @@
 /* only change padding within the main edit form, not in the choosers -> use #edit */
 
 #edit .edit-footer .edit-buttons-left {
-	padding: 2px 0px 8px 8px;
+	padding: 2px 0 8px 8px;
 }
 
 #edit .edit-footer .edit-buttons-right {
-	padding: 2px 8px 8px 0px;
+	padding: 2px 8px 8px 0;
 }
 
 /* chooser */
@@ -185,7 +185,7 @@
 
 /* TODO: remove edit-spacer and handle like item spacer */
 #edit .edit-spacer {
-	height: 0px;
+	height: 0;
 }
 
 #edit .edit-ruler {
@@ -207,23 +207,46 @@
 	display: inline;
 }
 
+#edit .edit-error {
+	color: #ff3300;
+	display: inline;
+	margin-left: 4px;
+}
+
+#edit .edit-count {
+	display: inline;
+	margin-left: 4px;
+}
+
 #edit .edit-nounderline a {
 	border: none;
-	padding: 0px;
+	padding: 0;
 }
 
 /* edit lists */
 
-#edit .edit-list-separator {
-	height: 10px;
+.edit-list-buttons {
+	text-align: right;
+	height: 12px;
+	/* Needed to make mouse events work on ie when over a div, but it would break Safari, so use a css hack */
+	position: relative\9;
 }
 
 #edit .edit-list-header {
-	text-align: right;
-	height: 14px;
-	margin-bottom: -16px;
-	/* Needed to make mouse events work on ie when over a div, but it would break Safari, so use a css hack */
-	position: relative\9;
+	/* Undo some of the 8px separator */
+	margin-bottom: -4px;
+}
+
+#edit .edit-list-separator {
+	height: 8px;
+}
+
+#edit .edit-list-header .edit-list-buttons {
+	margin-top: -14px;
+}
+
+#edit .edit-list-entry .edit-list-buttons {
+	margin-bottom: -14px;
 }
 
 #edit .edit-list-handle {
@@ -231,7 +254,7 @@
 	width: 14px;
 	height: 12px;
 	margin-left: 4px;
-	background: url(/static/edit/media/handle.png);
+	background: url(/static/edit/media/list-handle.png);
 	cursor: row-resize;
 }
 
@@ -245,47 +268,32 @@
 	margin-left: 4px;
 }
 
-#edit .edit-list-remove {
-	background: url(/static/edit/media/remove.png);
-}
-
-#edit .edit-list-remove:hover {
+#edit .edit-list-button:hover {
 	background-position: 0 -12px; 
-}
-
-#edit .edit-list-remove .overlay {
-	background: url(/static/edit/media/remove-overlay.png);
 }
 
 #edit .edit-list-add {
-	float: right;
-	margin-top: -4px;
-	margin-right: -40px;
+	background: url(/static/edit/media/list-add.png);
+}
+
+#edit .edit-list-remove {
+	background: url(/static/edit/media/list-remove.png);
+}
+
+#edit .edit-list-remove .overlay {
+	background: url(/static/edit/media/list-remove-overlay.png);
 }
 
 #edit .edit-list-hide {
-	background: url(/static/edit/media/visible.png);
-}
-
-#edit .edit-list-hide:hover {
-	background-position: 0 -12px; 
+	background: url(/static/edit/media/list-visible.png);
 }
 
 #edit .edit-list-hide .overlay {
-	background: url(/static/edit/media/visible-overlay.png);
+	background: url(/static/edit/media/list-visible-overlay.png);
 }
 
-#edit .edit-list-entry.invisible .edit-list-background {
+#edit .edit-list-entry.invisible .edit-list-entry-background {
 	opacity: 0.5;
-}
-
-
-/* error */
-
-#edit .edit-error {
-	font-weight: normal;
-	color: #ff3300;
-	display: inline;
 }
 
 /* help */
@@ -315,7 +323,7 @@
 }
 
 #edit .tab-pane .tab a {
-	margin: 1px -9px 0px 8px;
+	margin: 1px -9px 0 8px;
 	padding: 1px 7px 3px 7px;
 	color: #000;
 	background: #f7f7f7;
@@ -329,7 +337,7 @@
 
 #edit .tab-pane .tab.selected a {
 	background: #fff;
-	margin: 0px -9px 0px 8px;
+	margin: 0 -9px 0 8px;
 	padding: 2px 7px 3px 7px;
 	z-index: 3;
 }
@@ -361,7 +369,7 @@
 /* icons */
 
 #edit .icon a {
-	border-bottom: 0px;
+	border-bottom: 0;
 }
 
 #edit .icon-small img {
@@ -369,6 +377,6 @@
 }
 
 #edit .icon-small a {
-	padding: 0px 2px 3px 0;
-	border-bottom: 0px;
+	padding: 0 2px 3px 0;
+	border-bottom: 0;
 }

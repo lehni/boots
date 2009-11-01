@@ -56,7 +56,7 @@ Function.inject({
 						app.log('Storing ' + beforeId + ', now: ' + this.getEditId());
 					}
 					if (onPersist)
-						onPersist.call(this);
+						onPersist.apply(this, arguments);
 				}
 				proto.onPersist._wrapped = true;
 			}

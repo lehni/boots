@@ -1,15 +1,29 @@
 <% #list -%>
-<div id="edit-list-<%= param.name %>" class="edit-list edit-nounderline">
-<%= param.entries %>
-</div>
+<div id="edit-list-<%= param.name %>" class="edit-list edit-nounderline<%= param.addEntries prefix=' edit-list-insert-' %>">
+<div class="edit-list-header">
+<% this.template '#addButton' id=param.name
+	if=<%= param.addHandler && param.addEntries == 'top' %>
+	prefix='<div class="edit-list-buttons">' suffix='</div>' %>
+<% if (param.chooser) %>
+<% input type="hidden" name=<%= param.chooser.name %> value=<% json singleQuotes="true" param.chooser.list %> -%>
+<% end %>
 <% input type="hidden" name=param.name value=param.ids %>
+</div>
+<div class="edit-list-entries"><%-%>
+<%= param.entries -%>
+</div>
+<div class="edit-list-footer">
+<% this.template '#addButton' id=param.name
+	if=<%= param.addHandler && param.addEntries == 'bottom' %>
+	prefix='<div class="edit-list-buttons">' suffix='</div>' %>
+</div>
+</div>
 
 <% #entry -%>
 <div id="edit-list-entry-<%= param.id %>" class="edit-list-entry<%= ' invisible' if=<%= param.hide == 1 %> %>">
-<%= param.add prefix='<div class="edit-list-add">' suffix='</div>' %>
 <div class="edit-list-separator"></div>
-<div class="edit-list-background">
-<div class="edit-list-header">
+<div class="edit-list-entry-background">
+<div class="edit-list-buttons">
 <% if (param.sortable) %>
 <a id="edit-list-handle-<%= param.id %>" class="edit-list-handle" href="#" onclick="return false" onmousedown="<% this.handle "list_sort" <%= param.name %> <%= param.id %> %>"></a><%-%>
 <% end %>
@@ -26,12 +40,14 @@
 <% input type="hidden" name=<%= param.id + '_remove' %> value=0 -%>
 <div class="overlay hidden"></div>
 </a><%-%>
+<% this.template '#addButton' if=param.addHandler %>
 </div>
-<table width="<%= param.width %>" class="edit-list-content">
+<table class="edit-list-content">
 <%= param.items %>
 </table>
 </div>
 </div>
 
-<% #chooser -%>
-<% input type="hidden" name=<%= param.name %> value=<% json singleQuotes="true" param.chooser %> -%>
+<% #addButton -%>
+<%-- id cannot be edit-list-add-ID, as select_new relies on ID_new... --%>
+<a id="<%= param.id %>_new" class="edit-list-button edit-list-add" href="#" onclick="<%= param.addHandler %> return false;"></a><%-%>

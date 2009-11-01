@@ -30,11 +30,11 @@
 <% if (param.label.spacer) %>
 <td></td>
 <% end %>
-<td<%= param.label.span prefix=" colspan=\"" suffix="\"" -%>>
+<td <%= param.label.name prefix='id="edit-label-' suffix='"' %><%= param.label.span prefix=' colspan="' suffix='"' -%>>
 <% if (param.label.label) %>
 <div class="edit-label"><%= param.label.label suffix=":" encoding="html" -%></div><%-%>
 <% end %>
 <% if (param.label.name) %>
-<div id="edit-error-<%= param.label.name %>" class="edit-error hidden"></div>
+<div class="edit-error hidden"></div>
 <% end %>
 </td>
