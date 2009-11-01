@@ -43,6 +43,8 @@ EditForm.LABEL_LEFT = false;
 // The width value to be used in tables. Can be in pecent, otherwise pixels.
 EditForm.WIDTH_TOTAL = "100%";
 EditForm.WIDTH_SPACER = "1%";
+// The amount the width gets reduced in each nesting of forms
+EditForm.WIDTH_PADDING = "2%";
 
 // Titles
 EditForm.TITLE_BACK = 'Back';

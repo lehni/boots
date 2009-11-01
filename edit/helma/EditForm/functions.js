@@ -284,9 +284,23 @@ EditForm.inject(new function() {
 		setWidth: function(width) {
 			this.width = parseFloat(width);
 			this.widthInPercent = /%$/.test(width);
-			this.spacerWidth = parseFloat(EditForm.WIDTH_SPACER);
-			if (/%$/.test(EditForm.WIDTH_SPACER))
-				this.spacerWidth = Math.round(100 * this.spacerWidth / this.width);
+			this.widthUnit = this.widthInPercent ? '%' : '';
+			this.spacerWidth = this.getConvertedWidth(EditForm.WIDTH_SPACER);
+			this.widthPadding = this.getConvertedWidth(EditForm.WIDTH_PADDING);
+		},
+
+		getConvertedWidth: function(value) {
+			var num = parseFloat(value);
+			return /%$/.test(value)
+				?  Math.round(100 * num / this.width)
+				: num;
+		},
+
+		getInnerWidth: function(width, padding) {
+			padding = padding === undefined
+				? this.widthPadding
+				: this.getConvertedWidth(padding);
+			return ((width || this.width) - padding) + this.widthUnit;
 		},
 
 		setParent: function(parent) {

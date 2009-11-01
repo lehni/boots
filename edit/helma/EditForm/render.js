@@ -15,7 +15,7 @@ EditForm.inject({
 
 				var param = {
 					action: base.href(EditForm.ACTION_EDIT),
-					width: this.width + (this.widthInPercent ? '%' : '')
+					width: this.width + this.widthUnit
 				};
 
 				var title = node.getTitle();
@@ -134,8 +134,7 @@ EditForm.inject({
 		str = encodeAttribute(str);
 		// Pass the element on which this handler is called and the form id to each call.
 		// Sequence: form, action, elment
-		str = "'" + this.id + "','"  + action + "',this," + str;
-		app.log(str);
+		str = "'" + this.id + "','"  + action + "',this" + (str ? ',' + str : '');
 		// Pass event object last, e.g. in case we need mouse position
 		// TODO: Try instead: arguments[0] && new DomEvent(arguments[0])
 		if (action == 'list_sort')
@@ -262,9 +261,7 @@ EditForm.inject({
 					if (/%$/.test(item.width))
 						width = this.width * width / 100.0;
 					availableWidth -= width;
-					if (this.widthInPercent)
-						width += '%';
-					definedWidths[i] = width;
+					definedWidths[i] = width + this.widthUnit;
 				} else {
 					autoLayoutCount++;
 				}
@@ -273,10 +270,8 @@ EditForm.inject({
 		// Now calculate the default item width for all the others that do not
 		// set item.width:
 		itemWidth = Math.floor((availableWidth - spacerWidth * (cellCount - 1)) / autoLayoutCount);
-		if (this.widthInPercent) {
-			itemWidth += '%';
-			spacerWidth += '%';
-		}
+		itemWidth += this.widthUnit;
+		spacerWidth += this.widthUnit;
 		out.push();
 		var firstItem = null;
 		var labels = [];
