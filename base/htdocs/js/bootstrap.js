@@ -838,6 +838,8 @@ Json = new function() {
 						val = Json.encode(val, singles);
 						if (val) return Json.encode(key, singles) + ':' + val;
 					}) + '}';
+				case 'function':
+					return null;
 				default:
 					return obj + '';
 			}
@@ -3151,7 +3153,9 @@ Request = Base.extend(Chain, Callback, new function() {
 			if (frame && frame.location != 'about:blank' && this.running) {
 				this.running = false;
 				var doc = (frame.contentDocument || frame.contentWindow || frame).document;
-				var text = doc && doc.body && (doc.body.textContent || doc.body.innerText || doc.body.innerHTML) || '';
+				var text = doc && (doc.getElementsByTagName('textarea')[0].value
+					|| doc.body && (doc.body.textContent || doc.body.innerText
+							|| doc.body.innerHTML)) || '';
 				var head = Browser.TRIDENT && doc.getElementsByTagName('head')[0];
 				text = (head && head.innerHTML || '') + text;
 				var div = this.frame.div;
