@@ -10,7 +10,7 @@ body {
 
 select, input, textarea {
 	font-size: 10px;
-	margin: 0px;
+	margin: 0;
 	color: #000;
 }
 
@@ -20,7 +20,7 @@ a {
 }
 
 form {
-	margin: 0px;
+	margin: 0;
 }
 
 img {
@@ -32,7 +32,7 @@ div {
 }
 
 p {
-	margin-top: 0px;
+	margin-top: 0;
 	margin-bottom: 17px;
 }
 

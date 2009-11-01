@@ -1,6 +1,6 @@
 .tab-pane {
 	position: relative;
-	margin: -2px -2px 0px -2px;
+	margin: -2px -2px 0 -2px;
 }
 
 .tab-pane .row {
@@ -26,7 +26,7 @@
 	border-bottom: 0;
 	z-index: 3;
 	padding: 1px 6px 3px 7px;
-	margin: 1px -3px -1px 0px;
+	margin: 1px -3px -1px 0;
 	top: -1px;
 }
 
@@ -37,7 +37,7 @@
 .tab-pane .title {
 	display: inline;
 	float: left;
-	padding: 0px 6px 0px 2px;
+	padding: 0 6px 0 2px;
 }
 
 .tab-pane .content {
@@ -47,6 +47,6 @@
 	background: #ddd;
 	z-index: 2;
 	position: relative;
-	top: 0px;
+	top: 0;
 	margin: 4px;
 }

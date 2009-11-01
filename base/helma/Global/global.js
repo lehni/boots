@@ -114,9 +114,9 @@ renderLink = function(param, out) {
 // Simple helper for debugging
 
 function print() {
-	var str = Array.create(arguments).join(' ');
+	var str = Array.join(arguments, ' ');
 	app.log(str);
-	res.write(str + '<br/>');
+	res.writeln(str + '<br/>');
 }
 
 function sleep(milliseconds) {
