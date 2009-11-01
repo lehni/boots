@@ -27,7 +27,7 @@ function script_macro(param) {
 }
 
 /* This clashes with the global link macro. TODO: Rename the link macro
- to something else, e.g.g anchor, a, etc.?
+ to something else, e.g.g href_macro, a, etc.?
 function link_macro(param) {
 	var lastModified = Net.getLastModified(param.href);
 	if (lastModified)

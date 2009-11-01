@@ -56,7 +56,9 @@ Resource.inject({
 	},
 
 	getEditForm: function(param) {
-		var form = new EditForm(this, { removable: true });
+		var form = new EditForm(this, {
+			removable: true, width: param.width
+		});
 		if (param.name === undefined)
 			param.name = false;
 		if (param.file === undefined)

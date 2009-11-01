@@ -183,11 +183,6 @@
 	padding: 8px;
 }
 
-/* TODO: remove edit-spacer and handle like item spacer */
-#edit .edit-spacer {
-	height: 0;
-}
-
 #edit .edit-ruler {
 	margin: 6px -8px 2px -8px;
 	border-bottom: 1px dotted #999;

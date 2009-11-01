@@ -264,7 +264,7 @@ EditForm.inject(new function() {
 			this.object = object;
 			// the default variablePrefix for root edit forms.
 			this.variablePrefix = param.variablePrefix || 'value_';
-
+			// Copy over all values from param
 			for (var i in param)
 				this[i] = param[i];
 			// The titles object for button titles
@@ -278,7 +278,7 @@ EditForm.inject(new function() {
 			this.allGroups = {};
 			// the width of the table, defaults to 100 percent, but can
 			// be specified in pixels too
-			this.setWidth(EditForm.WIDTH_TOTAL);
+			this.setWidth(param.width || EditForm.WIDTH_TOTAL);
 		},
 
 		setWidth: function(width) {
@@ -301,6 +301,10 @@ EditForm.inject(new function() {
 				? this.widthPadding
 				: this.getConvertedWidth(padding);
 			return ((width || this.width) - padding) + this.widthUnit;
+		},
+
+		getWidth: function() {
+			return this.width;
 		},
 
 		setParent: function(parent) {

@@ -272,9 +272,9 @@ EditForm.inject({
 		itemWidth = Math.floor((availableWidth - spacerWidth * (cellCount - 1)) / autoLayoutCount);
 		itemWidth += this.widthUnit;
 		spacerWidth += this.widthUnit;
-		out.push();
-		var firstItem = null;
+		var items = [];
 		var labels = [];
+		var hasLabels = false;
 		for (var i = 0; i < row.length; i++) {
 			var item = row[i];
 			// If there's an array of items to merge, just look at the first one
@@ -282,12 +282,10 @@ EditForm.inject({
 			if (item instanceof Array)
 				item = item[0];
 			if (item.type != 'hidden') {
-				if (!firstItem)
-					firstItem = item;
 				var definedWidth = definedWidths[i];
 				var param = {
 					name: item.getEditName(),
-					label: !EditForm.LABEL_LEFT ? item.label : null,
+					label: item.label,
 					span: item.span ? item.span : rowSpan, align: item.align,
 					spacer: i > 0, spacerWidth: spacerWidth,
 					width: definedWidth, calculatedWidth: definedWidth || itemWidth,
@@ -295,11 +293,13 @@ EditForm.inject({
 					// or if it defines a width
 					scaleToFit: item.scaleToFit || definedWidth != null
 				}
+				if (item.label)
+					hasLabels = true;
 				// Don't use item here, as it might have been overriden above
 				// for the cell settings when arrays are passed, use row[i]
 				// pass param to renderItem so EditItems can access calculatedWidth
 				param.item = this.renderItem(baseForm, row[i], param);
-				baseForm.renderTemplate('item#item', param, out);
+				items.push(baseForm.renderTemplate('item#item', param));
 				// Collect the param here, so they can be used in itemRow
 				// bellow, for rendering the labels. It is optional to use this
 				// in itemRow.jstl. Labels can also be directly rendered in item.jstl
@@ -307,17 +307,15 @@ EditForm.inject({
 				labels.push(param);
 			}
 		}
-		var items = out.pop();
 		// At least one item needs to be rendered
-		if  (firstItem) {
+		if  (items.length > 0) {
 			baseForm.renderTemplate('item#row', {
-				label: EditForm.LABEL_LEFT ? firstItem.label ?
-					firstItem.label + ':' : ' ' : null,
-				labels: labels,
+				labels: hasLabels ? labels : null,
+				firstLabel: labels[0], // for EditForm.LABEL_LEFT
 				items: items,
 				index: index
 				// TODO: Fix this
-				// addEmptyCell: firstItem.width != null
+				// addEmptyCell: labels[0].width != null
 			}, out);
 		}
 	}.toRender(),

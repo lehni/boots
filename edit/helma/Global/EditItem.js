@@ -80,9 +80,9 @@ EditItem = Base.extend(new function() {
 
 		setValue: function(value) {
 			if (this.evaluate) {
-				// evaluate string variable to the content of value:
+				// Evaluate string variable to the content of value:
 				try {
-					new Function(this.evaluate + ' = value;').call(this.form.object);
+					new Function('value', this.evaluate + ' = value;').call(this.form.object, value);
 					return true;
 				} catch (e) {
 					User.logError('EditItem#setValue(): ' + this.evaluate, e);
@@ -211,7 +211,6 @@ StringItem = EditItem.extend(new function() {
 
 		renderLinkButtons: function(baseForm, name, out) {
 			return baseForm.renderTemplate('button#buttons', {
-				spacer: true,
 				buttons: baseForm.renderButtons([{
 					name: name + '_link',
 					value: 'Internal Link',
@@ -516,9 +515,6 @@ SelectItem = ListItem.extend({
 		Html.select(select, out);
 		if (editButtons)
 			baseForm.renderTemplate('button#buttons', {
-				// For multi line items, add the buttons bellow,
-				// for pulldown, add them to the right
-				spacer: this.size,
 				buttons: editButtons
 			}, out);
 	},
@@ -889,7 +885,10 @@ EditableListItem = ListItem.extend({
 		if (id == null)
 			id = object._id;
 		form.entryId = id;
-		form.setWidth(this.form.getInnerWidth(width, this.padding));
+		// Only shrink if it does not fit. It might be the user has already
+		// taken care of it.
+		if (form.getWidth() >= width)
+			form.setWidth(this.form.getInnerWidth(width, this.padding));
 		form.variablePrefix = this.getEditName() + '_' + id + '_';
 		return form;
 	},

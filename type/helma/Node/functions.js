@@ -2,7 +2,8 @@ Node.inject({
 	getEditForm: function(param) {
 		var form = new EditForm(this, {
 			removable: Base.pick(param.removable, true),
-			previewable: Base.pick(param.previewable, true)
+			previewable: Base.pick(param.previewable, true),
+			width: param.width
 		});
 		if (param.children === undefined)
 			param.children = true;

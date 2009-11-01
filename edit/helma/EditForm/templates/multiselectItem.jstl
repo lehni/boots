@@ -33,7 +33,6 @@
 	</tr>
 	<tr>
 		<td colspan="2">
-			<div class="edit-spacer"></div>
 			<div class="edit-buttons-left"><% if (param.sortable) %><img src="/static/edit/media/spacer.gif" width="15" height="1"><% end %><%= param.buttons %></div>
 		</td>
 	</tr>

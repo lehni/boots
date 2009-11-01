@@ -1,5 +1,5 @@
 User.inject({
-	getEditForm: function() {
+	getEditForm: function(param) {
 		var isAdmin = User.hasRole(UserRole.ADMIN);
 		var isSuperuser = User.hasRole(UserRole.ROOT);
 		var editSuperuser = this.hasRole(UserRole.ROOT);

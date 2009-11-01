@@ -10,31 +10,35 @@
 </td>
 
 <% #row %>
-<% if (param.index > 0) %>
-<tr><td class="edit-spacer"></td></tr>
+<%-- Label row above the items --%>
+<% if (!EditForm.LABEL_LEFT) %>
+<% this.template '#labels' prefix='<tr>' suffix='</tr>' labels=param.labels %>
 <% end %>
 <tr>
-<%= param.label prefix="<td nowrap class=\"edit-label\">" suffix="</td>" encoding="html" %>
-<tr>
-<% foreach ($label in param.labels) %>
-	<% this.template "#label" label=$label %>
+<%-- Label to the left of the item --%>
+<% if (EditForm.LABEL_LEFT) %>
+<% this.template '#label' param=param.firstLabel %>
 <% end %>
-</tr>
-<%= param.items %>
+<%= param.items.join('') %>
 <% if (param.addEmptyCell) %>
 <td width="100%"></td>
 <% end %>
 </tr>
 
-<% #label %>
-<% if (param.label.spacer) %>
+<% #label -%>
+<% if (param.spacer) %>
 <td></td>
 <% end %>
-<td <%= param.label.name prefix='id="edit-label-' suffix='"' %><%= param.label.span prefix=' colspan="' suffix='"' -%>>
-<% if (param.label.label) %>
-<div class="edit-label"><%= param.label.label suffix=":" encoding="html" -%></div><%-%>
+<td <%= param.name prefix='id="edit-label-' suffix='"' %> class="edit-label-cell" <%= param.span prefix=' colspan="' suffix='"' -%>>
+<% if (param.label) %>
+<div class="edit-label"><%= param.label suffix=":" encoding="html" -%></div><%-%>
 <% end %>
-<% if (param.label.name) %>
+<% if (param.name) %>
 <div class="edit-error hidden"></div>
 <% end %>
 </td>
+
+<% #labels -%>
+<% foreach ($label in param.labels) %>
+	<% this.template '#label' param=$label %>
+<% end %>

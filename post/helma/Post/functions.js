@@ -12,10 +12,11 @@ Post.inject({
 		return this.getEditParent(this.node);
 	},
 
-	getEditForm: function() {
+	getEditForm: function(param) {
 		var node = this.getNode();
 		var form = new EditForm(this, {
-			previewable: false, removable: true, showTitle: false, titles: { create: 'Post' }
+			previewable: false, removable: true, showTitle: false,
+			titles: { create: 'Post' }, width: param.width
 		});
 		var notifyItem = {
 			type: 'boolean', name: 'notify', value: !!this.getNotification(),
