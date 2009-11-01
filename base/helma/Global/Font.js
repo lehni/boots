@@ -179,26 +179,24 @@ Font = Base.extend({
 	 * if a single word is wider then maxWidth, it will break on a character.
 	 */
 	breakIntoLines: function(text, maxWidth) {
-		var lines =[];
+		var that = this;
 		// Split at linebreaks first
-		text.split(/\r\n|\n|\r/mg).each(function(line) {
-			var more = true;
-			while (more) {
-				var desc = this.processGlyphLine(line, maxWidth);
+		return text.split(/\r\n|\n|\r/mg).each(function(line) {
+			while (line != null) {
+				var desc = that.processGlyphLine(line, maxWidth);
 				if (desc && desc.text.length < line.length) {
 					var part = desc.text;
-					var lastSpace = part.lastIndexOf(' ') + 1;
-					if(lastSpace)
-						part = part.substring(0, lastSpace - 1);
-					lines.push(part);
-					line = line.substring(part.length + 1);
+					var pos = part.lastIndexOf(' ');
+					if(pos > 0)
+						part = part.substring(0, pos);
+					this.push(part);
+					line = line.substring(part.length) || null;
 				} else {
-					lines.push(desc.text);
-					more = false;
+					this.push(desc.text);
+					line = null;
 				}
 			}
-		}, this);
-		return lines;
+		}, []);
 	},
 
 	/**
