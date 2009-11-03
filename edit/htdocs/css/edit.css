@@ -220,6 +220,15 @@
 
 /* edit lists */
 
+#edit .edit-list-separator {
+	height: 8px;
+}
+
+#edit .edit-list-header {
+	/* Undo the 8px separator */
+	margin-bottom: -8px;
+}
+
 .edit-list-buttons {
 	text-align: right;
 	height: 12px;
@@ -227,21 +236,12 @@
 	position: relative\9;
 }
 
-#edit .edit-list-header {
-	/* Undo some of the 8px separator */
-	margin-bottom: -4px;
-}
-
-#edit .edit-list-separator {
-	height: 8px;
-}
-
 #edit .edit-list-header .edit-list-buttons {
 	margin-top: -14px;
 }
 
 #edit .edit-list-entry .edit-list-buttons {
-	margin-bottom: -14px;
+	margin: 2px 0 -14px 0;
 }
 
 #edit .edit-list-handle {
