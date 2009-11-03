@@ -37,15 +37,23 @@ ObjectWrapper = new function() {
 				var unwrappedObj = toJava(obj);
 				// unwrappedObj is not always the same as javaObj, e.g. HopObject VS Node
 				var hash = javaObj.hashCode();
+				// Store dontUnwrap values per thread, for thread savety!
+				if (!thread.data.dontUnwrap)
+					thread.data.dontUnwrap = {};
+				// Make sure this returned adapter makes it through the
+				// JavaAdapter auto-unwrap mechanism.
+				if (dontUnwrap) {
+					thread.data.dontUnwrap[hash] = true;
+				} else {
+					// Delete instead of setting to false, in order to not occupy too much memory.
+					delete thread.data.dontUnwrap[hash];
+				}
 				// TODO: Implement some sort of cache rotation, otherwise this will 
 				// potentiall grow endlessly...
 				// Or use Scriptographer's WeakIdentityHashMap and WeakReferences.
 				var adapter = adapters[hash];
 				if (adapter) {
 					// app.log('Reusing cached adapter: ' + adapter + ' @' + hash.toPaddedString(4, 16));
-					// Make sure this returned adapter makes it again through the
-					// JavaAdapter auto-unwrap mechanism.
-					adapter.dontUnwrap = dontUnwrap;
 					return adapter.object;
 				}
 				// Common fields among the different implementations.
@@ -85,9 +93,8 @@ ObjectWrapper = new function() {
 					unwrap: function() {
 						// Do not unwrap the first time unwrap is called 
 						// if dontUnwrap is set. See 'get' for an explanation.
-						var entry = adapters[hash];
-						if (entry.dontUnwrap) {
-							entry.dontUnwrap = false;
+						if (thread.data.dontUnwrap[hash]) {
+							delete thread.data.dontUnwrap[hash];
 							return this;
 						}
 						return unwrappedObj;
@@ -207,10 +214,7 @@ ObjectWrapper = new function() {
 
 					adapter = new JavaAdapter(ScriptableObject, Wrapper, fields);
 				}
-				adapters[hash] = {
-					object: adapter,
-					dontUnwrap: dontUnwrap 
-				};
+				adapters[hash] = adapter;
 				return adapter;
 			} else {
 				// Basic types, no wrapping needed to detect change
