@@ -78,7 +78,7 @@ MarkupTag = Base.extend(new function() {
 	// and the method collects different information, see bellow.
 	function parseDefinition(str, collectAttributes) {
 		var name = null, list = [], attribute = null, attributes = {};
-		for (var match; match = /(\w+)=|("(?:[^"\\]*(?:\\"|\\)?)*")|(\S+)/g.exec(str);) {
+		for (var match; match = /(\w+)=|("(?:[^"\\]*(?:\\"|\\|(?="))+)*")|(\S+)/g.exec(str);) {
 			if (match[1]) { // attribute name
 				attribute = match[1];
 			} else { // string or value
