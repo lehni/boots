@@ -626,6 +626,33 @@ Array.inject(new function() {
 
 $A = Array.create;
 
+Number.inject({
+	_type: 'number',
+
+	limit: function(min, max){
+		return Math.min(max, Math.max(min, this));
+	},
+
+	times: function(func, bind) {
+		for (var i = 0; i < this; ++i)
+			func.call(bind, i);
+		return bind || this;
+	},
+
+	toInt: function(base) {
+		return parseInt(this, base || 10);
+	},
+
+	toFloat: function() {
+		return parseFloat(this);
+	},
+
+	toPaddedString: function(length, base, prefix) {
+		var str = this.toString(base || 10);
+		return (prefix || '0').times(length - str.length) + str;
+	}
+});
+
 String.inject({
 	_type: 'string',
 
@@ -637,13 +664,9 @@ String.inject({
 		return this ? this.split(/\s+/) : [];
 	},
 
-	toInt: function(base) {
-		return parseInt(this, base || 10);
-	},
+	toInt: Number.prototype.toInt,
 
-	toFloat: function() {
-		return parseFloat(this);
-	},
+	toFloat: Number.prototype.toFloat,
 
 	camelize: function(separator) {
 		return this.replace(separator ? new RegExp('[' + separator + '](\\w)', 'g') : /-(\w)/g, function(all, chr) {
@@ -681,8 +704,8 @@ String.inject({
 		return this.replace(/\s{2,}/g, ' ').trim();
 	},
 
-	contains: function(string, s) {
-		return (s ? (s + this + s).indexOf(s + string + s) : this.indexOf(string)) != -1;
+	contains: function(string, sep) {
+		return (sep ? (sep + this + sep).indexOf(sep + string + sep) : this.indexOf(string)) != -1;
 	},
 
 	times: function(count) {
@@ -691,25 +714,6 @@ String.inject({
 
 	isHtml: function() {
 		return /^[^<]*(<(.|\s)+>)[^>]*$/.test(this);
-	}
-});
-
-Number.inject({
-	_type: 'number',
-
-	toInt: String.prototype.toInt,
-
-	toFloat: String.prototype.toFloat,
-
-	times: function(func, bind) {
-		for (var i = 0; i < this; ++i)
-			func.call(bind, i);
-		return bind || this;
-	},
-
-	toPaddedString: function(length, base, prefix) {
-		var str = this.toString(base || 10);
-		return (prefix || '0').times(length - str.length) + str;
 	}
 });
 
@@ -900,13 +904,13 @@ Browser = new function() {
 	return ret;
 };
 
-DomElements = Array.extend(new function() {
+DomNodes = Array.extend(new function() {
 	var unique = 0;
 	return {
-		initialize: function(elements) {
+		initialize: function(nodes) {
 			this._unique = unique++;
-			this.append(elements && elements.length != null && !elements.nodeType
-				? elements : arguments);
+			this.append(nodes && nodes.length != null && !nodes.nodeType
+				? nodes : arguments);
 		},
 
 		push: function() {
@@ -917,7 +921,7 @@ DomElements = Array.extend(new function() {
 		append: function(items) {
 			for (var i = 0, l = items.length; i < l; ++i) {
 				var el = items[i];
-				if ((el = el && (el._wrapper || DomElement.wrap(el))) && el._unique != this._unique) {
+				if ((el = el && (el._wrapper || DomNode.wrap(el))) && el._unique != this._unique) {
 					el._unique = this._unique;
 					this[this.length++] = el;
 				}
@@ -925,7 +929,7 @@ DomElements = Array.extend(new function() {
 			return this;
 		},
 
-		toElement: function() {
+		toNode: function() {
 			return this;
 		},
 
@@ -935,15 +939,17 @@ DomElements = Array.extend(new function() {
 				this.base(Base.each(src || {}, function(val, key) {
 					if (typeof val == 'function') {
 						var func = val, prev = proto[key];
-						var count = func.getParameters().length, prevCount = prev && prev.getParameters().length;
+						var count = func.getParameters().length,
+							prevCount = prev && prev.getParameters().length;
 						val = function() {
 							var args = arguments, values;
-							if (prev && args.length == prevCount || (args.length > count && args.length <= prevCount))
+							if (prev && args.length == prevCount
+								|| (args.length > count && args.length <= prevCount))
 								return prev.apply(this, args);
 							this.each(function(obj) {
 								var ret = (obj[key] || func).apply(obj, args);
 								if (ret !== undefined && ret != obj) {
-									values = values || (/^(element|textnode)$/.test(Base.type(ret))
+									values = values || (DomNode.isNode(ret)
 										? new obj._collection() : []);
 									values.push(ret);
 								}
@@ -961,13 +967,13 @@ DomElements = Array.extend(new function() {
 	};
 });
 
-DomElement = Base.extend(new function() {
-	var elements = [];
+DomNode = Base.extend(new function() {
+	var nodes = [];
 	var tags = {}, classes = {}, classCheck, unique = 0;
 
 	function dispose(force) {
-		for (var i = elements.length - 1; i >= 0; i--) {
-			var el = elements[i];
+		for (var i = nodes.length - 1; i >= 0; i--) {
+			var el = nodes[i];
 			if (force || (!el || el != window && el != document &&
 				(!el.parentNode || !el.offsetParent))) {
 				if (el) {
@@ -975,7 +981,7 @@ DomElement = Base.extend(new function() {
 					if (obj && obj.finalize) obj.finalize();
 					el._wrapper = el._unique = null;
 				}
-				if (!force) elements.splice(i, 1);
+				if (!force) nodes.splice(i, 1);
 			}
 		}
 	}
@@ -1010,16 +1016,18 @@ DomElement = Base.extend(new function() {
 		return classCheck && el.className && (match = el.className.match(classCheck)) && match[2] && classes[match[2]] ||
 			el.tagName && tags[el.tagName] ||
 			el.className !== undefined && HtmlElement ||
+			el.nodeType == 1 && DomElement ||
+
 			el.nodeType == 9 && (el.documentElement.nodeName.toLowerCase() == 'html' && HtmlDocument || DomDocument) ||
 			el.location && el.frames && el.history && DomWindow ||
-			DomElement;
+			DomNode;
 	}
 
 	var dont = {};
 
 	return {
-		_type: 'element',
-		_collection: DomElements,
+		_type: 'node',
+		_collection: DomNodes,
 		_initialize: true,
 
 		initialize: function(el, props, doc) {
@@ -1043,7 +1051,7 @@ DomElement = Base.extend(new function() {
 			this.$ = el;
 			try {
 				el._wrapper = this;
-				elements[elements.length] = el;
+				nodes[nodes.length] = el;
 			} catch (e) {} 
 			if (props) this.set(props);
 		},
@@ -1082,7 +1090,8 @@ DomElement = Base.extend(new function() {
 					init.apply(this, arguments);
 				}
 				inject.call(ret, src);
-				ret.inject = inject;
+				if (ret.prototype._collection == this.prototype._collection)
+					ret.inject = inject;
 				if (src) {
 					if (src._tag)
 						tags[src._tag.toLowerCase()] = tags[src._tag.toUpperCase()] = ret;
@@ -1100,7 +1109,7 @@ DomElement = Base.extend(new function() {
 			},
 
 			wrap: function(el) {
-				return el ? typeof el == 'string'
+				return el ? typeof el == 'string' 
 					? DomElement.get(el)
 					: el._wrapper || el._collection && el || new (getConstructor(el))(el, dont)
 						: null;
@@ -1110,46 +1119,16 @@ DomElement = Base.extend(new function() {
 				return el && el.$ || el;
 			},
 
-			get: function(selector, root) {
-				return (root && DomElement.wrap(root) || Browser.document).getElement(selector);
-			},
-
-			getAll: function(selector, root) {
-				return (root && DomElement.wrap(root) || Browser.document).getElements(selector);
-			},
-
-			create: function(tag, props, doc) {
-				if (Browser.TRIDENT && props) {
-					['name', 'type', 'checked'].each(function(key) {
-						if (props[key]) {
-							tag += ' ' + key + '="' + props[key] + '"';
-							if (key != 'checked')
-								delete props[key];
-						}
-					});
-					tag = '<' + tag + '>';
-				}
-				return (DomElement.unwrap(doc) || document).createElement(tag);
-			},
-
-			collect: function(el) {
-				elements.push(el);
-			},
-
 			unique: function(el) {
 				if (!el._unique) {
-					DomElement.collect(el);
+					nodes.push(el);
 					el._unique = ++unique;
 				}
 			},
 
-			isAncestor: function(el, parent) {
-				return !el ? false : el.ownerDocument == parent ? true
-					: Browser.WEBKIT && Browser.VERSION < 420
-						? Array.contains(parent.getElementsByTagName(el.tagName), el)
-						: parent.contains 
-							? parent != el && parent.contains(el)
-							: !!(parent.compareDocumentPosition(el) & 16)
+			isNode: function(obj) {
+				return /^(element|node|textnode|document)$/.test(
+					typeof obj == 'string' ? obj : Base.type(obj));
 			},
 
 			dispose: function() {
@@ -1159,10 +1138,7 @@ DomElement = Base.extend(new function() {
 	}
 });
 
-$ = DomElement.get;
-$$ = DomElement.getAll;
-
-DomElement.inject(new function() {
+DomNode.inject(new function() {
 	var bools = ['compact', 'nowrap', 'ismap', 'declare', 'noshade', 'checked',
 		'disabled', 'readonly', 'multiple', 'selected', 'noresize', 'defer'
 	].associate();
@@ -1176,7 +1152,6 @@ DomElement.inject(new function() {
 	].associate(function(name) {
 		return name.toLowerCase();
 	}), bools);
-	var clones = { input: 'checked', option: 'selected', textarea: Browser.WEBKIT && Browser.VERSION < 420 ? 'innerHTML' : 'value' };
 
 	function handle(that, prefix, name, value) {
 		var ctor = that.__proto__.constructor;
@@ -1189,25 +1164,12 @@ DomElement.inject(new function() {
 		else return that[prefix + 'Property'](name, value);
 	}
 
-	function walk(el, walk, start, match, all) {
-		var elements = all && new el._collection();
-		el = el.$[start || walk];
-		while (el) {
-			if (el.nodeType == 1 && (!match || DomElement.match(el, match))) {
-				if (!all) return DomElement.wrap(el);
-				elements.push(el);
-			}
-			el = el[walk];
-		}
-		return elements;
-	}
-
-	function toElements(elements) {
+	function toNodes(elements) {
 		var els = Base.type(elements) == 'array' ? elements : Array.create(arguments);
 		var created = els.find(function(el) {
-			return !/^(element|textnode)$/.test(Base.type(el));
+			return !DomNode.isNode(el);
 		});
-		var result = els.toElement(this.getDocument());
+		var result = els.toNode(this.getDocument());
 		return {
 			array: result ? (Base.type(result) == 'array' ? result : [result]) : [],
 			result: created && result
@@ -1232,72 +1194,24 @@ DomElement.inject(new function() {
 			return handle(this, 'get', name);
 		},
 
-		getTag: function() {
-			return (this.$.tagName || '').toLowerCase();
-		},
-
-		getId: function() {
-			return this.$.id;
-		},
-
 		getDocument: function() {
-			return DomElement.wrap(this.$.ownerDocument);
+			return DomNode.wrap(this.$.ownerDocument);
 		},
 
 		getWindow: function() {
 			return this.getDocument().getWindow();
 		},
 
-		getPrevious: function(match) {
-			return walk(this, 'previousSibling', null, match);
+		getPreviousNode: function() {
+			return DomNode.wrap(this.$.previousSibling);
 		},
 
-		getAllPrevious: function(match) {
-			return walk(this, 'previousSibling', null, match, true);
+		getNextNode: function() {
+			return DomNode.wrap(this.$.nextSibling);
 		},
 
-		getNext: function(match) {
-			return walk(this, 'nextSibling', null, match);
-		},
-
-		getAllNext: function(match) {
-			return walk(this, 'nextSibling', null, match, true);
-		},
-
-		getFirst: function(match) {
-			return walk(this, 'nextSibling', 'firstChild', match);
-		},
-
-		getLast: function(match) {
-			return walk(this, 'previousSibling', 'lastChild', match);
-		},
-
-		hasChild: function(match) {
-			return /^(element|textnode)$/.test(Base.type(match))
-				? DomElement.isAncestor(DomElement.unwrap(match), this.$)
-				: !!this.getFirst(match);
-		},
-
-		getParent: function(match) {
-			return walk(this, 'parentNode', null, match);
-		},
-
-		getParents: function(match) {
-			return walk(this, 'parentNode', null, match, true);
-		},
-
-		hasParent: function(match) {
-			return /^(element|textnode)$/.test(Base.type(match))
-				? DomElement.isAncestor(this.$, DomElement.unwrap(match))
-				: !!this.getParent(match);
-		},
-
-		getChildren: function(match) {
-			return walk(this, 'nextSibling', 'firstChild', match, true);
-		},
-
-		hasChildren: function(match) {
-			return !!this.getChildren(match).length;
+		getParentNode: function(match) {
+			return DomNode.wrap(this.$.parentNode);
 		},
 
 		getChildNodes: function() {
@@ -1309,7 +1223,7 @@ DomElement.inject(new function() {
 		},
 
 		appendChild: function(el) {
-			if (el = DomElement.wrap(el)) {
+			if (el = DomNode.wrap(el)) {
 				var text = Browser.TRIDENT && el.$.text;
 				if (text) el.$.text = '';
 				this.$.appendChild(el.$);
@@ -1320,7 +1234,7 @@ DomElement.inject(new function() {
 
 		appendChildren: function() {
 			return Array.flatten(arguments).each(function(el) {
-				this.appendChild($(DomElement.wrap(el)));
+				this.appendChild($(DomNode.wrap(el)));
 			}, this);
 		},
 
@@ -1332,16 +1246,6 @@ DomElement.inject(new function() {
 			return this.injectTop(this.getDocument().createTextNode(text));
 		},
 
-		wrap: function() {
-			var el = this.injectBefore.apply(this, arguments), last;
-			do {
-				last = el;
-				el = el.getFirst();
-			} while(el);
-			last.appendChild(this);
-			return last;
-		},
-
 		remove: function() {
 			if (this.$.parentNode)
 				this.$.parentNode.removeChild(this.$);
@@ -1349,7 +1253,7 @@ DomElement.inject(new function() {
 		},
 
 		removeChild: function(el) {
-			el = DomElement.wrap(el);
+			el = DomNode.wrap(el);
 			this.$.removeChild(el.$);
 			return el;
 		},
@@ -1362,7 +1266,7 @@ DomElement.inject(new function() {
 
 		replaceWith: function(el) {
 			if (this.$.parentNode) {
-				el = toElements.apply(this, arguments);
+				el = toNodes.apply(this, arguments);
 				var els = el.array;
 				if (els.length > 0)
 					this.$.parentNode.replaceChild(els[0].$, this.$);
@@ -1374,26 +1278,7 @@ DomElement.inject(new function() {
 		},
 
 		clone: function(contents) {
-			var clone = this.$.cloneNode(!!contents);
-			function clean(left, right) {
-				if (Browser.TRIDENT) {
-					left.clearAttributes();
-					left.mergeAttributes(right);
-					left.removeAttribute('_wrapper');
-					left.removeAttribute('_unique');
-					if (left.options)
-						for (var l = left.options, r = right.options, i = l.length; i--;)
-							l[i].selected = r[i].selected;
-				}
-				var name = clones[right.tagName.toLowerCase()];
-				if (name && right[name])
-					left[name] = right[name];
-			}
-			if (contents)
-				for (var l = clone.getElementsByTagName('*'), r = this.$.getElementsByTagName('*'), i = l.length; i--;)
-					clean(l[i], r[i]);
-			clean(clone, this.$);
-			return DomElement.wrap(clone);
+			return DomNode.wrap(this.$.cloneNode(!!contents));
 		},
 
 		getProperty: function(name) {
@@ -1433,13 +1318,12 @@ DomElement.inject(new function() {
 			return Base.each(arguments, this.removeProperty, this);
 		},
 
-		toString: function() {
-			return (this.$.tagName || this._type).toLowerCase() +
-				(this.$.id ? '#' + this.$.id : '');
+		getText: function() {
+			return this.getProperty('text');
 		},
 
-		toElement: function() {
-			return this;
+		setText: function(text) {
+			return this.setProperty('text', text);
 		}
 	};
 
@@ -1480,14 +1364,14 @@ DomElement.inject(new function() {
 	Base.each(inserters, function(inserter, name) {
 		var part = name.capitalize();
 		fields['insert' + part] = function(el) {
-			el = toElements.apply(this, arguments);
+			el = toNodes.apply(this, arguments);
 			for (var i = 0, list = el.array, l = list.length; i < l; i++)
 				inserter(i == 0 ? this : this.clone(true), list[i]);
 			return el.result || this;
 		}
 
 		fields['inject' + part] = function(el) {
-			el = toElements.apply(this, arguments);
+			el = toNodes.apply(this, arguments);
 			for (var i = 0, list = el.array, l = list.length; i < l; i++)
 				inserter(list[i], this);
 			return el.result || this;
@@ -1495,6 +1379,175 @@ DomElement.inject(new function() {
 	});
 
 	return fields;
+});
+
+DomElements = DomNodes.extend();
+
+DomElement = DomNode.extend({
+	_type: 'element',
+	_collection: DomElements,
+
+	statics: {
+		get: function(selector, root) {
+			return (root && DomNode.wrap(root) || Browser.document).getElement(selector);
+		},
+
+		getAll: function(selector, root) {
+			return (root && DomNode.wrap(root) || Browser.document).getElements(selector);
+		},
+
+		create: function(tag, props, doc) {
+			if (Browser.TRIDENT && props) {
+				['name', 'type', 'checked'].each(function(key) {
+					if (props[key]) {
+						tag += ' ' + key + '="' + props[key] + '"';
+						if (key != 'checked')
+							delete props[key];
+					}
+				});
+				tag = '<' + tag + '>';
+			}
+			return (DomElement.unwrap(doc) || document).createElement(tag);
+		},
+
+		isAncestor: function(el, parent) {
+			return !el ? false : el.ownerDocument == parent ? true
+				: Browser.WEBKIT && Browser.VERSION < 420
+					? Array.contains(parent.getElementsByTagName(el.tagName), el)
+					: parent.contains 
+						? parent != el && parent.contains(el)
+						: !!(parent.compareDocumentPosition(el) & 16)
+		}
+	}
+});
+
+DomElement.inject(new function() {
+	function walk(el, walk, start, match, all) {
+		var elements = all && new el._collection();
+		el = el.$[start || walk];
+		while (el) {
+			if (el.nodeType == 1 && (!match || DomElement.match(el, match))) {
+				if (!all) return DomNode.wrap(el);
+				elements.push(el);
+			}
+			el = el[walk];
+		}
+		return elements;
+	}
+
+	var clones = { input: 'checked', option: 'selected', textarea: Browser.WEBKIT && Browser.VERSION < 420 ? 'innerHTML' : 'value' };
+
+	return {
+
+		getTag: function() {
+			return (this.$.tagName || '').toLowerCase();
+		},
+
+		getId: function() {
+			return this.$.id;
+		},
+
+		getPrevious: function(match) {
+			return walk(this, 'previousSibling', null, match);
+		},
+
+		getAllPrevious: function(match) {
+			return walk(this, 'previousSibling', null, match, true);
+		},
+
+		getNext: function(match) {
+			return walk(this, 'nextSibling', null, match);
+		},
+
+		getAllNext: function(match) {
+			return walk(this, 'nextSibling', null, match, true);
+		},
+
+		getFirst: function(match) {
+			return walk(this, 'nextSibling', 'firstChild', match);
+		},
+
+		getLast: function(match) {
+			return walk(this, 'previousSibling', 'lastChild', match);
+		},
+
+		hasChild: function(match) {
+			return DomNode.isNode(match)
+				? DomElement.isAncestor(DomElement.unwrap(match), this.$)
+				: !!this.getFirst(match);
+		},
+
+		getParent: function(match) {
+			return walk(this, 'parentNode', null, match);
+		},
+
+		getParents: function(match) {
+			return walk(this, 'parentNode', null, match, true);
+		},
+
+		hasParent: function(match) {
+			return DomNode.isNode(match)
+				? DomElement.isAncestor(this.$, DomElement.unwrap(match))
+				: !!this.getParent(match);
+		},
+
+		getChildren: function(match) {
+			return walk(this, 'nextSibling', 'firstChild', match, true);
+		},
+
+		hasChildren: function(match) {
+			return !!this.getChildren(match).length;
+		},
+
+		clone: function(contents) {
+			var clone = this.base(contents);
+			function clean(left, right) {
+				if (Browser.TRIDENT) {
+					left.clearAttributes();
+					left.mergeAttributes(right);
+					left.removeAttribute('_wrapper');
+					left.removeAttribute('_unique');
+					if (left.options)
+						for (var l = left.options, r = right.options, i = l.length; i--;)
+							l[i].selected = r[i].selected;
+				}
+				var name = clones[right.tagName.toLowerCase()];
+				if (name && right[name])
+					left[name] = right[name];
+			}
+			if (contents)
+				for (var l = clone.$.getElementsByTagName('*'), r = this.$.getElementsByTagName('*'), i = l.length; i--;)
+					clean(l[i], r[i]);
+			clean(clone.$, this.$);
+			return clone;
+		},
+
+		wrap: function() {
+			var el = this.injectBefore.apply(this, arguments), last;
+			do {
+				last = el;
+				el = el.getFirst();
+			} while(el);
+			last.appendChild(this);
+			return last;
+		},
+
+		toString: function() {
+			return (this.$.tagName || this._type).toLowerCase() +
+				(this.$.id ? '#' + this.$.id : '');
+		},
+
+		toNode: function() {
+			return this;
+		}
+	};
+});
+
+$ = DomElement.get;
+$$ = DomElement.getAll;
+
+DomTextNode = DomNode.extend({
+	_type: 'textnode'
 });
 
 DomDocument = DomElement.extend({
@@ -1508,7 +1561,7 @@ DomDocument = DomElement.extend({
 	},
 
 	createElement: function(tag, props) {
-		return DomElement.wrap(DomElement.create(tag, props, this.$)).set(props);
+		return DomNode.wrap(DomElement.create(tag, props, this.$)).set(props);
 	},
 
 	createTextNode: function(text) {
@@ -1520,7 +1573,7 @@ DomDocument = DomElement.extend({
 	},
 
 	getWindow: function() {
-		return DomElement.wrap(this.$.defaultView || this.$.parentWindow);
+		return DomNode.wrap(this.$.defaultView || this.$.parentWindow);
 	},
 
 	open: function() {
@@ -1546,7 +1599,7 @@ Window = DomWindow = DomElement.extend({
 	_methods: ['close', 'alert', 'prompt', 'confirm', 'blur', 'focus', 'reload'],
 
 	getDocument: function() {
-		return DomElement.wrap(this.$.document);
+		return DomNode.wrap(this.$.document);
 	},
 
 	getWindow: function() {
@@ -1592,7 +1645,7 @@ DomElement.inject(new function() {
 				cur = next;
 				x += cur.$[left] || 0;
 				y += cur.$[top] || 0;
-			} while((next = DomElement.wrap(cur.$[parent])) && (!iter || iter(cur, next)))
+			} while((next = DomNode.wrap(cur.$[parent])) && (!iter || iter(cur, next)))
 			return { x: x, y: y };
 		}
 	}
@@ -1649,7 +1702,7 @@ DomElement.inject(new function() {
 		getScrollSize: function() {
 			return body(this)
 				? this.getWindow().getScrollSize()
-			 	: { width: this.$.scrollWidth, height: this.$.scrollHeight };
+				: { width: this.$.scrollWidth, height: this.$.scrollHeight };
 		},
 
 		getInnerSize: function() {
@@ -1733,7 +1786,7 @@ DomElement.inject(new function() {
 
 	getScrollSize: function() {
 		var doc = this.getCompatElement(), min = this.getSize();
-		return { width: Math.max(doc.scrollWidth, min.width), width: Math.max(doc.scrollHeight, min.height) };
+		return { width: Math.max(doc.scrollWidth, min.width), height: Math.max(doc.scrollHeight, min.height) };
 	},
 
 	getOffset: function() {
@@ -1809,8 +1862,8 @@ DomEvent = Base.extend(new function() {
 		initialize: function(event) {
 			this.event = event = event || window.event;
 			this.type = event.type;
-			this.target = DomElement.wrap(event.target || event.srcElement);
-			if (this.target.nodeType == 3)
+			this.target = DomNode.wrap(event.target || event.srcElement);
+			if (this.target && this.target.$.nodeType == 3)
 				this.target = this.target.getParent(); 
 			this.shift = event.shiftKey;
 			this.control = event.ctrlKey;
@@ -1839,7 +1892,7 @@ DomEvent = Base.extend(new function() {
 				}
 				this.rightClick = event.which == 3 || event.button == 2;
 				if (/^mouse(over|out)$/.test(this.type))
-					this.relatedTarget = DomElement.wrap(event.relatedTarget ||
+					this.relatedTarget = DomNode.wrap(event.relatedTarget ||
 						this.type == 'mouseout' ? event.toElement : event.fromElement);
 			}
 		},
@@ -1941,11 +1994,10 @@ DomElement.inject(new function() {
 					listener = pseudo && pseudo.listener || listener;
 					name = pseudo && pseudo.type;
 				}
-				var that = this, bound = listener.getParameters().length == 0
-					? listener.bind(this)
-					: function(event) { 
-						event = event && event.event ? event : new DomEvent(event);
-						if (listener.call(that, event) === false)
+				var that = this, bound = function(event) {
+						if (event || window.event)
+						 	event = event && event.event ? event : new DomEvent(event);
+						if (listener.call(that, event) === false && event)
 							event.stop();
 					};
 				if (name) {
@@ -2110,7 +2162,7 @@ DomElement.inject(new function() {
 				var uniques = {};
 				function add(item) {
 					if (!item._unique)
-						DomElement.unique(item);
+						DomNode.unique(item);
 					if (!uniques[item._unique] && match(item, params, data)) {
 						uniques[item._unique] = true;
 						found.push(item);
@@ -2245,13 +2297,13 @@ DomElement.inject(new function() {
 			var el, type = Base.type(selector), match;
 			if (type == 'string' && (match = selector.match(/^#?([\w-]+)$/)))
 				el = this.getDocument().$.getElementById(match[1]);
-			else if (/^(element|textnode)$/.test(type))
+			else if (DomNode.isNode(type))
 				el = DomElement.unwrap(selector);
-			if (el && !DomElement.isAncestor(el, this.$))
+			if (el && el != this.$ && !DomElement.isAncestor(el, this.$))
 				el = null;
 			if (!el)
 				el = this.getElements(selector, true)[0];
-			return DomElement.wrap(el);
+			return DomNode.wrap(el);
 		},
 
 		hasElement: function(selector) {
@@ -2396,7 +2448,7 @@ DomElement.pseudos = new function() {
 							var child = children[i];
 							if (child.nodeType == 1) {
 								if (!child._unique)
-									DomElement.unique(child);
+									DomNode.unique(item);
 								data.indices[child._unique] = count++;
 							}
 						}
@@ -2533,8 +2585,6 @@ HtmlElement = DomElement.extend({
 	_collection: HtmlElements
 });
 
-HtmlElement.inject = DomElement.inject;
-
 HtmlElement.inject({
 
 	getClass: function() {
@@ -2574,34 +2624,26 @@ HtmlElement.inject({
 
 	setHtml: function(html) {
 		return this.setProperty('html', html);
-	},
-
-	getText: function() {
-		return this.getProperty('text');
-	},
-
-	setText: function(text) {
-		return this.setProperty('text', text);
 	}
 });
 
 Array.inject({
-	toElement: function(doc) {
-		doc = DomElement.wrap(doc || document);
+	toNode: function(doc) {
+		doc = DomNode.wrap(doc || document);
 		var elements = new HtmlElements();
 		for (var i = 0; i < this.length;) {
 			var value = this[i++], element = null, type = Base.type(value);
 			if (type == 'string') {
 				var props = /^(object|hash)$/.test(Base.type(this[i])) && this[i++];
 				element = value.isHtml()
-					? value.toElement(doc).set(props)
+					? value.toNode(doc).set(props)
 					: doc.createElement(value, props);
 				if (Base.type(this[i]) == 'array')
-					element.injectBottom(this[i++].toElement(doc));
-			} else if (/^(element|textnode)$/.test(type)) {
+					element.injectBottom(this[i++].toNode(doc));
+			} else if (DomNode.isNode(type)) {
 				element = value;
-			} else if (value && value.toElement) {
-				element = value.toElement(doc);
+			} else if (value && value.toNode) {
+				element = value.toNode(doc);
 			}
 			if (element)
 				elements[Base.type(element) == 'array' ? 'append' : 'push'](element);
@@ -2611,7 +2653,7 @@ Array.inject({
 });
 
 String.inject({
-	toElement: function(doc) {
+	toNode: function(doc) {
 		var doc = doc || document, elements;
 		if (this.isHtml()) {
 			var str = this.trim().toLowerCase();
@@ -2650,7 +2692,7 @@ String.inject({
 			}
 			elements = new HtmlElements(div.childNodes);
 		} else {
-			elements = DomElement.wrap(doc).getElements(this);
+			elements = DomNode.wrap(doc).getElements(this);
 		}
 		return elements.length == 1 ? elements[0] : elements;
 	}
@@ -3013,8 +3055,8 @@ FormElement.inject({
 	}
 });
 
-$document = Browser.document = DomElement.wrap(document);
-$window = Browser.window = DomElement.wrap(window).addEvent('unload', DomElement.dispose);
+$document = Browser.document = DomNode.wrap(document);
+$window = Browser.window = DomNode.wrap(window).addEvent('unload', DomNode.dispose);
 
 Chain = {
 	chain: function(fn) {
@@ -3065,6 +3107,16 @@ Callback = {
 			if (typeof val == 'function' && (i = i.match(/^on([A-Z]\w*)/)))
 				this.addEvent(i[1].toLowerCase(), val);
 		}, this);
+	},
+
+	statics: {
+		inject: function() {
+			var proto = this.prototype, options = proto.options;
+			this.base.apply(this, arguments);
+			if (proto.options != options)
+				proto.options = Hash.merge({}, options, proto.options);
+			return this;
+		}
 	}
 };
 
@@ -3175,7 +3227,7 @@ Request = Base.extend(Chain, Callback, new function() {
 				var match = text.match(/<body[^>]*>([\u0000-\uffff]*?)<\/body>/i);
 				var stripped = this.stripScripts(match ? match[1] : text);
 				if (this.options.update)
-					DomElement.wrap(this.options.update).setHtml(stripped.html);
+					DomElement.get(this.options.update).setHtml(stripped.html);
 				if (this.options.evalScripts)
 					this.executeScript(stripped.script);
 				args = [ stripped.html, text ];
@@ -3251,7 +3303,7 @@ Request = Base.extend(Chain, Callback, new function() {
 			var method = params.method || opts.method;
 			switch (Base.type(data)) {
 				case 'element':
-					var el = DomElement.wrap(data);
+					var el = DomNode.wrap(data);
 					if (el.getTag() != 'form' || !el.hasElement('input[type=file]'))
 						data = el.toQueryString();
 					break;
@@ -3279,7 +3331,7 @@ Request = Base.extend(Chain, Callback, new function() {
 					data = null;
 				}
 			} else {
-		 		createFrame(this, DomElement.wrap(data));
+		 		createFrame(this, DomNode.wrap(data));
 			}
 			if (this.frame) {
 				if (this.frame.form)
@@ -3451,30 +3503,29 @@ Cookie = {
 
 Fx = Base.extend(Chain, Callback, {
 	options: {
+		fps: 50,
+		unit: false,
+		duration: 500,
+		wait: true,
 		transition: function(p) {
 			return -(Math.cos(Math.PI * p) - 1) / 2;
-		},
-		duration: 500,
-		unit: false,
-		wait: true,
-		fps: 50
+		}
 	},
 
 	initialize: function(element, options) {
-		this.element = DomElement.wrap(element);
+		this.element = DomElement.get(element);
 		this.setOptions(options);
 	},
 
 	step: function() {
-		var time = new Date().getTime();
+		var time = Date.now();
 		if (time < this.time + this.options.duration) {
 			this.delta = this.options.transition((time - this.time) / this.options.duration);
 			this.update(this.get());
 		} else {
 			this.stop(true);
 			this.update(this.to);
-			this.fireEvent('complete', [this.element]);
-			this.callChain();
+			this.fireEvent('complete', [this.element]).callChain();
 		}
 	},
 
@@ -3497,7 +3548,7 @@ Fx = Base.extend(Chain, Callback, {
 		else if (this.timer) return this;
 		this.from = from;
 		this.to = to;
-		this.time = new Date().getTime();
+		this.time = Date.now();
 		if (!this.slave) {
 			this.timer = this.step.periodic(Math.round(1000 / this.options.fps), this);
 			this.fireEvent('start', [this.element]);
@@ -3509,9 +3560,105 @@ Fx = Base.extend(Chain, Callback, {
 	stop: function(end) {
 		if (this.timer) {
 			this.timer = this.timer.clear();
-			if (!end) this.fireEvent('cancel', [this.element]);
+			if (!end) this.fireEvent('cancel', [this.element]).clearChain();
 		}
 		return this;
+	}
+});
+
+Fx.Scroll = Fx.extend({
+	options: {
+		offset: { x: 0, y: 0 },
+		wheelStops: true
+	},
+
+	initialize: function(element, options) {
+		this.base(element, options);
+		if (this.options.wheelStops) {
+			var stop = this.stop.bind(this), stopper = this.element;
+			this.addEvent('start', function() {
+				stopper.addEvent('mousewheel', stop);
+			}, true);
+			this.addEvent('complete', function() {
+				stopper.removeEvent('mousewheel', stop);
+			}, true);
+		}
+	},
+
+	update: function(x, y) {
+		var now = Array.flatten(arguments);
+		this.element.setScrollOffset(now[0], now[1]);
+	},
+
+	get: function() {
+		var now = [];
+		for (var i = 0; i < 2; i++)
+			now.push(this.compute(this.from[i], this.to[i]));
+		return now;
+	},
+
+	start: function(x, y) {
+		var offsetSize = this.element.getSize(),
+			scrollSize = this.element.getScrollSize(),
+			scroll = this.element.getScrollOffset(),
+			values = { x: x, y: y };
+		var lookup = { x: 'width', y: 'height' };
+		for (var i in values) {
+			var s = lookup[i];
+			var max = scrollSize[s] - offsetSize[s];
+			if (Base.check(values[i]))
+				values[i] = Base.type(values[i]) == 'number'
+					? values[i].limit(0, max) : max;
+			else values[i] = scroll[i];
+			values[i] += this.options.offset[i];
+		}
+		return this.base([scroll.x, scroll.y], [values.x, values.y]);
+	},
+
+	toTop: function(){
+		return this.start(false, 0);
+	},
+
+	toLeft: function(){
+		return this.start(0, false);
+	},
+
+	toRight: function(){
+		return this.start('right', false);
+	},
+
+	toBottom: function(){
+		return this.start(false, 'bottom');
+	},
+
+	toElement: function(el) {
+		var offset = DomElement.get(el).getOffset(true);
+		return this.start(offset.x, offset.y);
+	}
+});
+
+Fx.SmoothScroll = Fx.Scroll.extend({
+	initialize: function(options, context) {
+		context = DomElement.get(context || document);
+		var doc = context.getDocument(), win = context.getWindow();
+		this.base(doc, options);
+		this.links = this.options.links ? $$(this.options.links) : $$(doc.$.links);
+		var loc = win.location.href.match(/^[^#]*/)[0] + '#';
+		this.links.each(function(link) {
+			if (link.$.href.indexOf(loc) != 0) return;
+			var hash = link.$.href.substring(loc.length);
+			var anchor = hash && DomElement.get(hash);
+			if (anchor) {
+				link.addEvent('click', function(event) {
+					this.toElement(anchor);
+					var props = anchor.getProperties('name', 'id');
+					anchor.removeProperties('name', 'id');
+					win.location.hash = hash;
+					anchor.setProperties(props);
+					event.stop();
+				}.bind(this));
+			}
+		}, this);
 	}
 });
 

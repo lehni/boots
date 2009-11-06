@@ -680,7 +680,7 @@ Template.prototype = {
 		} catch (e) {
 			this.throwError(e);
 		}
-		this.lastChecked = new Date().getTime();
+		this.lastChecked = Date.now();
 	},
 
 	findResource: function() {
@@ -697,7 +697,7 @@ Template.prototype = {
 	},
 
 	checkResource: function() {
-		var now = new Date().getTime();
+		var now = Date.now();
 		if (now - this.lastChecked > 1000) {
 			this.lastChecked = now;
 			if (!this.resource || !this.resource.exists())
