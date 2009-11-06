@@ -9,6 +9,13 @@ ObjectWrapper = new function() {
 	// Cache for the produced adapters, and the objects they wrap.
 	var adapters = {};
 
+	// Store the dontUnwrap data per thread, for thread safety. 
+	var dontUnwrapData = new JavaAdapter(java.lang.ThreadLocal, {
+		initialValue: function() {
+			return {};
+		}
+	});
+
 	return {
 		// Produces a wrapper that inherits from object, intercepts modifications
 		// and calls a onChange handler if they happen. It also wraps returned
@@ -38,24 +45,20 @@ ObjectWrapper = new function() {
 				// unwrappedObj is not always the same as javaObj, e.g. HopObject VS Node
 				var hash = javaObj.hashCode();
 				// Store dontUnwrap values per thread, for thread savety!
-				if (!thread.data.dontUnwrap)
-					thread.data.dontUnwrap = {};
+				var dontUnwrapLookup = dontUnwrapData.get();
 				// Make sure this returned adapter makes it through the
 				// JavaAdapter auto-unwrap mechanism.
-				if (dontUnwrap) {
-					thread.data.dontUnwrap[hash] = true;
-				} else {
-					// Delete instead of setting to false, in order to not occupy too much memory.
-					delete thread.data.dontUnwrap[hash];
-				}
+				// Delete instead of setting to false, in order to occupy less memory.
+				if (dontUnwrap)
+					dontUnwrapLookup[hash] = true;
+				else
+					delete dontUnwrapLookup[hash];
 				// TODO: Implement some sort of cache rotation, otherwise this will 
 				// potentiall grow endlessly...
 				// Or use Scriptographer's WeakIdentityHashMap and WeakReferences.
 				var adapter = adapters[hash];
-				if (adapter) {
-					// app.log('Reusing cached adapter: ' + adapter + ' @' + hash.toPaddedString(4, 16));
-					return adapter.object;
-				}
+				if (adapter)
+					return adapter;
 				// Common fields among the different implementations.
 				var fields = {
 					getClassName: function() {
@@ -93,8 +96,9 @@ ObjectWrapper = new function() {
 					unwrap: function() {
 						// Do not unwrap the first time unwrap is called 
 						// if dontUnwrap is set. See 'get' for an explanation.
-						if (thread.data.dontUnwrap[hash]) {
-							delete thread.data.dontUnwrap[hash];
+						var dontUnwrapLookup = dontUnwrapData.get();
+						if (dontUnwrapLookup[hash]) {
+							delete dontUnwrapLookup[hash];
 							return this;
 						}
 						return unwrappedObj;
@@ -144,7 +148,6 @@ ObjectWrapper = new function() {
 					}
 
 					fields.memberRef = function() {
-						// varargs
 						return javaObj.memberRef.apply(javaObj, arguments);
 					}
 
