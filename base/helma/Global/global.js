@@ -66,7 +66,7 @@ renderLink = function(param, out) {
 		url += (param.query[0] == '?' ? '' : url.indexOf('?') != -1 ? '&' : '?')
 				+ param.query;
 
-	if (!Net.isLocal(url)) { // Not a local page -> target = '_blank'
+	if (url && !Net.isLocal(url)) { // Not a local page -> target = '_blank'
 		// Make sure the non-local url has a protocol, http is default:
 		if (!Net.isRemote(url))
 			url = 'http://' + url;
@@ -77,38 +77,59 @@ renderLink = function(param, out) {
 			param.attributes.target = '_blank';
 	}
 
-	// Start with '' for attributes list so that the joined result starts with ' '.
-	var attributes = param.attributes ? param.attributes.each(function(val, key) {
-		this.push(key + '="' + val + '"');
-	}, ['']).join(' ') : '';
-
 	// Use single quotes for confirm, since it will be inside double quotes
 	var confirm = param.confirm && 'confirm(' + Json.encode(param.confirm, true) + ')';
 
-	var onClick;
-	if (param.onClick) {
-		onClick = param.onClick;
+	// Collect attributes
+	// For onClick, support it both in param (deprecated) and attributes
+	var onClick = param.onClick;
+	// Start with '' for attributes list so that the joined result starts with ' '.
+	var attributes = param.attributes ? param.attributes.each(function(val, key) {
+		key = key.toLowerCase();
+		if (key == 'onclick') {
+			onClick = val;
+		} else {
+			this.push(key + '="' + val + '"');
+		}
+	}, ['']).join(' ') : '';
+
+	if (onClick) {
 		// Make sure it ends with ;
 		if (!/;$/.test(onClick))
 			onClick += ';';
-	} else if (param.update) {
-		onClick = "$('" + param.update + "').load('" + url + "');";
-		url = '#';
-	} else if (param.popup) {
-		onClick = 'new Window(' 
-				+ Json.encode(Hash.merge({ url: url }, param.popup), true) + ');';
-		url = '#';
-	}
-	if (onClick || confirm) {
-		if (confirm)
-			onClick = onClick 
-				? 'if (' + confirm + ') ' + onClick + ' return false;'
-				: 'return ' + confirm + ';';
-		attributes += ' onclick=' + Json.encode(onClick
-				+ (confirm ? '' : ' return false;'));
+		if (!url)
+			url = '#';
+	} else if (url) {
+		if (param.update) {
+			onClick = "$('" + param.update + "').load('" + url + "');";
+			url = '#';
+		} else if (param.popup) {
+			onClick = 'new Window(' 
+					+ Json.encode(Hash.merge({ url: url }, param.popup), true) + ');';
+			url = '#';
+		}
 	}
 
-	res.write('<a href="' + url + '"' + attributes + '>' + param.content + '</a>');
+	// Notice: param.text is not the same as param.content:
+	// content is supposed to be encoded already, text is encoded automatically!
+	var content = param.content;
+	if (!content && param.text)
+		content = encode(param.text);
+
+	if (!url) {
+		// Simply render the content without a link.
+		res.write(content);
+	} else {
+		if (onClick || confirm) {
+			if (confirm)
+				onClick = onClick 
+					? 'if (' + confirm + ') ' + onClick + ' return false;'
+					: 'return ' + confirm + ';';
+			attributes += ' onclick=' + Json.encode(onClick
+					+ (confirm ? '' : ' return false;'));
+		}
+		res.write('<a href="' + url + '"' + attributes + '>' + content + '</a>');
+	}
 }.toRender();
 
 // Simple helper for debugging
