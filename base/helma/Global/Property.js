@@ -1,7 +1,11 @@
 Property = Base.extend({
 	_cache: false,
 
-	initialize: function(property, onChange) {
+	initialize: function(property, param) {
+		if (!param)
+			param = {};
+
+		var onChange = param.onChange;
 		var that = this;
 
 		// Define get getter that inject will use for the propery. This part is 
@@ -18,9 +22,9 @@ Property = Base.extend({
 			}
 			var value = this[property];
 			if (that.get)
-				value = that.get(this, property, value);
+				value = that.get(this, property, value, param);
 			if (value != null && that._wrap)
-				value = that.wrap(this, property, value);
+				value = that.wrap(this, property, value, param);
 			// Store in cache after conversion from native type
 			if (cache)
 				cache[property] = value;
@@ -46,23 +50,25 @@ Property = Base.extend({
 				if (!cache)
 					cache = this.cache._properties = {};
 				if (value != null && that._wrap)
-					value = that.wrap(this, property, value);
+					value = that.wrap(this, property, value, param);
 				cache[property] = value;
 			}
 			if (that.set)
-				value = that.set(this, property, value);
+				value = that.set(this, property, value, param);
 			this[property] = value;
 		}
 	},
 
-	wrap: function(obj, property, value) {
+	wrap: function(obj, property, value, param) {
 		var that = this;
 		return ObjectWrapper.wrap(
 			value, {
 				// onChange handler for the object and any of its children:
 				onChange: function() {
+					// TODO: Call param.onChange handler as well?
 					that.markDirty(obj, property);
 				},
+
 				modifiers: that._modifiers
 			}
 		);
@@ -100,11 +106,11 @@ Property = Base.extend({
 	// To be defined in inheriting classes, to convert to and from the database 
 	// representation of the values, mostly strings.
 
-	get: function(obj, property, value) {
+	get: function(obj, property, value, param) {
 		return value;
 	}
 
-	set: function(obj, property, value) {
+	set: function(obj, property, value, param) {
 		return value;
 	}
 	*/
@@ -127,10 +133,9 @@ HopProperty = Property.extend(new function() {
 		return out.toString('UTF-8');
 	}
 
-	var obj = new HopObject();
 	// Extract the xml prefix and suffix that is added around each hopobject
 	// tag when converting to / from xml:
-	var str = writeToString(obj);
+	var str = writeToString(new HopObject());
 	var prefix = str.match(/^([\u0000-\uffff]*)\<hopobject/i)[1];
 	var suffix = str.match(/hopobject\>([\u0000-\uffff]*)$/i)[1];
 
@@ -140,9 +145,21 @@ HopProperty = Property.extend(new function() {
 		// HopObject methods that change the object
 		_modifiers: ['add', 'addAt', 'remove', 'removeChild'],
 
-		get: function(obj, property, value) {
+		get: function(obj, property, value, param) {
 //			app.log('HOP/XML GET ' + value);
-			return value ? Xml.readFromString(prefix + value + suffix) : null;
+			if (!value) {
+				// Create the object on the fly if createIfNull is set 
+				// to either true or the prototype to be created. 
+				if (param.createIfNull) {
+					var ctor = typeof param.createIfNull == 'function'
+						? param.createIfNull : HopObject;
+					value = new ctor();
+					obj[property] = value;
+				}
+				return value;
+			} else {
+				return Xml.readFromString(prefix + value + suffix);
+			}
 		},
 
 		set: function(obj, property, value) {
