@@ -4,6 +4,6 @@ HopObject.inject({
 	},
 
 	fullId_macro: function() {
-		rew.write(this.getFullId());
+		res.write(this.getFullId());
 	}
 });

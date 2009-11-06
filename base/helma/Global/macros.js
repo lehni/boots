@@ -57,8 +57,6 @@ function link_macro(param) {
 		param.email = param.mail;
 	if (param.url)
 		param.href = param.url;
-	if (param.text)
-		param.content = param.text;
 	renderLink(param, res);
 }
 
