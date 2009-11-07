@@ -1017,7 +1017,7 @@ DomNode = Base.extend(new function() {
 			el.tagName && tags[el.tagName] ||
 			el.className !== undefined && HtmlElement ||
 			el.nodeType == 1 && DomElement ||
-
+			el.nodeType == 3 && DomTextNode ||
 			el.nodeType == 9 && (el.documentElement.nodeName.toLowerCase() == 'html' && HtmlDocument || DomDocument) ||
 			el.location && el.frames && el.history && DomWindow ||
 			DomNode;
@@ -1210,7 +1210,15 @@ DomNode.inject(new function() {
 			return DomNode.wrap(this.$.nextSibling);
 		},
 
-		getParentNode: function(match) {
+		getFirstNode: function() {
+			return DomNode.wrap(this.$.firstChild);
+		},
+
+		getLastNode: function() {
+			return DomNode.wrap(this.$.lastChild);
+		},
+
+		getParentNode: function() {
 			return DomNode.wrap(this.$.parentNode);
 		},
 
