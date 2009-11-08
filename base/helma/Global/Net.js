@@ -69,12 +69,13 @@ Net = new function() {
 				return file.lastModified;
 		},
 
-		loadUrl: function(url, etagOrDate) {
+		// TODO: Add support for param.timeout somehow
+		loadUrl: function(url, param) {
 			try {
-				var res = getURL(url, etagOrDate);
+				var res = getURL(url, param.etag || param.date, param.timeout);
 				return res ? new java.lang.String(res.content) : null;
 			} catch (e) {
-				User.logError("Net.loadUrl", e);
+				User.logError('Net.loadUrl', e);
 			}
 		}
 	};
