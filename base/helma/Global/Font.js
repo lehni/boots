@@ -190,7 +190,7 @@ Font = Base.extend({
 					if(pos > 0)
 						part = part.substring(0, pos);
 					this.push(part);
-					line = line.substring(part.length) || null;
+					line = line.substring(part.length + 1) || null;
 				} else {
 					this.push(desc.text);
 					line = null;
