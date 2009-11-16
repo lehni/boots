@@ -438,7 +438,6 @@ ListItem = EditItem.extend({
 		} else {
 			// If we're not filtering by index or position, maybe it is memory only
 			// object that can be sorted through addAt.
-			app.log('Set Position ' + this.collection.indexOf(object) + ' ' + position + ' ' + object.url);
 			if (this.collection.indexOf(object) != position)
 			 	return this.collection.addAt(position, object);
 		}

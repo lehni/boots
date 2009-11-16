@@ -52,7 +52,7 @@ function decodeBase64(str) {
  * Encodes strings for html attributes, replacing quotes with their hex values
  */
 function encodeAttribute(str, singles) {
-	return str.replace(singles ? /'/gm : /"/gm, function(match) { // "
+	return str.replace(singles ? /'/gm : /"/gm, function(match) { // '
 		return encodeHex(match);
 	});
 }

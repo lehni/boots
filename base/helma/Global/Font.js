@@ -74,6 +74,7 @@ Font = Base.extend({
 			if (this.nativeFont)
 				this.nativeFont = this.nativeFont.deriveFont(this.size);
 		}
+		return this;
 	},
 	
 	getAntialias: function() {
@@ -85,6 +86,7 @@ Font = Base.extend({
 			this.antialias = antialias;
 			this.uniqueString = null;
 		}
+		return this;
 	},
 	
 	getCharSpacing: function() {
@@ -96,6 +98,7 @@ Font = Base.extend({
 			this.charSpacing = spacing;
 			this.uniqueString = null;
 		}
+		return this;
 	},
 
 	processGlyphLine: function(text, maxWidth, layout) {
