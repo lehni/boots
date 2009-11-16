@@ -866,7 +866,7 @@ Json = new function() {
 Browser = new function() {
 	var name = window.orientation != undefined ? 'ipod'
 			: (navigator.platform.match(/mac|win|linux|nix/i) || ['other'])[0].toLowerCase();
-	var ret = {
+	var fields = {
 		PLATFORM: name,
 		XPATH: !!document.evaluate,
 		QUERY: !!document.querySelector
@@ -882,7 +882,7 @@ Browser = new function() {
 		},
 
 		webkit: function() {
-			return navigator.taintEnabled ? false : ret.XPATH ? ret.QUERY ? 525 : 420 : 419;
+			return navigator.taintEnabled ? false : fields.XPATH ? fields.QUERY ? 525 : 420 : 419;
 		},
 
 		gecko: function() {
@@ -892,16 +892,26 @@ Browser = new function() {
 	for (var engine in engines) {
 		var version = engines[engine]();
 		if (version) {
-			ret.ENGINE = engine;
-			ret.VERSION = version;
+			fields.ENGINE = engine;
+			fields.VERSION = version;
 			engine = engine.toUpperCase();
-			ret[engine] = true;
-			ret[(engine + version).replace(/\./g, '')] = true;
+			fields[engine] = true;
+			fields[(engine + version).replace(/\./g, '')] = true;
 			break;
 		}
 	}
-	ret[name.toUpperCase()] = true;
-	return ret;
+	fields[name.toUpperCase()] = true;
+
+	fields.log = function() {
+		if (!Browser.TRIDENT && window.console && console.log)
+			console.log.apply(console, arguments);
+		else 
+			(window.console && console.log
+				|| window.opera && opera.postError 
+				|| alert)(Array.join(arguments, ' '));
+	}
+
+	return fields;
 };
 
 DomNodes = Array.extend(new function() {
@@ -1143,7 +1153,10 @@ DomNode.inject(new function() {
 		'disabled', 'readonly', 'multiple', 'selected', 'noresize', 'defer'
 	].associate();
 	var properties = Hash.merge({ 
-		text: Browser.TRIDENT || Browser.WEBKIT && Browser.VERSION < 420 ? 'innerText' : 'textContent',
+		text: Browser.TRIDENT || Browser.WEBKIT && Browser.VERSION < 420
+			? function(node) {
+				return node.$.innerText !== undefined ? 'innerText' : 'nodeValue'
+			} : 'textContent',
 		html: 'innerHTML', 'class': 'className', className: 'className', 'for': 'htmlFor'
 	}, [ 
 		'value', 'accessKey', 'cellPadding', 'cellSpacing', 'colSpan',
@@ -1153,6 +1166,8 @@ DomNode.inject(new function() {
 		return name.toLowerCase();
 	}), bools);
 
+	var clones = { input: 'checked', option: 'selected', textarea: Browser.WEBKIT && Browser.VERSION < 420 ? 'innerHTML' : 'value' };
+
 	function handle(that, prefix, name, value) {
 		var ctor = that.__proto__.constructor;
 		var handlers = ctor.handlers = ctor.handlers || { get: {}, set: {} };
@@ -1160,8 +1175,9 @@ DomNode.inject(new function() {
 		var fn = name == 'events' && prefix == 'set' ? that.addEvents : list[name];
 		if (fn === undefined)
 			fn = list[name] = that[prefix + name.capitalize()] || null;
-		if (fn) return fn[Base.type(value) == 'array' ? 'apply' : 'call'](that, value);
-		else return that[prefix + 'Property'](name, value);
+		return fn
+			? fn[Base.type(value) == 'array' ? 'apply' : 'call'](that, value)
+			: that[prefix + 'Property'](name, value);
 	}
 
 	function toNodes(elements) {
@@ -1286,13 +1302,49 @@ DomNode.inject(new function() {
 		},
 
 		clone: function(contents) {
-			return DomNode.wrap(this.$.cloneNode(!!contents));
+			var clone = this.$.cloneNode(!!contents);
+			function clean(left, right) {
+				if (Browser.TRIDENT) {
+					left.clearAttributes();
+					left.mergeAttributes(right);
+					left.removeAttribute('_wrapper');
+					left.removeAttribute('_unique');
+					if (left.options)
+						for (var l = left.options, r = right.options, i = l.length; i--;)
+							l[i].selected = r[i].selected;
+				}
+				var name = clones[right.tagName.toLowerCase()];
+				if (name && right[name])
+					left[name] = right[name];
+				if (contents)
+					for (var l = left.childNodes, r = right.childNodes, i = l.length; i--;)
+						clean(l[i], r[i]);
+			}
+			clean(clone, this.$);
+			return DomNode.wrap(clone);
 		},
 
 		getProperty: function(name) {
-			var key = properties[name];
+			var key = properties[name], value;
+			key = key && typeof key == 'function' ? key(this) : key;
 			var value = key ? this.$[key] : this.$.getAttribute(name);
-			return (bools[name]) ? !!value : value;
+			return bools[name] ? !!value : value;
+		},
+
+		setProperty: function(name, value) {
+			var key = properties[name], defined = value !== undefined;
+			key = key && typeof key == 'function' ? key(this) : key;
+			if (key && bools[name]) value = value || !defined ? true : false;
+			else if (!defined) return this.removeProperty(name);
+			key ? this.$[key] = value : this.$.setAttribute(name, value);
+			return this;
+		},
+
+		removeProperty: function(name) {
+			var key = properties[name], bool = key && bools[name];
+			key = key && typeof key == 'function' ? key(this) : key;
+			key ? this.$[key] = bool ? false : '' : this.$.removeAttribute(name);
+			return this;
 		},
 
 		getProperties: function() {
@@ -1302,24 +1354,10 @@ DomNode.inject(new function() {
 			return props;
 		},
 
-		setProperty: function(name, value) {
-			var key = properties[name], defined = value != undefined;
-			if (key && bools[name]) value = value || !defined ? true : false;
-			else if (!defined) return this.removeProperty(name);
-			key ? this.$[key] = value : this.$.setAttribute(name, value);
-			return this;
-		},
-
 		setProperties: function(src) {
 			return Base.each(src, function(value, name) {
 				this.setProperty(name, value);
 			}, this);
-		},
-
-		removeProperty: function(name) {
-			var key = properties[name], bool = key && bools[name];
-			key ? this.$[key] = bool ? false : '' : this.$.removeAttribute(name);
-			return this;
 		},
 
 		removeProperties: function() {
@@ -1443,8 +1481,6 @@ DomElement.inject(new function() {
 		return elements;
 	}
 
-	var clones = { input: 'checked', option: 'selected', textarea: Browser.WEBKIT && Browser.VERSION < 420 ? 'innerHTML' : 'value' };
-
 	return {
 
 		getTag: function() {
@@ -1505,29 +1541,6 @@ DomElement.inject(new function() {
 
 		hasChildren: function(match) {
 			return !!this.getChildren(match).length;
-		},
-
-		clone: function(contents) {
-			var clone = this.base(contents);
-			function clean(left, right) {
-				if (Browser.TRIDENT) {
-					left.clearAttributes();
-					left.mergeAttributes(right);
-					left.removeAttribute('_wrapper');
-					left.removeAttribute('_unique');
-					if (left.options)
-						for (var l = left.options, r = right.options, i = l.length; i--;)
-							l[i].selected = r[i].selected;
-				}
-				var name = clones[right.tagName.toLowerCase()];
-				if (name && right[name])
-					left[name] = right[name];
-			}
-			if (contents)
-				for (var l = clone.$.getElementsByTagName('*'), r = this.$.getElementsByTagName('*'), i = l.length; i--;)
-					clean(l[i], r[i]);
-			clean(clone.$, this.$);
-			return clone;
 		},
 
 		wrap: function() {
@@ -1677,7 +1690,7 @@ DomElement.inject(new function() {
 		return that.getTag() == 'body';
 	}
 
-	var getCumulative = cumulate('offset', 'offsetParent', Browser.WEBKIT ? function(cur, next) {
+	var getAbsolute = cumulate('offset', 'offsetParent', Browser.WEBKIT ? function(cur, next) {
 		return next.$ != document.body || cur.getStyle('position') != 'absolute';
 	} : null, true);
 
@@ -1695,10 +1708,17 @@ DomElement.inject(new function() {
 				: { width: this.$.offsetWidth, height: this.$.offsetHeight };
 		},
 
-		getOffset: function(positioned) {
-			return body(this)
-				? this.getWindow().getOffset()
-			 	: (positioned ? getPositioned : getCumulative)(this);
+		getOffset: function(relative) {
+			if (body(this))
+				return this.getWindow().getOffset();
+		 	if (relative && !DomNode.isNode(relative))
+				return getPositioned(this);
+			var off = getAbsolute(this);
+			if (relative) {
+				var rel = getAbsolute(DomNode.wrap(relative));
+				off = { x: off.x - rel.x, y: off.y - rel.y };
+			}
+			return off;
 		},
 
 		getScrollOffset: function() {
@@ -1719,10 +1739,10 @@ DomElement.inject(new function() {
 			 	: { width: this.getStyle('width').toInt(), height: this.getStyle('height').toInt() };
 		},
 
-		getBounds: function(positioned) {
+		getBounds: function(relative) {
 			if (body(this))
 				return this.getWindow().getBounds();
-			var off = this.getOffset(positioned), el = this.$;
+			var off = this.getOffset(relative), el = this.$;
 			return {
 				left: off.x,
 				top: off.y,
@@ -3212,10 +3232,10 @@ Request = Base.extend(Chain, Callback, new function() {
 			var frame = this.frame && this.frame.iframe;
 			if (frame && frame.location != 'about:blank' && this.running) {
 				this.running = false;
-				var doc = (frame.contentDocument || frame.contentWindow || frame).document;
-				var text = doc && (doc.getElementsByTagName('textarea')[0].value
-					|| doc.body && (doc.body.textContent || doc.body.innerText
-							|| doc.body.innerHTML)) || '';
+				var doc = (frame.contentDocument || frame.contentWindow || frame).document,
+					area = !this.options.html && doc.getElementsByTagName('textarea')[0];
+				var text = doc && (area && area.value || doc.body && (doc.body.textContent
+					|| doc.body.innerText || doc.body.innerHTML)) || '';
 				var head = Browser.TRIDENT && doc.getElementsByTagName('head')[0];
 				text = (head && head.innerHTML || '') + text;
 				var div = this.frame.div;
@@ -3322,13 +3342,13 @@ Request = Base.extend(Chain, Callback, new function() {
 					data = data.toString();
 			}
 			this.running = true;
-			var query = typeof data == 'string';
+			var string = typeof data == 'string';
 			if (opts.emulation && /^(put|delete)$/.test(method)) {
-				if (query) data += '&_method=' + method;
+				if (string) data += '&_method=' + method;
 				else data.setValue('_method', method); 
 				method = 'post';
 			}
-			if (query) { 
+			if (string && !this.options.iframe) { 
 				createRequest(this);
 				if (!this.transport) {
 					createFrame(this);
@@ -3339,7 +3359,7 @@ Request = Base.extend(Chain, Callback, new function() {
 					data = null;
 				}
 			} else {
-		 		createFrame(this, DomNode.wrap(data));
+		 		createFrame(this, !string && DomNode.wrap(data));
 			}
 			if (this.frame) {
 				if (this.frame.form)
@@ -3640,7 +3660,7 @@ Fx.Scroll = Fx.extend({
 	},
 
 	toElement: function(el) {
-		var offset = DomElement.get(el).getOffset(true);
+		var offset = DomElement.get(el).getOffset();
 		return this.start(offset.x, offset.y);
 	}
 });
@@ -3650,7 +3670,7 @@ Fx.SmoothScroll = Fx.Scroll.extend({
 		context = DomElement.get(context || document);
 		var doc = context.getDocument(), win = context.getWindow();
 		this.base(doc, options);
-		this.links = this.options.links ? $$(this.options.links) : $$(doc.$.links);
+		this.links = this.options.links ? $$(this.options.links) : $$('a', context);
 		var loc = win.location.href.match(/^[^#]*/)[0] + '#';
 		this.links.each(function(link) {
 			if (link.$.href.indexOf(loc) != 0) return;
