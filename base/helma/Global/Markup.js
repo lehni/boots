@@ -458,30 +458,31 @@ ListTag = MarkupTag.extend({
 OEmbedTag = MarkupTag.extend(new function() {
 	var settings = {};
 
+	function getHost(url) {
+		return (url.match(/^(?:\w+:\/\/)?(?:www\.)?([^:\/]+)/) || [])[1];
+	}
+
 	return {
 		_tags: 'oembed,video',
 		_attributes: 'url maxwidth maxheight',
-		_endpoint: 'http://www.oembed.com/',
+		_endpoint: '',
 		_prefix: '',
 		_suffix: '',
 
 		initialize: function() {
 			// When creating a video or oembed tag with a full url, we
-			// automatically loop through all the different defined subtags
-			// (flickr, vimeo, etc) and match their _prefix settings against
-			// the url. If a sub tag is found, its settings are used for
-			// rendering by overriding the tags's prefix, suffix and endpoint
-			// setting
+			// automatically match the included domain name (flickr.com,
+			// vimeo.com, etc) against the various _provider settings.
+			// If a sub tag is found, its settings are used for rendering by
+			// overriding the tags's prefix, suffix and endpoint setting.
 			var url = this.attributes.url;
 			if (url && this._tags.contains(this.name, ',')) {
-				for (var prefix in settings) {
-					if (url.indexOf(prefix) == 0) {
-						var values = settings[prefix];
-						this._endpoint = values._endpoint;
-						this._prefix = values._prefix;
-						this._suffix = values._suffix;
-						break;
-					}
+				var values = settings[getHost(url)];
+				if (values) {
+					this._provider = values._provider;
+					this._endpoint = values._endpoint;
+					this._prefix = values._prefix;
+					this._suffix = values._suffix;
 				}
 			}
 		},
@@ -512,6 +513,25 @@ OEmbedTag = MarkupTag.extend(new function() {
 				var json = Net.loadUrl(href + '&format=json', { timeout: 250 });
 				var obj = Json.decode(json);
 				if (obj) {
+					// Youtube sometimes ignores maxWidth / height, so fix it here:
+					if (param.maxWidth && obj.width > param.maxWidth ||
+						param.maxHeight && obj.height > param.maxHeight) {
+						var old = { width: obj.width, height: obj.height };
+						var bar = obj.provider_name == 'YouTube' ? 25 : 0;
+						var ratio = obj.width / (obj.height - bar);
+						if (param.maxWidth && obj.width > param.maxWidth) {
+							obj.width = param.maxWidth;
+							obj.height = obj.width / ratio + bar;
+						}
+						if (param.maxHeight && obj.height > param.maxHeight) {
+							obj.height = param.maxHeight;
+							obj.width = ratio * (obj.height - bar);
+						}
+						if (obj.html)
+							['width', 'height'].each(function(name) {
+								obj.html = obj.html.replace(new RegExp(name + '=(?:["\']|)' + old[name] + '(?:["\']|)', 'g'), name + '="' + obj[name] + '"');
+							});
+					}
 					if (!obj.html) {
 						// Compose html from the other info
 						switch (obj.type) {
@@ -551,7 +571,7 @@ OEmbedTag = MarkupTag.extend(new function() {
 
 		statics: {
 			extend: function(src) {
-				settings[src._prefix] = src;
+				settings[getHost(src._prefix)] = src;
 				return this.base(src);
 			},
 

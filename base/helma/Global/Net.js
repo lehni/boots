@@ -10,7 +10,7 @@ Net = new function() {
 		},
 
 		parseUrl: function(url) {
-			var values = url.match(/^(?:(\w+):\/\/)?([^:\/]+)(?::([0-9]+))?(\/.*)?/) || {};
+			var values = url.match(/^(?:(\w+):\/\/)?([^:\/]+)(?::([0-9]+))?(\/.*)?/) || [];
 			return {
 				protocol: values[1],
 				host: values[2],
