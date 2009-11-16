@@ -263,7 +263,7 @@ HopObject.inject(new function() {
 						param.id = this.getFullId();
 					if (!param.target)
 						param.target = this.getEditId();
-					param.url = path.href('edit');
+					param.url = (param.base || path).href('edit');
 					param.popup = param.popup == 'true';
 					if (param.popup) {
 						if (!param.width) param.width = 400;
