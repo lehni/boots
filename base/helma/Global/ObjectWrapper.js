@@ -10,14 +10,14 @@ ObjectWrapper = Base.extend(new function() {
 	var NOT_FOUND = javascript.Scriptable.NOT_FOUND;
 
 	return {
-		initialize: function(obj, param, dontUnwrap) {
+		initialize: function(object, param, dontUnwrap) {
 			// Retrieve the NativeJavaObject wrapper for this object, so we can
 			// access its java methods directly from the wrapper that we are going
 			// to produce bellow.
 			// Need to tell toJava to not unwrap, as we want the HopObject wrapper
 			// for Node, wrapped again in a NativeJavaObject, so we can use it, 
 			// instead of the Node directly.
-			this.obj = obj;
+			this.object = object;
 			this.param = param;
 			this.dontUnwrap = dontUnwrap;
 			this.javaObj = toJava(obj, false);
@@ -65,7 +65,7 @@ ObjectWrapper = Base.extend(new function() {
 			}
 			// unwrappedObj is not always the same as javaObj, e.g. HopObject VS Node
 			if (!this.unwrappedObj)
-				this.unwrappedObj = toJava(this.obj);
+				this.unwrappedObj = toJava(this.object);
 			return this.unwrappedObj;
 		},
 
@@ -140,7 +140,7 @@ ScriptableObjectWrapper = ObjectWrapper.extend(new function() {
 								? Context.toObject(arg, global)
 								: arg;
 						}
-						var ret = that.obj[name].apply(that.obj, arguments);
+						var ret = that.object[name].apply(that.object, arguments);
 						// Call onChange after calling a function that changes the object.
 						// The name of these methods need to be passed to wrap.
 						if (that.param && that.param.modifiers && that.param.onChange
