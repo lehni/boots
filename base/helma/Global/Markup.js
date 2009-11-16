@@ -472,7 +472,7 @@ OEmbedTag = MarkupTag.extend(new function() {
 		initialize: function() {
 			// When creating a video or oembed tag with a full url, we
 			// automatically match the included domain name (flickr.com,
-			// vimeo.com, etc) against the various _provider settings.
+			// vimeo.com, etc) against the various _prefix settings.
 			// If a sub tag is found, its settings are used for rendering by
 			// overriding the tags's prefix, suffix and endpoint setting.
 			var url = this.attributes.url;
@@ -529,7 +529,8 @@ OEmbedTag = MarkupTag.extend(new function() {
 						}
 						if (obj.html)
 							['width', 'height'].each(function(name) {
-								obj.html = obj.html.replace(new RegExp(name + '=(?:["\']|)' + old[name] + '(?:["\']|)', 'g'), name + '="' + obj[name] + '"');
+								obj.html = obj.html.replace(new RegExp(name + '=(?:["\']|)'
+									+ old[name] + '(?:["\']|)', 'g'), name + '="' + obj[name] + '"');
 							});
 					}
 					if (!obj.html) {
