@@ -20,7 +20,7 @@ ObjectWrapper = Base.extend(new function() {
 			this.object = object;
 			this.param = param;
 			this.dontUnwrap = dontUnwrap;
-			this.javaObj = toJava(obj, false);
+			this.javaObj = toJava(object, false);
 			this.hash = this.javaObj.hashCode();
 		},
 
