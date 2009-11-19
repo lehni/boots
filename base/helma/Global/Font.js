@@ -246,7 +246,17 @@ Font = Base.extend({
 		var file = new File(app.properties.fontRenderDir, filename);
 
 		if (!file.exists()) {
-			var lines = this.breakIntoLines(text, param.maxWidth);
+			var str = text;
+			if (param.transform) {
+				var method = ({
+					uppercase: 'toUpperCase',
+					lowercase: 'toLowerCase',
+					capitalize: 'capitalize'
+				})[param.transform];
+				if (method)
+					str = str[method]();
+			}
+			var lines = this.breakIntoLines(str, param.maxWidth);
 			if (lines.length > 0) {
 				var width = 0;
 				for (var i = 0, l = lines.length; i < l; i++) {
