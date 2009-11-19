@@ -86,7 +86,7 @@ String.inject({
 	 * License: http://www.opensource.org/licenses/mit-license.php
 	 */
 	toTitleCase: function() {
-		var small = '(a|an|and|as|at|but|by|en|for|if|in|of|on|or|the|to|v[.]?|via|s|vs[.]?)';
+		var small = '(s|a|an|and|as|at|but|by|en|for|if|in|of|on|or|the|to|v[.]?|via|vs[.]?)';
 		var punct = '([!"#$%&\'()*+,./:;<=>?@[\\\\\\]^_`{|}~-]*)';
 
 		function lower(word) {
@@ -99,21 +99,23 @@ String.inject({
 
 		// “ = \u201c, ’ = \u2019
 		var parts = [], split = /[:.;?!] |(?: |^)["\u201c]/g, index = 0;
+
 		while (true) {
 			var m = split.exec(this);
 			parts.push(this.substring(index, m ? m.index : this.length)
 				.replace(/\b([A-Za-z][a-z.'\u2019]*)\b/g, function(all){
 					return /[A-Za-z]\.[A-Za-z]/.test(all) ? all : upper(all);
 				})
-				.replace(RegExp('\\b' + small + '\\b', 'ig'), lower)
-				.replace(RegExp('^' + punct + small + '\\b', 'ig'), function(all, punct, word){
+				.replace(new RegExp('\\b' + small + '\\b', 'ig'), lower)
+				.replace(new RegExp('^' + punct + small + '\\b', 'ig'), function(all, punct, word){
 					return punct + upper(word);
 				})
-				.replace(RegExp('\\b' + small + punct + '$', 'ig'), upper));
+				.replace(new RegExp('\\b' + small + punct + '$', 'ig'), upper));
 			index = split.lastIndex;
 			if (m) parts.push(m[0]);
 			else break;
 		}
+
 		return parts.join('').replace(/ V(s?)\. /ig, ' v$1. ')
 			.replace(/(['\u2019])S\b/ig, '$1s')
 			.replace(/\b(AT&T|Q&A)\b/ig, function(all){
