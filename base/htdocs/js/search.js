@@ -23,11 +23,13 @@ SearchField = Input.extend({
 				clear = that.getValue().length > 0;
 				right.modifyClass('apple-search-clear', clear);
 			}
+			this.wrap('div', { width: this.getStyle('width') });
 			this.injectBefore('span', { 'class': 'apple-search-left' });
 			var right = this.injectAfter('span', { 'class': 'apple-search-right' });
 			this.addClass('apple-search');
 			this.setWidth(this.getWidth() - 50); // 2 * 19 + 4 * 3
-			if (!this.getValue()) {
+			var value = this.getValue();
+			if (!value || value == placeholder) {
 				showPlaceholder(true);
 			} else {
 				updateClear();
@@ -79,19 +81,20 @@ SearchField = Input.extend({
 		}
 		this.addEvents({
 			keydown: function(event) {
-				if (event.key == 'enter') {
+				if (event.key == 'enter')
 					this.fireEvent('search');
-				}
 			},
 
-			keyup: function() {
-				var that = this;
-				if (this.timer) this.timer.clear();
-				if (this.getValue()) this.timer = (function() {
-					that.fireEvent('search');
-				}).delay(500);
-				else this.fireEvent('search');
-			}			
+			keyup: function(event) {
+				if (event.key != 'enter') {
+					var that = this;
+					if (this.timer) this.timer.clear();
+					if (this.getValue()) this.timer = (function() {
+						that.fireEvent('search');
+					}).delay(500);
+					else this.fireEvent('search');
+				}
+			}
 		});
 	}
 });
