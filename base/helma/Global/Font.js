@@ -56,7 +56,8 @@ Font = Base.extend({
 	},
 	
 	getKerning: function(c1, c2) {
-		return this.kernedFont != null ? this.kernedFont.getKerning(c1, c2) : 0;
+		return this.kernedFont != null ? this.kernedFont.getKerning(
+			c1.charCodeAt(0), c2.charCodeAt(0)) : 0;
 	},
 	
 	getFont: function() {
