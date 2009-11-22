@@ -373,7 +373,8 @@ Hash = Base.extend(Enumerable, {
 		return Base.each(arguments, function(obj) {
 			Base.each(obj, function(val, key) {
 				this[key] = Base.type(this[key]) == 'object'
-					? Hash.prototype.merge.call(this[key], val) : val;
+					? Hash.prototype.merge.call(this[key], val)
+					: Base.type(val) == 'object' ? Base.clone(val) : val;
 			}, this);
 		}, this);
 	},
@@ -2798,7 +2799,7 @@ HtmlElement.inject(new function() {
 				return /^(visible|inherit(|ed))$/.test(style);
 			var color = style && style.match(/rgb[a]?\([\d\s,]+\)/);
 			if (color) return style.replace(color[0], color[0].rgbToHex());
-			if (Browser.PRESTO || Browser.TRIDENT) {
+			if (Browser.PRESTO || Browser.TRIDENT && isNaN(parseInt(style))) {
 				if (/^(width|height)$/.test(name)) {
 					var size = 0;
 					(name == 'width' ? ['left', 'right'] : ['top', 'bottom']).each(function(val) {
@@ -3169,7 +3170,6 @@ Request = Base.extend(Chain, Callback, new function() {
 				}
 			]
 		);
-
 		that.frame = {
 			id: id, div: div, form: form,
 			iframe: window.frames[id] || document.getElementById(id),
@@ -3195,7 +3195,6 @@ Request = Base.extend(Chain, Callback, new function() {
 		initialize: function() {
 			var params = Array.associate(arguments, { url: 'string', options: 'object', handler: 'function' });
 			this.setOptions(params.options);
-			this.url = params.url || this.options.url;
 			if (params.handler)
 				this.addEvent('complete', params.handler);
 			this.headers = new Hash(this.options.headers);
@@ -3229,11 +3228,12 @@ Request = Base.extend(Chain, Callback, new function() {
 		},
 
 		onFrameLoad: function() {
-			var frame = this.frame && this.frame.iframe;
-			if (frame && frame.location != 'about:blank' && this.running) {
+			var frame = this.frame && this.frame.iframe, loc = frame && frame.location,
+				doc = frame && (frame.contentDocument || frame.contentWindow || frame).document;
+			if (this.running && frame && loc && (!loc.href || loc.href.indexOf(this.url) != -1)
+				&& /^(loaded|complete|undefined)$/.test(doc.readyState)) {
 				this.running = false;
-				var doc = (frame.contentDocument || frame.contentWindow || frame).document,
-					area = !this.options.html && doc.getElementsByTagName('textarea')[0];
+				var area = !this.options.html && doc.getElementsByTagName('textarea')[0];
 				var text = doc && (area && area.value || doc.body
 					&& (this.options.html && doc.body.innerHTML
 						|| doc.body.textContent || doc.body.innerText)) || '';
@@ -3347,7 +3347,6 @@ Request = Base.extend(Chain, Callback, new function() {
 				default:
 					data = data.toString();
 			}
-			this.running = true;
 			var string = typeof data == 'string', method = opts.method;
 			if (opts.emulation && /^(put|delete)$/.test(method)) {
 				if (string) data += '&_method=' + method;
@@ -3361,13 +3360,15 @@ Request = Base.extend(Chain, Callback, new function() {
 						createFrame(this);
 					method = 'get';
 				}
-				if (data && method == 'get') {
-					url += (url.contains('?') ? '&' : '?') + data;
-					data = null;
-				}
 			} else if (!this.frame) {
 		 		createFrame(this, !string && DomNode.wrap(data));
 			}
+			if (string && data && method == 'get') {
+				url += (url.contains('?') ? '&' : '?') + data;
+				data = null;
+			}
+			this.running = true;
+			this.url = url;
 			if (this.frame) {
 				if (this.frame.form)
 					this.frame.form.set({
@@ -3650,19 +3651,19 @@ Fx.Scroll = Fx.extend({
 		return this.base([scroll.x, scroll.y], [values.x, values.y]);
 	},
 
-	toTop: function(){
+	toTop: function() {
 		return this.start(false, 0);
 	},
 
-	toLeft: function(){
+	toLeft: function() {
 		return this.start(0, false);
 	},
 
-	toRight: function(){
+	toRight: function() {
 		return this.start('right', false);
 	},
 
-	toBottom: function(){
+	toBottom: function() {
 		return this.start(false, 'bottom');
 	},
 
