@@ -334,11 +334,12 @@ Base.inject({
 
 		type: function(obj) {
 			return (obj || obj === 0) && (
-				(obj._type || obj.nodeName && (
+				obj._type || obj.nodeName && (
 					obj.nodeType == 1 && 'element' ||
 					obj.nodeType == 3 && 'textnode' ||
-					obj.nodeType == 9 && 'document'
-				)) || typeof obj) || null;
+					obj.nodeType == 9 && 'document')
+					|| obj.location && obj.frames && obj.history && 'window'
+					|| typeof obj) || null;
 		},
 
 		pick: function() {
@@ -2324,14 +2325,18 @@ DomElement.inject(new function() {
 
 		getElement: function(selector) {
 			var el, type = Base.type(selector), match;
-			if (type == 'string' && (match = selector.match(/^#?([\w-]+)$/)))
-				el = this.getDocument().$.getElementById(match[1]);
-			else if (DomNode.isNode(type))
-				el = DomElement.unwrap(selector);
-			if (el && el != this.$ && !DomElement.isAncestor(el, this.$))
-				el = null;
-			if (!el)
-				el = this.getElements(selector, true)[0];
+			if (type == 'window') {
+				el = selector;
+			} else {
+				if (type == 'string' && (match = selector.match(/^#?([\w-]+)$/)))
+					el = this.getDocument().$.getElementById(match[1]);
+				else if (DomNode.isNode(type))
+					el = DomElement.unwrap(selector);
+				if (el && el != this.$ && !DomElement.isAncestor(el, this.$))
+					el = null;
+				if (!el)
+					el = this.getElements(selector, true)[0];
+			}
 			return DomNode.wrap(el);
 		},
 
@@ -3683,7 +3688,7 @@ Fx.SmoothScroll = Fx.Scroll.extend({
 		links.each(function(link) {
 			if (link.$.href.indexOf(loc) != 0) return;
 			var hash = link.$.href.substring(loc.length);
-			var anchor = hash && DomElement.get(hash, context);
+			var anchor = hash && DomElement.get('#' + hash, context);
 			if (anchor) {
 				link.addEvent('click', function(event) {
 					this.toElement(anchor);
