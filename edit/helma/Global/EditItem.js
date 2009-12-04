@@ -420,7 +420,6 @@ ListItem = EditItem.extend({
 	 * setPosition is here to fasciliate these modes
 	 */
 	setPosition: function(object, position, visible) {
-//		app.log('POS: ' + (object.position + ' ' + (typeof object.position) + ' ' + (object.position === undefined) + ' ' + (object.position === null)))
 		if (object.position !== undefined && object.visible !== undefined) {
 			// Position / Visible mode
 			if (object.position != position || !object.visible != !visible) {
@@ -723,7 +722,7 @@ MultiSelectItem = SelectItem.extend({
 				if (prototypes && !prototypes.find(function(proto) {
 					return obj instanceof proto;
 				})) {
-					app.log('Filtering out ' + obj);
+					User.log('Filtering out', obj);
 				} else {
 					this.push(stringIds ? obj._id : obj);
 				}
@@ -914,7 +913,7 @@ EditableListItem = ListItem.extend({
 			});
 			/*
 			var t = Date().now();
-			app.log(Date().now() - t);
+			User.log(Date().now() - t);
 			*/
 		}
 		return this.getPrototypeChooserButton(baseForm, { 

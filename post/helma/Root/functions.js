@@ -9,7 +9,6 @@ Root.inject({
 			if (notifications.length > 0) {
 				var email = notifications[0].email;
 				var username = notifications[0].username;
-				app.log(username + ' ' + email);
 
 				res.push();
 				var numTopics = 0;
