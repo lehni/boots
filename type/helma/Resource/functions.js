@@ -128,6 +128,10 @@ Resource.inject({
 		return new File(app.properties.resourceDir, this.getFilename(id));
 	},
 
+	hasFile: function() {
+		return !!this.extension;
+	},
+
 	/**
 	 * Returns the href without the trailing /, so a differenciation can be
 	 * made between requestion the resource (without /) and the html code to
