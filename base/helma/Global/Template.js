@@ -179,7 +179,7 @@ Template.prototype = {
 			for (var i = 0; i < this.renderTemplates.length; i++) {
 				var template = this.renderTemplates[i];
 				code.splice(1, 0, 'var ' + template.name + ' = template.renderSubTemplate(this, "' +
-					template.name + '", param)' + (template.trim ? '.trim()' : ''));
+					template.name + '", param)' + (template.trim ? '.trim();' : ';'));
 				this.tags.unshift(null);
 			}
 			code.push('}');

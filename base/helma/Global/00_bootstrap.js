@@ -367,7 +367,8 @@ Base.inject({
 		},
 
 		type: function(obj) {
-			return (obj || obj === 0) && (obj._type || typeof obj) || null;
+			return (obj || obj === 0) && (obj._type
+				|| obj instanceof java.lang.Object ? 'java' : typeof obj) || null;
 		},
 
 		pick: function() {
