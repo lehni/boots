@@ -1,5 +1,5 @@
 SearchField = Input.extend({
-	_class: 'search',
+	_class: 'search-field',
 
 	initialize: function() {
 		this.removeClass('hidden');
