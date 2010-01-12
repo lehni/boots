@@ -9,6 +9,23 @@ String.inject({
 				&& this.substring(0, start.length) == start;
 	},
 
+	indexOfPattern: function(pattern, start) {
+		start = start || 0;
+		var res = this.substring(start).search(pattern);
+		return res == -1 ? -1 : res + start;
+	},
+
+	lastIndexOfPattern: function(pattern, start) {
+		start = start === undefined ? this.length : start;
+		var res = this.substring(0, start).reverse().indexOfPattern(pattern, 0);
+		return (res == -1) ? -1 : this.length - res + 1;
+	},
+
+	reverse: function() {
+		return new java.lang.StringBuffer(this).reverse().toString();
+//		Pure JS: return this.split('').reverse().join('');
+	},
+
 	unaccent: function() {
 		// Use encodeForm instead of encode, so no <br /> are produced
 		str = encodeForm(this);
@@ -22,12 +39,18 @@ String.inject({
 		return this.unaccent().replace(/([^a-z0-9\.]+)/gi, '-').trim('-').toLowerCase();
 	},
 
-	truncate: function(length, suffix) {
-		if (this.length > length) {
-			suffix = suffix || '';
-			return this.substring(0, length - suffix.length).trim() + suffix;
+	truncate: function(length, suffix, preserveWords) {
+		if (this.length < length)
+			return this;
+		suffix = suffix || '';
+		length -= suffix.length;
+		var part = this.substring(0, length);
+		if (preserveWords && !/\s/.test(this[length])) {
+			var i = part.lastIndexOfPattern(/\s/);
+			if (i > 0)
+				part = part.substring(0, i - 1);
 		}
-		return this;
+		return part.trim() + suffix;
 	},
 
 	stripTags: function() {
