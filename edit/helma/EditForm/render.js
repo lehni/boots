@@ -286,6 +286,7 @@ EditForm.inject({
 				var param = {
 					name: item.getEditName(),
 					label: item.label,
+					className: item.itemClassName,
 					span: item.span ? item.span : rowSpan, align: item.align,
 					spacer: i > 0, spacerWidth: spacerWidth,
 					width: definedWidth, calculatedWidth: definedWidth || itemWidth,
@@ -298,7 +299,7 @@ EditForm.inject({
 				// Don't use item here, as it might have been overriden above
 				// for the cell settings when arrays are passed, use row[i]
 				// pass param to renderItem so EditItems can access calculatedWidth
-				param.item = this.renderItem(baseForm, row[i], param);
+				param.content = this.renderItem(baseForm, row[i], param);
 				items.push(baseForm.renderTemplate('item#item', param));
 				// Collect the param here, so they can be used in itemRow
 				// bellow, for rendering the labels. It is optional to use this

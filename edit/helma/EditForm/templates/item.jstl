@@ -2,19 +2,19 @@
 <% if param.spacer %>
 <td width="<%= param.spacerWidth %>"></td>
 <% end %>
-<td<%= param.span prefix=" colspan=\"" suffix="\"" -%>
-<%= param.align prefix=" align=\"" suffix="\"" -%>
-<%= param.calculatedWidth prefix=" width=\"" suffix="\"" -%>
-<% if param.scaleToFit %> class="edit-scale"<% end %>>
-<%= param.item -%>
+<td <%= param.span prefix=' colspan="' suffix='"' -%>
+<%= param.align prefix=' align="' suffix='"' -%>
+<%= param.calculatedWidth prefix=' width="' suffix='"' -%>
+class="<%= 'edit-scale' if=param.scaleToFit %><%= param.className prefix=<%= ' ' if=param.scaleToFit %> %>"
+<%= param.content -%>
 </td>
 
 <% #row %>
 <%-- Label row above the items --%>
 <% if (!EditForm.LABEL_LEFT) %>
-<% this.template '#labels' prefix='<tr>' suffix='</tr>' labels=param.labels %>
+<% this.template '#labels' prefix='<tr class="edit-labels">' suffix='</tr>' labels=param.labels %>
 <% end %>
-<tr>
+<tr class="edit-items">
 <%-- Label to the left of the item --%>
 <% if (EditForm.LABEL_LEFT) %>
 <% this.template '#label' param=param.firstLabel %>
@@ -29,7 +29,7 @@
 <% if (param.spacer) %>
 <td></td>
 <% end %>
-<td <%= param.name prefix='id="edit-label-' suffix='"' %> class="edit-label-cell" <%= param.span prefix=' colspan="' suffix='"' -%>>
+<td <%= param.name prefix='id="edit-label-' suffix='"' %> <%= param.span prefix=' colspan="' suffix='"' -%>>
 <% if (param.label) %>
 <div class="edit-label"><%= param.label suffix=":" encoding="html" -%></div><%-%>
 <% end %>

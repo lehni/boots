@@ -9,6 +9,7 @@ EditItem = Base.extend(new function() {
 
 	return {
 		_scale: false,
+		itemClassName: 'edit-item',
 
 		initialize: function() {
 			if (this.prototypes) {
@@ -855,6 +856,7 @@ RulerItem = EditItem.extend({
 
 HelpItem = EditItem.extend({
 	_types: 'help',
+	itemClassName: 'edit-help hidden',
 
 	render: function(baseForm, name, value, param, out) {
 		if (!this.initialized) {
