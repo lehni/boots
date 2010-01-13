@@ -36,7 +36,7 @@ Root.inject({
 						mail.addPart(text);
 						mail.send();
 					} catch (e) {
-						logError('checkNotifications' , e);
+						logError('Root#checkNotifications()' , e);
 					}
 				}
 			}

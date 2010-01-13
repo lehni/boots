@@ -54,7 +54,7 @@ HtmlRenderer = Base.extend({
 			Packages.javax.swing.SwingUtilities.paintComponent(g, pane, new java.awt.Container(), 0, 0, width, height);
 			g.dispose();
 		} catch (e) {
-			User.logError('renderHtmlImage()', e);
+			User.logError('HtmlRenderer#renderHtmlImage()', e);
 		}
 		return img; 
 	}

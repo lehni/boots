@@ -100,7 +100,7 @@ EditForm.inject({
 				}
 			} catch (e) {
 				if (typeof e != 'string')
-					User.logError('applyItem', e);
+					User.logError('EditForm#applyItem()', e);
 	 			throw new EditException(item, e, value);
 			}
 		}
