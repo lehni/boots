@@ -300,7 +300,7 @@
 	margin-bottom: 4px;
 }
 
-#edit .edit-help div, #edit .edit-help td {
+#edit .edit-help, #edit .edit-help {
 	font-size: 9px;
 	line-height: 13px;
 	white-space: normal;
