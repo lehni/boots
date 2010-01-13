@@ -37,10 +37,25 @@ Picture.inject({
 	 	return this.base(param, out);
 	},
 
+	getUniqueValues: function(param) {
+		// Generate an array of unique values to identify the characteristics of this image.
+		// The list is is then converted to an id in processImage.
+		var crop = param.crop;
+		return [
+			param.maxWidth, param.maxHeight, param.quality, param.tint,
+//			param.rotation, param.bgColor,
+			param.transparentPixel && [param.transparentPixel.x, param.transparentPixel.y],
+			crop && [crop.width, crop.height,
+				crop.offset && [crop.offset.x, crop.offset.y],
+				crop.align && [crop.align.x, crop.align.y]]
+		];
+		return encodeMD5(res.pop());
+	},
+
 	processImage: function(param) {
 		// Generate a unique id for the characteristics of this image:
-		var versionId = encodeMD5(param.maxWidth +  param.maxHeight + (param.tint || '') + (param.crop || ''));
-		var version = this.getVersionFile(versionId);
+		var id = encodeMD5(this.getUniqueValues(param).join(''));
+		var version = this.getVersionFile(id);
 		var width, height;
 		// We use on the fly generation of image versions (e.g. thumbnails).
 		// The file's existance is checked each time it's requested, and generated if needed
@@ -49,83 +64,60 @@ Picture.inject({
 			if (file.exists()) {
 				var maxWidth = param.maxWidth;
 				var maxHeight = param.maxHeight;
+				// Before fully loading the image, use Image.getInfo to see
+				// if we need to.
 				var info = Image.getInfo(file);
-				width = info.getWidth();
-				height = info.getHeight();
+				width = info.width;
+				height = info.height;
 				var image = null;
+
+				// Resize?
 				if (width > maxWidth || height > maxHeight) {
 					image = new Image(file);
-					if (param.crop) {
-						if (param.cropScale)
-							image.resize(Math.round(width * param.cropScale), Math.round(height * param.cropScale));
-						if (param.cropOffset)
-							image.crop(param.cropOffset.x, param.cropOffset.y, maxWidth, maxHeight);
-						else
-							image.crop(0, 0, maxWidth, maxHeight);
+					var factor = width / height;
+					if (maxWidth && width > maxWidth) {
 						width = maxWidth;
-						height = maxHeight;
-					} else {
-						var factor = width / height;
-						if (maxWidth && width > maxWidth) {
-							width = maxWidth;
-							height = Math.round(width / factor);
-						}
-						if (maxHeight && height > maxHeight) {
-							height = maxHeight;
-							width = Math.round(height * factor);
-						}
-						image.resize(width, height);
+						height = Math.round(width / factor);
 					}
+					if (maxHeight && height > maxHeight) {
+						height = maxHeight;
+						width = Math.round(height * factor);
+					}
+					image.resize(width, height);
 				}
-				// Check if we need to tint the image with a color
-				var tint = param.tint;
-				if (tint && (tint = java.awt.Color.decode(tint))) {
-					// image is only set if it was resized before
+
+				// Check if we need to crop the image
+				if (param.crop) {
+					var crop = param.crop;
+					// Image is only set if it was resized before
 					if (!image)
 						image = new Image(file);
-					// convert to grayscale first:
-					/*
-					var cs = new java.awt.color.ColorSpace.getInstance(java.awt.color.ColorSpace.CS_GRAY);
-					var bits = java.lang.reflect.Array.newInstance(java.lang.Integer.TYPE, 2);
-					bits[0] = bits[1] = 8;
-					var cm = new java.awt.image.ComponentColorModel(cs, bits, true, false, java.awt.Transparency.TRANSLUCENT, java.awt.image.DataBuffer.TYPE_BYTE);
-					var gray = new java.awt.image.BufferedImage(cm, cm.createCompatibleWritableRaster(width, height), false, null); 
-					*/
-					var gray = new java.awt.image.BufferedImage(width, height, java.awt.image.BufferedImage.TYPE_BYTE_GRAY);
-					var g2d = gray.createGraphics();
-					g2d.setColor(java.awt.Color.WHITE);
-					g2d.fillRect(0, 0, width, height);
-					g2d['drawImage(java.awt.Image,int,int,java.awt.image.ImageObserver)'](image.getImage(), 0, 0, null);
-
-					var r = tint.getRed();
-					var g = tint.getGreen();
-					var b = tint.getBlue();
-
-					// Create IndexColorModel with new tinted palette
-					// Boring: there's no other way to create a byte value for the JavaScript bridge:
-					function toByte(val) {
-						return val > 127 ? val - 256 : val;
+					var cropWidth = crop.width ? crop.width : width;
+					var cropHeight = crop.height ? crop.height : height;
+					var offset = crop.offset;
+					var offsetX = offset ? offset.x : 0;
+					var offsetY = offset ? offset.y : 0;
+					var align = crop.align;
+					if (align) {
+						offsetX += (width - cropWidth) *
+							(align.x == 'center' ? 0.5 : align.x == 'right' ? 1 : 0);
+						offsetY += (height - cropHeight) *
+							(align.y == 'middle' ? 0.5 : align.y == 'bottom' ? 1 : 0);
 					}
-			
-					var cmap = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 256 * 3);
-					var c = 0;
-					var dr = (255 - r) / 255.0;
-					var dg = (255 - g) / 255.0;
-					var db = (255 - b) / 255.0;
-					for (var i = 0; i < 256; i++) {
-						cmap[c++] = toByte(Math.round(r));
-						cmap[c++] = toByte(Math.round(g));
-						cmap[c++] = toByte(Math.round(b));
-						r += dr
-						g += dg
-						b += db
-					}
-					var cm = new java.awt.image.IndexColorModel(8, 256, cmap, 0, false);
-					var col = new java.awt.image.BufferedImage(cm, gray.getRaster(), false, null); 
-					gray.flush();
-					// and then tint with color:
-					image = new Image(col);
+					app.log('Cropping ' + crop + ' ' + [offsetX, offsetY, cropWidth, cropHeight]);
+					image.crop(offsetX, offsetY, cropWidth, cropHeight);
+					width = image.width;
+					height = image.height;
 				}
+
+				// Check if we need to tint the image with a color
+				if (param.tint) {
+					// Image is only set if it was resized before
+					if (!image)
+						image = new Image(file);
+					image = this.processTint(image, param.tint);
+				}
+
 				if (image) {
 					// A new image version was produced, save it to a file now:
 					var quality = (app.properties.imageQuality || 0.8).toFloat();
@@ -135,22 +127,42 @@ Picture.inject({
 						// use the same amount of colors as the initial file:
 						image.reduceColors(numColors);
 					}
-					image.saveAs(version, quality);
+
+					// Set the transparant pixel
+					if (param.transparentPixel) {
+						image.setTransparentPixel(image.getPixel(
+							param.transparentPixel.x || 0,
+							param.transparentPixel.y || 0
+						));
+					}
+
+					if (param.returnImage)
+						return image;
+					else
+						image.saveAs(version, quality);
 				} else {
 					// No modifications were needed:
-					file.writeToFile(version);
+					if (param.returnImage)
+						return new Image(file);
+					else
+						file.writeToFile(version);
 				}
 			}
+		} 
+		if (param.returnImage) {
+			return new Image(version);
 		} else {
-			var info = Image.getInfo(version);
-			width = info.width;
-			height = info.height;
+			if (!width || !height) {
+				var info = Image.getInfo(version);
+				width = info.width;
+				height = info.height;
+			}
+			return {
+				src: this.getUri() + '?version=' + id,
+				width: width,
+				height: height
+			};
 		}
-		return {
-			src: this.getUri() + '?version=' + versionId,
-			width: width,
-			height: height
-		};
 	},
 
 	renderImage: function(param, out) {
@@ -159,5 +171,55 @@ Picture.inject({
 		if (param.attributes)
 			image = Hash.merge(image, param.attributes);
 		return Html.image(image, out);
+	},
+
+	processTint: function(image, tint) {
+		var tintColor = java.awt.Color.decode(tint);
+		if (!tintColor) {
+			User.logError('Picture#processTint()', 'Unsupported Tint: ' + tint);
+			return image;
+		}
+		// convert to grayscale first:
+		/*
+		var cs = new java.awt.color.ColorSpace.getInstance(java.awt.color.ColorSpace.CS_GRAY);
+		var bits = java.lang.reflect.Array.newInstance(java.lang.Integer.TYPE, 2);
+		bits[0] = bits[1] = 8;
+		var cm = new java.awt.image.ComponentColorModel(cs, bits, true, false, java.awt.Transparency.TRANSLUCENT, java.awt.image.DataBuffer.TYPE_BYTE);
+		var gray = new java.awt.image.BufferedImage(cm, cm.createCompatibleWritableRaster(width, height), false, null); 
+		*/
+		var gray = new java.awt.image.BufferedImage(image.width, image.height, java.awt.image.BufferedImage.TYPE_BYTE_GRAY);
+		var g2d = gray.createGraphics();
+		g2d.setColor(java.awt.Color.WHITE);
+		g2d.fillRect(0, 0, image.width, image.height);
+		g2d['drawImage(java.awt.Image,int,int,java.awt.image.ImageObserver)'](image.getImage(), 0, 0, null);
+
+		var r = tintColor.getRed();
+		var g = tintColor.getGreen();
+		var b = tintColor.getBlue();
+
+		// Create IndexColorModel with new tinted palette
+		// Boring: there's no other way to create a byte value for the JavaScript bridge:
+		function toByte(val) {
+			return val > 127 ? val - 256 : val;
+		}
+
+		var cmap = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 256 * 3);
+		var c = 0;
+		var dr = (255 - r) / 255.0;
+		var dg = (255 - g) / 255.0;
+		var db = (255 - b) / 255.0;
+		for (var i = 0; i < 256; i++) {
+			cmap[c++] = toByte(Math.round(r));
+			cmap[c++] = toByte(Math.round(g));
+			cmap[c++] = toByte(Math.round(b));
+			r += dr;
+			g += dg;
+			b += db;
+		}
+		var cm = new java.awt.image.IndexColorModel(8, 256, cmap, 0, false);
+		var col = new java.awt.image.BufferedImage(cm, gray.getRaster(), false, null); 
+		gray.flush();
+		// and then tint with color:
+		return new Image(col);
 	}
 });
