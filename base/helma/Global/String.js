@@ -17,8 +17,8 @@ String.inject({
 
 	lastIndexOfPattern: function(pattern, start) {
 		start = start === undefined ? this.length : start;
-		var res = this.substring(0, start).reverse().indexOfPattern(pattern, 0);
-		return (res == -1) ? -1 : this.length - res + 1;
+		var res = this.substring(0, start).reverse().indexOfPattern(pattern);
+		return res == -1 ? -1 : this.length - res + 1;
 	},
 
 	reverse: function() {
