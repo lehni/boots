@@ -300,7 +300,7 @@ Template.prototype = {
 					values: { prefix: null, suffix: null, 'default': null, encoding: null, separator: null, 'if': null }
 				};
 				if (isMain) {
-					macro.isControl = allowControls && /^(foreach|if|elseif|else|end)$/.test(next);
+					macro.isControl = allowControls && /^(foreach|begin|if|elseif|else|end)$/.test(next);
 					macro.isData = isEqualTag;
 					macro.isSetter = !isEqualTag && next[0] == '$'; 
 					if (macro.isSetter) {
@@ -395,11 +395,12 @@ Template.prototype = {
 		if (!macro)
 			throw 'Invalid tag';
 		var values = macro.values, result;
+		var postProcess = !!(values.prefix || values.suffix || values.filters);
 		var codeIndexBefore = code.length;
 		var condition = values['if'];
-		if (condition)
+		var conditionCode = condition && (!toString || postProcess);
+		if (conditionCode)
 			code.push(								'if (' + condition + ') {');
-		var postProcess = !!(values.prefix || values.suffix || values.filters);
 		if (macro.isData) { 
 			result = this.parseLoopVariables(macro.opcode
 				? macro.command + ' ' + macro.opcode : macro.command, stack);
@@ -431,10 +432,27 @@ Template.prototype = {
 													'		var ' + variable + ' = ' + list + '[' + index + '];',
 						values.separator		?	'		out.push();' : null);
 					break;
+				case 'elseif':
+					close = true;
+				case 'if':
+					if (!macro.opcode) throw 'Syntax error';
+					open = true;
+					code.push(						(close ? '} else if (' : 'if (') + this.parseLoopVariables(macro.opcode, stack) + ') {');
+					break;
+				case 'else':
+					if (macro.opcode) throw 'Syntax error';
+					close = true;
+					open = true;
+					code.push(						'} else {');
+					break;
+				case 'begin':
+					code.push(						'{');
+					open = true;
+					break;
 				case 'end':
 					if (macro.opcode) throw 'Syntax error';
-					if (!prevControl || !/^else|^if$|^foreach$/.test(prevControl.macro.command))
-						throw "Syntax error: 'end' requiers 'if', 'else', 'elseif' or 'foreach'";
+					if (!prevControl || !prevControl.macro.isControl)
+						throw "Syntax error: 'end' requires 'if', 'else', 'elseif', 'begin' or 'foreach': " + prevControl;
 					close = true;
 					if (prevControl.macro.command == 'foreach') {
 						var loop = stack.loop[prevControl.macro.variable].pop();
@@ -449,19 +467,6 @@ Template.prototype = {
 						code.push(					'	}');
 					}
 					code.push(						'}');
-					break;
-				case 'elseif':
-					close = true;
-				case 'if':
-					if (!macro.opcode) throw 'Syntax error';
-					open = true;
-					code.push(						(close ? '} else if (' : 'if (') + this.parseLoopVariables(macro.opcode, stack) + ') {');
-					break;
-				case 'else':
-					if (macro.opcode) throw 'Syntax error';
-					close = true;
-					open = true;
-					code.push(						'} else {');
 					break;
 				}
 				if (close) {
@@ -512,23 +517,35 @@ Template.prototype = {
 															values.suffix + ', ' + values['default']  + ', out);');
 			else {
 				if (!toString) {
-					if (/[.()\s]/.test(result)) {
-						code.push(					'var val = ' + result + ';');
-						result = 'val';
+					if (/^["'](?:[^"'\\]*(?:\\["']|\\|(?=["']))+)*["']$|^[-+]?\d+[.]?\d*(e[-+]?\d+)?$\d/.test(result)) {
+						var value = eval(result);
+						if (value != null && value !== '')
+							code.push(					'out.write(' + result + ');');
+					} else {
+						if (/[.()\s]/.test(result)) {
+							code.push(					'var val = ' + result + ';');
+							result = 'val';
+						}
+						code.push(						'if (' + result + ' != null && ' + result + ' !== "")',
+														'	out.write(' + result + ');');
+						if (values['default'])
+							code.push(					'else',
+														'	out.write(' + values['default'] + ');');
 					}
-					code.push(						'if (' + result + ' != null && ' + result + ' !== "")',
-													'	out.write(' + result + ');');
-					if (values['default'])
-						code.push(					'else',
-													'	out.write(' + values['default'] + ');');
 				}
 			}
 		}
-		if (toString && postProcess) {
-			code.splice(codeIndexBefore, 0,			'out.push();');
-			result = 'out.pop()';
+		if (toString) {
+			if (postProcess) {
+				code.splice(codeIndexBefore, 0,			'out.push();');
+				if (result)
+					code.push(							'out.write(' + result + ');');
+				result = 'out.pop()';
+			} else if (condition) {
+				result = condition + ' ? ' + result + ' : null';
+			}
 		}
-		if (condition)
+		if (conditionCode)
 			code.push(								'}');
 		return toString ? result : macro.swallow;
 	},
