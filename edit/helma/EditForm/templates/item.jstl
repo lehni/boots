@@ -5,7 +5,10 @@
 <td <%= param.span prefix=' colspan="' suffix='"' -%>
 <%= param.align prefix=' align="' suffix='"' -%>
 <%= param.calculatedWidth prefix=' width="' suffix='"' -%>
-class="<%= 'edit-scale' if=param.scaleToFit %><%= param.className prefix=<%= ' ' if=param.scaleToFit %> %>"
+<% begin prefix='class="' suffix='"' %>
+<%= 'edit-scale' if=param.scaleToFit -%>
+<%= param.className prefix=<%= ' ' if=param.scaleToFit %> -%>
+<% end %>
 <%= param.content -%>
 </td>
 
