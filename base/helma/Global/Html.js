@@ -8,7 +8,7 @@ Html = new function() {
 	};
 
 	return {
-		XHTML: true,
+		XHTML: false,
 
 		attributes: function(attributes, out) {
 			for (var name in attributes) {
