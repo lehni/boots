@@ -4,7 +4,7 @@
 			<% input type="text" name=param.name value=param.value size="7" maxlength="7" onkeyup=<% this.handle "color_update" <%= param.name %> %> class=param.className %>
 		</td>
 		<td>
-			&nbsp;<a href="javascript:<% this.handle "color_choose" <%= param.name %> %>"><img src="/static/edit/media/spacer.gif" width="17" height="17" id="<%= param.name %>-color" class="edit-color" style="background:<%= param.value || '#dddddd' %>;vertical-align:top;"></a>
+			&nbsp;<a href="javascript:<% this.handle "color_choose" <%= param.name %> %>"><img src="/static/edit/assets/spacer.gif" width="17" height="17" id="<%= param.name %>-color" class="edit-color" style="background:<%= param.value || '#dddddd' %>;vertical-align:top;"></a>
 		</td>
 	</tr>
 </table>

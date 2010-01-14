@@ -1,5 +1,5 @@
 .apple-search {
-	background: url('/static/base/media/search_bg.png') repeat-x top left;
+	background: url('/static/base/assets/search_bg.png') repeat-x top left;
 	font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif;
 	font-size: 11px;
 	float: left;
@@ -10,21 +10,21 @@
 }
 
 .apple-search-left {
-	background: url('/static/base/media/search_left.png') no-repeat top left;
+	background: url('/static/base/assets/search_left.png') no-repeat top left;
 	float: left;
 	width: 19px;
 	height: 19px;
 }
 
 .apple-search-right {
-	background: url('/static/base/media/search_right.png') no-repeat top left;
+	background: url('/static/base/assets/search_right.png') no-repeat top left;
 	float: left;
 	width: 19px;
 	height: 19px;
 }
 
 .apple-search-clear {
-	background: url('/static/base/media/search_clear.png') no-repeat top left;
+	background: url('/static/base/assets/search_clear.png') no-repeat top left;
 }
 
 .apple-search-placeholder {

@@ -1,6 +1,6 @@
 <div id="edit-elements-<%= param.id %>" class="edit-elements">
 <% if (param.showProgress) %>
-	<div class="edit-progress hidden"><img src="/static/edit/media/progress.gif" width="15" height="15"></div>
+	<div class="edit-progress hidden"><img src="/static/edit/assets/progress.gif" width="15" height="15"></div>
 <% end %>
 	<div class="edit-buttons"><%-%>
 		<form><%-%>

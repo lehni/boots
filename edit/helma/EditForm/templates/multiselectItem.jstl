@@ -5,8 +5,8 @@
 				<tr>
 <% if (param.sortable) %>
 					<td>
-						<div><a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "up" %>"><img src="/static/edit/media/arrow-up.gif" width="15" height="15" border="0"></a></div>
-						<div><a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "down" %>"><img src="/static/edit/media/arrow-down.gif" width="15" height="15" border="0"></a></div>
+						<div><a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "up" %>"><img src="/static/edit/assets/arrow-up.gif" width="15" height="15" border="0"></a></div>
+						<div><a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "down" %>"><img src="/static/edit/assets/arrow-down.gif" width="15" height="15" border="0"></a></div>
 					</td>
 <% end %>
 					<td width="100%">
@@ -20,8 +20,8 @@
 			<table width="100%">
 				<tr>
 					<td>
-						<div><a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "left" %>"><img src="/static/edit/media/arrow-left.gif" width="15" height="15" border="0"></a></div>
-						<div><a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "right" %>"><img src="/static/edit/media/arrow-right.gif" width="15" height="15" border="0"></a></div>
+						<div><a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "left" %>"><img src="/static/edit/assets/arrow-left.gif" width="15" height="15" border="0"></a></div>
+						<div><a href="javascript:<% this.handle "multiselect_arrange" <%= param.name %> "right" %>"><img src="/static/edit/assets/arrow-right.gif" width="15" height="15" border="0"></a></div>
 					</td>
 					<td width="100%">
 						<%= param.right %>
@@ -33,7 +33,7 @@
 	</tr>
 	<tr>
 		<td colspan="2">
-			<div class="edit-buttons-left"><% if (param.sortable) %><img src="/static/edit/media/spacer.gif" width="15" height="1"><% end %><%= param.buttons %></div>
+			<div class="edit-buttons-left"><% if (param.sortable) %><img src="/static/edit/assets/spacer.gif" width="15" height="1"><% end %><%= param.buttons %></div>
 		</td>
 	</tr>
 </table>

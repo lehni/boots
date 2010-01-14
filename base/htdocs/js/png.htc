@@ -1,7 +1,7 @@
 <public:component lightWeight='true'>
 <public:attach event='onpropertychange' onevent='propertyChanged()' />
 <script>
-var blankSrc = '/static/base/media/spacer.gif';
+var blankSrc = '/static/base/assets/spacer.gif';
 
 var supported/*@cc_on=@_jscript_version@*/;
 if (supported) fixImage();

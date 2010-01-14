@@ -1,7 +1,7 @@
 ChooseHandler = EditHandler.extend({
 	_types: 'choose',
 
-	handle:	function(base, object, node, form) {
+	handle: function(base, object, node, form) {
 		if (User.canEdit(object)) {
 			var obj = HopObject.get(req.data.edit_root_id) || root;
 			var objId = obj.getFullId();
@@ -19,10 +19,10 @@ ChooseHandler = EditHandler.extend({
 					res.write('<li>');
 					if (child.count()) {
 						res.write('<a href="javascript:' + form.renderHandle('choose_toggle', id) + '">' +
-							'<img id="edit-choose-arrow-' +  id + '" src="/static/edit/media/arrow-close.gif" width="8" height="8"></a>' + 
-							'<img src="/static/media/spacer.gif" width="6" height="1">');
+							'<img id="edit-choose-arrow-' +  id + '" src="/static/edit/assets/arrow-close.gif" width="8" height="8"></a>' + 
+							'<img src="/static/assets/spacer.gif" width="6" height="1">');
 					} else {
-						res.write('<img src="/static/media/spacer.gif" width="14" height="1">');
+						res.write('<img src="/static/assets/spacer.gif" width="14" height="1">');
 					}
 					res.write('<a href="javascript:' + form.renderHandle('choose_select', id, name) + '">' + name + '</a><ul id="edit-choose-children-' + id + '" class="hidden"></ul></li>');
 				}

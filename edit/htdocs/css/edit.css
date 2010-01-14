@@ -249,7 +249,7 @@
 	width: 14px;
 	height: 12px;
 	margin-left: 4px;
-	background: url(/static/edit/media/list-handle.png);
+	background: url(/static/edit/assets/list-handle.png);
 	cursor: row-resize;
 }
 
@@ -268,23 +268,23 @@
 }
 
 #edit .edit-list-add {
-	background: url(/static/edit/media/list-add.png);
+	background: url(/static/edit/assets/list-add.png);
 }
 
 #edit .edit-list-remove {
-	background: url(/static/edit/media/list-remove.png);
+	background: url(/static/edit/assets/list-remove.png);
 }
 
 #edit .edit-list-remove .overlay {
-	background: url(/static/edit/media/list-remove-overlay.png);
+	background: url(/static/edit/assets/list-remove-overlay.png);
 }
 
 #edit .edit-list-hide {
-	background: url(/static/edit/media/list-visible.png);
+	background: url(/static/edit/assets/list-visible.png);
 }
 
 #edit .edit-list-hide .overlay {
-	background: url(/static/edit/media/list-visible-overlay.png);
+	background: url(/static/edit/assets/list-visible-overlay.png);
 }
 
 #edit .edit-list-entry.invisible .edit-list-entry-background {
