@@ -59,23 +59,20 @@ Resource.inject({
 		var form = new EditForm(this, {
 			removable: true, width: param.width
 		});
-		if (param.name === undefined)
-			param.name = false;
-		if (param.file === undefined)
-			param.file = true;
+
 		// Allow sub-prototypes to display a name field easily through param
 		form.add(
 			form.createItem(param.name, {
 				name: 'name', type: 'string', label: 'Name',
 				length: 64
-			}),
+			}, false),
 			form.createItem(param.file, {
 				name: 'file', type: 'file', label: 'File',
 				onApply: this.setFile,
 				preview: this.name && this.renderIcon({ 
 					small: true, details: true
 				})
-			})
+			}, true)
 		);
 		return form;
 	},

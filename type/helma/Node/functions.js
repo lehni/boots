@@ -5,10 +5,7 @@ Node.inject({
 			previewable: Base.pick(param.previewable, true),
 			width: param.width
 		});
-		if (param.children === undefined)
-			param.children = true;
-		if (param.resources === undefined)
-			param.resources = true;
+
 		form.addTab('node', param.tabLabel || 'Node',
 			form.createItem(param.children, {
 				type: 'multiselect', name: 'children', label: 'Sub Pages',
@@ -18,7 +15,7 @@ Node.inject({
 				editable: true, autoRemove: true,
 				movable: false,
 				size: 6
-			}),
+			}, true),
 			form.createItem(param.resources, {
 				type: 'multiselect', name: 'resources', label: 'Resources',
 				collection: this.allResources, value: this.resources,
@@ -27,7 +24,7 @@ Node.inject({
 				editable: true, autoRemove: true,
 				movable: false,
 				size: 6
-			})
+			}, true)
 		);
 		return form;
 	},

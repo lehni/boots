@@ -527,13 +527,14 @@ EditForm.inject(new function() {
 		 * item can also simply be set to true, meaning all default values
 		 * are to be used.
 		 */
-		createItem: function(item, defaults) {
+		createItem: function(item, defaults, useDefaults) {
 			if (item) {
 				if (item == true)
 					return defaults;
 				else
 					return defaults.clone().inject(item);
-			}
+			} else if (useDefaults)
+				return defaults;
 			return null;
 		},
 

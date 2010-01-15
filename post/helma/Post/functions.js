@@ -18,6 +18,7 @@ Post.inject({
 			previewable: false, removable: true, showTitle: false,
 			titles: { create: 'Post' }, width: param.width
 		});
+
 		var notifyItem = {
 			type: 'boolean', name: 'notify', value: !!this.getNotification(),
 			text: 'Notify on subsequent posts',
@@ -37,7 +38,7 @@ Post.inject({
 			]);
 		} else {
 			form.add([
-				{
+				form.createItem(param.name, {
 					label: 'Name', type: 'string', name: 'username', length: 32, trim: true,
 					requirements: {
 						notNull: true,
@@ -46,14 +47,15 @@ Post.inject({
 							'\nThis user already exists.\nChoose a different name.'
 						}
 					}
-				}, {
+				}, true),
+				form.createItem(param.website, {
 					label: 'Website', type: 'string', name: 'website',
 					requirements: {
 						uri: true
 					}
-				}
+				}, true)
 			], [
-				{
+				form.createItem(param.email, {
 					label: 'Email', type: 'string', name: 'email', length: 255, trim: true,
 					requirements: {
 						notNull: {
@@ -65,23 +67,25 @@ Post.inject({
 						},
 						email: true
 					}
-				},
+				}, true),
 				notifyItem
 			]);
 		}
-		form.add({
-			label: node.POST_TITLE, type: 'string', name: 'title', length: 64, trim: true,
-			requirements: {
-				notNull: { value: true, message: 'Please specify a title.' },
-			}
-		});
-		form.add({
-			label: 'Text', type: 'text', name: 'text', cols: '40', rows: '20',
-			trim: true, hasLinks: true,
-			requirements: {
-				notNull: { value: true, message: 'Please write a text.' }
-			}
-		});
+		form.add(
+			form.createItem(param.title, {
+				label: node.POST_TITLE, type: 'string', name: 'title', length: 64, trim: true,
+				requirements: {
+					notNull: { value: true, message: 'Please specify a title.' },
+				}
+			}, true),
+			form.createItem(param.text, {
+				label: 'Text', type: 'text', name: 'text', cols: '40', rows: '20',
+				trim: true, hasLinks: true,
+				requirements: {
+					notNull: { value: true, message: 'Please write a text.' }
+				}
+			}, true)
+		);
 		if (User.hasRole(UserRole.ADMIN) && !this.isCreating()) {
 			form.add({
 				type: 'ruler'
@@ -100,7 +104,7 @@ Post.inject({
 		if (this.isFirst && node.populateFirstPostEditForm)
 			node.populateFirstPostEditForm(form);
 
-		form.add({
+		form.add(form.createItem(param.resources, {
 			label: 'Attachments', type: 'list', name: 'resources',
 			collection: this.allResources, prototypes: 'Resource',
 			addButton: 'Attach',
@@ -112,9 +116,10 @@ Post.inject({
 					resource.visible = true;
 				return resource;
 			}
-		}, {
-			type: 'help', text: this.renderTemplate('help')
-		});
+		}, true));
+		var help = this.renderTemplate('help');
+		if (help)
+			form.add({ type: 'help', text: help });
 		return form;
 	},
 
