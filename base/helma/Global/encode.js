@@ -66,6 +66,6 @@ function decodeUrl(str) {
 
 // The opposite of helma's encode, using org.htmlparser:
 function decode(str) {
-	str = Packages.org.htmlparser.util.Translate.decode(str);
-	return str.replaceAll('<br />', '\n');
+	return Packages.org.htmlparser.util.Translate.decode(str || '').replace(
+		/<br\s*\/?>/g, '\n');
 }

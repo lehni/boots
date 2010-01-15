@@ -322,7 +322,7 @@ CodeTag = MarkupTag.extend({
 	_tags: 'code',
 
 	render: function(content) {
-		return '<pre><code>' + content.replaceAll('<br />', '') + '</code></pre>';
+		return '<pre><code>' + content.replace(/<br\s*\/?>/g, '') + '</code></pre>';
 	}
 });
 
@@ -452,7 +452,7 @@ ListTag = MarkupTag.extend({
 	_tags: 'list',
 
 	render: function(content) {
-		return '<ul><li>' + content.replaceAll('<br />', '').trim().split(/\r\n|\n|\r/mg).join('</li>\n<li>') + '</li></ul>';
+		return '<ul><li>' + content.replace(/<br\s*\/?>/g, '').trim().split(/\r\n|\n|\r/mg).join('</li>\n<li>') + '</li></ul>';
 	}
 });
 

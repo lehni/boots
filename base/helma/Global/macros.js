@@ -11,20 +11,18 @@ function input_macro(param) {
 	Html.input(param, res);
 }
 
-function textarea_macro(param) {
-	Html.textarea(param, res);
-}
-
-function select_macro(param) {
-	Html.select(param, res);
-}
-
 function script_macro(param) {
 	var lastModified = Net.getLastModified(param.src);
 	if (lastModified)
 		param.src += '?' + lastModified;
 	Html.script(param, res);
 }
+
+var textarea_macro = Html.textarea;
+
+var select_macro = Html.select;
+
+var br_macro = Html.lineBreak;
 
 /* This clashes with the global link macro. TODO: Rename the link macro
  to something else, e.g.g href_macro, a, etc.?

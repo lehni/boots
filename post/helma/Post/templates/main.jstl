@@ -6,11 +6,11 @@
 <% if (param.nodeFields) %>
 <%= param.nodeFields -%>
 <% else %>
-		<% param.title prefix="<b>" suffix="</b><br />" %>
-		<b>From:</b>&nbsp;&nbsp;<% this.user %><br />
+		<div><% param.title prefix="<b>" suffix="</b></div>" %>
+		<div><b>From:</b>&nbsp;&nbsp;<% this.user %></div>
 <%-- "| format properties.dateTimeLong" is a Scriptographer dependency.
 TODO: Find a way to abstract this --%>
-		<b>Date:</b>&nbsp;&nbsp;<%= this.creationDate | format properties.dateTimeLong %><br />
+		<div><b>Date:</b>&nbsp;&nbsp;<%= this.creationDate | format properties.dateTimeLong %></div>
 <% end %>
 	</div>
 	<% this.editButtons buttons="edit,remove" %>

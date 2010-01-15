@@ -58,7 +58,7 @@ function stripTags_filter(input) {
 }
 
 function breaksToHtml_filter(input) {
-	return input != null && input.replaceAll('\n', '<br />');
+	return input != null && input.replaceAll('\n', Html.lineBreak());
 }
 
 function replace_filter(input, param, search, replace) {

@@ -15,7 +15,7 @@ Html = new function() {
 				var value = attributes[name];
 				name = properties[name] || name;
 				// Only pre XHTML allows empty attributes
-				if (value != null || !this.XHTML && value !== undefined) {
+				if (value != null || !Html.XHTML && value !== undefined) {
 					out.write(' ');
 					out.write(name);
 					if (value != null) {
@@ -31,7 +31,7 @@ Html = new function() {
 			out.write('<');
 			out.write(name);
 			if (attributes != null)
-				this.attributes(attributes, out);
+				Html.attributes(attributes, out);
 
 			if (content != null) {
 				out.write('>');
@@ -41,16 +41,16 @@ Html = new function() {
 				out.write('>');
 			} else {
 				// use /> only for empty XHTML tags:
-				out.write(this.XHTML ? ' />' : '>');
+				out.write(Html.XHTML ? ' />' : '>');
 			}
 		}.toRender(),
 
 		script: function(attributes, out) {
-			return this.element('script', attributes, null, out);
+			return Html.element('script', attributes, null, out);
 		},
 
 		link: function(attributes, out) {
-			return this.element('link', attributes, null, out);
+			return Html.element('link', attributes, null, out);
 		},
 
 		image: function(attributes, out) {
@@ -63,7 +63,7 @@ Html = new function() {
 				attributes.border = 0;
 			if (attributes.alt == null)
 				attributes.alt = attributes.title;
-			return this.element('img', attributes, null, out);
+			return Html.element('img', attributes, null, out);
 		},
 
 		textarea: function(attributes, out) {
@@ -72,7 +72,7 @@ Html = new function() {
 			// Form elements should have both id and name
 			if (!attributes.id)
 				attributes.id = attributes.name;
-			return this.element('textarea', attributes, value ? encodeForm(value) : '', out);
+			return Html.element('textarea', attributes, value ? encodeForm(value) : '', out);
 		},
 
 		select: function(attributes, out) {
@@ -82,7 +82,7 @@ Html = new function() {
 			if (!attributes.id)
 				attributes.id = attributes.name;
 			out.write('<select');
-			this.attributes(attributes, out);
+			Html.attributes(attributes, out);
 			out.write('>');
 			for (var i = 0; i < options.length; i++) {
 				var option = options[i];
@@ -99,12 +99,12 @@ Html = new function() {
 					};
 				}
 				if (option.selected || option.value == attributes.current) {
-					option.selected = this.XHTML ? 'selected' : null; // null causes an non-xhtml attribute without a value in this.attributes() (<... selected ...>)
+					option.selected = Html.XHTML ? 'selected' : null; // null causes an non-xhtml attribute without a value in Html.attributes() (<... selected ...>)
 				} else {
 					delete option.selected;
 				}
 				option.name = option.name ? encodeForm(option.name) : '';
-				this.element('option', option, option.name, out);
+				Html.element('option', option, option.name, out);
 			}
 			out.write('</select>');
 		}.toRender(),
@@ -119,7 +119,7 @@ Html = new function() {
 				case 'checkbox':
 					if (!attributes.value) attributes.value = 1;
 					if (attributes.value == attributes.current)
-						attributes.checked = this.XHTML ? 'checked' : null; // null causes an non-xhtml attribute without a value in this.attributes() (<... checked ...>)
+						attributes.checked = Html.XHTML ? 'checked' : null; // null causes an non-xhtml attribute without a value in Html.attributes() (<... checked ...>)
 					break;
 
 			}
@@ -127,7 +127,13 @@ Html = new function() {
 			if (!attributes.id)
 				attributes.id = attributes.name;
 			delete attributes.current;
-			return this.element('input', attributes, null, out);
+			return Html.element('input', attributes, null, out);
+		},
+
+		lineBreak: function(out) {
+			var br = Html.XHTML ? '<br />' : '<br>';
+			if (out) out.write(br);
+			else return br;
 		}
 	}
 };

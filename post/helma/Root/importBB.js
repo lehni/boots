@@ -59,11 +59,11 @@ Root.inject({
 				res.commit();
 				forum.text = desc;
 
-				res.write("<br/><br/>" + id + " " + name + " --- " + desc + "<br/>");
+				res.write("<br><br>" + id + " " + name + " --- " + desc + "<br>");
 				var topics = con.executeRetrieval("SELECT topic_id FROM phpbb_topics WHERE forum_id = " + id);
 				while (topics.next()) {
 					var id = topics.getColumnItem("topic_id");
-					res.write("&nbsp;&nbsp;&nbsp;&nbsp;" + id + "<br/>");
+					res.write("&nbsp;&nbsp;&nbsp;&nbsp;" + id + "<br>");
 					var posts = con.executeRetrieval("SELECT phpbb_posts.post_id, poster_id, FROM_UNIXTIME(post_time) AS time, post_username, poster_ip, post_subject, post_text FROM phpbb_posts, phpbb_posts_text WHERE topic_id = " + id + " AND phpbb_posts.post_id = phpbb_posts_text.post_id");
 					var topic = null;
 					while (posts.next()) {
@@ -108,7 +108,7 @@ Root.inject({
 							node.addPost(post);
 						}
 						res.commit();
-						res.write("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + post.creationDate + " " + post.title + " " + post.text + "<br/>");
+						res.write("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + post.creationDate + " " + post.title + " " + post.text + "<br>");
 					}
 				}
 	 		}

@@ -137,7 +137,7 @@ renderLink = function(param, out) {
 function print() {
 	var str = Array.join(arguments, ' ');
 	app.log(str);
-	res.writeln(str + '<br/>');
+	res.writeln(str + Html.lineBreak());
 }
 
 function sleep(milliseconds) {
