@@ -62,7 +62,7 @@ MultiSelectItem = SelectItem.extend({
 				onClick: baseForm.renderHandle('references_remove', name)
 			}]);
 		} else {
-			param.buttons = this.renderEditButtons(baseForm);
+			param.buttons = this.renderButtons(baseForm, name);
 		}
 		var size = Base.pick(this.size, '6');
 		var left = name + '_left', right = name + '_right';

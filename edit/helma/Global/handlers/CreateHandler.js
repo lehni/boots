@@ -1,5 +1,5 @@
 CreateHandler = EditHandler.extend({
-	_types: 'create',
+	mode: 'create',
 
 	handle: function(base, object, node, form) {
 		// Apply all changes first, add it to the db only at the end

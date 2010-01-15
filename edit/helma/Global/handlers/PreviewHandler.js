@@ -1,5 +1,5 @@
 PreviewHandler = EditHandler.extend({
-	_types: 'preview',
+	mode: 'preview',
 
 	handle:	function(base, object, node, form) {
 		// Apply changes first:

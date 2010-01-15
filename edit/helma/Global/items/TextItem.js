@@ -11,12 +11,25 @@ TextItem = StringItem.extend({
 			className: this.className + (this.countWords ? ' edit-text-count' : ''),
 			onKeyUp: this.countWords ? baseForm.renderHandle('text_count') : null
 		}, out);
-		// TODO: Find a better way to more generally add buttons underneath
-		if (this.hasLinks)
-			this.renderLinkButtons(baseForm, name, out);
+		this.renderButtons(baseForm, name, true, out);
 	},
 
 	convert: function(value) {
 		return this.convertBreaks(value);
+	},
+
+	getButtons: function(baseForm, name) {
+		var buttons = this.base(baseForm, name);
+		if (this.hasCrop) {
+			buttons.push({
+				name: name + '_crop',
+				value: 'Crop Image',
+				onClick: baseForm.renderHandle('choose_crop', name, {
+					root: this.root ? this.root.getFullId() : '',
+					multiple: false
+				})
+			});
+		}
+		return buttons;
 	}
 });

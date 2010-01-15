@@ -1,5 +1,5 @@
 GroupHandler = EditHandler.extend({
-	_types: 'group',
+	mode: 'group',
 
 	handle:	function(base, object, node, form) {
 		if (req.data.edit_item) {

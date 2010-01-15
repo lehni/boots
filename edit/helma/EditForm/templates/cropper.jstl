@@ -1,0 +1,62 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+	<script type="text/javascript" src="/static/base/js/bootstrap.js"></script>
+	<script type="text/javascript" src="/static/edit/js/cropper.js"></script>
+	<script>
+		$document.addEvent('domready', function() {
+			var cropper = new Cropper({
+				min: { width: 167, height: 50 },
+				canResize: { width: true, height: true },
+				cropperSize: $window.getSize(),
+				sizePresets: <% json param.getSpanPresets(4) %>
+			});
+
+			cropper.confirm = function(){
+				var cropInfo = new Hash(cropper.getCropInfo());
+				if (this.sizePresets) {
+					var preset = this.options.sizePresets[this.sizePresets.getValue()];
+					var span = preset && preset.value;
+				}
+				var tag = '<cropimage <%= param.name %> ';
+				if(span) {
+					cropInfo.span = span;
+					cropInfo.width = null;
+				}
+				['top', 'left', 'width', 'height', 'imageWidth', 'imageHeight', 'span'].each(function(attribute){
+					if(cropInfo[attribute])
+						tag += attribute + '=' + cropInfo[attribute] + ' ';
+				});
+				tag += '></cropimage>';
+				if ($window.setResult)
+					$window.setResult(tag);
+				$window.close();
+			}
+		});
+	</script>
+	<link href="/static/edit/css/cropper.css" media="screen" rel="Stylesheet" type="text/css">
+</head>
+<body>
+	<div id="imageCropper">
+		<div id="cropCanvas">
+			<div id="cropLoadingOverlay">
+				<h2>loading image...</h2>
+			</div>
+			<img src="<%= param.getUri() %>" width=<%= param.width %> height=<%= param.height %> id="cropImage">
+	    </div>
+		<div id="cropBg">
+			<div id="cropFooter">
+		 		<div id="zoomSlider">
+					<div id="zoomSliderHandle"></div>
+				</div>
+				<div id="cropButtons">
+					<input id="cropSubmit" name="commit" type="submit" value="OK">
+					<input type="button" value="Cancel" id="cropCancel">
+					<input type="button" value="Reset" id="cropReset">
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

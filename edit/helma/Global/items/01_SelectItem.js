@@ -29,15 +29,13 @@ SelectItem = ListItem.extend({
 		if (this.size)
 			select.size = this.size;
 
-		var editButtons = this.renderEditButtons(baseForm);
-		if (editButtons)
+		var buttons = this.renderButtons(baseForm, name, true);
+		if (buttons)
 			select.onDblClick = baseForm.renderHandle('select_edit', [name], this.getEditParam());
 		select.options = options;
 		Html.select(select, out);
-		if (editButtons)
-			baseForm.renderTemplate('button#buttons', {
-				buttons: editButtons
-			}, out);
+		if (buttons)
+			out.write(buttons);
 	},
 
 	convert: function(value) {
@@ -58,8 +56,7 @@ SelectItem = ListItem.extend({
 		return value;
 	},
 
-	renderEditButtons: function(baseForm, out) {
-		var name = this.getEditName();
+	getButtons: function(baseForm, name) {
 		var editParam = this.getEditParam();
 		var selParam = this.type == 'multiselect'
 			? [ name + '_left', name + '_right' ]
@@ -81,12 +78,13 @@ SelectItem = ListItem.extend({
 					Hash.merge({ edit_prototype: this.destPrototype || '' }, editParam))
 			});
 		}
-		if (this.prototypes)
+		if (this.prototypes) {
 			buttons.push(this.getPrototypeChooserButton(baseForm, { value: 'New '}), {
 				value: 'Delete',
 				onClick: baseForm.renderHandle('select_remove', selParam, editParam)
 			});
-		return baseForm.renderButtons(buttons, out);
+		}
+		return buttons;
 	},
 
 	// toOptions returns an array with option descriptions:

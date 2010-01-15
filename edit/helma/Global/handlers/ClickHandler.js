@@ -1,5 +1,5 @@
 ClickHandler = EditHandler.extend({
-	_types: 'click',
+	mode: 'click',
 
 	handle:	function(base, object, node, form) {
 		if (req.data.edit_item) {
@@ -11,4 +11,3 @@ ClickHandler = EditHandler.extend({
 		}
 	}
 });
-

@@ -325,13 +325,12 @@ EditForm.inject({
 		return this.renderTemplate('button#button', button, out);
 	},
 
-	renderButtons: function(buttons, out) {
-		for (var i = 0; i < buttons.length; i++) {
-			var button = buttons[i];
-			if (button)
-				this.renderButton(button, out);
-		}
-	}.toRender(),
+	renderButtons: function(buttons, wrapped, out) {
+		return this.renderTemplate('button#buttons', {
+			buttons: buttons,
+			wrapped: wrapped
+		}, out);
+	},
 
 	addResponse: function(data) {
 		res.data.editResponse.merge(data);

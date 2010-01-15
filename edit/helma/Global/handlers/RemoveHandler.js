@@ -1,5 +1,5 @@
 RemoveHandler = EditHandler.extend({
-	_types: 'remove',
+	mode: 'remove',
 
 	handle:	function(base, object, node, form) {
 		// If ids and collection are set, delete the objects of the collection with these ids.

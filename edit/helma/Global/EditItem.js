@@ -153,6 +153,16 @@ EditItem = Base.extend(new function() {
 			return param;
 		},
 
+		getButtons: function(baseForm, name) {
+			return null;
+		},
+
+		renderButtons: function(baseForm, name, wrapped, out) {
+			var buttons = this.getButtons(baseForm, name);
+			if (buttons && buttons.length)
+				return baseForm.renderButtons(buttons, wrapped, out);
+		},
+
 		toString: function() {
 			var out = [];
 			['type', 'name', 'index', 'row', 'groupForm'].each(function(val) {

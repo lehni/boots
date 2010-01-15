@@ -1,5 +1,5 @@
 NewHandler = EditHandler.extend({
-	_types: 'new',
+	mode: 'new',
 
 	handle: function(base, object, node, form) {
 		// req.data.value_item and req.data.value_group are set

@@ -1,5 +1,5 @@
 EditObjectHandler = EditHandler.extend({
-	_types: 'edit',
+	mode: 'edit',
 
 	handle: function(base, object, node, form) {
 		if (req.data.edit_item) {

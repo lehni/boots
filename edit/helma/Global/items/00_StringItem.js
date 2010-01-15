@@ -14,8 +14,7 @@ StringItem = EditItem.extend(new function() {
 				name: name, value: value, size: this.size || '20',
 				maxlength: this.length, className: this.className 
 			}, out);
-			if (this.hasLinks && this.type == 'string')
-				this.renderLinkButtons(baseForm, name, out);
+			this.renderButtons(baseForm, name, true, out);
 		},
 
 		convert: function(value) {
@@ -27,9 +26,11 @@ StringItem = EditItem.extend(new function() {
 			}
 		},
 
-		renderLinkButtons: function(baseForm, name, out) {
-			return baseForm.renderTemplate('button#buttons', {
-				buttons: baseForm.renderButtons([{
+		getButtons: function(baseForm, name) {
+			var buttons = [];
+			// TODO: Make control over links and other edit buttons more flexible
+			if (this.hasLinks && this.type != 'password') {
+				buttons.push({
 					name: name + '_link',
 					value: 'Internal Link',
 					onClick: baseForm.renderHandle('choose_link', name, {
@@ -40,8 +41,9 @@ StringItem = EditItem.extend(new function() {
 					name: name + '_url',
 					value: 'External Link',
 					onClick: baseForm.renderHandle('choose_url', name)
-				}])
-			}, out);
+				});
+			}
+			return buttons;
 		}
 	};
 });

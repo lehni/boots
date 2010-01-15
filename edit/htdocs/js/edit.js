@@ -401,6 +401,10 @@ EditForm = Base.extend({
 		}, params);
 	},
 
+	getUrl: function(mode, params) {
+		return this.url + '?' + Base.toQueryString(this.getData(mode, params));
+	},
+
 	execute: function(mode, params) {
 		if (!params) params = {};
 		if (!params.confirm || confirm(params.confirm)) {
@@ -642,7 +646,7 @@ EditForm.inject(new function() {
 	};
 });
 
-// default:
+// Default:
 EditForm.register({
 	execute: function(element, mode, params) {
 		this.execute(mode, params);
@@ -690,8 +694,8 @@ EditForm.register({
 	},
 
 	text_count: function(element) {
-		// TODO: Use special char for ponctuation?
-		var count = element.getValue().trim().split(/[\S.,:;!?-]*/g).length;
+		// Spit at punctiation. Values taken from Java's \p{Punct}
+		var count = element.getValue().trim().split(/[!"#$%&'()*+,-.\/:;<=>?@[\]^_`{|}~]*/g).length;
 		if (count)
 			count--;
 		var name = element.getId();
@@ -796,7 +800,7 @@ EditForm.register(new function() {
 	};
 });
 
-// multiselect
+// Multiselect
 EditForm.register(new function() {
 	function moveSelected(from, to) {
 		var at = null;
@@ -854,20 +858,19 @@ EditForm.inject({
 	}
 });
 
-// choose
+// Object Chooser
 EditForm.register(new function() {
-	var objectChooser = null;
+	var chooser = null;
 
 	function getChooser() {
-		if (!objectChooser)
-			objectChooser = new ObjectChooser();
-		return objectChooser;
+		if (!chooser)
+			chooser = new ObjectChooser();
+		return chooser;
 	}
 
 	function choose(form, name, params, onChoose) {
-		var chooser = getChooser();
 		form.onChoose = onChoose;
-		chooser.choose(form, name, params);
+		getChooser().choose(form, name, params);
 	}
 
 	return {
@@ -930,7 +933,7 @@ EditForm.register(new function() {
 		},
 
 		choose_toggle: function(element, id) {
-			objectChooser.toggle(id);
+			getChooser().toggle(id);
 		},
 
 		choose_select: function(element, id, title) {
@@ -961,7 +964,7 @@ EditForm.register(new function() {
 	};
 });
 
-// references
+// References
 EditForm.register({
 	references_remove: function(element, name) {
 		var el = $('#' + name + '_left', this.form);
@@ -970,8 +973,55 @@ EditForm.register({
 	}
 });
 
+// Image Chooser
+EditForm.register(new function() {
+	var chooser = null;
 
-// color
+	function choose(form, fieldName, buttonName, action, params, onChoose) {
+		if (!chooser)
+			chooser = new ImageChooser();
+		form.fieldName = fieldName;
+		chooser.choose(form, buttonName, action, params);
+	}
+
+	return {
+		choose_image: function(element, name, params) {
+			choose(this, name, name + '_image', 'choose_image', params);
+		},
+
+		choose_image_select: function(element, id, title) {
+			var field = $('#' + this.fieldName, this.form);
+			if (field) {
+				var text = field.getSelectedText();
+				field.replaceSelectedText(
+					EditSettings.image.replace('@name', title).replace('@text', text)
+				);
+			}
+			EditChooser.closeAll();
+		},
+
+		choose_crop: function(element, name, params) {
+			choose(this, name, name + '_crop', 'choose_crop', params);
+		},
+		
+		choose_crop_select: function(element, id, title) {
+			var win = new Window({
+				name: title,
+				url: this.getUrl('crop', { edit_picture_id: id }),
+				width: 800, height: 600,
+				resizable: true, focus: true
+			});
+			var field = $('#' + this.fieldName, this.form);
+			if (field)
+				win.setResult = function(text) {
+					field.replaceSelectedText(text);
+				}
+			EditChooser.closeAll();
+		}
+	};
+});
+
+// Color Chooser
 EditForm.register(new function() {
 	function updateColor(target) {
 		if (!target.color)
@@ -983,7 +1033,7 @@ EditForm.register(new function() {
 		return target;
 	}
 
-	var colorChooser = null;
+	var chooser = null;
 
 	return {
 		color_choose: function(element, name) {
@@ -992,9 +1042,9 @@ EditForm.register(new function() {
 			target.onUpdate = function() {
 				updateColor(this);
 			};
-			if (!colorChooser)
-				colorChooser = new ColorChooser(168);
-			colorChooser.choose(this, name + '-color', target);
+			if (!chooser)
+				chooser = new ColorChooser(168);
+			chooser.choose(this, name + '-color', target);
 		},
 
 		color_update: function(element, name) {
@@ -1003,8 +1053,7 @@ EditForm.register(new function() {
 	};
 });
 
-// list
-
+// Editable List
 EditForm.register(new function() {
 	function getList(form, name) {
 		if (typeof name == 'object')
@@ -1157,7 +1206,6 @@ EditForm.register(new function() {
 		}
 	};
 });
-
 
 // Choosers:
 EditChooser = Base.extend({
@@ -1340,6 +1388,28 @@ ObjectChooser = EditChooser.extend({
 	}
 });
 
+ImageChooser = EditChooser.extend({
+	initialize: function() {
+		this.base({ padding: 4, className: 'edit-simple-chooser' });
+	},
+
+	choose: function(editForm, name, action, params) {
+		this.editForm = editForm;
+		this.base(editForm, name);
+		this.show(false);
+		new Request({
+			url: editForm.url, method: 'get',
+			data: editForm.getData(action, {
+				edit_root_id: params.root || '',
+				fieldName: name
+			})
+		}, (function(result) {
+			this.content.setHtml(result);
+			this.show(true);
+		}).bind(this)).send();
+	}
+});
+
 ColorChooser = EditChooser.extend({
 	initialize: function(size) {
 		this.base({ padding: 1, buttons: true, html: 
@@ -1348,19 +1418,19 @@ ColorChooser = EditChooser.extend({
 		<tr>\
 			<td rowspan="8">\
 				<div class="edit-element">\
-					<div style="position:absolute;clip:rect(0px,' + size + 'px,' + size + 'px,0px)"><div id="edit-color-cross" style="position:relative; width:12px; height:12px; background-image:url(/static/edit/media/color-cross.gif);"></div></div>\
-					<img id="edit-color-overlay" class="edit-color" src="/static/edit/media/color-overlay.png" width="' + size + '" height="' + size + '">\
+					<div style="position:absolute;clip:rect(0px,' + size + 'px,' + size + 'px,0px)"><div id="edit-color-cross" style="position:relative; width:12px; height:12px; background-image:url(/static/edit/assets/color-cross.gif);"></div></div>\
+					<img id="edit-color-overlay" class="edit-color" src="/static/edit/assets/color-overlay.png" width="' + size + '" height="' + size + '">\
 				</div>\
 			</td>\
 			<td rowspan="8">\
 				<div class="edit-element">\
-					<div style="position:absolute;clip:rect(0px,' + Math.round(size / 10 + 5) + 'px,' + size + 'px,-4px)"><div id="edit-color-slider" style="position:relative; left:-4px; width:25px; height:7px; background-image:url(/static/edit/media/color-slider.gif);"></div></div>\
-					<img id="edit-color-rainbow" class="edit-color" src="/static/edit/media/color-rainbow.png" width="' + Math.round(size / 10) + '" height="' + size + '">\
+					<div style="position:absolute;clip:rect(0px,' + Math.round(size / 10 + 5) + 'px,' + size + 'px,-4px)"><div id="edit-color-slider" style="position:relative; left:-4px; width:25px; height:7px; background-image:url(/static/edit/assets/color-slider.gif);"></div></div>\
+					<img id="edit-color-rainbow" class="edit-color" src="/static/edit/assets/color-rainbow.png" width="' + Math.round(size / 10) + '" height="' + size + '">\
 				</div>\
 			</td>\
 			<td colspan="2">\
 				<div class="edit-element">\
-					<img id="edit-color-preview" class="edit-color" src="/static/edit/media/spacer.gif" width="100%" height="' + Math.round(size / 4) + '">\
+					<img id="edit-color-preview" class="edit-color" src="/static/edit/assets/spacer.gif" width="100%" height="' + Math.round(size / 4) + '">\
 				</div>\
 			</td>\
 		</tr>\

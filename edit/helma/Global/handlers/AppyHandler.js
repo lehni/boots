@@ -1,5 +1,5 @@
 ApplyHandler = EditHandler.extend({
-	_types: 'apply',
+	mode: 'apply',
 
 	handle: function(base, object, node, form) {
 		// Get the form description and save the values of all items:

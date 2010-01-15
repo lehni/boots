@@ -1,5 +1,5 @@
 MoveHandler = EditHandler.extend({
-	_types: 'move',
+	mode: 'move',
 
 	handle:	function(object) {
 		// TODO: Make sure this works

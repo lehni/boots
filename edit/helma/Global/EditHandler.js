@@ -5,9 +5,7 @@ EditHandler = Base.extend(new function() {
 		statics: {
 			extend: function(src) {
 				var ctor = this.base(src), handler = new ctor();
-				return (src._types || '').split(',').each(function(type) {
-					handlers[type] = handler;
-				});
+				handlers[src.mode] = handler;
 				return ctor;
 			},
 
@@ -107,6 +105,8 @@ EditHandler = Base.extend(new function() {
 							}
 						}
 					}
+				} else {
+					EditForm.reportError('Unknown edit handler: ' + mode);
 				}
 				if (!out) {
 					if (res.message)

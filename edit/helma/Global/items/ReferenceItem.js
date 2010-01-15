@@ -24,7 +24,7 @@ ReferenceItem = EditItem.extend({
 				onClick: baseForm.renderHandle('execute', 'edit', this.getEditParam())
 			});
 		}
-		baseForm.renderButtons(buttons, out);
+		baseForm.renderButtons(buttons, false, out);
 		Html.input({
 			type: 'hidden', name: name,
 			value: value ? value.getFullId() : null
