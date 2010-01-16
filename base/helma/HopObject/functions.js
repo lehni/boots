@@ -3,6 +3,16 @@ HopObject.inject({
 		return app.properties.serverUri + this.href(action);
 	},
 
+	instanceOf: function(ctor) {
+		var proto = this.__proto__;
+		while (proto && proto !== Object.prototype) {
+			if (proto.constructor.name == ctor.name)
+				return true;
+			proto = proto.__proto__;
+		}
+		return false;
+	},
+
 	/**
 	 * Parses the text into a helma skin and renders it. This will be deprecated
 	 * in favour of Markup.js and Template.js

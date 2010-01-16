@@ -221,7 +221,7 @@ Resource.inject({
 		if (param.details)
 			param.details = ' (' +
 				// Display image / video size for media
-				(this instanceof Medium ? this.width + ' x ' + this.height + ' Pixels, ' : '') +
+				(this.instanceOf(Medium) ? this.width + ' \xd7 ' + this.height + ' Pixels, ' : '') +
 				// File size
 				this.getFile().getSizeAsString() + 
 				')';

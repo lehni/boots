@@ -54,7 +54,7 @@ Node.inject({
 		var users = root.getNotificationUsers(post);
 		for (var i = 0, l = users && users.length; i < l; i++) {
 			var user = users[i];
-			if (!(user instanceof User))
+			if (!(user.instanceOf(User)))
 				user = root.users.get(user);
 			if (user)
 				this.setNotification(true, user);
