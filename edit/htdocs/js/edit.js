@@ -694,7 +694,7 @@ EditForm.register({
 	},
 
 	text_count: function(element) {
-		// Spit at punctiation. Values taken from Java's \p{Punct}
+		// Split at punctiation. Values taken from Java's \p{Punct}
 		var count = element.getValue().trim().split(/[!"#$%&'()*+,-.\/:;<=>?@[\]^_`{|}~]*/g).length;
 		if (count)
 			count--;
