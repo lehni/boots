@@ -24,9 +24,13 @@ ChooseCropImageHandler = EditHandler.extend({
 				picture: picture,
 				cropper: {
 					min: { width: 32, height: 32 },
-					presets: presets
+					presets: presets && presets.length && presets
 				}
 			}, res);
 		 }
+	},
+
+	getSizePresets: function() {
+		return [];
 	}
 });

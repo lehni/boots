@@ -92,16 +92,16 @@ Picture.inject({
 						image = new Image(file);
 					var cropWidth = crop.width || width;
 					var cropHeight = crop.height || height;
-					var left = (crop.left || 0).toInt();
-					var top = (crop.top || 0).toInt();
-					if (crop.align)
-						left += (width - cropWidth) *
-							(crop.align == 'center' ? 0.5 : crop.align == 'right' ? 1 : 0);
+					var x = (crop.x || 0).toInt();
+					var y = (crop.y || 0).toInt();
+					if (crop.halign)
+						x += (width - cropWidth) *
+							(crop.halign == 'center' ? 0.5 : crop.halign == 'right' ? 1 : 0);
 					if (crop.valign) {
-						top += (height - cropHeight) *
+						y += (height - cropHeight) *
 							(crop.valign == 'middle' ? 0.5 : crop.valign == 'bottom' ? 1 : 0);
 					}
-					image.crop(left, top, cropWidth, cropHeight);
+					image.crop(x, y, cropWidth, cropHeight);
 					width = image.width;
 					height = image.height;
 				}

@@ -1020,8 +1020,8 @@ EditForm.register(new function() {
 						delete crop.width;
 					}
 					var tag = '<crop "' + param.image_name + '" '
-						+ ['top', 'left', 'width', 'height', 'imageWidth', 'span'].collect(function(name) {
-							if(crop[name] && (name != 'imageWidth' || crop.zoom != 1))
+						+ ['x', 'y', 'width', 'height', 'imagewidth', 'span'].collect(function(name) {
+							if(crop[name] && (name != 'imagewidth' || crop.zoom != 1))
 								return name + '="' + crop[name] + '"';
 						}).join(' ') + ' />';
 					field.replaceSelectedText(tag);
