@@ -120,7 +120,7 @@ Picture.inject({
 
 				if (image) {
 					// A new image version was produced, save it to a file now:
-					var quality = (app.properties.imageQuality || 0.8).toFloat();
+					var quality = (param.quality || app.properties.imageQuality || 0.8).toFloat();
 
 					var numColors = info.getNumColors();
 					if (numColors > 0) {
