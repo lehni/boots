@@ -182,8 +182,8 @@ MarkupTag = Base.extend(new function() {
 				// No merging sof far!
 				var attributes = src._attributes || this.prototype._attributes;
 				attributes = attributes && parseDefinition(attributes, true);
-				var namespace = src._namespace || 'default';
-				var store = tags[namespace] = tags[namespace] || {};
+				var context = src._context || 'default';
+				var store = tags[context] = tags[context] || {};
 				return (src._tags && src._tags.split(',') || []).each(function(tag) {
 					// Store attributes information and a reference to prototype in tags
 					store[tag] = {
@@ -197,7 +197,7 @@ MarkupTag = Base.extend(new function() {
 				// Parse tag definition for attributes (named) and arguments (unnamed).
 				var def = definition == 'root' ? { name: 'root' } : parseDefinition(definition);
 				// Render any undefined tag through the UndefinedTag.
-				var store = param && tags[param.namespace] || tags['default'];
+				var store = param && tags[param.context] || tags['default'];
 				var obj = store[def.name] || store['undefined'] || tags['default']['undefined'];
 				if (obj.attributes) {
 					// If _attributes were defined, use the info object produced
