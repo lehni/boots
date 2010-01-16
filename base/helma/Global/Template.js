@@ -767,7 +767,7 @@ Template.prototype = {
 
 Template.lineBreak = java.lang.System.getProperty('line.separator');
 
-HopObject.prototype.getTemplate = function(template) {
+getTemplate = HopObject.prototype.getTemplate = function(template) {
 	var name = template;
 	if (!(template instanceof Template)) {
 		var pos = name.indexOf('#');
@@ -788,7 +788,7 @@ HopObject.prototype.getTemplate = function(template) {
 	return template;
 };
 
-HopObject.prototype.renderTemplate = function(template, param, out) {
+renderTemplate = HopObject.prototype.renderTemplate = function(template, param, out) {
 	template = this.getTemplate(template);
 	if (template)
 		return template.render(this, param, null, out);
