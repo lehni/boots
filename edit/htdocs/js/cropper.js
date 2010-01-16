@@ -372,7 +372,7 @@ var Cropper = Base.extend(Chain, Callback, {
 		this.getCurrentCoords(preCssStyles);
 		this.drawMasks();
 		this.positionHandles();
-		this.fireEvent('changeCrop', [this.img.src, this.current.crop, this.getCropInfo()]);
+		this.fireEvent('change', [this.img.src, this.current.crop, this.getCropInfo()]);
 	},
 
 	getCurrentCoords: function(changed) {
@@ -491,7 +491,7 @@ var Cropper = Base.extend(Chain, Callback, {
 				setIndicator(imgsrc, crop, cropInfo, handle);
 			},
 
-			changeCrop: function(imgsrc, crop, cropInfo) {
+			change: function(imgsrc, crop, cropInfo) {
 				setIndicator(imgsrc, crop, cropInfo);
 			},
 
@@ -503,13 +503,13 @@ var Cropper = Base.extend(Chain, Callback, {
 
 	buildSizePresets: function() {
 		var that = this;
-		if(this.options.sizePresets) {
-			this.sizePresets = $('cropButtons').injectBottom('select', {
-				id: 'sizePresets',
+		if(this.options.presets) {
+			this.presets = $('cropButtons').injectBottom('select', {
+				id: 'presets',
 				events: {
 					change: function() {
 						var index = this.getSelected()[0].$.value.toInt();
-						var preset = that.options.sizePresets[index];
+						var preset = that.options.presets[index];
 						if(preset.resize)
 							that.options.resize = preset.resize;
 						that.setup(preset.width, preset.height);
@@ -519,10 +519,10 @@ var Cropper = Base.extend(Chain, Callback, {
 					}
 				}
 			});
-			this.sizePresets.injectBottom('option', { text: 'Size presets', value: '' });
+			this.presets.injectBottom('option', { text: 'Presets', value: '' });
 			var that = this;
-			this.options.sizePresets.each(function(preset, i) {
-				this.sizePresets.injectBottom('option', {
+			this.options.presets.each(function(preset, i) {
+				this.presets.injectBottom('option', {
 					text: preset.name,
 					value: i,
 					selected: !!preset.selected
@@ -673,6 +673,7 @@ var Cropper = Base.extend(Chain, Callback, {
 		cropInfo.top = cropInfo.top - this.imageBounds.top;
 		cropInfo.imageWidth =  this.imageBounds.width;
 		cropInfo.imageHeight = this.imageBounds.height;
+		cropInfo.zoom = this.imageBounds.width / this.originalSize.width;
 		return cropInfo;
 	},
 
@@ -682,7 +683,3 @@ var Cropper = Base.extend(Chain, Callback, {
 	}
 
 });
-
-// function initializeCropper(options) {
-// 	return new Cropper(options);
-// }

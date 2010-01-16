@@ -14,22 +14,9 @@
 
 			cropper.confirm = function(){
 				var cropInfo = new Hash(cropper.getCropInfo());
-				if (this.sizePresets) {
-					var preset = this.options.sizePresets[this.sizePresets.getValue()];
-					var span = preset && preset.value;
-				}
-				var tag = '<cropimage <%= param.picture.name %> ';
-				if(span) {
-					cropInfo.span = span;
-					cropInfo.width = null;
-				}
-				['top', 'left', 'width', 'height', 'imageWidth', 'imageHeight', 'span'].each(function(attribute){
-					if(cropInfo[attribute])
-						tag += attribute + '=' + cropInfo[attribute] + ' ';
-				});
-				tag += '></cropimage>';
+				var preset = this.presets && this.options.presets[this.presets.getValue()];
 				if ($window.setResult)
-					$window.setResult(tag);
+					$window.setResult(cropInfo, preset);
 				$window.close();
 			}
 		});

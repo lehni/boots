@@ -1013,8 +1013,18 @@ EditForm.register(new function() {
 			});
 			var field = $('#' + this.fieldName, this.form);
 			if (field)
-				win.setResult = function(text) {
-					field.replaceSelectedText(text);
+				win.setResult = function(crop, preset) {
+					var span = preset && preset.value;
+					if(span) {
+						crop.span = span;
+						delete crop.width;
+					}
+					var tag = '<crop "' + param.image_name + '" '
+						+ ['top', 'left', 'width', 'height', 'imageWidth', 'span'].collect(function(name) {
+							if(crop[name] && (name != 'imageWidth' || crop.zoom != 1))
+								return name + '="' + crop[name] + '"';
+						}).join(' ') + ' />';
+					field.replaceSelectedText(tag);
 				}
 			EditChooser.closeAll();
 		}
