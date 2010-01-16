@@ -435,12 +435,12 @@ EditForm = Base.extend({
 
 	getSelectedTag: function(field, tag) {
 		var text = field.getValue(), pos = field.getCaret();
-		var start = text.substring(0, pos).lastIndexOf('<' + tag);
+		var start = text.substring(0, pos + tag.length + 1).lastIndexOf('<' + tag);
 		if (start != -1) {	
-			var end = text.indexOf('</' + tag + '>', pos);
+			var end = text.indexOf('</' + tag + '>', pos - tag.length - 3);
 			if (end != -1)
 				end += tag.length + 3;
-			var end2 = text.indexOf('/>', pos);
+			var end2 = text.indexOf('/>', pos - 2);
 			if (end2 != -1) {
 				end2 += 2;
 				if (end == -1 || end2 < end)
@@ -1035,8 +1035,8 @@ EditForm.register(new function() {
 			this.field = $('#' + name, this.form);
 			var tag = this.getSelectedTag(this.field, 'crop');
 			if (tag) {
-				param.crop_tag = tag.tag;
 				this.field.setSelection(tag);
+				param.crop_tag = tag.tag;
 			}
 			choose(this, name + '_crop', 'choose_crop', param);
 		},
