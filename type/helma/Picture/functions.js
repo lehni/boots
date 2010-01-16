@@ -44,10 +44,8 @@ Picture.inject({
 		return [
 			param.maxWidth, param.maxHeight, param.quality, param.tint,
 //			param.rotation, param.bgColor,
-			param.transparentPixel && [param.transparentPixel.x, param.transparentPixel.y],
-			crop && [crop.width, crop.height,
-				crop.offset && [crop.offset.x, crop.offset.y],
-				crop.align && [crop.align.x, crop.align.y]]
+			crop && [crop.width, crop.height, crop.left, crop.top, crop.align, crop.valign],
+			param.transparentPixel && [param.transparentPixel.x, param.transparentPixel.y]
 		];
 		return encodeMD5(res.pop());
 	},
@@ -59,7 +57,7 @@ Picture.inject({
 		var width, height;
 		// We use on the fly generation of image versions (e.g. thumbnails).
 		// The file's existance is checked each time it's requested, and generated if needed
-		if (!version.exists()) {
+		if (true || !version.exists()) {
 			var file = this.getFile();
 			if (file.exists()) {
 				var maxWidth = param.maxWidth;
@@ -92,20 +90,18 @@ Picture.inject({
 					// Image is only set if it was resized before
 					if (!image)
 						image = new Image(file);
-					var cropWidth = crop.width ? crop.width : width;
-					var cropHeight = crop.height ? crop.height : height;
-					var offset = crop.offset;
-					var offsetX = offset ? offset.x : 0;
-					var offsetY = offset ? offset.y : 0;
-					var align = crop.align;
-					if (align) {
-						offsetX += (width - cropWidth) *
-							(align.x == 'center' ? 0.5 : align.x == 'right' ? 1 : 0);
-						offsetY += (height - cropHeight) *
-							(align.y == 'middle' ? 0.5 : align.y == 'bottom' ? 1 : 0);
+					var cropWidth = crop.width || width;
+					var cropHeight = crop.height || height;
+					var left = (crop.left || 0).toInt();
+					var top = (crop.top || 0).toInt();
+					if (crop.align)
+						left += (width - cropWidth) *
+							(crop.align == 'center' ? 0.5 : crop.align == 'right' ? 1 : 0);
+					if (crop.valign) {
+						top += (height - cropHeight) *
+							(crop.valign == 'middle' ? 0.5 : crop.valign == 'bottom' ? 1 : 0);
 					}
-					app.log('Cropping ' + crop + ' ' + [offsetX, offsetY, cropWidth, cropHeight]);
-					image.crop(offsetX, offsetY, cropWidth, cropHeight);
+					image.crop(left, top, cropWidth, cropHeight);
 					width = image.width;
 					height = image.height;
 				}

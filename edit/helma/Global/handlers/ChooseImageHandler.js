@@ -9,11 +9,7 @@ ChooseImageHandler = EditHandler.extend({
 			// TODO: Use Template
 			res.write('<ul>');
 			var pictures = obj.resources.list().filter(function(resource) {
-				// TODO: resource instanceof Picture does not work due to 
-				// an error in Helma's lazy loading of HopObjectCtor. Fix this
-				// bug and then change to instanceof, as this would support
-				// subclasses too.
-				return resource._prototype ==  'Picture';
+				return resource.instanceOf(Picture);
 			});
 			for (var i = 0; i < pictures.length; i++) {
 				var picture = pictures[i];
