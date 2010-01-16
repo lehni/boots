@@ -114,7 +114,9 @@ EditForm = Base.extend({
 	},
 
 	reportError: function(error) {
-		$('#edit-label-' + error.name + ' > .edit-error', this.form).setHtml(error.message).removeClass('hidden');
+		$('#edit-label-' + error.name + ' > .edit-error', this.form)
+			.setHtml(error.message)
+			.removeClass('hidden');
 		this.setSelectedTab(error.tab);
 		var field = $('#' + error.name, this.form);
 		if (field && field.focus) {
@@ -226,9 +228,13 @@ EditForm = Base.extend({
 			var val = null;
 			if (el instanceof Select) {
 				val = { options: el.getOptions().map(function(opt) {
-					return { text: opt.getText(), value: opt.getValue(), selected: opt.getSelected() }
+					return { 
+						text: opt.getText(), value: opt.getValue(), 
+						selected: opt.getSelected()
+					};
 				}) };
-			} else if ((!(el instanceof Input) || !/^(file|button)$/.test(el.getType())) && el.getValue() != null) {
+			} else if ((!(el instanceof Input) 
+				|| !/^(file|button)$/.test(el.getType())) && el.getValue() != null) {
 				val = { value: el.getValue() };
 			}
 			if (val)
@@ -319,7 +325,8 @@ EditForm = Base.extend({
 				multi.right.element.removeChildren();
 			multi.values.each(function(opt) {
 				if (opt) {
-					var options = lookupIds[opt.value] ? multi.left.element :  multi.right.element;
+					var options = lookupIds[opt.value]
+						? multi.left.element :  multi.right.element;
 					if (options)
 						options.appendChild(new SelectOption(opt));
 				}
@@ -352,11 +359,13 @@ EditForm = Base.extend({
 				if (uploadStatus) {
 					var maxWidth = uploadStatus.getParent().getWidth();
 					var request = new Request({
-						url: url, method: 'get', json: true, data: this.getData('upload_status')
+						url: url, method: 'get', json: true,
+						data: this.getData('upload_status')
 					}, function(status) {
 						if (that.uploadTimer && status && status.total) {
-							if (status.current == status.total ||
-								current == status.current && new Date().getTime() - startTime > 6000)
+							if (status.current == status.total
+								|| current == status.current
+								&& new Date().getTime() - startTime > 6000)
 									that.uploadTimer = that.uploadTimer.clear();
 							uploadStatus.setWidth(status.current / status.total * maxWidth);
 							// .setHtml(status.current + ' of ' + status.total + ' uploaded.');
@@ -421,6 +430,24 @@ EditForm = Base.extend({
 			});
 			this.submit(post, this.getData(mode, param));
 			this.form.enable(enable);
+		}
+	},
+
+	getSelectedTag: function(field, tag) {
+		var text = field.getValue(), pos = field.getCaret();
+		var start = text.substring(0, pos).lastIndexOf('<' + tag);
+		if (start != -1) {	
+			var end = text.indexOf('</' + tag + '>', pos);
+			if (end != -1)
+				end += tag.length + 3;
+			var end2 = text.indexOf('/>', pos);
+			if (end2 != -1) {
+				end2 += 2;
+				if (end == -1 || end2 < end)
+					end = end2;
+			}
+			if (start <= pos && end >= pos)
+				return text.substring(start, end);
 		}
 	},
 
@@ -880,7 +907,8 @@ EditForm.register(new function() {
 				if (field) {
 					var text = field.getSelectedText();
 					field.replaceSelectedText(
-						(text ? EditSettings.objectLink : EditSettings.unnamedObjectLink).replace('@link', id).replace('@text', text)
+						EditSettings[text ? 'objectLink' : 'unnamedObjectLink']
+							.replace('@link', id).replace('@text', text)
 					);
 				}
 				return true; // close
@@ -948,7 +976,8 @@ EditForm.register(new function() {
 				var url = prompt('Enter link URL (email or internet address):\n' +
 					'Email addresses are encrypted and protected against spam.');
 				if (url) {
-					var text = prompt('Enter link text (empty = same as URL):', field.getSelectedText());
+					var text = prompt('Enter link text (empty = same as URL):',
+						field.getSelectedText());
 					if (text || text == '') {
 						var link = text ? EditSettings.urlLink : EditSettings.unnamedUrlLink;
 						if (/^([a-zA-Z0-9\-\.\_]+)(\@)([a-zA-Z0-9\-\.]+)(\.)([a-zA-Z]{2,4})$/.test(url)) {
@@ -977,31 +1006,30 @@ EditForm.register({
 EditForm.register(new function() {
 	var chooser = null;
 
-	function choose(form, fieldName, buttonName, action, param) {
+	function choose(form, name, action, param) {
 		if (!chooser)
 			chooser = new ImageChooser();
-		form.fieldName = fieldName;
-		chooser.choose(form, buttonName, action, param);
+		chooser.choose(form, name, action, param);
 	}
 
 	return {
 		choose_image: function(element, name, param) {
-			choose(this, name, name + '_image', 'choose_image', param);
+			this.field = $('#' + name, this.form);
+			choose(this, name + '_image', 'choose_image', param);
 		},
 
 		choose_image_select: function(element, param) {
-			var field = $('#' + this.fieldName, this.form);
-			if (field) {
-				var text = field.getSelectedText();
-				field.replaceSelectedText(
-					EditSettings.image.replace('@name', param.image_name).replace('@text', text)
-				);
-			}
+			var text = this.field.getSelectedText();
+			this.field.replaceSelectedText(
+				EditSettings.image.replace('@name', param.image_name).replace('@text', text)
+			);
 			EditChooser.closeAll();
 		},
 
 		choose_crop: function(element, name, param) {
-			choose(this, name, name + '_crop', 'choose_crop', param);
+			this.field = $('#' + name, this.form);
+			param.crop_tag = this.getSelectedTag(this.field, 'crop');
+			choose(this, name + '_crop', 'choose_crop', param);
 		},
 		
 		choose_crop_select: function(element, param) {
@@ -1011,21 +1039,14 @@ EditForm.register(new function() {
 				width: 800, height: 600,
 				resizable: true, focus: true
 			});
-			var field = $('#' + this.fieldName, this.form);
-			if (field)
-				win.setResult = function(crop, preset) {
-					var span = preset && preset.value;
-					if(span) {
-						crop.span = span;
-						delete crop.width;
-					}
-					var tag = '<crop "' + param.image_name + '" '
-						+ ['x', 'y', 'width', 'height', 'imagewidth', 'span'].collect(function(name) {
-							if(crop[name] && (name != 'imagewidth' || crop.zoom != 1))
-								return name + '="' + crop[name] + '"';
-						}).join(' ') + ' />';
-					field.replaceSelectedText(tag);
-				}
+			win.setResult = (function(crop, preset) {
+				var tag = '<crop "' + param.image_name + '" '
+					+ ['x', 'y', 'width', 'height', 'imageWidth'].collect(function(name) {
+						if(crop[name] && (name != 'imageWidth' || crop.zoom != 1))
+							return name.toLowerCase() + '="' + crop[name] + '"';
+					}).join(' ') + ' />';
+				this.field.replaceSelectedText(tag);
+			}).bind(this);
 			EditChooser.closeAll();
 		}
 	};
@@ -1295,7 +1316,7 @@ EditChooser = Base.extend({
 
 	load: function(action, param, callback) {
 		new Request({
-			url: this.editForm.url, method: 'get',
+			url: this.editForm.url, method: 'get', json: true,
 			data: this.editForm.getData(action, param)
 		}, callback && callback.bind(this)).send();
 	},
@@ -1386,7 +1407,7 @@ ObjectChooser = EditChooser.extend({
 		if (show) {
 			this.load('choose', Hash.merge({ edit_child_id: id || '' }, this.param),
 				function(result) {
-					children.setHtml(result);
+					children.setHtml(result.html);
 					this.setArrow(id, true);
 					if (show) {
 						children.removeClass('hidden');
@@ -1413,7 +1434,7 @@ ImageChooser = EditChooser.extend({
 		this.show(false);
 		this.load(action, param,
 			function(result) {
-				this.content.setHtml(result);
+				this.content.setHtml(result.html);
 				this.show(true);
 			}
 		);

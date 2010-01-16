@@ -90,7 +90,7 @@ EditHandler = Base.extend(new function() {
 						EditForm.reportError(e);
 					}
 					var out = res.pop();
-					if (!out && !res.data.editResponse.id) {
+					if (!out && !res.data.editResponse.html) {
 						// Go back the given amount, if any
 						if (req.data.edit_back) {
 							var back = parseInt(req.data.edit_back);

@@ -66,7 +66,7 @@ Markup = {
 
 	// Parses the passed text into a DOM tree and renders it directly.
 	render: function(text, param) {
-		var markup = Markup.parse(text);
+		var markup = Markup.parse(text, param);
 		return markup && markup.render(param) || '';
 	}
 };

@@ -5,8 +5,8 @@ ChooseHandler = EditHandler.extend({
 		if (item) {
 			var obj = HopObject.get(req.data.edit_child_id) || item.root || root;
 			var objId = obj.getFullId();
-			res.contentType = 'text/html';
 			// TODO: Use Template
+			res.push();
 			res.write('<ul id="edit-choose-children-' + objId + '">');
 			var children = obj.list();
 			for (var i = 0; i < children.length; i++) {
@@ -32,6 +32,9 @@ ChooseHandler = EditHandler.extend({
 				}
 			}
 			res.write('</ul>');
+			form.addResponse({
+				html: res.pop()
+			});
 		}
 	}
 });

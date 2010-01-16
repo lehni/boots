@@ -5,8 +5,8 @@ ChooseImageHandler = EditHandler.extend({
 		if (item) {
 			var obj = item.root || object;
 			var objId = obj.getFullId();
-			res.contentType = 'text/html';
 			// TODO: Use Template
+			res.push();
 			res.write('<ul>');
 			var pictures = obj.resources.list().filter(function(resource) {
 				return resource.instanceOf(Picture);
@@ -26,10 +26,40 @@ ChooseImageHandler = EditHandler.extend({
 				}
 			}
 			res.write('</ul>');
+			form.addResponse({
+				html: res.pop()
+			});
 		 }
 	}
 });
 
+CropTagParser = ResourceTag.extend({
+	_tags: 'crop',
+	_context: 'edit',
+	_attributes: 'resource',
+	// attributes: resource imagewidth imageheight y top width height halign valign
+
+	render: function(content, param) {
+		param.crop = this.attributes;
+	}
+});
+
 ChooseCropImageHandler = ChooseImageHandler.extend({
-	mode: 'choose_crop'
+	mode: 'choose_crop',
+
+	handle: function(base, object, node, form, item) {
+		var tag = req.data.crop_tag, crop;
+		if (tag) {
+			var param = { context: 'edit' };
+			Markup.render(tag, param);
+			crop = param.crop;
+		}
+		if (crop) {
+			form.addResponse({
+				crop: crop
+			});
+		} else {
+			this.base.apply(this, arguments);
+		}
+	}
 });
