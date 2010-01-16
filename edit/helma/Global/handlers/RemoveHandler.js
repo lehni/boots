@@ -7,7 +7,6 @@ RemoveHandler = EditHandler.extend({
 		var removed = false;
 		// Do not check for canEdit, as remove() does so.
 		if (req.data.edit_object_ids) {
-			var item = form.getItem(req.data.edit_item, req.data.edit_group);
 			req.data.edit_object_ids.split(',').each(function(id) {
 				var obj = HopObject.get(id);
 				// No need to check canEdit since obj.remove does it for us

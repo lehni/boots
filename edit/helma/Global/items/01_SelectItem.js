@@ -30,8 +30,9 @@ SelectItem = ListItem.extend({
 			select.size = this.size;
 
 		var buttons = this.renderButtons(baseForm, name, true);
+		// Double clicking onto the select input also edits the entry
 		if (buttons)
-			select.onDblClick = baseForm.renderHandle('select_edit', [name], this.getEditParam());
+			select.onDblClick = baseForm.renderHandle('select_edit', name, this.getEditParam());
 		select.options = options;
 		Html.select(select, out);
 		if (buttons)

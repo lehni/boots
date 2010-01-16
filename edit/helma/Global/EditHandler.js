@@ -39,8 +39,12 @@ EditHandler = Base.extend(new function() {
 							node.log(mode);
 							// Make sure a new form is produced each time when editing
 							var form = node.getForm(mode == 'edit');
+							// Retrieve item too if defined and pass it to handler
+							var item = req.data.edit_item !== undefined
+								? form.getItem(req.data.edit_item, req.data.edit_group)
+								: null;
 							var oldHref = base.href();
-							var result = handler.handle(base, node.object, node, form);
+							var result = handler.handle(base, node.object, node, form, item);
 							if (result == EditForm.COMMIT) {
 								res.commit();
 								var redirect = null;

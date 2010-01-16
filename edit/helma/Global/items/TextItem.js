@@ -24,10 +24,7 @@ TextItem = StringItem.extend({
 			buttons.push({
 				name: name + '_crop',
 				value: 'Crop Image',
-				onClick: baseForm.renderHandle('choose_crop', name, {
-					root: this.root ? this.root.getFullId() : '',
-					multiple: false
-				})
+				onClick: baseForm.renderHandle('choose_crop', name, this.getEditParam())
 			});
 		}
 		return buttons;

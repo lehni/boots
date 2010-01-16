@@ -1,10 +1,7 @@
 NewHandler = EditHandler.extend({
 	mode: 'new',
 
-	handle: function(base, object, node, form) {
-		// req.data.value_item and req.data.value_group are set
-		// if a prototype chooser is used bellow:
-		var item = form.getItem(req.data.edit_item, req.data.edit_group);
+	handle: function(base, object, node, form, item) {
 		if (item) {
 			// Make sure the passed prototype is in the list of prototypes allowed
 			var prototype = null, prototypes = item.prototypes;

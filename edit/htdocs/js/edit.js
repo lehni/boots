@@ -328,7 +328,7 @@ EditForm = Base.extend({
 		}, this);
 	},
 
-	submit: function(post, params) {
+	submit: function(post, param) {
 		// Clear all errors:
 		$$('.edit-error', this.form).addClass('hidden');
 		var progress = $('.edit-progress', this.form);
@@ -336,7 +336,7 @@ EditForm = Base.extend({
 			progress.removeClass('hidden');
 		var method = 'get';
 		var url = this.url;
-		var back = params.edit_back;
+		var back = param.edit_back;
 		var that = this;
 		if (post) {
  			// Post values using internal form
@@ -371,11 +371,11 @@ EditForm = Base.extend({
 					}).delay(50);
 				}
 			}
-			// Set / add fields to form as elements and use the form as params.
-			params = this.form.setValues(params);
+			// Set / add fields to form as elements and use the form as param.
+			param = this.form.setValues(param);
 		}
 		this.request = new Request({
-			url: url, method: method, json: true, data: params
+			url: url, method: method, json: true, data: param
 		}, function(values) {
 			if (progress)
 				progress.addClass('hidden');
@@ -393,33 +393,33 @@ EditForm = Base.extend({
 		}).send();
 	},
 
-	getData: function(mode, params) {
+	getData: function(mode, param) {
 		return Hash.merge({
 			edit_mode: mode,
 			edit_id: this.id,
 			edit_data: Json.encode(EditForm.data)
-		}, params);
+		}, param);
 	},
 
-	getUrl: function(mode, params) {
-		return this.url + '?' + Base.toQueryString(this.getData(mode, params));
+	getUrl: function(mode, param) {
+		return this.url + '?' + Base.toQueryString(this.getData(mode, param));
 	},
 
-	execute: function(mode, params) {
-		if (!params) params = {};
-		if (!params.confirm || confirm(params.confirm)) {
+	execute: function(mode, param) {
+		if (!param) param = {};
+		if (!param.confirm || confirm(param.confirm)) {
 			// This is necessay for mozilla browsers, because otherwise form focus
 			// gets messed up (because the input that still has the focus gets
 			// deleted by innerHTML....)
 			this.form.blur();
-			var post = params.post;
-			var enable = !!params.enable;
+			var post = param.post;
+			var enable = !!param.enable;
 			// Filter out all parameters that do not start with edit_
-			Base.each(params, function(val, key) {
+			Base.each(param, function(val, key) {
 				if (!/^edit_/.test(key))
-					delete params[key];
+					delete param[key];
 			});
-			this.submit(post, this.getData(mode, params));
+			this.submit(post, this.getData(mode, param));
 			this.form.enable(enable);
 		}
 	},
@@ -648,8 +648,8 @@ EditForm.inject(new function() {
 
 // Default:
 EditForm.register({
-	execute: function(element, mode, params) {
-		this.execute(mode, params);
+	execute: function(element, mode, param) {
+		this.execute(mode, param);
 	},
 
 	remove: function(element, title) {
@@ -659,15 +659,15 @@ EditForm.register({
 		});
 	},
 
-	apply: function(element, params) {
+	apply: function(element, param) {
 		if ($$('.edit-list-remove input[value=1]').find(function(item) {
 			// Only warn for items not newly created. (= not containing ids like _n10_)
 			if (!/_n\d*_/.test(item.getId()))
 				return true;
 		})) {
-			params.confirm = 'Do you really want to delete the marked entries?';
+			param.confirm = 'Do you really want to delete the marked entries?';
 		}
-		this.execute('apply', params);
+		this.execute('apply', param);
 	},
 
 	close: function(element) {
@@ -741,7 +741,7 @@ EditForm.register(new function() {
 	var prototypeChooser = null;
 
 	return {
-		select_new: function(element, name, prototypes, params) {
+		select_new: function(element, name, prototypes, param) {
 			if (typeof prototypes == 'string') {
 				var str = $('#' + prototypes).getValue();
 				// name: listId_entryId_new
@@ -755,26 +755,26 @@ EditForm.register(new function() {
 			prototypeChooser.choose(this, name, prototypes, element);
 		},
 
-		select_edit: function(element, sels, params) {
+		select_edit: function(element, sels, param) {
 			var sel = getSelected(this, sels);
 			if (sel && sel.values.length == 1) {
 				var val = sel.values[0];
 				if (val != 'null') {
-					params.edit_object_id = val;
-					this.execute('edit', params);
+					param.edit_object_id = val;
+					this.execute('edit', param);
 				}
 			}
 		},
 
-		select_remove: function(element, sels, params) {
-			if (params) {
+		select_remove: function(element, sels, param) {
+			if (param) {
 				var sel = getSelected(this, sels);
 				if (sel) {
-					params.confirm = 'Do you really want to delete ' + 
+					param.confirm = 'Do you really want to delete ' + 
 						(sel.values.length > 1 ? 'these items: "' + 
 						sel.names : '"' + sel.names) + '"?';
-					params.edit_object_ids = sel.ids;
-					this.execute('remove', params);
+					param.edit_object_ids = sel.ids;
+					this.execute('remove', param);
 				}
 			} else {
 				// Remove links from list
@@ -788,10 +788,10 @@ EditForm.register(new function() {
 			}
 		},
 
-		select_move: function(element, name, sels, params) {
+		select_move: function(element, name, sels, param) {
 			var sel = getSelected(this, sels);
 			if (sel) {
-				sel.params = params;
+				sel.param = param;
 				sel.move = true;
 				// TODO: Finish porting. Pass sel, etc
 				this.handle('choose_move', element, name);
@@ -868,14 +868,14 @@ EditForm.register(new function() {
 		return chooser;
 	}
 
-	function choose(form, name, params, onChoose) {
+	function choose(form, name, param, onChoose) {
 		form.onChoose = onChoose;
-		getChooser().choose(form, name, params);
+		getChooser().choose(form, name, param);
 	}
 
 	return {
-		choose_link: function(element, name, params) {
-			choose(this, name + '_link', params, function(id, title) {
+		choose_link: function(element, name, param) {
+			choose(this, name + '_link', param, function(id, title) {
 				var field = $('#' + name, this.form);
 				if (field) {
 					var text = field.getSelectedText();
@@ -887,11 +887,11 @@ EditForm.register(new function() {
 			});
 		},
 
-		choose_reference: function(element, name, params) {
+		choose_reference: function(element, name, param) {
 			var that = this, element = null, backup = null;
 			// make sure the chooser is there:
 			var chooser = getChooser();
-			if (params.multiple) {
+			if (param.multiple) {
 				element = $('#' + name + '_left');
 				backup = element.getChildren();
 				chooser.onCancel = function() {
@@ -902,9 +902,9 @@ EditForm.register(new function() {
 					this.close();
 				}
 			}
-			choose(this, name + '_choose', params, function(id, title) {
+			choose(this, name + '_choose', param, function(id, title) {
 				var match;
-				if (params.multiple) {
+				if (param.multiple) {
 					if (element.getElement('option[value="' + id + '"]')) {
 						alert('This element was already added to the list.');
 					} else {
@@ -926,8 +926,8 @@ EditForm.register(new function() {
 			});
 		},
 
-		choose_move: function(element, name, params) {
-			choose(this, name, params, function(id, title) {
+		choose_move: function(element, name, param) {
+			choose(this, name, param, function(id, title) {
 				return true;
 			});
 		},
@@ -977,37 +977,37 @@ EditForm.register({
 EditForm.register(new function() {
 	var chooser = null;
 
-	function choose(form, fieldName, buttonName, action, params, onChoose) {
+	function choose(form, fieldName, buttonName, action, param) {
 		if (!chooser)
 			chooser = new ImageChooser();
 		form.fieldName = fieldName;
-		chooser.choose(form, buttonName, action, params);
+		chooser.choose(form, buttonName, action, param);
 	}
 
 	return {
-		choose_image: function(element, name, params) {
-			choose(this, name, name + '_image', 'choose_image', params);
+		choose_image: function(element, name, param) {
+			choose(this, name, name + '_image', 'choose_image', param);
 		},
 
-		choose_image_select: function(element, id, title) {
+		choose_image_select: function(element, param) {
 			var field = $('#' + this.fieldName, this.form);
 			if (field) {
 				var text = field.getSelectedText();
 				field.replaceSelectedText(
-					EditSettings.image.replace('@name', title).replace('@text', text)
+					EditSettings.image.replace('@name', param.image_name).replace('@text', text)
 				);
 			}
 			EditChooser.closeAll();
 		},
 
-		choose_crop: function(element, name, params) {
-			choose(this, name, name + '_crop', 'choose_crop', params);
+		choose_crop: function(element, name, param) {
+			choose(this, name, name + '_crop', 'choose_crop', param);
 		},
 		
-		choose_crop_select: function(element, id, title) {
+		choose_crop_select: function(element, param) {
 			var win = new Window({
-				name: title,
-				url: this.getUrl('crop', { edit_picture_id: id }),
+				name: param.image_name,
+				url: this.getUrl('crop', param),
 				width: 800, height: 600,
 				resizable: true, focus: true
 			});
@@ -1266,10 +1266,11 @@ EditChooser = Base.extend({
 		}).addEvent('mouseup', handler);
 	},
 
-	choose: function(form, name) {
+	choose: function(editForm, name) {
+		this.editForm = editForm;
 		EditChooser.closeAll();
 		EditChooser.current = this;
-		var bounds = $('#' + name, form.container).getBounds();
+		var bounds = $('#' + name, editForm.container).getBounds();
 		this.element.setOffset({ x: bounds.left, y: bounds.bottom });
 		this.show(true);
 	},
@@ -1280,6 +1281,13 @@ EditChooser = Base.extend({
 
 	close: function() {
 		this.show(false);
+	},
+
+	load: function(action, param, callback) {
+		new Request({
+			url: this.editForm.url, method: 'get',
+			data: this.editForm.getData(action, param)
+		}, callback && callback.bind(this)).send();
 	},
 
 	statics: {
@@ -1306,7 +1314,6 @@ HtmlChooser = EditChooser.extend({
 
 	choose: function(editForm, name, html) {
 		this.content.setHtml(html);
-		this.editForm = editForm;
 		this.base(editForm, name);
 	}
 });
@@ -1337,12 +1344,12 @@ ObjectChooser = EditChooser.extend({
 	},
 
 	choose: function(editForm, name, param) {
-		this.editForm = editForm;
+		this.param = param;
 		this.base(editForm, name);
 		this.buttons.modifyClass('hidden', !param.multiple);
 		this.show(false);
 		// Open the root list
-		this.toggle(param.root);
+		this.toggle();
 	},
 
 	close: function() {
@@ -1364,22 +1371,19 @@ ObjectChooser = EditChooser.extend({
 	},
 
 	toggle: function(id) {
-		var children = $('#edit-choose-children-' + id, this.content) || this.content;
+		var children = id && $('#edit-choose-children-' + id, this.content) || this.content;
 		var show = children == this.content || children.hasClass('hidden');
 		if (show) {
-			new Request({
-				url: this.editForm.url, method: 'get',
-				data: this.editForm.getData('choose', {
-					edit_root_id: id || ''
-				})
-			}, (function(result) {
-				children.setHtml(result);
-				this.setArrow(id, true);
-				if (show) {
-					children.removeClass('hidden');
-					this.show(true);
+			this.load('choose', Hash.merge({ edit_child_id: id || '' }, this.param),
+				function(result) {
+					children.setHtml(result);
+					this.setArrow(id, true);
+					if (show) {
+						children.removeClass('hidden');
+						this.show(true);
+					}
 				}
-			}).bind(this)).send();
+			);
 		} else {
 			this.setArrow(id, false);
 		}
@@ -1393,20 +1397,16 @@ ImageChooser = EditChooser.extend({
 		this.base({ padding: 4, className: 'edit-simple-chooser' });
 	},
 
-	choose: function(editForm, name, action, params) {
+	choose: function(editForm, name, action, param) {
 		this.editForm = editForm;
 		this.base(editForm, name);
 		this.show(false);
-		new Request({
-			url: editForm.url, method: 'get',
-			data: editForm.getData(action, {
-				edit_root_id: params.root || '',
-				fieldName: name
-			})
-		}, (function(result) {
-			this.content.setHtml(result);
-			this.show(true);
-		}).bind(this)).send();
+		this.load(action, param,
+			function(result) {
+				this.content.setHtml(result);
+				this.show(true);
+			}
+		);
 	}
 });
 
@@ -1590,13 +1590,13 @@ Edit = {
 		if (values) {
 			if (values.linkElement) {
 			} else if (values.move) {
-				var params = values.params;
-				params.confirm = 'Do you really want to move ' +
+				var param = values.param;
+				param.confirm = 'Do you really want to move ' +
 					(values.values.length > 1 ? 'these items: "' + values.names :
 					'"' + values.names) + '" to "' + name + '"?';
-				params.edit_object_ids = values.ids;
-				params.edit_object_id = id;
-				this.execute(id, 'move', params);
+				param.edit_object_ids = values.ids;
+				param.edit_object_id = id;
+				this.execute(id, 'move', param);
 			}
 			this.chooserValues = null;
 		}

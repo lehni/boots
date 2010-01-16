@@ -33,10 +33,7 @@ StringItem = EditItem.extend(new function() {
 				buttons.push({
 					name: name + '_link',
 					value: 'Internal Link',
-					onClick: baseForm.renderHandle('choose_link', name, {
-						root: this.root ? this.root.getFullId() : '',
-						multiple: false
-					})
+					onClick: baseForm.renderHandle('choose_link', name, this.getEditParam())
 				}, {
 					name: name + '_url',
 					value: 'External Link',

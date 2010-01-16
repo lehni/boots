@@ -53,10 +53,9 @@ MultiSelectItem = SelectItem.extend({
 			// different edit buttons
 			param.buttons = baseForm.renderButtons([{
 				name: name + '_choose', value: 'Add',
-				onClick: baseForm.renderHandle('choose_reference', name, {
-					root: this.root ? this.root.getFullId() : '',
+				onClick: baseForm.renderHandle('choose_reference', name, this.getEditParam({
 					multiple: true
-				})
+				}))
 			}, {
 				value: 'Remove',
 				onClick: baseForm.renderHandle('references_remove', name)
@@ -70,13 +69,13 @@ MultiSelectItem = SelectItem.extend({
 		param.left = Html.select({
 			size: size, name: left, multiple: true,
 			options: values, className: this.className,
-			onDblClick: editParam && baseForm.renderHandle('select_edit', [left], editParam)
+			onDblClick: editParam && baseForm.renderHandle('select_edit', left, editParam)
 		});
 		if (this.showOptions) {
 			param.right = Html.select({
 				size: size, name: right, multiple: true,
 				options: options, className: this.className,
-				onDblClick: editParam && baseForm.renderHandle('select_edit', [right], editParam)
+				onDblClick: editParam && baseForm.renderHandle('select_edit', right, editParam)
 			});
 		}
 		baseForm.renderTemplate('multiselectItem', param, out);

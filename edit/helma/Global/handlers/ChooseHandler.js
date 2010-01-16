@@ -1,12 +1,10 @@
 ChooseHandler = EditHandler.extend({
 	mode: 'choose',
 
-	handle: function(base, object, node, form) {
-		if (User.canEdit(object)) {
-			var obj = HopObject.get(req.data.edit_root_id) || root;
+	handle: function(base, object, node, form, item) {
+		if (item) {
+			var obj = HopObject.get(req.data.edit_child_id) || item.root || root;
 			var objId = obj.getFullId();
-			var isRoot = obj == root;
-
 			res.contentType = 'text/html';
 			// TODO: Use Template
 			res.write('<ul id="edit-choose-children-' + objId + '">');

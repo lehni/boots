@@ -1,18 +1,13 @@
 EditObjectHandler = EditHandler.extend({
 	mode: 'edit',
 
-	handle: function(base, object, node, form) {
-		if (req.data.edit_item) {
+	handle: function(base, object, node, form, item) {
+		if (item) {
 			var obj = null;
-			var item = form.getItem(req.data.edit_item, req.data.edit_group);
-			if (item) {
-				if (req.data.edit_object_id) {
-					obj = HopObject.get(req.data.edit_object_id);
-				} else {
-					obj = item.getValue();
-				}
+			if (req.data.edit_object_id) {
+				obj = HopObject.get(req.data.edit_object_id);
 			} else {
-				EditForm.alert('Unable to find edit item: ' + req.data.edit_item);
+				obj = item.getValue();
 			}
 			if (!User.canEdit(obj))
 				return EditForm.NOT_ALLOWED;

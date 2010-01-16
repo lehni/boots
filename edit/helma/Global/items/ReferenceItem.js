@@ -12,11 +12,9 @@ ReferenceItem = EditItem.extend({
 		out.write(' ');
 		var buttons = [{
 			name: name + '_choose', value: 'Choose',
-			onClick: baseForm.renderHandle('choose_reference', name, {
-				root: this.root ? this.root.getFullId() : '',
-				selected: value ? value.getFullId() : '',
-				multiple: false
-			})
+			onClick: baseForm.renderHandle('choose_reference', name, this.getEditParam({
+				selected: value ? value.getFullId() : ''
+			}))
 		}];
 		if (this.editable) {
 			buttons.push({
