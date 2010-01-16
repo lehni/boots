@@ -69,13 +69,13 @@ MultiSelectItem = SelectItem.extend({
 		param.left = Html.select({
 			size: size, name: left, multiple: true,
 			options: values, className: this.className,
-			onDblClick: editParam && baseForm.renderHandle('select_edit', left, editParam)
+			onDblClick: editParam && baseForm.renderHandle('select_edit', [left], editParam)
 		});
 		if (this.showOptions) {
 			param.right = Html.select({
 				size: size, name: right, multiple: true,
 				options: options, className: this.className,
-				onDblClick: editParam && baseForm.renderHandle('select_edit', right, editParam)
+				onDblClick: editParam && baseForm.renderHandle('select_edit', [right], editParam)
 			});
 		}
 		baseForm.renderTemplate('multiselectItem', param, out);
