@@ -1,11 +1,11 @@
 <p>These tags are available for formating the text:</p>
 <table>
 	<tr>
-		<td>&lt;url&gt;href&lt;/url&gt;<td>
+		<td>&lt;url&nbsp;href&nbsp;/&gt;<td>
 		<td>Links to the specified href.</td>
 	</tr>
 	<tr>
-		<td>&lt;url href&gt;text&lt;/url&gt;<td>
+		<td>&lt;url&nbsp;href&gt;text&lt;/url&gt;<td>
 		<td>Renders the given text as a link to the href.</td>
 	</tr>
 	<tr>
@@ -17,19 +17,19 @@
 		<td>Renders the text as a list item. Nesting is not possible.</td>
 	</tr>
 	<tr>
-		<td>&lt;quote [name]&gt;text&lt;/quote&gt;<td>
+		<td>&lt;quote&nbsp;[name]&gt;text&lt;/quote&gt;<td>
 		<td>Formats the given text as a quote. The parameter name is optional.</td>
 	</tr>
 	<tr>
-		<td>&lt;resource&gt;filename&lt;/resource&gt;<td>
+		<td>&lt;resource&nbsp;filename&nbsp;/&gt;<td>
 		<td>Renders an icon for the given attached resource inside the text. If the resource is not linked to like this, it is automatically attached at the end of the text.</td>
 	</tr>
 	<tr>
-		<td>&lt;img&gt;filename&lt;/img&gt;<td>
+		<td>&lt;image&nbsp;filename&nbsp;/&gt;<td>
 		<td>Renders the attached image inside the text. If the image is not linked to like this, it is automatically attached at the end of the text.</td>
 	</tr>
 	<tr>
-		<td>&lt;img&gt;href&lt;/img&gt;<td>
+		<td>&lt;image&nbsp;href&nbsp;/&gt;<td>
 		<td>Renders the external image inside the text.</td>
 	</tr>
 </table>
