@@ -1,18 +1,16 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 <html>
 <head>
-	<title><%= param.name encoding='html' %></title>
+	<title><%= param.picture.name encoding='html' %></title>
 	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 	<script type="text/javascript" src="/static/base/js/bootstrap.js"></script>
 	<script type="text/javascript" src="/static/edit/js/cropper.js"></script>
 	<script>
 		$document.addEvent('domready', function() {
-			var cropper = new Cropper({
-				min: { width: 167, height: 50 },
-				canResize: { width: true, height: true },
+			var cropper = new Cropper(Hash.merge({
+				resize: { width: true, height: true },
 				cropperSize: $window.getSize(),
-				sizePresets: <% json param.getSpanPresets(4) %>
-			});
+			}, <% json param.cropper %>));
 
 			cropper.confirm = function(){
 				var cropInfo = new Hash(cropper.getCropInfo());
@@ -20,7 +18,7 @@
 					var preset = this.options.sizePresets[this.sizePresets.getValue()];
 					var span = preset && preset.value;
 				}
-				var tag = '<cropimage <%= param.name %> ';
+				var tag = '<cropimage <%= param.picture.name %> ';
 				if(span) {
 					cropInfo.span = span;
 					cropInfo.width = null;
@@ -44,7 +42,7 @@
 			<div id="cropLoadingOverlay">
 				<h2>loading image...</h2>
 			</div>
-			<img src="<%= param.getUri() %>" width=<%= param.width %> height=<%= param.height %> id="cropImage">
+			<img src="<%= param.picture.getUri() %>" width=<%= param.picture.width %> height=<%= param.picture.height %> id="cropImage">
 	    </div>
 		<div id="cropBg">
 			<div id="cropFooter">

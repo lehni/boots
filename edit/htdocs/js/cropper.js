@@ -8,7 +8,7 @@
  * @copyright		Author
  */
 
-// TODO: create all handles (n/w/s/e etc) and disable if canResize changes..
+// TODO: create all handles (n/w/s/e etc) and disable if resize changes..
 
 var Cropper = Base.extend(Chain, Callback, {
 
@@ -30,7 +30,7 @@ var Cropper = Base.extend(Chain, Callback, {
 		showHandles: false, // hide handles on drag
 		maxZoom: 1,
 		//TODO: add ratio?
-		canResize: true, // boolean or {width: boolean, height: boolean}
+		resize: true, // boolean or {width: boolean, height: boolean}
 		cropperSize: {width: 500, height: 500} //
 	},
 
@@ -430,17 +430,17 @@ var Cropper = Base.extend(Chain, Callback, {
 			height: this.handleHeightOffset
 		}
 
-		if(this.options.canResize === true || this.options.canResize.height) {
+		if(this.options.resize === true || this.options.resize.height) {
 			this.handles.N.setOffset(crop.width / 2 - offset.width, - offset.height);
 			this.handles.S.setOffset(crop.width / 2 - offset.width, crop.height - offset.height);
 		}
 
-		if(this.options.canResize === true || this.options.canResize.width) {
+		if(this.options.resize === true || this.options.resize.width) {
 			this.handles.E.setOffset(crop.width - offset.width, crop.height / 2 - offset.height);
 			this.handles.W.setOffset(-offset.width, crop.height / 2 - offset.height);
 		}
 
-		if(this.options.canResize === true || this.options.canResize.width && this.options.canResize.height) {
+		if(this.options.resize === true || this.options.resize.width && this.options.resize.height) {
 			this.handles.NE.setOffset(crop.width - offset.width, - offset.height);
 			this.handles.SE.setOffset(crop.width - offset.width, crop.height - offset.height);
 			this.handles.SW.setOffset(-offset.width, crop.height - offset.height);
@@ -510,8 +510,8 @@ var Cropper = Base.extend(Chain, Callback, {
 					change: function() {
 						var index = this.getSelected()[0].$.value.toInt();
 						var preset = that.options.sizePresets[index];
-						if(preset.canResize)
-							that.options.canResize = preset.canResize;
+						if(preset.resize)
+							that.options.resize = preset.resize;
 						that.setup(preset.width, preset.height);
 						that.setupImage();
 						that.setZoomSlidePosition();
@@ -527,7 +527,7 @@ var Cropper = Base.extend(Chain, Callback, {
 					value: i,
 					selected: !!preset.selected
 				});
-			})
+			}, this);
 		}
 	},
 
@@ -605,13 +605,13 @@ var Cropper = Base.extend(Chain, Callback, {
 
 		var handles = ['N','NE','E','SE','S','SW','W','NW'];
 
-		// if(this.options.canResize===true) {
+		// if(this.options.resize===true) {
 		//	handles = ['N','NE','E','SE','S','SW','W','NW'];
 		// } else {
-		// 	if(this.options.canResize) {
-		// 		if(this.options.canResize.width) handles.push('E', 'W');
-		// 		if(this.options.canResize.height) handles.push('S', 'N');
-		// 		if(this.options.canResize.height && this.options.canResize.width)
+		// 	if(this.options.resize) {
+		// 		if(this.options.resize.width) handles.push('E', 'W');
+		// 		if(this.options.resize.height) handles.push('S', 'N');
+		// 		if(this.options.resize.height && this.options.resize.width)
 		// 			handles.push('NE', 'SE', 'SW', 'NW');
 		// 	}
 		// }
@@ -649,14 +649,14 @@ var Cropper = Base.extend(Chain, Callback, {
 			that.handles[handleName].setStyle({visibility: 'hidden'});
 		});
 		var handles = [];
-		if(this.options.canResize === true) {
+		if(this.options.resize === true) {
 			handles.push('N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW');
 		} else {
 			var handles = [];
-			if(this.options.canResize) {
-				if(this.options.canResize.width) handles.push('E', 'W');
-				if(this.options.canResize.height) handles.push('S', 'N');
-				if(this.options.canResize.height && this.options.canResize.width)
+			if(this.options.resize) {
+				if(this.options.resize.width) handles.push('E', 'W');
+				if(this.options.resize.height) handles.push('S', 'N');
+				if(this.options.resize.height && this.options.resize.width)
 					handles.push('NE', 'SE', 'SW', 'NW');
 			}
 		}
