@@ -446,8 +446,13 @@ EditForm = Base.extend({
 				if (end == -1 || end2 < end)
 					end = end2;
 			}
-			if (start <= pos && end >= pos)
-				return text.substring(start, end);
+			if (start <= pos && end >= pos) {
+				return {
+					tag: text.substring(start, end),
+					start: start,
+					end: end
+				}
+			}
 		}
 	},
 
@@ -1028,7 +1033,11 @@ EditForm.register(new function() {
 
 		choose_crop: function(element, name, param) {
 			this.field = $('#' + name, this.form);
-			param.crop_tag = this.getSelectedTag(this.field, 'crop');
+			var tag = this.getSelectedTag(this.field, 'crop');
+			if (tag) {
+				param.crop_tag = tag.tag;
+				this.field.setSelection(tag);
+			}
 			choose(this, name + '_crop', 'choose_crop', param);
 		},
 		
@@ -1434,8 +1443,12 @@ ImageChooser = EditChooser.extend({
 		this.show(false);
 		this.load(action, param,
 			function(result) {
-				this.content.setHtml(result.html);
-				this.show(true);
+				if (result.html) {
+					this.content.setHtml(result.html);
+					this.show(true);
+				} else if (result.image_crop) {
+					editForm.handle('choose_crop_select', null, result);
+				}
 			}
 		);
 	}

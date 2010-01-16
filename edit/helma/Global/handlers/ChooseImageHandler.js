@@ -2,34 +2,31 @@ ChooseImageHandler = EditHandler.extend({
 	mode: 'choose_image',
 
 	handle: function(base, object, node, form, item) {
-		if (item) {
-			var obj = item.root || object;
-			var objId = obj.getFullId();
-			// TODO: Use Template
-			res.push();
-			res.write('<ul>');
-			var pictures = obj.resources.list().filter(function(resource) {
-				return resource.instanceOf(Picture);
-			});
-			for (var i = 0; i < pictures.length; i++) {
-				var picture = pictures[i];
-				if (picture) {
-					var name = EditForm.getEditName(picture);
-					res.write('<li class="' + this.mode.replace('_', '-') + '">');
-					res.write('<a href="javascript:'
-						+ form.renderHandle(this.mode + '_select', item.getEditParam({
-							image_id: picture.getFullId(),
-							image_name: name
-						})) + '">'
-						+ picture.renderImage({ maxWidth: 30, maxHeight: 50 })
-						+ name + '</a></li>');
-				}
+		var obj = item.root || object;
+		// TODO: Use Template
+		res.push();
+		res.write('<ul>');
+		var pictures = obj.resources.list().filter(function(resource) {
+			return resource.instanceOf(Picture);
+		});
+		for (var i = 0; i < pictures.length; i++) {
+			var picture = pictures[i];
+			if (picture) {
+				var name = EditForm.getEditName(picture);
+				res.write('<li class="' + this.mode.replace('_', '-') + '">');
+				res.write('<a href="javascript:'
+					+ form.renderHandle(this.mode + '_select', item.getEditParam({
+						image_id: picture.getFullId(),
+						image_name: name
+					})) + '">'
+					+ picture.renderImage({ maxWidth: 30, maxHeight: 50 })
+					+ name + '</a></li>');
 			}
-			res.write('</ul>');
-			form.addResponse({
-				html: res.pop()
-			});
-		 }
+		}
+		res.write('</ul>');
+		form.addResponse({
+			html: res.pop()
+		});
 	}
 });
 
@@ -55,9 +52,18 @@ ChooseCropImageHandler = ChooseImageHandler.extend({
 			crop = param.crop;
 		}
 		if (crop) {
-			form.addResponse({
-				crop: crop
+			var obj = item.root || object;
+			var picture = obj.resources.get(crop.resource);
+			delete crop.resource;
+			crop.each(function(value, key) {
+				crop[key] = value.toInt();
 			});
+			form.addResponse(item.getEditParam({
+				image_id: picture.getFullId(),
+				image_name: EditForm.getEditName(picture),
+				// Double encode this so it's passed through as a string
+				image_crop: Json.encode(crop)
+			}));
 		} else {
 			this.base.apply(this, arguments);
 		}

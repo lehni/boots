@@ -17,7 +17,7 @@ EditHandler = Base.extend(new function() {
 				// The code bellow handling iframes checks for this again.
 				res.contentType = 'text/javascript';
 				EditNode.onRequest();
-				res.data.editResponse = new Hash();
+				var editResponse = res.data.editResponse = new Hash();
 				var parent = base.getParent();
 				var mode = req.data.edit_mode || mode || 'edit';
 				var fullId = req.data.edit_id || base.getFullId();
@@ -69,16 +69,16 @@ EditHandler = Base.extend(new function() {
 									redirect = base;
 								}
 								if (redirect) {
-									res.data.editResponse.redirect = redirect.href();
+									editResponse.redirect = redirect.href();
 								} else {
 									// Render the updated html and cause edit.js
 									// to update on the fly.
 									var renderAction = EditForm.ACTION_RENDER + '_action';
 									if (base[renderAction]) {
-										// Render the page into res.data.editResponse.page:
+										// Render the page into editResponse.page:
 										res.push();
 										base[renderAction]();
-										res.data.editResponse.page = res.pop();
+										editResponse.page = res.pop();
 									}
 								}
 							} else if (result == EditForm.NOT_ALLOWED) {
@@ -90,7 +90,7 @@ EditHandler = Base.extend(new function() {
 						EditForm.reportError(e);
 					}
 					var out = res.pop();
-					if (!out && !res.data.editResponse.html) {
+					if (!out && !editResponse.added) {
 						// Go back the given amount, if any
 						if (req.data.edit_back) {
 							var back = parseInt(req.data.edit_back);
@@ -114,8 +114,9 @@ EditHandler = Base.extend(new function() {
 				}
 				if (!out) {
 					if (res.message)
-						res.data.editResponse.alert = res.message;
-					out = Json.encode(res.data.editResponse);
+						editResponse.alert = res.message;
+					delete editResponse.added;
+					out = Json.encode(editResponse);
 				}
 				// Prevent any caching at the remote server or any intermediate proxy 
 				// Tested on most browsers with http://www.mnot.net/javascript/xmlhttprequest/cache.html

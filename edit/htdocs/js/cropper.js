@@ -159,7 +159,14 @@ Cropper = Base.extend(Chain, Callback, {
 			left: (this.cropCanvas.getWidth() - width) / 2
 		});
 
-		this.current.crop = this.crop = width || height ? this.cropArea.getBounds() : this.getCropArea();
+		var crop = this.options.crop;
+		if (crop) {
+			crop.right = crop.left + crop.width;
+			crop.bottom = crop.top + crop.height;
+		} else {
+			crop = width || height ? this.cropArea.getBounds() : this.getCropArea();
+		}
+		this.current.crop = this.crop = crop;
 
 		this.wrapperBounds = this.wrapper.getBounds();
 

@@ -20,11 +20,20 @@ ChooseCropImageHandler = EditHandler.extend({
 						preset.value = i;
 				});
 			}
+			var crop = req.data.image_crop;
+			if (crop) {
+				crop = Json.decode(crop);
+				crop.left = crop.x;
+				crop.top = crop.y;
+				delete crop.x;
+				delete crop.y;
+			}
 			form.renderTemplate('cropper', {
 				picture: picture,
 				cropper: {
 					min: { width: 32, height: 32 },
-					presets: presets && presets.length && presets
+					presets: presets && presets.length && presets,
+					crop: crop
 				}
 			}, res);
 		 }
