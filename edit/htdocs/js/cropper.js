@@ -19,13 +19,9 @@ Cropper = Base.extend(Chain, Callback, {
 		maskColor: 'black',
 		maskOpacity: 0.4,
 		handleColor: 'blue',
-		handleWidth: 8,
-		handleHeight: 8,
+		handle: { width: 8, height: 8 },
 		cropBorder: '1px dashed blue',
-		min: {
-			width: 50,
-			height: 50
-		},
+		min: { width: 50, height: 50 },
 		showMask: true, // false to remove, helps on slow machines
 		showHandles: false, // hide handles on drag
 		maxZoom: 1,
@@ -130,9 +126,8 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	setup: function() {
-		this.handleWidthOffset = this.options.handleWidth / 2;
-		this.handleHeightOffset = this.options.handleHeight / 2;
-
+		var handle = this.options.handle;
+		this.handleOffset = { width: handle.width / 2, height: handle.height / 2 };
 		this.crop = this.options.crop || this.options.min;
 		// We need to setup image now for imageBounds
 		this.setupImage();
@@ -376,10 +371,7 @@ Cropper = Base.extend(Chain, Callback, {
 		if (!this.calculateHandles)
 			return;
 		var crop = this.current.crop;
-		var offset = {
-			width: this.handleWidthOffset,
-			height: this.handleHeightOffset
-		}
+		var offset = this.handleOffset;
 
 		if (this.options.resize === true || this.options.resize.height) {
 			this.handles.N.setOffset(crop.width / 2 - offset.width, - offset.height);
@@ -558,8 +550,8 @@ Cropper = Base.extend(Chain, Callback, {
 				style: {
 					position: 'absolute',
 					backgroundColor: opts.handleColor, 
-					width: opts.handleWidth,
-					height: opts.handleHeight,
+					width: opts.handle.width,
+					height: opts.handle.height,
 					overflow: 'hidden',
 					cursor: handle.toLowerCase() + '-resize'
 				},
