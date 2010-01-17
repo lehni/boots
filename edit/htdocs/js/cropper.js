@@ -63,7 +63,6 @@ Cropper = Base.extend(Chain, Callback, {
 		this.canvas.setHeight(this.options.cropperSize.height - panelHeight);
 
 		this.setup();
-		this.setZoomSlidePosition();
 
 		$window.addEvent('resize', function(e) {
 			var size = $window.getSize();
@@ -106,15 +105,11 @@ Cropper = Base.extend(Chain, Callback, {
 		);
 
 		var crop = this.options.crop;
-		if (crop) {
-			var zoom = crop.imageWidth
-				? crop.imageWidth / this.image.size.width
-				: crop.imageHeight
-					? crop.imageHeight / this.image.size.height
-					: null;
-			if (zoom)
-				this.setZoom(zoom);
-		}
+		this.setZoom(crop && crop.imageWidth
+			? crop.imageWidth / this.image.size.width
+			: crop && crop.imageHeight
+				? crop.imageHeight / this.image.size.height
+				: this.zoom || 1);
 	},
 
 	setup: function() {
@@ -153,36 +148,26 @@ Cropper = Base.extend(Chain, Callback, {
 		this.sliderRange = 192;
 		this.minZoom = 0;
 		this.maxZoom = this.options.maxZoom;
-		this.zoomHandle.addEvent('drag', function(event) {
-			this.zoomHandleDrag(event);
-		}.bind(this));
-	},
-
-	setZoomSlidePosition: function() {
-		var currentZoom = this.imageBounds.width / this.image.size.width;
-		this.zoomHandle.setStyle({
-			left: Math.max(0, this.sliderRange * currentZoom)
+		this.zoomHandle.addEvents({
+			dragstart: function(event) {
+				this.zoomOffset = this.zoomHandle.getLeft() - event.page.x;
+			}.bind(this),
+			drag: function(event) {
+				var pos = Math.max(0, Math.min(1, (event.page.x + this.zoomOffset) / this.sliderRange));
+				this.setZoom(pos * (this.maxZoom - this.minZoom) + this.minZoom);
+			}.bind(this)
 		});
 	},
 
-	zoomHandleDrag: function(event) {
-		var curLeft = this.zoomHandle.getStyle('left').toInt();
-		var x = Math.max(0, Math.min(this.sliderRange, curLeft + event.delta.x));
-		// zoom the image in and out around its center.
-		var curSliderPos = x / this.sliderRange;
-		this.setZoom((curSliderPos * (this.maxZoom - this.minZoom)) + this.minZoom);
-	},
-
 	setZoom: function(zoom) {
+		this.zoom = zoom;
 		// find out the minimum zoom allowed by the croparea
 		var aspectRatio = this.crop.height / this.crop.width;
 		var landscape = this.image.aspectRatio > aspectRatio;
 		var minZoom = (landscape ? this.crop.width : this.crop.height / this.image.aspectRatio) / this.image.size.width;
 		if (zoom < minZoom) zoom = minZoom;
 
-		this.zoomHandle.setOffset({
-			x: zoom * this.sliderRange
-		});
+		this.zoomHandle.setLeft(zoom * this.sliderRange);
 
 		this.setImageBounds(
 			this.imageBounds.left + this.imageBounds.width / 2,
@@ -250,12 +235,12 @@ Cropper = Base.extend(Chain, Callback, {
 			handle: handle,
 			crop: this.current.crop
 		};
-		if (this.current.handle == 'NESW' && !this.options.showHandles) this.hideHandles();
+		if (this.current.handle == 'NESW' && !this.options.showHandles) this.showHandles(false);
 		this.fireEvent('start', [this.image.src, this.current.crop, this.getCropInfo(), handle]);
 	},
 
 	removeFunc: function() {
-		if (this.current.handle == 'NESW' && !this.options.showHandles) this.showHandles();
+		if (this.current.handle == 'NESW' && !this.options.showHandles) this.showHandles(true);
 		this.crop = this.current.crop;
 		this.fireEvent('complete', [this.image.src, this.current.crop, this.getCropInfo()]);
 	},
@@ -391,18 +376,12 @@ Cropper = Base.extend(Chain, Callback, {
 		}
 	},
 
-	hideHandles: function() {
-		this.calculateHandles = false;
+	showHandles: function(show) {
+		this.calculateHandles = show;
+		if (show)
+			this.positionHandles();
 		this.handles.each(function(handle) {
-			handle.setStyle({ display: 'none' });
-		});
-	},
-
-	showHandles: function() {
-		this.calculateHandles = true;
-		this.positionHandles();
-		this.handles.each(function(handle) {
-			handle.setStyle({ display: 'block' });
+			handle.setStyle({ display: show ? 'block' : 'none' });
 		});
 	},
 
@@ -472,7 +451,6 @@ Cropper = Base.extend(Chain, Callback, {
 								this.options.resize = preset.resize;
 							this.options.min = preset;
 							this.setup();
-							this.setZoomSlidePosition();
 							this.showHideHandles();
 						}
 					}.bind(this)
