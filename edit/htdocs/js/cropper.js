@@ -78,32 +78,43 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	setupImage: function() {
-		if (!this.originalSize) {
-			this.originalSize = this.image.getSize();
+		if (!this.image.size) {
+			this.image.size = this.image.getSize();
 			this.image.setStyle('position', 'absolute');
-			this.image.aspectRatio = this.originalSize.height / this.originalSize.width;
+			this.image.aspectRatio = this.image.size.height / this.image.size.width;
 		}
 
-		var wrapperBounds = this.wrapper.getBounds();
-		var aspectRatio = wrapperBounds.height / wrapperBounds.width;
+		var bounds = this.wrapper.getBounds();
+		var aspectRatio = bounds.height / bounds.width;
 		// scale the image to fit within the wrapper only if it's larger than the wrapper
 		var landscape = this.image.aspectRatio > aspectRatio;
 
 		// scale the image to fit within the wrapper & crop area, if its larger than them;
-		var width = wrapperBounds.width > this.crop.width ? wrapperBounds.width : this.crop.width;
-		var height = wrapperBounds.height > this.crop.height ? wrapperBounds.height : this.crop.height;
+		var width = bounds.width > this.crop.width ? bounds.width : this.crop.width;
+		var height = bounds.height > this.crop.height ? bounds.height : this.crop.height;
 		var scaledSize = {
 			width: landscape ? width : height / this.image.aspectRatio,
 			height: landscape ? width * this.image.aspectRatio : height
 		};
 
-		if (scaledSize.width > this.originalSize.width && scaledSize.height > this.originalSize.height)
-			scaledSize = this.originalSize;
+		if (scaledSize.width > this.image.size.width && scaledSize.height > this.image.size.height)
+			scaledSize = this.image.size;
 
 		this.setImageBounds(
-			wrapperBounds.width / 2, wrapperBounds.height / 2,
+			bounds.width / 2, bounds.height / 2,
 			scaledSize.width, scaledSize.height
 		);
+
+		var crop = this.options.crop;
+		if (crop) {
+			var zoom = crop.imageWidth
+				? crop.imageWidth / this.image.size.width
+				: crop.imageHeight
+					? crop.imageHeight / this.image.size.height
+					: null;
+			if (zoom)
+				this.setZoom(zoom);
+		}
 	},
 
 	setup: function() {
@@ -148,7 +159,7 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	setZoomSlidePosition: function() {
-		var currentZoom = this.imageBounds.width / this.originalSize.width;
+		var currentZoom = this.imageBounds.width / this.image.size.width;
 		this.zoomHandle.setStyle({
 			left: Math.max(0, this.sliderRange * currentZoom)
 		});
@@ -157,16 +168,16 @@ Cropper = Base.extend(Chain, Callback, {
 	zoomHandleDrag: function(event) {
 		var curLeft = this.zoomHandle.getStyle('left').toInt();
 		var x = Math.max(0, Math.min(this.sliderRange, curLeft + event.delta.x));
-
-		// find out the minimum zoom allowed by the croparea
-		this.crop.aspectRatio = this.crop.height / this.crop.width;
-		var landscape = this.image.aspectRatio > this.crop.aspectRatio;
-		var minZoom = (landscape ? this.crop.width : this.crop.height / this.image.aspectRatio) / this.originalSize.width;
-
 		// zoom the image in and out around its center.
 		var curSliderPos = x / this.sliderRange;
-		var zoom = ((curSliderPos * (this.maxZoom - this.minZoom)) + this.minZoom);
+		this.setZoom((curSliderPos * (this.maxZoom - this.minZoom)) + this.minZoom);
+	},
 
+	setZoom: function(zoom) {
+		// find out the minimum zoom allowed by the croparea
+		var aspectRatio = this.crop.height / this.crop.width;
+		var landscape = this.image.aspectRatio > aspectRatio;
+		var minZoom = (landscape ? this.crop.width : this.crop.height / this.image.aspectRatio) / this.image.size.width;
 		if (zoom < minZoom) zoom = minZoom;
 
 		this.zoomHandle.setOffset({
@@ -176,8 +187,8 @@ Cropper = Base.extend(Chain, Callback, {
 		this.setImageBounds(
 			this.imageBounds.left + this.imageBounds.width / 2,
 			this.imageBounds.top + this.imageBounds.height / 2,
-			this.originalSize.width * zoom,
-			this.originalSize.height * zoom
+			this.image.size.width * zoom,
+			this.image.size.height * zoom
 		);
 	},
 
@@ -605,7 +616,7 @@ Cropper = Base.extend(Chain, Callback, {
 			y: crop.top - this.imageBounds.top,
 			imageWidth:  this.imageBounds.width,
 			imageHeight: this.imageBounds.height,
-			zoom: this.imageBounds.width / this.originalSize.width
+			zoom: this.imageBounds.width / this.image.size.width
 		}
 	},
 

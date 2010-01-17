@@ -20,9 +20,17 @@ ChooseCropImageHandler = EditHandler.extend({
 						preset.value = i;
 				});
 			}
-			var crop = req.data.image_crop;
-			if (crop)
-				crop = Json.decode(crop);
+			var crop = req.data.image_crop && Json.decode(req.data.image_crop);
+			if (crop) {
+				// Translate crop values:
+				({ x: 'left', y: 'top', imageWidth: 'imagewidth', imageHeight: 'imageheight' }).each(function(old, key) {
+					var value = crop[old];
+					if (value !== undefined) {
+						crop[key] = value;
+						delete crop[old];
+					}
+				})
+			}
 			form.renderTemplate('cropper', {
 				picture: picture,
 				cropper: {
