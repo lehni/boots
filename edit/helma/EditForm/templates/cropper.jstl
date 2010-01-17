@@ -13,8 +13,8 @@
 			}, <% json param.cropper %>));
 
 			cropper.confirm = function(){
-				var cropInfo = new Hash(cropper.getCropInfo());
-				var preset = this.presets && this.options.presets[this.presets.getValue()];
+				var cropInfo = cropper.getCropInfo();
+				var preset = cropper.getPreset();
 				if ($window.setResult)
 					$window.setResult(cropInfo, preset);
 				$window.close();
