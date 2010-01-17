@@ -13,12 +13,14 @@ ButtonItem = EditItem.extend({
 			if (typeof this.onClick == 'string') {
 				onClick = this.onClick;
 			} else {
+				// TODO: is Json.encode needed here? Doesn't renderHandle do this
+				// for us?
 				onClick = baseForm.renderHandle('execute', 'click', Json.encode(params));
 			}
 		}
 		baseForm.renderButton({
+			name: this.name, // TODO: Shouldn't this be name instead of this.name??
 			value: this.value,
-			name: this.name,
 			onClick: onClick,
 			className: this.className
 		}, out);

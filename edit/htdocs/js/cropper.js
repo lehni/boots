@@ -1,5 +1,5 @@
-/***
- * MooCrop (v. rc-1 - 2007-10-24 )
+/**
+ * Based on MooCrop (v. rc-1 - 2007-10-24 )
  *
  * @version			rc-1
  * @license			BSD-style license
@@ -160,12 +160,12 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	setZoom: function(zoom) {
-		this.zoom = zoom;
 		// find out the minimum zoom allowed by the croparea
 		var aspectRatio = this.crop.height / this.crop.width;
 		var landscape = this.image.aspectRatio > aspectRatio;
 		var minZoom = (landscape ? this.crop.width : this.crop.height / this.image.aspectRatio) / this.image.size.width;
 		if (zoom < minZoom) zoom = minZoom;
+		this.zoom = zoom;
 
 		this.zoomHandle.setLeft(zoom * this.sliderRange);
 

@@ -1010,6 +1010,8 @@ EditForm.register({
 // Image Chooser
 EditForm.register(new function() {
 	var chooser = null;
+	var field = null;
+	var json = false;
 
 	function choose(form, name, action, param) {
 		if (!chooser)
@@ -1019,28 +1021,43 @@ EditForm.register(new function() {
 
 	return {
 		choose_image: function(element, name, param) {
-			this.field = $('#' + name, this.form);
+			field = $('#' + name, this.form);
 			choose(this, name + '_image', 'choose_image', param);
 		},
 
 		choose_image_select: function(element, param) {
-			var text = this.field.getSelectedText();
-			this.field.replaceSelectedText(
-				EditSettings.image.replace('@name', param.image_name).replace('@text', text)
-			);
+			if (json) {
+				// TODO: Implement
+			} else {
+				var text = field.getSelectedText();
+				field.replaceSelectedText(
+					EditSettings.image.replace('@name', param.image_name).replace('@text', text)
+				);
+			}
 			EditChooser.closeAll();
 		},
 
 		choose_crop: function(element, name, param) {
-			this.field = $('#' + name, this.form);
-			var tag = this.getSelectedTag(this.field, 'crop');
-			if (tag) {
-				this.field.setSelection(tag);
-				param.crop_tag = tag.tag;
+			field = $('#' + name, this.form);
+			json = field.getProperty('type') == 'hidden';
+			if (json) {
+				var crop = Json.decode(field.getValue());
+				if (crop) {
+					param.image_name = crop.resource;
+					delete crop.resource;
+					param.image_crop = Json.encode(crop);
+					return this.handle('choose_crop_select', element, param);
+				}
+			} else {
+				var tag = this.getSelectedTag(field, 'crop');
+				if (tag) {
+					field.setSelection(tag);
+					param.crop_tag = tag.tag;
+				}
 			}
 			choose(this, name + '_crop', 'choose_crop', param);
 		},
-		
+
 		choose_crop_select: function(element, param) {
 			var win = new Window({
 				name: param.image_name,
@@ -1049,14 +1066,25 @@ EditForm.register(new function() {
 				resizable: true, focus: true
 			});
 			win.setResult = (function(crop, preset) {
-				var tag = '<crop "' + param.image_name + '" '
-					+ ['x', 'y', 'width', 'height', 'imageWidth'].collect(function(name) {
-						if(crop[name] && (name != 'imageWidth' || crop.zoom != 1))
-							return name.toLowerCase() + '="' + crop[name] + '"';
-					}).join(' ') + ' />';
-				this.field.replaceSelectedText(tag);
+				if (json) {
+					crop.resource = param.image_name;
+					field.setValue(Json.encode(crop));
+				} else {
+					// TODO: Find a way to produce this through EditSettings too, maybe
+					// as a function that takes crop and preset?
+					var tag = '<crop "' + param.image_name + '" '
+						+ ['x', 'y', 'width', 'height', 'imageWidth'].collect(function(name) {
+							if(crop[name] && (name != 'imageWidth' || crop.zoom != 1))
+								return name.toLowerCase() + '="' + crop[name] + '"';
+						}).join(' ') + ' />';
+					field.replaceSelectedText(tag);
+				}
 			}).bind(this);
 			EditChooser.closeAll();
+		},
+
+		clear_crop: function(element, name) {
+			$('#' + name, this.form).setValue('');
 		}
 	};
 });

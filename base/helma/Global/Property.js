@@ -178,10 +178,12 @@ JsonProperty = Property.extend({
 	_wrap: true,
 	
 	get: function(obj, property, value) {
+//		app.log('JSON GET ' + Json.decode(value));
 		return Json.decode(value);
 	},
 
 	set: function(obj, property, value) {
+//		app.log('JSON SET ' + Json.encode(value));
 		return Json.encode(value);
 	}
 });

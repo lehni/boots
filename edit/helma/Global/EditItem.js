@@ -92,6 +92,7 @@ EditItem = Base.extend(new function() {
 					User.logError('EditItem#setValue(): ' + this.evaluate, e);
 				}
 			} else if (this.name) {
+				User.log('EditItem#setValue(): ' + this.name + ' = ' + value);
 				this.form.object[this.name] = value;
 				return true;
 			}
