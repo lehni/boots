@@ -26,9 +26,7 @@
 <body>
 	<div id="cropper">
 		<div id="cropper-canvas">
-			<div id="cropper-loader">
-				<h2>loading image...</h2>
-			</div>
+			<table id="cropper-loader"><tr><td>Loading Image...</td></tr></table>
 			<img src="<%= param.picture.getUri() %>" width=<%= param.picture.width %> height=<%= param.picture.height %> id="cropper-image">
 	    </div>
 		<div id="cropper-background">
