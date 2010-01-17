@@ -57,11 +57,9 @@ Cropper = Base.extend(Chain, Callback, {
 				}
 			}
 
-			this.cropCanvas.setStyles({
-				height: windowSize.height - 84
-			});
+			this.cropCanvas.setHeight(windowSize.height - 84);
 
-			this.imageCropper.setStyles({
+			this.imageCropper.setBounds({
 				height: windowSize.height,
 				width: windowSize.width
 			});
@@ -75,9 +73,7 @@ Cropper = Base.extend(Chain, Callback, {
 
 		this.setOptions(options);
 
-		this.cropCanvas.setStyles({
-			height: this.options.cropperSize.height - 84
-		});
+		this.cropCanvas.setHeight(this.options.cropperSize.height - 84);
 
 		this.imageCropper.setStyles({
 			display: 'block',
@@ -114,7 +110,7 @@ Cropper = Base.extend(Chain, Callback, {
 	setupImage: function() {
 		if (!this.originalSize){
 			this.originalSize = this.image.getSize();
-			this.image.setStyles({ position: 'absolute' });
+			this.image.setStyle('position', 'absolute');
 			this.image.aspectRatio = this.originalSize.height / this.originalSize.width;
 		}
 		// scale the image to fit within the wrapper only if it's larger than the wrapper
@@ -160,14 +156,14 @@ Cropper = Base.extend(Chain, Callback, {
 		//center the crop on the canvas
 		var crop = this.options.crop;
 		if (crop) {
-			this.cropArea.setStyles({
+			this.cropArea.setBounds({
 				width: crop.width, 
 				height: crop.height,
 				left: (crop.left || crop.x) + this.imageBounds.left,
 				top: (crop.top || crop.y) + this.imageBounds.top
 			});
 		} else {
-			this.cropArea.setStyles({
+			this.cropArea.setBounds({
 				width: width, 
 				height: height,
 				left: (this.cropCanvas.getWidth() - width) / 2,
@@ -268,17 +264,18 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	fixBoxModel: function() {
-		// TODO: How to calculate boxDiff?
-		this.boxDiff = 1; //(this.crop.width - this.options.min.width) / 2;
+		this.boxDiff = this.options.cropBorder.toInt();
 		this.bounds = {
 			top: this.boxDiff,
 			left: this.boxDiff, 
 			right: this.cropCanvas.getWidth(),
 			bottom: this.cropCanvas.getHeight(),
+			// TODO: This seems to be the limmiting values, they are completely wrong
+			// in here... as they do not represent left + width = right...
 			width: this.options.min.width,
 			height: this.options.min.height
 		};
-		this.wrapper.setStyles({
+		this.wrapper.setBounds({
 			width: this.bounds.right,
 			height: this.bounds.bottom
 		});
@@ -378,7 +375,7 @@ Cropper = Base.extend(Chain, Callback, {
 		this.getCurrentBounds(styles);
 		styles.width -= this.boxDiff * 2;
 		styles.height -= this.boxDiff * 2;
-		this.cropArea.setStyles(styles);
+		this.cropArea.setBounds(styles);
 		this.drawMasks();
 		this.positionHandles();
 		this.fireEvent('change', [this.image.src, this.current.crop, this.getCropInfo()]);
@@ -418,14 +415,14 @@ Cropper = Base.extend(Chain, Callback, {
 		this.north.setStyle({ height: Math.max(0, currentCrop.top) });
 		this.south.setStyle({ height: Math.max(0, bounds.bottom  - currentCrop.bottom) });
 
-		this.east.setStyles({
+		this.east.setBounds({
 			height: currentCrop.height,
 			width: Math.max(0, bounds.right  - currentCrop.right),
 			top: currentCrop.top,
 			left: currentCrop.right
 		});
 
-		this.west.setStyles({
+		this.west.setBounds({
 			height: currentCrop.height,
 			width: Math.max(0, currentCrop.left),
 			top: currentCrop.top
@@ -489,7 +486,7 @@ Cropper = Base.extend(Chain, Callback, {
 		});
 
 		var setIndicator = function(imgsrc, crop, info) {
-			indicator.setStyles({
+			indicator.setBounds({
 				top: crop.bottom + 10,
 				left: crop.left
 			}).setText('w: '+ info.width + ' h: ' + info.height + ' x: ' + info.x + ' y: ' + info.y);
@@ -545,7 +542,7 @@ Cropper = Base.extend(Chain, Callback, {
 	buildOverlay: function() {
 		var opts = this.options;
 		this.wrapper = this.image.injectBefore('div', {
-			style: {
+			styles: {
 				position: 'relative',
 				width: this.cropCanvas.getWidth(),
 				height: this.cropCanvas.getHeight(),
@@ -581,10 +578,10 @@ Cropper = Base.extend(Chain, Callback, {
 				}.bind(this)
 			};
 
-			this.north = this.wrapper.injectBottom('div', { style: maskStyles, id: 'north', events: dragFunctions });
-			this.south = this.wrapper.injectBottom('div', { style: Hash.merge({  bottom: 0 }, maskStyles), id: 'south', events: dragFunctions });
-			this.east = this.wrapper.injectBottom('div', { style: maskStyles, id: 'east', events: dragFunctions });
-			this.west = this.wrapper.injectBottom('div', { style: maskStyles, id: 'west', events: dragFunctions });
+			this.north = this.wrapper.injectBottom('div', { styles: maskStyles, id: 'north', events: dragFunctions });
+			this.south = this.wrapper.injectBottom('div', { styles: Hash.merge({  bottom: 0 }, maskStyles), id: 'south', events: dragFunctions });
+			this.east = this.wrapper.injectBottom('div', { styles: maskStyles, id: 'east', events: dragFunctions });
+			this.west = this.wrapper.injectBottom('div', { styles: maskStyles, id: 'west', events: dragFunctions });
 		}
 
 		this.cropArea = this.wrapper.injectBottom('div', {
