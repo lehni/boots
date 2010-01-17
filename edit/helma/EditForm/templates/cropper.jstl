@@ -6,7 +6,7 @@
 	<script type="text/javascript" src="/static/base/js/bootstrap.js"></script>
 	<script type="text/javascript" src="/static/edit/js/cropper.js"></script>
 	<script>
-		$document.addEvent('domready', function() {
+		$window.addEvent('load', function() {
 			var cropper = new Cropper(Hash.merge({
 				resize: { width: true, height: true },
 				cropperSize: $window.getSize(),
