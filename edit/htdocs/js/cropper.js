@@ -187,8 +187,8 @@ Cropper = Base.extend(Chain, Callback, {
 		var left = Math.round(centerX - width / 2);
 		var top = Math.round(centerY - height / 2);
 		this.imageBounds = {
-			width: width, height: height, left: left, top: top,
-			right: left + width, bottom: top + height
+			left: left, top: top,
+			width: width, height: height
 		};
 		this.updateImageBounds();
 	},
@@ -216,6 +216,9 @@ Cropper = Base.extend(Chain, Callback, {
 		// test the bottom edge
 		if (!keepInside.y && (bounds.top + bounds.height) < (crop.top + crop.height))
 			bounds.top = (crop.top + crop.height) - bounds.height;
+
+		bounds.right = bounds.left + bounds.width;
+		bounds.bottom = bounds.top + bounds.height;
 
 		this.image.setBounds(bounds);
 	},
@@ -248,8 +251,8 @@ Cropper = Base.extend(Chain, Callback, {
 
 	moveImage: function(event) {
 		if (event) {
-			this.imageBounds.right = (this.imageBounds.left += event.delta.x) + this.imageBounds.width;
-			this.imageBounds.bottom = (this.imageBounds.top += event.delta.y) + this.imageBounds.top;
+			this.imageBounds.left += event.delta.x;
+			this.imageBounds.top += event.delta.y;
 		}
 		this.updateImageBounds();
 	},
