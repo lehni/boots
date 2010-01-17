@@ -20,7 +20,7 @@ Html = new function() {
 					out.write(name);
 					if (value != null) {
 						out.write('="');
-						out.write(value);
+						out.write(encode(value));
 						out.write('"');
 					}
 				}
