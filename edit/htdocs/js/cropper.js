@@ -90,28 +90,20 @@ Cropper = Base.extend(Chain, Callback, {
 		var landscape = this.image.aspectRatio > aspectRatio;
 
 		// scale the image to fit within the wrapper & crop area, if its larger than them;
-		var maxWidth = wrapperBounds.width > this.crop.width ? wrapperBounds.width : this.crop.width;
-		var maxHeight = wrapperBounds.height > this.crop.height ? wrapperBounds.height : this.crop.height;
+		var width = wrapperBounds.width > this.crop.width ? wrapperBounds.width : this.crop.width;
+		var height = wrapperBounds.height > this.crop.height ? wrapperBounds.height : this.crop.height;
 		var scaledSize = {
-			width: landscape ? maxWidth : maxHeight / this.image.aspectRatio,
-			height: landscape ? maxWidth * this.image.aspectRatio : maxHeight
+			width: landscape ? width : height / this.image.aspectRatio,
+			height: landscape ? width * this.image.aspectRatio : height
 		};
 
 		if (scaledSize.width > this.originalSize.width && scaledSize.height > this.originalSize.height)
 			scaledSize = this.originalSize;
 
-		var width = Math.floor(scaledSize.width);
-		var height = Math.floor(scaledSize.height);
-		var left = Math.floor(wrapperBounds.width / 2 - width / 2);
-		var top = Math.floor(wrapperBounds.height / 2 - height / 2);
-
-		this.imageBounds = {
-			width: width, height: height, left: left, top: top,
-			right: left + width, bottom: top + height
-		}
-
-		this.keepImageInsideCrop();
-		this.image.setBounds(this.imageBounds);
+		this.setImageBounds(
+			wrapperBounds.width / 2, wrapperBounds.height / 2,
+			scaledSize.width, scaledSize.height
+		);
 	},
 
 	setup: function() {
@@ -177,27 +169,31 @@ Cropper = Base.extend(Chain, Callback, {
 
 		if (zoom < minZoom) zoom = minZoom;
 
-		this.zoomHandle.setStyle({
-			left: zoom * this.sliderRange
+		this.zoomHandle.setOffset({
+			x: zoom * this.sliderRange
 		});
 
-		var bounds = this.imageBounds;
-
-		var centerX = bounds.left + bounds.width / 2;
-		var centerY = bounds.top + bounds.height / 2;
-
-		bounds.width = this.originalSize.width * zoom;
-		bounds.height = this.originalSize.height * zoom;
-		bounds.left = centerX - bounds.width / 2;
-		bounds.top = centerY - bounds.height / 2;
-
-		this.keepImageInsideCrop();
-
-		this.image.setBounds(bounds);
-		this.imageBounds = this.image.getBounds();
+		this.setImageBounds(
+			this.imageBounds.left + this.imageBounds.width / 2,
+			this.imageBounds.top + this.imageBounds.height / 2,
+			this.originalSize.width * zoom,
+			this.originalSize.height * zoom
+		);
 	},
 
-	keepImageInsideCrop: function() {
+	setImageBounds: function(centerX, centerY, width, height) {
+		width = Math.round(width);
+		height = Math.round(height);
+		var left = Math.round(centerX - width / 2);
+		var top = Math.round(centerY - height / 2);
+		this.imageBounds = {
+			width: width, height: height, left: left, top: top,
+			right: left + width, bottom: top + height
+		};
+		this.updateImageBounds();
+	},
+
+	updateImageBounds: function() {
 		var bounds = this.imageBounds;
 		var crop = this.crop;
 		var keepInside = {
@@ -220,6 +216,8 @@ Cropper = Base.extend(Chain, Callback, {
 		// test the bottom edge
 		if (!keepInside.y && (bounds.top + bounds.height) < (crop.top + crop.height))
 			bounds.top = (crop.top + crop.height) - bounds.height;
+
+		this.image.setBounds(bounds);
 	},
 
 	getCropArea: function() {
@@ -253,8 +251,7 @@ Cropper = Base.extend(Chain, Callback, {
 			this.imageBounds.right = (this.imageBounds.left += event.delta.x) + this.imageBounds.width;
 			this.imageBounds.bottom = (this.imageBounds.top += event.delta.y) + this.imageBounds.top;
 		}
-		this.keepImageInsideCrop();
-		this.image.setBounds(this.imageBounds);
+		this.updateImageBounds();
 	},
 
 	resizeFunc: function(event) {
