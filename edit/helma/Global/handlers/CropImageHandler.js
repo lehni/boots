@@ -21,13 +21,8 @@ ChooseCropImageHandler = EditHandler.extend({
 				});
 			}
 			var crop = req.data.image_crop;
-			if (crop) {
+			if (crop)
 				crop = Json.decode(crop);
-				crop.left = crop.x;
-				crop.top = crop.y;
-				delete crop.x;
-				delete crop.y;
-			}
 			form.renderTemplate('cropper', {
 				picture: picture,
 				cropper: {

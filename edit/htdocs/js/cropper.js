@@ -145,28 +145,26 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	setup: function(width, height) {
-		if (width)
-			this.options.min.width = width;
-		if (height)
-			this.options.min.height = height;
-		var width = this.options.min.width;//Base.pick(width, this.options.min.width);
-		var height = this.options.min.height;//Base.pick(height, this.options.min.height);
+		var width = this.options.min.width;
+		var height = this.options.min.height;
 		//center the crop on the canvas
-		this.cropArea.setStyles({
-			width: width, 
-			height: height,
-			top: (this.cropCanvas.getHeight() - height) / 2,
-			left: (this.cropCanvas.getWidth() - width) / 2
-		});
-
 		var crop = this.options.crop;
 		if (crop) {
-			crop.right = crop.left + crop.width;
-			crop.bottom = crop.top + crop.height;
+			this.cropArea.setStyles({
+				width: crop.width, 
+				height: crop.height,
+				left: crop.left || crop.x,
+				top: crop.top || crop.y
+			});
 		} else {
-			crop = width || height ? this.cropArea.getBounds() : this.getCropArea();
+			this.cropArea.setStyles({
+				width: width, 
+				height: height,
+				left: (this.cropCanvas.getWidth() - width) / 2,
+				top: (this.cropCanvas.getHeight() - height) / 2
+			});
 		}
-		this.current.crop = this.crop = crop;
+		this.current.crop = this.crop = width || height ? this.cropArea.getBounds() : this.getCropArea();
 
 		this.wrapperBounds = this.wrapper.getBounds();
 
@@ -527,7 +525,8 @@ Cropper = Base.extend(Chain, Callback, {
 						var preset = that.options.presets[index];
 						if (preset.resize)
 							that.options.resize = preset.resize;
-						that.setup(preset.width, preset.height);
+						this.options.min = preset;
+						that.setup();
 						that.setupImage();
 						that.setZoomSlidePosition();
 						that.showHideHandles();
