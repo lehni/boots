@@ -1043,8 +1043,10 @@ EditForm.register(new function() {
 			if (json) {
 				var crop = Json.decode(field.getValue());
 				if (crop) {
-					param.image_name = crop.resource;
+					param.image_name = crop.name;
+					param.image_id = crop.id;
 					delete crop.resource;
+					delete crop.id;
 					param.image_crop = Json.encode(crop);
 					return this.handle('choose_crop_select', element, param);
 				}
@@ -1067,7 +1069,8 @@ EditForm.register(new function() {
 			});
 			win.setResult = (function(crop, preset) {
 				if (json) {
-					crop.resource = param.image_name;
+					crop.id = param.image_id;
+					crop.name = param.image_name;
 					field.setValue(Json.encode(crop));
 				} else {
 					// TODO: Find a way to produce this through EditSettings too, maybe

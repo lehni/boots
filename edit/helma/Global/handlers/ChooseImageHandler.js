@@ -16,7 +16,8 @@ ChooseImageHandler = EditHandler.extend({
 				res.write('<li class="' + this.mode.replace('_', '-') + '">');
 				res.write('<a href="javascript:'
 					+ form.renderHandle(this.mode + '_select', item.getEditParam({
-						image_name: name
+						image_name: name,
+						image_id: picture.getFullId()
 					})) + '">'
 					+ picture.renderImage({ maxWidth: 30, maxHeight: 50 })
 					+ name + '</a></li>');
@@ -59,6 +60,7 @@ ChooseCropImageHandler = ChooseImageHandler.extend({
 			});
 			form.addResponse(item.getEditParam({
 				image_name: EditForm.getEditName(picture),
+				image_id: picture.getFullId(),
 				// Double encode this so it's passed through as a string
 				image_crop: Json.encode(crop)
 			}));
