@@ -37,7 +37,7 @@ Cropper = Base.extend(Chain, Callback, {
 	initialize: function(options) {
 		this.setOptions(options);
 
-		this.boxDiff = this.options.cropBorder.toInt();
+		this.boderWidth = this.options.cropBorder.toInt();
 
 		this.cropCanvas = $('#cropCanvas');
 
@@ -330,20 +330,19 @@ Cropper = Base.extend(Chain, Callback, {
 			bounds.left = crop.left - xdiff; // both Drag and W handles
 		}
 
-		this.getCurrentBounds(bounds);
-		bounds.width -= this.boxDiff * 2;
-		bounds.height -= this.boxDiff * 2;
+		// update current crop
+		var crop = Hash.merge({}, this.crop, bounds);
+		crop.right = crop.left + crop.width;
+		crop.bottom = crop.top + crop.height;
+		this.current.crop = crop;
+
+		// TODO: Add boderWidth to left / top?
+		bounds.width -= this.boderWidth * 2;
+		bounds.height -= this.boderWidth * 2;
 		this.cropArea.setBounds(bounds);
 		this.drawMasks();
 		this.positionHandles();
 		this.fireEvent('change', [this.image.src, this.current.crop, this.getCropInfo()]);
-	},
-
-	getCurrentBounds: function(changed) {
-		var current = Hash.merge({}, this.crop, changed);
-		current.right = current.left + current.width;
-		current.bottom = current.top + current.height;
-		this.current.crop = current;
 	},
 
 	drawMasks: function() {
@@ -604,8 +603,8 @@ Cropper = Base.extend(Chain, Callback, {
 	getCropInfo: function() {
 		var crop = this.current.crop;
 		return {
-			width: crop.width - this.boxDiff * 2,
-			height: crop.height - this.boxDiff * 2,
+			width: crop.width - this.boderWidth * 2,
+			height: crop.height - this.boderWidth * 2,
 			x: crop.left - this.imageBounds.left,
 			y: crop.top - this.imageBounds.top,
 			imageWidth:  this.imageBounds.width,
