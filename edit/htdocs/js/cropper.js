@@ -52,11 +52,7 @@ Cropper = Base.extend(Chain, Callback, {
 			}.bind(this)
 		});
 
-		$('#cropper-ok').addEvent('click', function() {
-			this.confirm && this.confirm();
-			//window.close();
-		}.bind(this))
-
+		this.buildButtons();
 		this.buildSizePresets();
 		this.buildOverlay();
 		this.buildZoom();
@@ -435,6 +431,22 @@ Cropper = Base.extend(Chain, Callback, {
 				indicator.setStyle({ display: 'none' });
 			 }
 		 });
+	},
+
+	buildButtons: function() {
+		$('#cropper-ok').addEvent('click', function() {
+			if (!this.onOK || this.onOK())
+				$window.close();
+		}.bind(this));
+
+		$('#cropper-cancel').addEvent('click', function() {
+			$window.close();
+		});
+
+		$('#cropper-reset').addEvent('click', function() {
+			// TODO: Implement
+		});
+
 	},
 
 	buildSizePresets: function() {

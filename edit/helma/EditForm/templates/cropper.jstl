@@ -12,12 +12,12 @@
 				cropperSize: $window.getSize(),
 			}, <% json param.cropper %>));
 
-			cropper.confirm = function(){
+			cropper.onOK = function(){
 				var cropInfo = cropper.getCropInfo();
 				var preset = cropper.getPreset();
 				if ($window.setResult)
 					$window.setResult(cropInfo, preset);
-				$window.close();
+				return true;
 			}
 		});
 	</script>
