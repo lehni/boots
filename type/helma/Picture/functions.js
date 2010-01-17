@@ -57,11 +57,12 @@ Picture.inject({
 		var width, height;
 		// We use on the fly generation of image versions (e.g. thumbnails).
 		// The file's existance is checked each time it's requested, and generated if needed
-		if (true || !version.exists()) {
+		if (!version.exists()) {
 			var file = this.getFile();
 			if (file.exists()) {
-				var maxWidth = param.maxWidth;
-				var maxHeight = param.maxHeight;
+				var crop = param.crop;
+				var maxWidth = crop && crop.imageWidth || param.maxWidth;
+				var maxHeight = crop && crop.imageHeight || param.maxHeight;
 				// Before fully loading the image, use Image.getInfo to see
 				// if we need to.
 				var info = Image.getInfo(file);
@@ -85,8 +86,7 @@ Picture.inject({
 				}
 
 				// Check if we need to crop the image
-				if (param.crop) {
-					var crop = param.crop;
+				if (crop) {
 					// Image is only set if it was resized before
 					if (!image)
 						image = new Image(file);
@@ -217,5 +217,16 @@ Picture.inject({
 		gray.flush();
 		// and then tint with color:
 		return new Image(col);
+	},
+
+	statics: {
+		renderCropped: function(crop, param) {
+			// Similar to CropTag
+			var picture = crop && HopObject.get(crop.id);
+			if (picture) {
+				param.crop = crop;
+				return picture.renderImage(param);
+			}
+		}
 	}
 });
