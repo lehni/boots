@@ -340,26 +340,9 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	getCurrentBounds: function(changed) {
-		var current = Base.clone(this.crop);
-
-		if (changed.left != undefined) {
-			current.left = changed.left;
-			if (changed.width != undefined) current.width = changed.width;
-			else current.right = current.left + current.width;
-		}
-		if (changed.top != undefined) {
-			current.top = changed.top;
-			if (changed.height != undefined) current.height = changed.height;
-			else current.bottom = current.top + current.height;
-		}
-		if ((changed.width != undefined) && (changed.left == undefined)) {
-			current.width = changed.width;
-			current.right = current.left + current.width;
-		}
-		if ((changed.height != undefined) && (changed.top == undefined)) {
-			current.height = changed.height;
-			current.bottom = current.top + current.height;
-		}
+		var current = Hash.merge({}, this.crop, changed);
+		current.right = current.left + current.width;
+		current.bottom = current.top + current.height;
 		this.current.crop = current;
 	},
 
