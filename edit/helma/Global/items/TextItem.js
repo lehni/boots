@@ -21,6 +21,11 @@ TextItem = StringItem.extend({
 	getButtons: function(baseForm, name) {
 		var buttons = this.base(baseForm, name);
 		if (this.buttons.crop) {
+			// Set this.resources so ChooseImageHandler knows where to get them
+			// from. We need to do this because CropButton also relies on this.resources,
+			// but we want this information in the userland to be clearly grouped
+			// with the crop button.
+			this.resources = this.buttons.crop.resources;
 			buttons.push({
 				name: name + '_crop',
 				value: 'Crop Image',

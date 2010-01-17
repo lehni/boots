@@ -2,11 +2,11 @@ ChooseImageHandler = EditHandler.extend({
 	mode: 'choose_image',
 
 	handle: function(base, object, node, form, item) {
-		var obj = item.root || object;
+		var resources = item.resources || object.resources;
 		// TODO: Use Template
 		res.push();
 		res.write('<ul>');
-		var pictures = obj.resources.list().filter(function(resource) {
+		var pictures = resources.list().filter(function(resource) {
 			return resource.instanceOf(Picture);
 		});
 		for (var i = 0; i < pictures.length; i++) {
@@ -16,7 +16,6 @@ ChooseImageHandler = EditHandler.extend({
 				res.write('<li class="' + this.mode.replace('_', '-') + '">');
 				res.write('<a href="javascript:'
 					+ form.renderHandle(this.mode + '_select', item.getEditParam({
-						image_id: picture.getFullId(),
 						image_name: name
 					})) + '">'
 					+ picture.renderImage({ maxWidth: 30, maxHeight: 50 })
@@ -52,14 +51,13 @@ ChooseCropImageHandler = ChooseImageHandler.extend({
 			crop = param.crop;
 		}
 		if (crop) {
-			var obj = item.root || object;
-			var picture = obj.resources.get(crop.resource);
+			var resources = item.resources || object.resources;
+			var picture = resources.get(crop.resource);
 			delete crop.resource;
 			crop.each(function(value, key) {
 				crop[key] = value.toInt();
 			});
 			form.addResponse(item.getEditParam({
-				image_id: picture.getFullId(),
 				image_name: EditForm.getEditName(picture),
 				// Double encode this so it's passed through as a string
 				image_crop: Json.encode(crop)

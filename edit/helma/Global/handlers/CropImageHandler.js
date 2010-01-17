@@ -2,8 +2,9 @@ ChooseCropImageHandler = EditHandler.extend({
 	mode: 'crop',
 
 	handle: function(base, object, node, form, item) {
-		var picture = HopObject.get(req.data.image_id);
-		if (item && picture) {
+		var resources = item.resources || object.resources;
+		var picture = resources.get(req.data.image_name);
+		if (picture) {
 			res.contentType = 'text/html';
 			var presets = this.getSizePresets();
 			if (presets) {
