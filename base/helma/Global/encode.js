@@ -50,6 +50,8 @@ function decodeBase64(str) {
 
 /**
  * Encodes strings for html attributes, replacing quotes with their hex values
+ * TODO: This appears to not be for attributes but scripts within attributes?
+ * Find out more... Wouldn't a normal encode work for this? It does hor input values...
  */
 function encodeAttribute(str, singles) {
 	return str.replace(singles ? /'/gm : /"/gm, function(match) { // '
