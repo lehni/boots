@@ -80,7 +80,10 @@ Post.inject({
 			}, true),
 			form.createItem(param.text, {
 				label: 'Text', type: 'text', name: 'text', cols: '40', rows: '20',
-				trim: true, hasLinks: true,
+				trim: true,
+				buttons: {
+					links: true
+				},
 				requirements: {
 					notNull: { value: true, message: 'Please write a text.' }
 				}

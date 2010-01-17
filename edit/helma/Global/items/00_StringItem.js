@@ -29,7 +29,7 @@ StringItem = EditItem.extend(new function() {
 		getButtons: function(baseForm, name) {
 			var buttons = [];
 			// TODO: Make control over links and other edit buttons more flexible
-			if (this.hasLinks && this.type != 'password') {
+			if (this.buttons.links && this.type != 'password') {
 				buttons.push({
 					name: name + '_link',
 					value: 'Internal Link',

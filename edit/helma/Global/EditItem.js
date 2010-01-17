@@ -10,6 +10,9 @@ EditItem = Base.extend(new function() {
 	return {
 		_scale: false,
 		itemClassName: 'edit-item',
+		// Facilitate adding buttons through this.buttons object by making
+		// sure it one always there...
+		buttons: {},
 
 		initialize: function() {
 			if (this.prototypes) {

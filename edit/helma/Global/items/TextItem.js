@@ -20,7 +20,7 @@ TextItem = StringItem.extend({
 
 	getButtons: function(baseForm, name) {
 		var buttons = this.base(baseForm, name);
-		if (this.hasCrop) {
+		if (this.buttons.crop) {
 			buttons.push({
 				name: name + '_crop',
 				value: 'Crop Image',
