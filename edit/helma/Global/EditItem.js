@@ -167,6 +167,10 @@ EditItem = Base.extend(new function() {
 			return object.resources;
 		},
 
+		getCropOptions: function(object) {
+			return {};
+		},
+
 		getButtons: function(baseForm, name) {
 			return null;
 		},

@@ -16,18 +16,18 @@ Cropper = Base.extend(Chain, Callback, {
 	current: {},
 
 	options: {
-		maskColor: 'black',
-		maskOpacity: 0.4,
-		handleColor: 'blue',
-		handle: { width: 8, height: 8 },
-		cropBorder: '1px dashed blue',
 		min: { width: 50, height: 50 },
+		cropperSize: { width: 500, height: 500 },
+		resize: true, // boolean or { width: boolean, height: boolean }
 		showMask: true, // false to remove, helps on slow machines
 		showHandles: false, // hide handles on drag
 		maxZoom: 1,
 		//TODO: add ratio?
-		resize: true, // boolean or { width: boolean, height: boolean }
-		cropperSize: { width: 500, height: 500 } //
+		maskColor: 'black',
+		maskOpacity: 0.4,
+		handleColor: 'blue',
+		handle: { width: 8, height: 8 },
+		cropBorder: '1px dashed blue'
 	},
 
 	initialize: function(options) {

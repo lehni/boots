@@ -24,5 +24,9 @@ CropButtonItem = EditItem.extend({
 
 	getPictureResources: function(object) {
 		return this.resources || this.base(object);
+	},
+
+	getCropOptions: function(object) {
+		return this.options || this.base(object);
 	}
 });

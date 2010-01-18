@@ -5,7 +5,8 @@ ChooseCropImageHandler = EditHandler.extend({
 		var picture = HopObject.get(req.data.image_id);
 		if (item && picture) {
 			res.contentType = 'text/html';
-			var presets = this.getSizePresets();
+			var options = item.getCropOptions(object);
+			var presets = settings.options;
 			if (presets) {
 				presets.each(function(preset, i) {
 					if (!preset.name) {
@@ -29,20 +30,20 @@ ChooseCropImageHandler = EditHandler.extend({
 						crop[key] = value;
 						delete crop[old];
 					}
-				})
+				});
+				if (options.min) {
+					var resize = options.resize || true;
+					if (crop.width < options.min.width || resize !== true && !resize.width)
+						crop.width = options.min.width;
+					if (crop.height < options.min.height || resize !== true && !resize.height)
+						crop.height = options.min.height;
+				}
+				options.crop = crop;
 			}
 			form.renderTemplate('cropper', {
 				picture: picture,
-				cropper: {
-					min: { width: 32, height: 32 },
-					presets: presets && presets.length && presets,
-					crop: crop
-				}
+				options: options || {}
 			}, res);
 		 }
-	},
-
-	getSizePresets: function() {
-		return [];
 	}
 });

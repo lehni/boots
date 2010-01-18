@@ -32,5 +32,9 @@ TextItem = StringItem.extend({
 
 	getPictureResources: function(object) {
 		return this.buttons.crop && this.buttons.crop.resources || this.base(object);
+	},
+
+	getCropOptions: function(object) {
+		return this.buttons.crop && this.buttons.crop.options || this.base(object);
 	}
 });
