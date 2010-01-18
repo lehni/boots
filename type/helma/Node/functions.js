@@ -7,6 +7,26 @@ Node.inject({
 		});
 
 		form.addTab('node', param.tabLabel || 'Node',
+			// Although node does not have a title itself, give it the 
+			// possibility to create a title edit item for it, so subclasses
+			// can define a title property and use this as a base, including 
+			// handling of unique child names.
+			form.createItem(param.title, {
+				name: 'title', type: 'string', label: 'Title',
+				requirements: {
+					notNull: true, maxLength: 64
+				},
+				onApply: function(value) {
+					this.title = value;
+					// Generate a url friendly and unique name based on title:
+					if (this == root) {
+						this.name = 'root';
+					} else {
+						this.name = this.getEditParent().getUniqueChildName(this,
+							value, (app.properties.maxNameLength || 64).toInt());
+					}
+				}
+			}, false),
 			form.createItem(param.children, {
 				type: 'multiselect', name: 'children', label: 'Sub Pages',
 				collection: this.all, value: this,
