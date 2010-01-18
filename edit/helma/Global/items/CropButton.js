@@ -1,4 +1,4 @@
-ButtonItem = EditItem.extend({
+CropButtonItem = EditItem.extend({
 	_types: 'crop',
 
 	render: function(baseForm, name, value, param, out) {
@@ -20,5 +20,9 @@ ButtonItem = EditItem.extend({
 
 	convert: function(value) {
 		return this.json ? Json.decode(value) : value;
+	},
+
+	getPictureResources: function(object) {
+		return this.resources || this.base(object);
 	}
 })

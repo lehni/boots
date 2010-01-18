@@ -2,24 +2,21 @@ ChooseImageHandler = EditHandler.extend({
 	mode: 'choose_image',
 
 	handle: function(base, object, node, form, item) {
-		var resources = item.resources || object.resources;
 		// TODO: Use Template
 		res.push();
 		res.write('<ul>');
-		var pictures = resources.list().filter(function(resource) {
-			return resource.instanceOf(Picture);
-		});
-		for (var i = 0; i < pictures.length; i++) {
-			var picture = pictures[i];
-			if (picture) {
-				var name = EditForm.getEditName(picture);
+		var resources = item.getPictureResources(object).list();
+		for (var i = 0; i < resources.length; i++) {
+			var resource = resources[i];
+			if (resource && resource.instanceOf(Picture)) {
+				var name = EditForm.getEditName(resource);
 				res.write('<li class="' + this.mode.replace('_', '-') + '">');
 				res.write('<a href="javascript:'
 					+ form.renderHandle(this.mode + '_select', item.getEditParam({
 						image_name: name,
-						image_id: picture.getFullId()
+						image_id: resource.getFullId()
 					})) + '">'
-					+ picture.renderImage({ maxWidth: 30, maxHeight: 50 })
+					+ resource.renderImage({ maxWidth: 30, maxHeight: 50 })
 					+ name + '</a></li>');
 			}
 		}
@@ -52,7 +49,7 @@ ChooseCropImageHandler = ChooseImageHandler.extend({
 			crop = param.crop;
 		}
 		if (crop) {
-			var resources = item.resources || object.resources;
+			var resources = item.getPictureResources(object);
 			var picture = resources.get(crop.resource);
 			delete crop.resource;
 			crop.each(function(value, key) {

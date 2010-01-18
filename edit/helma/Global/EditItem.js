@@ -157,6 +157,16 @@ EditItem = Base.extend(new function() {
 			return param;
 		},
 
+		/**
+		 * Used by image related items to receive a hopoject collection that
+		 * contains pictures resources. The list can contain other resources too,
+		 * as it then gets filtered as well. This can be overridden in apps.
+		 * Returning arrays is not supported.
+		 */
+		getPictureResources: function(object) {
+			return object.resources;
+		},
+
 		getButtons: function(baseForm, name) {
 			return null;
 		},
