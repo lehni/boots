@@ -44,7 +44,7 @@ Picture.inject({
 		return [
 			param.maxWidth, param.maxHeight, param.quality, param.tint,
 //			param.rotation, param.bgColor,
-			crop && [crop.width, crop.height, crop.left, crop.top, crop.align, crop.valign],
+			crop && [crop.x, crop.y, crop.width, crop.height, crop.halign, crop.valign, crop.imageWidth, crop.imageHeight],
 			param.transparentPixel && [param.transparentPixel.x, param.transparentPixel.y]
 		];
 		return encodeMD5(res.pop());
