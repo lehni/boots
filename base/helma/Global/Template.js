@@ -538,8 +538,6 @@ Template.prototype = {
 		if (toString) {
 			if (postProcess) {
 				code.splice(codeIndexBefore, 0,			'out.push();');
-				if (result)
-					code.push(							'out.write(' + result + ');');
 				result = 'out.pop()';
 			} else if (condition) {
 				result = condition + ' ? ' + result + ' : null';
