@@ -487,7 +487,7 @@ Cropper = Base.extend(Chain, Callback, {
 		}, function(style, side) {
 			this.sides[side] = this.cropArea.injectTop('div', { styles: Hash.merge({
 				position: 'absolute', width: 1, height: 1, overflow: 'hidden', zIndex: 1,
-				backgroundImage: 'url(/static/edit/css/assets/crop.gif)'
+				backgroundImage: 'url(/static/edit/css/assets/cropper-ants.gif)'
 			}, style) });
 		}, this);
 
