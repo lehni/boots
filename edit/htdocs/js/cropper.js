@@ -11,10 +11,7 @@
 // TODO: create all handles (n/w/s/e etc) and disable if resize changes..
 
 Cropper = Base.extend(Chain, Callback, {
-
-	calculateHandles: true,
 	current: {},
-
 	options: {
 		min: { width: 50, height: 50 },
 		cropperSize: { width: 500, height: 500 },
@@ -41,6 +38,7 @@ Cropper = Base.extend(Chain, Callback, {
 
 		this.cropper = $('#cropper');
 		this.canvas = $('#cropper-canvas', this.cropper);
+		this.footer = $('cropper-footer', this.cropper);
 		this.image = $('#cropper-image', this.cropper);
 
 		// Use asset to wait for image tio load in order to get load event either way
@@ -72,6 +70,8 @@ Cropper = Base.extend(Chain, Callback, {
 		}
 
 		var bounds = this.canvas.getBounds();
+		bounds.height -= this.footer.getHeight();
+
 		var aspectRatio = bounds.height / bounds.width;
 		// scale the image to fit within the wrapper only if it's larger than the wrapper
 		var landscape = this.image.aspectRatio > aspectRatio;
@@ -218,14 +218,14 @@ Cropper = Base.extend(Chain, Callback, {
 		};
 		if (handle == 'nesw' && !this.options.showHandles)
 			this.showHandles(false);
-		this.fireEvent('start', [this.image.src, this.current.crop, this.getCropInfo(), handle]);
+		this.fireEvent('start', [this.current.crop, this.getCropInfo(), handle]);
 	},
 
 	dragEnd: function() {
 		if (this.current.handle == 'nesw' && !this.options.showHandles)
 			this.showHandles(true);
 		this.crop = this.current.crop;
-		this.fireEvent('end', [this.image.src, this.current.crop, this.getCropInfo()]);
+		this.fireEvent('end', [this.current.crop, this.getCropInfo()]);
 	},
 
 	drag: function(event) {
@@ -294,7 +294,7 @@ Cropper = Base.extend(Chain, Callback, {
 		this.cropArea.setBounds(bounds);
 		this.updateMasks();
 		this.updateHandles();
-		this.fireEvent('move', [this.image.src, this.current.crop, this.getCropInfo()]);
+		this.fireEvent('move', [this.current.crop, this.getCropInfo()]);
 	},
 
 	dragImage: function(event) {
@@ -327,8 +327,6 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	updateHandles: function() {
-		if (!this.calculateHandles)
-			return;
 		var crop = this.current.crop;
 		var size = Math.ceil(this.options.handleSize / 2);
 		if (this.resize.height) {
@@ -348,7 +346,6 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	showHandles: function(show) {
-		this.calculateHandles = show;
 		if (show)
 			this.updateHandles();
 		Base.each(this.handles, function(handle) {
@@ -359,32 +356,35 @@ Cropper = Base.extend(Chain, Callback, {
 	buildIndicator: function() {
 		var indicator = this.canvas.injectTop('div', {
 			styles: {
-				position: 'absolute', display: 'none', zIndex: 1,
+				position: 'absolute', zIndex: 1,
 				padding: '4px', opacity: '.75',
 				background: '#fdf2a4', border: '1px solid #bba82a'
-			}
+			},
+			text: '.'
 		});
+		var distance = 10, height = indicator.getHeight() + distance;
+		indicator.setStyle('display', 'none');
 
-		var setIndicator = function(imgsrc, crop, info) {
-			indicator.setBounds({
-				top: crop.bottom + 10,
-				left: crop.left
-			}).setText('w: '+ info.width + ' h: ' + info.height + ' x: ' + info.x + ' y: ' + info.y);
-		};
+		var update = function(crop, info) {
+			indicator.setOffset(crop.left, crop.bottom < this.canvas.getHeight() - this.footer.getHeight() - height
+					? crop.bottom + distance
+					: crop.top - height)
+				.setText('w: '+ info.width + ' h: ' + info.height + ' x: ' + info.x + ' y: ' + info.y);
+		}.bind(this);
 
 		 // when dragging/resizing begins show indicator
 		 this.addEvents({
-			start: function(imgsrc, crop, info, handle) {
-				indicator.setStyle({ display: 'block' });
-				setIndicator(imgsrc, crop, info, handle);
+			start: function(crop, info, handle) {
+				indicator.setStyle('display', 'block');
+				update(crop, info);
 			},
 
-			move: function(imgsrc, crop, info) {
-				setIndicator(imgsrc, crop, info);
+			move: function(crop, info) {
+				update(crop, info);
 			},
 
 			end: function() {
-				indicator.setStyle({ display: 'none' });
+				indicator.setStyle('display', 'none');;
 			 }
 		 });
 	},

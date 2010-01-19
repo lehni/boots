@@ -47,17 +47,18 @@ body {
 	vertical-align: center;
 }
 
-#cropper-footer {
+#cropper-panel {
 	background: url(assets/footer_bg.png);
 	margin: 0px auto;
 	width: 400px;
 }
 
-#cropper-background {
+#cropper-footer {
 	position: absolute;
 	background: #979797 url(assets/subfooter_bg_grey.png);
 	bottom: 0;
 	width: 100%;
+	z-index: 2;
 }
 
 #cropper-slider {

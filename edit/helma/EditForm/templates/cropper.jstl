@@ -27,9 +27,9 @@
 		<div id="cropper-canvas">
 			<table id="cropper-loader"><tr><td>Loading Image...</td></tr></table>
 			<img src="<%= param.picture.getUri() %>" width=<%= param.picture.width %> height=<%= param.picture.height %> id="cropper-image">
-	    </div>
-		<div id="cropper-background">
-			<div id="cropper-footer">
+		</div>
+		<div id="cropper-footer">
+			<div id="cropper-panel">
 		 		<div id="cropper-slider">
 					<div id="cropper-slider-handle"></div>
 				</div>
