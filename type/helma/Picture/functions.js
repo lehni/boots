@@ -227,6 +227,12 @@ Picture.inject({
 				param.crop = crop;
 				return picture.renderImage(param);
 			}
+		},
+
+		getScaledCrop: function(crop, scale) {
+			return scale == 1 ? crop : crop.each(function(value, key) {
+				this[key] = typeof value == 'number' ? Math.round(value * scale) : value;
+			}, {});
 		}
 	}
 });
