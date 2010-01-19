@@ -780,7 +780,7 @@ EditForm.register(new function() {
 				var match = name.match(/((.*)_(?:[^_]*))_new$/);
 				var entryId = match[1], listId = match[2];
 				prototypes = Json.decode(str.replace(
-					new RegExp('<%' + listId + '_entry_id%>', 'g'), entryId));
+					new RegExp('{%' + listId + '_entry_id%}', 'g'), entryId));
 			}
 			if (!prototypeChooser)
 				prototypeChooser = new PrototypeChooser();
@@ -1179,7 +1179,7 @@ EditForm.register(new function() {
 			list.element.counter = list.element.counter || 0;
 			var id = 'n' + list.element.counter++, obj;
 			// Replace id placeholder with generated id, mark with 'n' for new
-			html = html.replace(new RegExp('<%' + name + '_id%>', 'g'), id);
+			html = html.replace(new RegExp('{%' + name + '_id%}', 'g'), id);
 			var entry = entryId && getEntry(this, entryId);
 			var top = list.element.hasClass('edit-list-insert-top');
 			if (entry) {

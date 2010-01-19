@@ -33,10 +33,10 @@ EditableListItem = ListItem.extend({
 				// Or simpy caching within 'this'...
 				var html = this.renderEntry(baseForm, name, new ctor(), {
 					add: param.add, width: param.width,
-					id: '<%' + name + '_id%>'
+					id: '{%' + name + '_id%}'
 				});
 				return baseForm.renderHandle('list_add', name, html,
-					'<%' + name + '_entry_id%>');
+					'{%' + name + '_entry_id%}');
 			});
 			/*
 			var t = Date().now();
@@ -125,6 +125,7 @@ EditableListItem = ListItem.extend({
 				var pos = rest.indexOf('_');
 				var id = rest.substring(0, pos);
 				if (/^n/.test(id)) { // Create
+					User.log('Create', id);
 					// Group values and process later.
 					// This is needed by the onCreate handler that
 					// can produce an object based on e.g. file type
