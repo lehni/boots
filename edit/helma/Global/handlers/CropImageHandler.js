@@ -24,11 +24,12 @@ ChooseCropImageHandler = EditHandler.extend({
 			var crop = req.data.image_crop && Json.decode(req.data.image_crop);
 			if (crop) {
 				// Translate crop values:
-				({ x: 'left', y: 'top', imageWidth: 'imagewidth', imageHeight: 'imageheight' }).each(function(old, key) {
-					var value = crop[old];
+				['imageWidth', 'imageHeight'].each(function(key) {
+					var lower = key.toLowerCase();
+					var value = crop[lower];
 					if (value !== undefined) {
 						crop[key] = value;
-						delete crop[old];
+						delete crop[lower];
 					}
 				});
 				if (options.min) {

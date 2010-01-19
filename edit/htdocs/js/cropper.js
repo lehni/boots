@@ -23,32 +23,30 @@ Cropper = Base.extend(Chain, Callback, {
 		showHandles: false, // hide handles on drag
 		maxZoom: 1,
 		//TODO: add ratio?
+
 		maskColor: 'black',
 		maskOpacity: 0.4,
-		handleColor: 'blue',
-		handle: { width: 8, height: 8 },
-		cropBorder: '1px dashed blue'
+
+		handleColor: '#ccc',
+		handleBorder: '1px solid #000',
+		handleOpacity: 0.75,
+		handleSize: 7,
+
+		cropColor: null,
+		cropOpacity: 0.75
 	},
 
 	initialize: function(options) {
 		this.setOptions(options);
 
-		this.boderWidth = this.options.cropBorder.toInt();
-
-		this.element = $('#cropper');
-		this.canvas = $('#cropper-canvas', this.element);
-		this.image = $('#cropper-image', this.element);
-
-		this.element.setStyles({
-			display: 'block',
-			height: this.options.cropperSize.height,
-			width: this.options.cropperSize.width
-		});
+		this.cropper = $('#cropper');
+		this.canvas = $('#cropper-canvas', this.cropper);
+		this.image = $('#cropper-image', this.cropper);
 
 		// Use asset to wait for image tio load in order to get load event either way
 		Asset.image(this.image.getProperty('src'), {
 			onLoad: function() {
-				$('#cropper-loader', this.element).setStyle({ display: 'none' });
+				$('#cropper-loader', this.cropper).setStyle({ display: 'none' });
 			}.bind(this)
 		});
 
@@ -58,21 +56,11 @@ Cropper = Base.extend(Chain, Callback, {
 		this.buildZoom();
 		this.buildIndicator();
 
-		var panelHeight = $('#cropper-background').getHeight();
-
-		this.canvas.setHeight(this.options.cropperSize.height - panelHeight);
-
 		this.setup();
 
 		$window.addEvent('resize', function(e) {
-			var size = $window.getSize();
-			this.canvas.setHeight(size.height - panelHeight);
-			this.element.setSize(size);
-			var event = { page: { x: size.width, y: size.height }};
-			this.activate(event, 'NESW');
-			this.resizeFunc(event);
-			this.removeFunc();
-			this.moveImage();
+			this.updateMasks();
+			this.updateImageBounds();
 		}.bind(this));
 	},
 
@@ -83,7 +71,7 @@ Cropper = Base.extend(Chain, Callback, {
 			this.image.aspectRatio = this.image.size.height / this.image.size.width;
 		}
 
-		var bounds = this.wrapper.getBounds();
+		var bounds = this.canvas.getBounds();
 		var aspectRatio = bounds.height / bounds.width;
 		// scale the image to fit within the wrapper only if it's larger than the wrapper
 		var landscape = this.image.aspectRatio > aspectRatio;
@@ -92,11 +80,11 @@ Cropper = Base.extend(Chain, Callback, {
 		var width = bounds.width > this.crop.width ? bounds.width : this.crop.width;
 		var height = bounds.height > this.crop.height ? bounds.height : this.crop.height;
 		var scaledSize = {
-			width: landscape ? width : height / this.image.aspectRatio,
+			width: landscape ? width : (height / this.image.aspectRatio),
 			height: landscape ? width * this.image.aspectRatio : height
 		};
 
-		if (scaledSize.width > this.image.size.width && scaledSize.height > this.image.size.height)
+		if (scaledSize.width > this.image.size.width || scaledSize.height > this.image.size.height)
 			scaledSize = this.image.size;
 
 		this.setImageBounds(
@@ -113,8 +101,9 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	setup: function() {
-		var handle = this.options.handle;
-		this.handleOffset = { width: handle.width / 2, height: handle.height / 2 };
+		this.resize = this.options.resize === true
+			? { width: true, height: true } : this.options.resize;
+
 		this.crop = this.options.crop || this.options.min;
 		// We need to setup image now for imageBounds
 		this.setupImage();
@@ -127,8 +116,8 @@ Cropper = Base.extend(Chain, Callback, {
 			this.cropArea.setBounds({
 				width: crop.width, 
 				height: crop.height,
-				left: (crop.left || crop.x) + this.imageBounds.left,
-				top: (crop.top || crop.y) + this.imageBounds.top
+				left: crop.x + this.imageBounds.left,
+				top: crop.y + this.imageBounds.top
 			});
 		} else {
 			this.cropArea.setBounds({
@@ -138,9 +127,10 @@ Cropper = Base.extend(Chain, Callback, {
 				top: (this.canvas.getHeight() - height) / 2
 			});
 		}
-		this.current.crop = this.crop = this.getCropArea();
-		this.drawMasks();
-		this.positionHandles();
+		this.current.crop = this.crop = this.cropArea.getBounds();
+		this.setupHandles();
+		this.updateMasks();
+		this.updateHandles();
 	},
 
 	buildZoom: function() {
@@ -193,8 +183,8 @@ Cropper = Base.extend(Chain, Callback, {
 		var bounds = this.imageBounds;
 		var crop = this.crop;
 		var keepInside = {
-			x: this.imageBounds.width < crop.width,
-			y: this.imageBounds.height < crop.height
+			x: bounds.width < crop.width,
+			y: bounds.height < crop.height
 		};
 
 		// test the left edge
@@ -219,41 +209,26 @@ Cropper = Base.extend(Chain, Callback, {
 		this.image.setBounds(bounds);
 	},
 
-	getCropArea: function() {
-		var crop = this.cropArea.getBounds();
-		crop.left -= this.offsets.x;
-		crop.right -= this.offsets.x; // calculate relative (horizontal)
-		crop.top -= this.offsets.y;
-		crop.bottom  -= this.offsets.y; // calculate relative (vertical)
-		return crop;
-	},
-
-	activate: function(event, handle) {
+	dragStart: function(event, handle) {
 		this.current = {
 			x: event.page.x,
 			y: event.page.y,
 			handle: handle,
 			crop: this.current.crop
 		};
-		if (this.current.handle == 'NESW' && !this.options.showHandles) this.showHandles(false);
+		if (handle == 'nesw' && !this.options.showHandles)
+			this.showHandles(false);
 		this.fireEvent('start', [this.image.src, this.current.crop, this.getCropInfo(), handle]);
 	},
 
-	removeFunc: function() {
-		if (this.current.handle == 'NESW' && !this.options.showHandles) this.showHandles(true);
+	dragEnd: function() {
+		if (this.current.handle == 'nesw' && !this.options.showHandles)
+			this.showHandles(true);
 		this.crop = this.current.crop;
-		this.fireEvent('complete', [this.image.src, this.current.crop, this.getCropInfo()]);
+		this.fireEvent('end', [this.image.src, this.current.crop, this.getCropInfo()]);
 	},
 
-	moveImage: function(event) {
-		if (event) {
-			this.imageBounds.left += event.delta.x;
-			this.imageBounds.top += event.delta.y;
-		}
-		this.updateImageBounds();
-	},
-
-	resizeFunc: function(event) {
+	drag: function(event) {
 		var xdiff = this.current.x - event.page.x;
 		var ydiff = this.current.y - event.page.y;
 
@@ -268,7 +243,7 @@ Cropper = Base.extend(Chain, Callback, {
 		var bounds = {};
 		var dragging = handle.length > 2;
 
-		if (handle.contains('S')) {//SOUTH
+		if (handle.contains('s')) {
 			if (keepInside.y || (crop.bottom - ydiff > this.imageBounds.bottom))
 				ydiff = Math.round(crop.bottom - this.imageBounds.bottom); // box south
 			if (!dragging) {
@@ -278,7 +253,7 @@ Cropper = Base.extend(Chain, Callback, {
 			}
 		}
 
-		if (handle.contains('N')) {//NORTH
+		if (handle.contains('n')) {
 			if (!keepInside.y && (crop.top - ydiff < this.imageBounds.top))
 				ydiff = crop.top - this.imageBounds.top; //box north
 			if (!dragging) {
@@ -289,7 +264,7 @@ Cropper = Base.extend(Chain, Callback, {
 			bounds.top = crop.top - ydiff; // both Drag and N handles
 		}
 
-		if (handle.contains('E')) {//EAST
+		if (handle.contains('e')) {
 			if (!keepInside.x && (crop.right - xdiff > this.imageBounds.right))
 				xdiff = Math.round(crop.right - this.imageBounds.right); //box east
 			if (!dragging) {
@@ -299,7 +274,7 @@ Cropper = Base.extend(Chain, Callback, {
 			}
 		}
 
-		if (handle.contains('W')) {//WEST
+		if (handle.contains('w')) {
 			if (keepInside.x || (crop.left - xdiff < this.imageBounds.left))
 				xdiff = Math.round(crop.left - this.imageBounds.left); //box west
 			if (!dragging) {
@@ -316,86 +291,77 @@ Cropper = Base.extend(Chain, Callback, {
 		crop.bottom = crop.top + crop.height;
 		this.current.crop = crop;
 
-		// TODO: Add boderWidth to left / top?
-		bounds.width -= this.boderWidth * 2;
-		bounds.height -= this.boderWidth * 2;
 		this.cropArea.setBounds(bounds);
-		this.drawMasks();
-		this.positionHandles();
-		this.fireEvent('change', [this.image.src, this.current.crop, this.getCropInfo()]);
+		this.updateMasks();
+		this.updateHandles();
+		this.fireEvent('move', [this.image.src, this.current.crop, this.getCropInfo()]);
 	},
 
-	drawMasks: function() {
+	dragImage: function(event) {
+		this.imageBounds.left += event.delta.x;
+		this.imageBounds.top += event.delta.y;
+		this.updateImageBounds();
+	},
+
+	updateMasks: function() {
 		if (!this.options.showMask)
 			return;
-
 		var size = this.canvas.getSize();
 		var crop = this.current.crop;
-
-		this.wrapper.setSize(size);
-
-		this.north.setSize(size.width, Math.max(0, crop.top));
-
-		this.south.setSize(size.width, Math.max(0, size.height - crop.bottom));
-
-		this.east.setBounds({
-			left: crop.right,
-			top: crop.top,
+		this.masks.n.setSize(size.width, Math.max(0, crop.top));
+		this.masks.s.setBounds({
+			top: crop.bottom,
+			width: size.width,
+			height: Math.max(0, size.height - crop.bottom)
+		});
+		this.masks.e.setBounds({
+			left: crop.right, top: crop.top,
 			width: Math.max(0, size.width - crop.right),
 			height: crop.height
 		});
-
-		this.west.setBounds({
+		this.masks.w.setBounds({
 			top: crop.top,
 			width: Math.max(0, crop.left),
 			height: crop.height
 		});
 	},
 
-	positionHandles: function() {
+	updateHandles: function() {
 		if (!this.calculateHandles)
 			return;
 		var crop = this.current.crop;
-		var offset = this.handleOffset;
-
-		if (this.options.resize === true || this.options.resize.height) {
-			this.handles.N.setOffset(crop.width / 2 - offset.width, - offset.height);
-			this.handles.S.setOffset(crop.width / 2 - offset.width, crop.height - offset.height);
+		var size = Math.ceil(this.options.handleSize / 2);
+		if (this.resize.height) {
+			this.handles.n.setOffset(crop.width / 2 - size, -size);
+			this.handles.s.setOffset(crop.width / 2 - size, crop.height - size - 1);
 		}
-
-		if (this.options.resize === true || this.options.resize.width) {
-			this.handles.E.setOffset(crop.width - offset.width, crop.height / 2 - offset.height);
-			this.handles.W.setOffset(-offset.width, crop.height / 2 - offset.height);
+		if (this.resize.width) {
+			this.handles.e.setOffset(crop.width - size - 1, crop.height / 2 - size);
+			this.handles.w.setOffset(-size, crop.height / 2 - size);
 		}
-
-		if (this.options.resize === true || this.options.resize.width && this.options.resize.height) {
-			this.handles.NE.setOffset(crop.width - offset.width, - offset.height);
-			this.handles.SE.setOffset(crop.width - offset.width, crop.height - offset.height);
-			this.handles.SW.setOffset(-offset.width, crop.height - offset.height);
-			this.handles.NW.setOffset(-offset.width, -offset.height);
+		if (this.resize.width && this.resize.height) {
+			this.handles.ne.setOffset(crop.width - size - 1, - size);
+			this.handles.se.setOffset(crop.width - size - 1, crop.height - size - 1);
+			this.handles.sw.setOffset(-size, crop.height - size - 1);
+			this.handles.nw.setOffset(-size, -size);
 		}
 	},
 
 	showHandles: function(show) {
 		this.calculateHandles = show;
 		if (show)
-			this.positionHandles();
-		this.handles.each(function(handle) {
+			this.updateHandles();
+		Base.each(this.handles, function(handle) {
 			handle.setStyle({ display: show ? 'block' : 'none' });
 		});
 	},
 
 	buildIndicator: function() {
-		var indicator = this.element.injectTop('span', {
+		var indicator = this.canvas.injectTop('div', {
 			styles: {
-				position: 'absolute',
-				display: 'none',
-				padding: '4px',
-				opacity: '.7',
-				background: '#ffffff',
-				border: '1px solid #525252',
-				fontSize: '11px',
-				zIndex: 40
+				position: 'absolute', display: 'none', zIndex: 1,
+				padding: '4px', opacity: '.75',
+				background: '#fdf2a4', border: '1px solid #bba82a'
 			}
 		});
 
@@ -413,11 +379,11 @@ Cropper = Base.extend(Chain, Callback, {
 				setIndicator(imgsrc, crop, info, handle);
 			},
 
-			change: function(imgsrc, crop, info) {
+			move: function(imgsrc, crop, info) {
 				setIndicator(imgsrc, crop, info);
 			},
 
-			complete: function() {
+			end: function() {
 				indicator.setStyle({ display: 'none' });
 			 }
 		 });
@@ -451,7 +417,6 @@ Cropper = Base.extend(Chain, Callback, {
 								this.options.resize = preset.resize;
 							this.options.min = preset;
 							this.setup();
-							this.showHideHandles();
 						}
 					}.bind(this)
 				}
@@ -471,125 +436,90 @@ Cropper = Base.extend(Chain, Callback, {
 		var opts = this.options;
 		this.wrapper = this.image.injectBefore('div', {
 			styles: {
-				position: 'relative',
-				width: this.canvas.getWidth(),
-				height: this.canvas.getHeight(),
+				position: 'absolute',
+				width: '100%', height: '100%',
 				overflow: 'hidden'
 			},
 			id: 'wrapper'
 		});
-
 		this.wrapper.injectInside(this.image);
 
-		this.offsets = {
-			x: this.wrapper.getLeft(),
-			y: this.wrapper.getTop()
+		var events = {
+			dragstart: this.dragStart.bind(this),
+			drag: this.drag.bind(this),
+			dragend: this.dragEnd.bind(this)
 		};
-
-		if (this.options.showMask) {		// optional masks
-			var maskStyles = {
-				position: 'absolute',
-				overflow: 'hidden',
-				backgroundColor: opts.maskColor,
-				opacity: opts.maskOpacity
-			};
-
-			var dragFunctions = {
-				dragstart: function(e) {
-					this.activate(e, 'image');
-				}.bind(this),
-				drag: function(e) {
-					this.moveImage(e);
-				}.bind(this),
-				dragend: function () {
-					this.removeFunc();
-				}.bind(this)
-			};
-
-			this.north = this.wrapper.injectBottom('div', { styles: maskStyles, id: 'north', events: dragFunctions });
-			this.south = this.wrapper.injectBottom('div', { styles: Hash.merge({  bottom: 0 }, maskStyles), id: 'south', events: dragFunctions });
-			this.east = this.wrapper.injectBottom('div', { styles: maskStyles, id: 'east', events: dragFunctions });
-			this.west = this.wrapper.injectBottom('div', { styles: maskStyles, id: 'west', events: dragFunctions });
-		}
 
 		this.cropArea = this.wrapper.injectBottom('div', {
 			style: {
-				position: 'absolute',
-				top: 0,
-				left: 0,
-				border: opts.cropBorder,
-				cursor: 'move'
+				position: 'absolute', cursor: 'move', opacity: opts.cropOpacity
 			},
-
-			events: {
-				dblclick: function() {
-					this.fireEvent('dblClk', [this.image.src, this.current.crop, this.getCropInfo()]);
-				}.bind(this),
+			events: Hash.merge({}, events, {
 				dragstart: function(e) {
-					this.activate(e, 'NESW');
-				}.bind(this),
-				drag: function(e) {
-					this.resizeFunc(e);
-				}.bind(this),
-				dragend: function () {
-					this.removeFunc();
+					this.dragStart(e, 'nesw');
 				}.bind(this)
-			}
+			})
 		});
 
-		this.handles = new Hash();
-		['N','NE','E','SE','S','SW','W','NW'].each(function(handle) {
+		this.handles = {};
+		['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'].each(function(handle) {
 			this.handles[handle] = this.cropArea.injectTop('div', {
 				style: {
-					position: 'absolute',
-					backgroundColor: opts.handleColor, 
-					width: opts.handle.width,
-					height: opts.handle.height,
-					overflow: 'hidden',
-					cursor: handle.toLowerCase() + '-resize'
+					position: 'absolute', overflow: 'hidden', cursor: handle + '-resize',
+					backgroundColor: opts.handleColor, border: opts.handleBorder, 
+					opacity: opts.handleOpacity, width: opts.handleSize, height: opts.handleSize
 				},
-				events: {
+				events: Hash.merge({}, events, {
 					dragstart: function(e) {
-						this.activate(e, handle);
-					}.bind(this),
-					drag: function(e) {
-						this.resizeFunc(e);
-					}.bind(this),
-					dragend: function () {
-						this.removeFunc();
+						this.dragStart(e, handle);
 					}.bind(this)
-				}
+				})
 			});
 		}, this);
-		this.showHideHandles();
+
+		// Marching Ants
+		this.sides = {};
+		Base.each({
+			n: { top: 0, left: 0, width: '100%' },
+			e: { top: 0, right: 0, height: '100%' },
+			s: { bottom: 0, left: 0, width: '100%' },
+			w: { top: 0, left: 0, height: '100%' }
+		}, function(style, side) {
+			this.sides[side] = this.cropArea.injectTop('div', { styles: Hash.merge({
+				position: 'absolute', width: 1, height: 1, overflow: 'hidden', zIndex: 1,
+				backgroundImage: 'url(/static/edit/css/assets/crop.gif)'
+			}, style) });
+		}, this);
+
+		if (this.options.showMask) { // optional masks
+			events.drag = this.dragImage.bind(this);
+			this.masks = {};
+			['n', 's', 'e' , 'w'].each(function(mask) {
+				this.masks[mask] = this.wrapper.injectBottom('div', { styles: {
+					position: 'absolute', overflow: 'hidden',
+					backgroundColor: opts.maskColor, opacity: opts.maskOpacity
+				}, id: mask, events: events });
+				
+			}, this);
+		}
 	},
 
-	showHideHandles: function() {
-		['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'].each(function(handleName){
-			this.handles[handleName].setStyle({ visibility: 'hidden' });
-		}, this);
+	setupHandles: function() {
 		var handles = [];
-		if (this.options.resize === true) {
-			handles.push('N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW');
-		} else {
-			var handles = [];
-			if (this.options.resize) {
-				if (this.options.resize.width) handles.push('E', 'W');
-				if (this.options.resize.height) handles.push('S', 'N');
-				if (this.options.resize.height && this.options.resize.width)
-					handles.push('NE', 'SE', 'SW', 'NW');
-			}
-		}
-		handles.each(function(handleName){
-			this.handles[handleName].setStyle({ visibility: 'visible' });
+		if (this.resize.width) handles.push('e', 'w');
+		if (this.resize.height) handles.push('s', 'n');
+		if (this.resize.height && this.resize.width)
+			handles.push('ne', 'se', 'sw', 'nw');
+		['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw'].each(function(name) {
+			this.handles[name].setStyle({ visibility: handles.contains(name) ? 'visible': 'hidden' });
 		}, this);
 	},
 
 	getCropInfo: function() {
 		var crop = this.current.crop;
 		return {
-			width: crop.width - this.boderWidth * 2,
-			height: crop.height - this.boderWidth * 2,
+			width: crop.width,
+			height: crop.height,
 			x: crop.left - this.imageBounds.left,
 			y: crop.top - this.imageBounds.top,
 			imageWidth:  this.imageBounds.width,

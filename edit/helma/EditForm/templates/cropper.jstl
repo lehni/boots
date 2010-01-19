@@ -11,7 +11,7 @@
 				cropperSize: $window.getSize()
 			}));
 
-			cropper.onOK = function(){
+			cropper.onOK = function() {
 				var cropInfo = cropper.getCropInfo();
 				var preset = cropper.getPreset();
 				if ($window.setResult)
