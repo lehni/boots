@@ -1,7 +1,3 @@
-/* kropper.css: this file contains the css that defines the size and appearance of all elements of the Kropper image-cropping UI. */
-
-/* This is the container element for the cropper UI */
-
 body {
 	margin: 0;
 	overflow: hidden;
@@ -16,16 +12,12 @@ body {
 	font-size: 11px;
 }
 
-/* this element is the user's cropping workspace, so to speak */
-
 #cropper-canvas {
 	position: absolute;
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
 }
-
-/* this element, automatically hidden when everything has loaded, covers up the cropping canvas and displays the message that javascript is required */
 
 #cropper-loader {
 	position: absolute;
@@ -48,14 +40,14 @@ body {
 }
 
 #cropper-panel {
-	background: url(assets/footer_bg.png);
+	background: url(assets/cropper-panel.png);
 	margin: 0px auto;
 	width: 400px;
 }
 
 #cropper-footer {
 	position: absolute;
-	background: #979797 url(assets/subfooter_bg_grey.png);
+	background: #979797 url(assets/cropper-footer.png);
 	bottom: 0;
 	width: 100%;
 	z-index: 2;
@@ -72,7 +64,7 @@ body {
 	width: 16px;
 	height: 16px;
 	position: absolute;
-	background: url(assets/slider.png) no-repeat;
+	background: url(assets/cropper-slider.png) no-repeat;
 }
 
 #cropper-buttons {
@@ -82,6 +74,3 @@ body {
 #cropper-ok {
 	float: right;
 }
-
-/* The stuff below is an IE6 PNG transparency fix. See http://bjorkoy.com/past/2007/4/8/the_easiest_way_to_png/ for information. */
-img { behavior: url(iepngfix.htc); }
