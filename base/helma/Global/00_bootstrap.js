@@ -656,7 +656,7 @@ $A = Array.create;
 Number.inject({
 	_type: 'number',
 
-	limit: function(min, max){
+	limit: function(min, max) {
 		return Math.min(max, Math.max(min, this));
 	},
 

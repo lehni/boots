@@ -126,11 +126,11 @@ String.inject({
 		while (true) {
 			var m = split.exec(this);
 			parts.push(this.substring(index, m ? m.index : this.length)
-				.replace(/\b([A-Za-z][a-z.'\u2019]*)\b/g, function(all){
+				.replace(/\b([A-Za-z][a-z.'\u2019]*)\b/g, function(all) {
 					return /[A-Za-z]\.[A-Za-z]/.test(all) ? all : upper(all);
 				})
 				.replace(new RegExp('\\b' + small + '\\b', 'ig'), lower)
-				.replace(new RegExp('^' + punct + small + '\\b', 'ig'), function(all, punct, word){
+				.replace(new RegExp('^' + punct + small + '\\b', 'ig'), function(all, punct, word) {
 					return punct + upper(word);
 				})
 				.replace(new RegExp('\\b' + small + punct + '$', 'ig'), upper));
@@ -141,7 +141,7 @@ String.inject({
 
 		return parts.join('').replace(/ V(s?)\. /ig, ' v$1. ')
 			.replace(/(['\u2019])S\b/ig, '$1s')
-			.replace(/\b(AT&T|Q&A)\b/ig, function(all){
+			.replace(/\b(AT&T|Q&A)\b/ig, function(all) {
 				return all.toUpperCase();
 			});
 	},

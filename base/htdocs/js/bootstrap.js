@@ -631,7 +631,7 @@ $A = Array.create;
 Number.inject({
 	_type: 'number',
 
-	limit: function(min, max){
+	limit: function(min, max) {
 		return Math.min(max, Math.max(min, this));
 	},
 
@@ -1977,7 +1977,7 @@ DomEvent = Base.extend(new function() {
 									arguments.callee.delay(50);
 								}
 							}).delay(0);
-						} else if (Browser.WEBKIT && Browser.VERSION < 525){
+						} else if (Browser.WEBKIT && Browser.VERSION < 525) {
 							(function() {
 								/^(loaded|complete)$/.test(doc.$.readyState)
 									? doc.onDomReady() : arguments.callee.delay(50);
