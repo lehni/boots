@@ -6,17 +6,7 @@ Function.inject({
 	 * used to render to a string and return it.
 	 * Otherwise, the function renders directly into res.
 	 */
-	/*
-	toRender: function() {
-		var params = this.parameters;
-		var last = params.last;
-		return Function.compile(params, 
-			'var _asString = ' + last + ' == null;' +
-			'if (_asString) (' + last + ' = res).push();' +
-			this.body() +
-			'if (_asString) return res.pop();');
-	},
-	*/
+
 	toRender: function(count) {
 		var length = count == undefined ? this.parameters.length : count;
 		var last = length ? length - 1 : 0;
