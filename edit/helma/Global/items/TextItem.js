@@ -20,6 +20,13 @@ TextItem = StringItem.extend({
 
 	getButtons: function(baseForm, name) {
 		var buttons = this.base(baseForm, name);
+		if (this.buttons.image) {
+			buttons.push({
+				name: name + '_image',
+				value: 'Image',
+				onClick: baseForm.renderHandle('choose_image', name, this.getEditParam())
+			});
+		}
 		if (this.buttons.crop) {
 			buttons.push({
 				name: name + '_crop',
