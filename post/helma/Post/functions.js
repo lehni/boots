@@ -191,18 +191,6 @@ Post.inject({
 		return user && this.creator == user;
 	},
 
-	// Used by feed lib:
-	renderSimple: function(out) {
-		var resources = this.resources.list();
-		return this.renderTemplate('simple', {
-			text: Markup.render(this.text, {
-				resources: resources, removeUsedResources: true,
-				simple: true, inline: true, encoding: 'all'
-			}),
-			resources: resources,
-		}, out);
-	},
-
 	renderUser: function(out) {
 		if (this.username) {
 			var name = encode(this.username);
@@ -213,35 +201,24 @@ Post.inject({
 		}
 	}.toRender(),
 
+	// Used by feed lib:
+	renderSimple: function(out) {
+		var resources = this.resources.list();
+		return this.renderTemplate('simple', {
+			resources: resources,
+		}, out);
+	},
+
 	render: function(withLink, asFirst, out) {
 		var resources = this.resources.list();
 		var title = encode(this.title);
-		var param = {
+		return this.renderTemplate('main', {
 			id: this.getEditId(),
 			title: withLink ? this.node.renderLink(title) : title,
 			resources: resources,
 			postClass: this.node.POST_CLASS,
-			styleClass: asFirst ? this.node.POST_CLASS_FIRST : this.node.POST_CLASS_OTHERS,
-			// We need to process this before all the renderFields / Footer / Outer
-			// methods since Markup modified param.resources already.
-			// Therefore it canneot be moved to main.jstl until these render*
-			// methods are converted to macros that can be called from there too.
-			text: Markup.render(this.text, {
-				resources: resources,
-				removeUsedResources: true,
-				encoding: 'all'
-			})
-		};
-		// first posts in nodes also can show fields of the node (e.g. for scripts, gallery)
-		if (this.isFirst) {
-			if (this.node.renderFields)
-				param.nodeFields = this.node.renderFields(param, resources);
-			if (this.node.renderFooter)
-				param.nodeFooter = this.node.renderFooter(param, resources);
-			if (this.node.renderOuter)
-				param.outer = this.node.renderOuter(param, resources);
-		}
-		return this.renderTemplate('main', param, out);
+			styleClass: asFirst ? this.node.POST_CLASS_FIRST : this.node.POST_CLASS_OTHERS
+		}, out);
 	},
 
 	getNotification: function() {

@@ -1,6 +1,5 @@
-<p>
-<%= param.text %>
-</p>
+<%= this.text | markup resources=param.resources removeUsedResources=true
+simple=true inline=true encoding='paragraphs' %>
 <% if (param.resources.length > 0) %>
 <p>
 <% foreach ($resource in param.resources) %>
