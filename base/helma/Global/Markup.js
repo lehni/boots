@@ -79,12 +79,12 @@ MarkupTag = Base.extend(new function() {
 	function parseDefinition(str, collectAttributes) {
 		var name = null, list = [], attribute = null, attributes = {};
 		// Match name=value pairs, and allow strings with escaped quotes inside too
-		for (var match; match = /(\w+)=|(["'](?:[^"'\\]*(?:\\["']|\\|(?=["']))+)*["'])|(\S+)/g.exec(str);) {
+		for (var match; match = /(\w+)=|(["'](?:[^"'\\]*(?:\\["']|\\|(?=["']))+)*["'])|(\S+)/gm.exec(str);) {
 			if (match[1]) { // attribute name
 				attribute = match[1];
 			} else { // string or value
-				// Eval strings (match[2]) here is safe, due to regex above it is always a string
-				var value = match[2] ? eval(match[2]) : match[3];
+				// Do not eval match[2] as it might contain line breaks which will throw errors.
+				var value = match[2] ? match[2].substring(1, match[2].length - 1).replace(/\\/g, '') : match[3];
 				if (collectAttributes) {
 					// When collecting _attributes, use list array to store them
 					if (!attribute) // attribute with no default value
@@ -151,7 +151,7 @@ MarkupTag = Base.extend(new function() {
 					// This is a tag, render its children first into one content string
 					var content = part.renderChildren(param, encoder, cleanUps);
 					// Now render the tag itself and place it in the resulting buffer
-					buffer[i] = part.render(content, param, encoder)
+					buffer[i] = part.render(content, param, encoder, this.parts[i - 1], this.parts[i + 1]);
 					// If the object defines the cleanUp function, 
 					// collect it now:
 					if (part.cleanUp)
@@ -198,7 +198,7 @@ MarkupTag = Base.extend(new function() {
 				var def = definition == 'root' ? { name: 'root' } : parseDefinition(definition);
 				// Render any undefined tag through the UndefinedTag.
 				var store = param && tags[param.context] || tags['default'];
-				var obj = store[def.name] || store['undefined'] || tags['default']['undefined'];
+				var obj = store[def.name] || tags['default'][def.name] || store['undefined'] || tags['default']['undefined'];
 				if (obj.attributes) {
 					// If _attributes were defined, use the info object produced
 					// by parseDefinition in MarkupTag.extend now to scan through
