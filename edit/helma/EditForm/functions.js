@@ -533,7 +533,7 @@ EditForm.inject(new function() {
 					return defaults;
 				else
 					return defaults.clone().inject(item);
-			} else if (useDefaults)
+			} else if (item === undefined && useDefaults)
 				return defaults;
 			return null;
 		},
