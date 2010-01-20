@@ -15,6 +15,8 @@ Topic.inject({
 	},
 
 	getEditForm: function(param) {
+		// Redirect to the first post if we're creating a new post and not removing
+		// it. In those cases we need the node form for meta data.
 		if (!param.removing && this.isCreating()) { 
 			return this.getFirstPost().getEditForm(param); 
 		} else {
