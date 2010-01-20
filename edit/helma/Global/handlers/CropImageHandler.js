@@ -5,7 +5,7 @@ ChooseCropImageHandler = EditHandler.extend({
 		var picture = HopObject.get(req.data.image_id);
 		if (item && picture) {
 			var options = item.getCropOptions(object);
-			var presets = settings.options;
+			var presets = options.presets;
 			if (presets) {
 				presets.each(function(preset, i) {
 					if (!preset.name) {
