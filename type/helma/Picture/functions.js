@@ -153,20 +153,20 @@ Picture.inject({
 				width = info.width;
 				height = info.height;
 			}
-			return {
+			var image = {
 				src: this.getUri() + '?version=' + id,
 				width: width,
 				height: height
 			};
+			// Merge attributes into it before rendering
+			if (param.attributes)
+				image = Hash.merge(image, param.attributes);
+			return image;
 		}
 	},
 
 	renderImage: function(param, out) {
-		var image = this.processImage(param);
-		// Merge attributes into it before rendering
-		if (param.attributes)
-			image = Hash.merge(image, param.attributes);
-		return Html.image(image, out);
+		return Html.image(this.processImage(param), out);
 	},
 
 	processTint: function(image, tint) {
