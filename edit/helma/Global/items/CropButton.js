@@ -1,12 +1,21 @@
 CropButtonItem = EditItem.extend({
 	_types: 'crop',
+	itemClassName: 'edit-item edit-nolinks',
 
 	render: function(baseForm, name, value, param, out) {
+		var cropAction = baseForm.renderHandle('choose_crop', name, this.getEditParam());
+		if (this.preview) {
+			renderLink({
+				content: this.renderPreview(value),
+				onClick: cropAction,
+				attributes: { className: 'edit-crop-preview' }
+			}, res);
+		}
 		baseForm.renderButtons([
 			{ // Crop Button
 				name: name + '_crop',
 				value: this.title || 'Crop Image',
-				onClick: baseForm.renderHandle('choose_crop', name, this.getEditParam()),
+				onClick: cropAction,
 				className: this.className
 			}, { // Reset Button
 				name: name + '_reset',
@@ -14,12 +23,29 @@ CropButtonItem = EditItem.extend({
 				onClick: baseForm.renderHandle('clear_crop', name),
 				className: this.className
 			}
-		], false, out);
-		Html.input({type: 'hidden', name: name, value: Json.encode(value) }, out);
+		], false, res);
+		Html.input({type: 'hidden', name: name, value: Json.encode(value) }, res);
 	},
 
 	convert: function(value) {
 		return this.json ? Json.decode(value) : value;
+	},
+
+	renderPreview: function(crop, out) {
+		var id = this.getEditName() + '_preview';
+		var size = this.preview !== true ? this.preview : { width: 100, height: 80 };
+		if (crop) {
+			var scale = Math.min(size.width / crop.width, size.height / crop.height);
+			crop = Picture.getScaledCrop(crop, scale);
+			return Picture.renderCrop(crop, { 
+				attributes: { id: id } 
+			}, out);
+		} else {
+			return Html.image({
+				width: size.width, height: size.height, id: id,
+				src: '/static/edit/assets/spacer.gif'
+			}, out);
+		}
 	},
 
 	getPictureResources: function(object) {

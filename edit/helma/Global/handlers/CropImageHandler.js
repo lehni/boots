@@ -4,7 +4,6 @@ ChooseCropImageHandler = EditHandler.extend({
 	handle: function(base, object, node, form, item) {
 		var picture = HopObject.get(req.data.image_id);
 		if (item && picture) {
-			res.contentType = 'text/html';
 			var options = item.getCropOptions(object);
 			var presets = settings.options;
 			if (presets) {
@@ -41,6 +40,7 @@ ChooseCropImageHandler = EditHandler.extend({
 				}
 				options.crop = crop;
 			}
+			res.contentType = 'text/html';
 			form.renderTemplate('cropper', {
 				picture: picture,
 				options: options || {}
@@ -48,3 +48,20 @@ ChooseCropImageHandler = EditHandler.extend({
 		 }
 	}
 });
+
+PreviewCropImageHandler = EditHandler.extend({
+	mode: 'crop_preview',
+
+	handle: function(base, object, node, form, item) {
+		if (item.preview) {
+			var crop = req.data.image_crop && Json.decode(req.data.image_crop);
+			if (crop) {
+				form.addResponse({
+					html: item.renderPreview(crop),
+					name: item.getEditName()
+				});
+			}
+		}
+	}
+});
+

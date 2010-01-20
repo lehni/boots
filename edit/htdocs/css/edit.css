@@ -213,9 +213,30 @@
 	margin-left: 4px;
 }
 
-#edit .edit-nounderline a {
+#edit .edit-nounderline a, #edit .edit-nolinks a {
 	border: none;
 	padding: 0;
+}
+
+#edit .edit-nolinks a:hover {
+	background: none;
+}
+
+/* image / cropper */
+
+#edit .edit-crop-preview img {
+	border: 1px dashed #999;
+	vertical-align: middle;
+	margin-right: 4px;
+}
+
+.edit-choose-image a {
+	display: block;
+}
+
+.edit-choose-image img {
+	vertical-align: middle;
+	margin-right: 4px;
 }
 
 /* edit lists */

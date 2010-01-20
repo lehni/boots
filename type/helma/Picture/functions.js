@@ -220,12 +220,12 @@ Picture.inject({
 	},
 
 	statics: {
-		renderCropped: function(crop, param) {
+		renderCrop: function(crop, param, out) {
 			// Similar to CropTag
 			var picture = crop && HopObject.get(crop.id);
 			if (picture) {
 				param.crop = crop;
-				return picture.renderImage(param);
+				return picture.renderImage(param, out);
 			}
 		},
 

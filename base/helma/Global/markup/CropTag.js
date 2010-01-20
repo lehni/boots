@@ -5,7 +5,7 @@ CropTag = ResourceTag.extend({
 
 	render: function(content, param) {
 		var attributes = this.attributes;
-		// Similar to Picture.renderCropped
+		// Similar to Picture.renderCrop
 		var resource = this.getResource(this.attributes.resource, param);
 		if (resource && resource.instanceOf(Picture)) {
 			return resource.renderImage({

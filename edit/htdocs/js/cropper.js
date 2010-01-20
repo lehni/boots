@@ -446,9 +446,22 @@ Cropper = Base.extend(Chain, Callback, {
 
 		var events = {
 			dragstart: this.dragStart.bind(this),
-			drag: this.drag.bind(this),
+			drag: this.dragImage.bind(this),
 			dragend: this.dragEnd.bind(this)
 		};
+
+		if (this.options.showMask) { // optional masks
+			this.masks = {};
+			['n', 's', 'e' , 'w'].each(function(mask) {
+				this.masks[mask] = this.wrapper.injectBottom('div', { styles: {
+					position: 'absolute', overflow: 'hidden',
+					backgroundColor: opts.maskColor, opacity: opts.maskOpacity
+				}, id: mask, events: events });
+				
+			}, this);
+		}
+
+		events.drag = this.drag.bind(this);
 
 		this.cropArea = this.wrapper.injectBottom('div', {
 			style: {
@@ -490,18 +503,6 @@ Cropper = Base.extend(Chain, Callback, {
 				backgroundImage: 'url(/static/edit/css/assets/cropper-ants.gif)'
 			}, style) });
 		}, this);
-
-		if (this.options.showMask) { // optional masks
-			events.drag = this.dragImage.bind(this);
-			this.masks = {};
-			['n', 's', 'e' , 'w'].each(function(mask) {
-				this.masks[mask] = this.wrapper.injectBottom('div', { styles: {
-					position: 'absolute', overflow: 'hidden',
-					backgroundColor: opts.maskColor, opacity: opts.maskOpacity
-				}, id: mask, events: events });
-				
-			}, this);
-		}
 	},
 
 	setupHandles: function() {

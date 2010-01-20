@@ -433,6 +433,13 @@ EditForm = Base.extend({
 		}
 	},
 
+	load: function(mode, param, callback) {
+		new Request({
+			url: this.url, method: 'get', json: true,
+			data: this.getData(mode, param)
+		}, callback && callback.bind(this)).send();
+	},
+
 	getSelectedTag: function(field, tag) {
 		var text = field.getValue(), pos = field.getCaret();
 		var start = text.substring(0, pos + tag.length + 1).lastIndexOf('<' + tag);
@@ -1071,7 +1078,12 @@ EditForm.register(new function() {
 				if (json) {
 					crop.id = param.image_id;
 					crop.name = param.image_name;
-					field.setValue(Json.encode(crop));
+					crop = Json.encode(crop);
+					field.setValue(crop);
+					param.image_crop = crop;
+					this.load('crop_preview', param, function(result) {
+						$('#' + result.name + '_preview', this.form).replaceWith(result.html);
+					});
 				} else {
 					// TODO: Find a way to produce this through EditSettings too, maybe
 					// as a function that takes crop and preset?
@@ -1088,6 +1100,7 @@ EditForm.register(new function() {
 
 		clear_crop: function(element, name) {
 			$('#' + name, this.form).setValue('');
+			$('#' + name + '_preview', this.form).setProperty('src', '/static/edit/assets/spacer.gif');
 		}
 	};
 });
@@ -1354,13 +1367,6 @@ EditChooser = Base.extend({
 		this.show(false);
 	},
 
-	load: function(action, param, callback) {
-		new Request({
-			url: this.editForm.url, method: 'get', json: true,
-			data: this.editForm.getData(action, param)
-		}, callback && callback.bind(this)).send();
-	},
-
 	statics: {
 		choosers: [],
 		current: null,
@@ -1445,7 +1451,7 @@ ObjectChooser = EditChooser.extend({
 		var children = id && $('#edit-choose-children-' + id, this.content) || this.content;
 		var show = children == this.content || children.hasClass('hidden');
 		if (show) {
-			this.load('choose', Hash.merge({ edit_child_id: id || '' }, this.param),
+			this.editForm.load('choose', Hash.merge({ edit_child_id: id || '' }, this.param),
 				function(result) {
 					children.setHtml(result.html);
 					this.setArrow(id, true);
@@ -1453,7 +1459,7 @@ ObjectChooser = EditChooser.extend({
 						children.removeClass('hidden');
 						this.show(true);
 					}
-				}
+				}.bind(this)
 			);
 		} else {
 			this.setArrow(id, false);
@@ -1472,7 +1478,7 @@ ImageChooser = EditChooser.extend({
 		this.editForm = editForm;
 		this.base(editForm, name);
 		this.show(false);
-		this.load(action, param,
+		editForm.load(action, param,
 			function(result) {
 				if (result.html) {
 					this.content.setHtml(result.html);
@@ -1480,7 +1486,7 @@ ImageChooser = EditChooser.extend({
 				} else if (result.image_crop) {
 					editForm.handle('choose_crop_select', null, result);
 				}
-			}
+			}.bind(this)
 		);
 	}
 });
