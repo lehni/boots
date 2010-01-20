@@ -11,6 +11,8 @@ Html = new function() {
 		XHTML: false,
 
 		attributes: function(attributes, out) {
+			var asString = !out;
+			if (asString) (out = res).push();
 			for (var name in attributes) {
 				var value = attributes[name];
 				name = properties[name] || name;
@@ -25,9 +27,12 @@ Html = new function() {
 					}
 				}
 			}
+			if (asString) return out.pop();
 		},
 
 		element: function(name, attributes, content, out) {
+			var asString = !out;
+			if (asString) (out = res).push();
 			out.write('<');
 			out.write(name);
 			if (attributes != null)
@@ -43,7 +48,8 @@ Html = new function() {
 				// use /> only for empty XHTML tags:
 				out.write(Html.XHTML ? ' />' : '>');
 			}
-		}.toRender(),
+			if (asString) return out.pop();
+		},
 
 		script: function(attributes, out) {
 			return Html.element('script', attributes, null, out);
@@ -76,6 +82,8 @@ Html = new function() {
 		},
 
 		select: function(attributes, out) {
+			var asString = !out;
+			if (asString) (out = res).push();
 			var options = attributes.options;
 			delete attributes.options;
 			// Form elements should have both id and name
@@ -107,7 +115,8 @@ Html = new function() {
 				Html.element('option', option, option.name, out);
 			}
 			out.write('</select>');
-		}.toRender(),
+			if (asString) return out.pop();
+		},
 
 		input: function(attributes, out) {
 			switch(attributes.type) {

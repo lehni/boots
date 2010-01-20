@@ -81,18 +81,10 @@ renderLink = function(param, out) {
 	var confirm = param.confirm && 'confirm(' + Json.encode(param.confirm, true) + ')';
 
 	// Collect attributes
-	// For onClick, support it both in param (deprecated) and attributes
-	var onClick = param.onClick;
-	// Start with '' for attributes list so that the joined result starts with ' '.
-	var attributes = param.attributes ? param.attributes.each(function(val, key) {
-		key = key.toLowerCase();
-		if (key == 'onclick') {
-			onClick = val;
-		} else {
-			this.push(key + '="' + val + '"');
-		}
-	}, ['']).join(' ') : '';
+	var attributes = param.attributes && Html.attributes(param.attributes);
 
+	// Handle onClick
+	var onClick = param.onClick;
 	if (onClick) {
 		// Make sure it ends with ;
 		if (!/;$/.test(onClick))
@@ -128,7 +120,7 @@ renderLink = function(param, out) {
 			attributes += ' onclick=' + Json.encode(onClick
 					+ (confirm ? '' : ' return false;'));
 		}
-		res.write('<a href="' + url + '"' + attributes + '>' + content + '</a>');
+		res.write('<a href="' + url + '"' + (attributes ? ' ' + attributes : '') + '>' + content + '</a>');
 	}
 }.toRender();
 
