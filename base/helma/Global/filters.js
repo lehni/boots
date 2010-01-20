@@ -91,7 +91,7 @@ function markup_filter(input, param) {
 }
 
 function versioned_filter(input, param) {
-	var lastModified = Net.getLastModified(input);
+	var lastModified = Url.getLastModified(input);
 	if (lastModified)
 		input += '?' + lastModified;
 	return input;

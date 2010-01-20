@@ -1,8 +1,8 @@
-Net = new function() {
+Url = new function() {
 	var urlFiles = {};
 
 	return {
-		parseUrl: function(url) {
+		parse: function(url) {
 			var values = url.match(/^(?:(\w+):\/\/)?([^:\/]+)(?::([0-9]+))?(\/.*)?/) || [];
 			return {
 				protocol: values[1],
@@ -39,7 +39,7 @@ Net = new function() {
 		 * Returns true when the url is a absolute or relative local url.
 		 */
 		isLocal: function(url) {
-			return Net.isAbsolute(url) || Net.isRelative(url);
+			return Url.isAbsolute(url) || Url.isRelative(url);
 		},
 
 		// TODO: This should not really be in Net, but where?
@@ -64,18 +64,18 @@ Net = new function() {
 			// This retruns the modficitation date of files represented by 
 			// absolute local urls. It can be used to force loading of script
 			// files...
-			var file = Net.getStaticFile(url);
+			var file = Url.getStaticFile(url);
 			if (file)
 				return file.lastModified;
 		},
 
 		// TODO: Add support for param.timeout somehow
-		loadUrl: function(url, param) {
+		load: function(url, param) {
 			try {
 				var res = getURL(url, param.etag || param.date, param.timeout);
 				return res ? new java.lang.String(res.content) : null;
 			} catch (e) {
-				User.logError('Net.loadUrl', e);
+				User.logError('Url.load', e);
 			}
 		}
 	};

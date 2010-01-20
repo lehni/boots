@@ -14,7 +14,7 @@ function input_macro(param) {
 function script_macro(param, src) {
 	if (!param.src)
 		param.src = src;
-	var lastModified = Net.getLastModified(param.src);
+	var lastModified = Url.getLastModified(param.src);
 	if (lastModified)
 		param.src += '?' + lastModified;
 	if (!param.type)
@@ -32,7 +32,7 @@ function stylesheet_macro(param, href) {
 	param.rel = 'stylesheet';
 	if (!param.href)
 		param.href = href;
-	var lastModified = Net.getLastModified(param.href);
+	var lastModified = Url.getLastModified(param.href);
 	if (lastModified)
 		param.href += '?' + lastModified;
 	Html.link(param, res);

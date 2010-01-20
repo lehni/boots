@@ -40,7 +40,7 @@ OEmbedTag = MarkupTag.extend(new function() {
 				// Get the embed html through the oEmbed API
 				var url = this.attributes.url;
 				// Support both urls and ids
-				if (!Net.isRemote(url))
+				if (!Url.isRemote(url))
 					url = this._prefix + url + this._suffix;
 				var href = this._endpoint + '?url=' + encodeUrl(url);
 				// Support global setting of maxWidth and maxHeight through param
@@ -53,7 +53,7 @@ OEmbedTag = MarkupTag.extend(new function() {
 					if (name != 'url')
 						href += '&' + name + '=' + this.attributes[name];
 				// Request json
-				var json = Net.loadUrl(href + '&format=json', { timeout: 250 });
+				var json = Url.load(href + '&format=json', { timeout: 250 });
 				var obj = Json.decode(json);
 				if (obj) {
 					// Youtube sometimes ignores maxWidth / height, so fix it here:

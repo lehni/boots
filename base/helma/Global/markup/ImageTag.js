@@ -9,7 +9,7 @@ ImageTag = ResourceTag.extend({
 
 	render: function(content, param) {
 		var src = this.attributes.src || content;
-		if (!Net.isRemote(src)) {
+		if (!Url.isRemote(src)) {
 			var resource = this.getResource(src, param);
 			if (resource && resource.instanceOf(Picture))
 				return this.renderImage(resource, param);
