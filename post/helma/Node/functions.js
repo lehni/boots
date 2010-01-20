@@ -116,7 +116,7 @@ Node.inject({
 			if (index + posts.length == count && this.POST_ALLOW)
 				this.renderPostButton({
 					title: param.postButton,
-					click: param.postButtonClick
+					expand: param.postButtonExpand
 				}, res);
 			posts = res.pop();
 		}
