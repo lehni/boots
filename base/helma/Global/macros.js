@@ -11,10 +11,14 @@ function input_macro(param) {
 	Html.input(param, res);
 }
 
-function script_macro(param) {
+function script_macro(param, src) {
+	if (!param.src)
+		param.src = src;
 	var lastModified = Net.getLastModified(param.src);
 	if (lastModified)
 		param.src += '?' + lastModified;
+	if (!param.type)
+		param.type = 'text/javascript';
 	Html.script(param, res);
 }
 
@@ -24,15 +28,15 @@ var select_macro = Html.select;
 
 var br_macro = Html.lineBreak;
 
-/* This clashes with the global link macro. TODO: Rename the link macro
- to something else, e.g.g href_macro, a, etc.?
-function link_macro(param) {
+function stylesheet_macro(param, href) {
+	param.rel = 'stylesheet';
+	if (!param.href)
+		param.href = href;
 	var lastModified = Net.getLastModified(param.href);
 	if (lastModified)
 		param.href += '?' + lastModified;
 	Html.link(param, res);
 }
-*/
 
 function json_macro(param, object) {
 	// If param.include is defined, only include the keys defined in that
