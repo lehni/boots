@@ -500,11 +500,11 @@ Template.prototype = {
 				object = 'obj';
 				postProcess = postProcess | macro.swallow;
 				code.push(		postProcess		?	'out.push();' : null,
-													'var val = template.renderMacro("' + macro.command + '", ' + object + ', "' +
-															macro.name + '", param, ' + this.parseLoopVariables(macro.arguments, stack) + ', out);',
+													'var val = template.renderMacro("' + macro.command + '", ' + object + ', "' + macro.name
+														+ '", param, ' + this.parseLoopVariables(macro.arguments, stack) + ',' + macro.param.length + ', out);',
 								macro.swallow	?	'if (val) val = val.toString().trim();' : null,
-								postProcess		?	'template.write(out.pop()' + (macro.swallow ? '.trim()' : '') + ', ' + values.filters + ', ' + values.prefix + ', ' +
-															values.suffix + ', null, out);' : null);
+								postProcess		?	'template.write(out.pop()' + (macro.swallow ? '.trim()' : '') + ', ' + values.filters + ', ' + values.prefix + ', '
+														+ values.suffix + ', null, out);' : null);
 				result = 'val';
 			}
 		}
@@ -602,7 +602,7 @@ Template.prototype = {
 		}
 	},
 
-	renderMacro: function(command, object, name, param, args, out) {
+	renderMacro: function(command, object, name, param, args, paramLength, out) {
 		var unhandled = false, value, macro;
 		if (object) {
 			if (name == 'template') {
@@ -622,8 +622,13 @@ Template.prototype = {
 				try {
 					var prm = args[0];
 					if (prm && prm.param) {
-						prm = args[0] = this.inherit(prm, prm.param);
-						delete prm.param;
+						if (paramLength == 1 && prm.param == param) {
+							prm = param;
+						} else {
+							prm = this.inherit(prm, prm.param);
+							delete prm.param;
+						}
+						args[0] = prm;
 					}
 					value = macro.apply(object, args);
 				} catch (e) {
