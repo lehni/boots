@@ -154,7 +154,6 @@ Cropper = Base.extend(Chain, Callback, {
 		var aspectRatio = this.crop.height / this.crop.width;
 		var landscape = this.image.aspectRatio > aspectRatio;
 		var minZoom = (landscape ? this.crop.width : this.crop.height / this.image.aspectRatio) / this.image.size.width;
-		minZoom = 0;
 		if (zoom < minZoom) zoom = minZoom;
 		this.zoom = zoom;
 

@@ -1029,18 +1029,17 @@ EditForm.register(new function() {
 	return {
 		choose_image: function(element, name, param) {
 			field = $('#' + name, this.form);
+			var tag = this.getSelectedTag(field, 'image');
+			if (tag)
+				field.setSelection(tag);
 			choose(this, name + '_image', 'choose_image', param);
 		},
 
 		choose_image_select: function(element, param) {
-			if (json) {
-				// TODO: Implement
-			} else {
-				var text = field.getSelectedText();
-				field.replaceSelectedText(
-					EditSettings.image.replace('@name', param.image_name).replace('@text', text)
-				);
-			}
+			var text = field.getSelectedText();
+			field.replaceSelectedText(
+				EditSettings.image.replace('@name', param.image_name).replace('@text', text)
+			);
 			EditChooser.closeAll();
 		},
 
@@ -1471,7 +1470,7 @@ ObjectChooser = EditChooser.extend({
 
 ImageChooser = EditChooser.extend({
 	initialize: function() {
-		this.base({ padding: 4, className: 'edit-simple-chooser' });
+		this.base({ padding: 4, className: 'edit-simple-chooser edit-image-chooser' });
 	},
 
 	choose: function(editForm, name, action, param) {

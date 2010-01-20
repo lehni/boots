@@ -3,28 +3,30 @@ CropButtonItem = EditItem.extend({
 	itemClassName: 'edit-item edit-nolinks',
 
 	render: function(baseForm, name, value, param, out) {
-		var cropAction = baseForm.renderHandle('choose_crop', name, this.getEditParam());
-		if (this.preview) {
-			renderLink({
-				content: this.renderPreview(value),
-				onClick: cropAction,
-				attributes: { className: 'edit-crop-preview' }
-			}, res);
-		}
-		baseForm.renderButtons([
-			{ // Crop Button
-				name: name + '_crop',
-				value: this.title || 'Crop Image',
-				onClick: cropAction,
-				className: this.className
-			}, { // Reset Button
-				name: name + '_reset',
-				value: 'Clear',
-				onClick: baseForm.renderHandle('clear_crop', name),
-				className: this.className
+		if (this.hasPictureResources()) {
+			var cropAction = baseForm.renderHandle('choose_crop', name, this.getEditParam());
+			if (this.preview) {
+				renderLink({
+					content: this.renderPreview(value),
+					onClick: cropAction,
+					attributes: { className: 'edit-crop-preview' }
+				}, res);
 			}
-		], false, res);
-		Html.input({type: 'hidden', name: name, value: Json.encode(value) }, res);
+			baseForm.renderButtons([
+				{ // Crop Button
+					name: name + '_crop',
+					value: this.title || 'Crop Image',
+					onClick: cropAction,
+					className: this.className
+				}, { // Reset Button
+					name: name + '_reset',
+					value: 'Clear',
+					onClick: baseForm.renderHandle('clear_crop', name),
+					className: this.className
+				}
+			], false, res);
+			Html.input({type: 'hidden', name: name, value: Json.encode(value) }, res);
+		}
 	},
 
 	convert: function(value) {

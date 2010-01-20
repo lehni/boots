@@ -21,6 +21,6 @@ EditForm.inline('<%= param.url %>', <% json singleQuotes="true" include="mode,id
 <% #button -%>
 <% $id = 'edit-button-' + param.button.mode + '-' + param.id %>
 <input type="button" id=<%= $id %> value="<% param.button.title %>" onclick="return <% this.template "#onclick" param=param.button %>" class="edit-button"><%-%>
-<% if (param.button.expand) %>
+<% if (param.button.click) %>
 <script type="text/javascript">$("<%= $id %>").click();</script><%-%>
 <% end %>

@@ -8,6 +8,11 @@ function encodeJs(str, singleQuotes) {
 	// return str ? (str = uneval(str)).substring(1, str.length - 1) : str;
 }
 
+function encodeParagraphs(str) {
+	// Remove empty paragraphs from formatParagraphs
+	return formatParagraphs(str).replaceAll('<p></p>', '');
+}
+
 function encodeHex(str) {
 	var hex = '';
 	// two \\ needed because it's javascript encoded (for the client side)

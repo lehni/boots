@@ -167,6 +167,13 @@ EditItem = Base.extend(new function() {
 			return object.resources;
 		},
 
+		hasPictureResources: function() {
+			var resources = this.getPictureResources(this.form.object);
+			return resources && resources.list().find(function(resource) {
+				return resource.instanceOf(Picture);
+			});
+		},
+
 		getCropOptions: function(object) {
 			return {};
 		},

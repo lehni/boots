@@ -239,6 +239,14 @@
 	margin-right: 4px;
 }
 
+.edit-choose-image {
+	margin-bottom: 4px;
+}
+
+.edit-image-chooser {
+	margin-bottom: -4px;
+}
+
 /* edit lists */
 
 #edit .edit-list-separator {

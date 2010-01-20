@@ -1,7 +1,7 @@
 <%--
 We need to process the text before all the fields / footer / out macros since Markup might param.resources or other param values which are passed to these.
 --%>
-<% $text = <%= this.text | markup resources=param.resources removeUsedResources=true encoding='paragraphs' %> %>
+<% $text = <%= this.text | markup resources=param.resources removeUsedResources=true | encode 'paragraphs' %> %>
 <div class="<%= param.postClass %> <%= param.styleClass %>">
 <div id="<%= param.id %>">
 <a name="<%= param.id %>" class="anchor"></a>
@@ -21,7 +21,7 @@ TODO: Find a way to abstract this --%>
 	<% this.editButtons buttons="edit,remove" %>
 	<div class="clear"></div>
 </div>
-<%= $text prefix="<div class=\"text\">" suffix="</div>" %>
+<%= $text prefix='<div class="content"><div class="text">' suffix='</div></div>' %>
 <% if (param.resources.length > 0) %>
 <div class="resources">
 <% foreach ($resource in param.resources) %>
