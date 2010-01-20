@@ -12,6 +12,15 @@ Url = new function() {
 			};
 		},
 
+		load: function(url, param) {
+			try {
+				var res = getURL(url, param.etag || param.date, param.timeout);
+				return res ? new java.lang.String(res.content) : null;
+			} catch (e) {
+				User.logError('Url.load', e);
+			}
+		},
+
 		/**
 		 * Returns true if the url is remote, meaning it starts with a protocol.
 		 */
@@ -42,7 +51,6 @@ Url = new function() {
 			return Url.isAbsolute(url) || Url.isRelative(url);
 		},
 
-		// TODO: This should not really be in Net, but where?
 		getStaticFile: function(url) {
 			// Caching of url files, to speed up lookup
 			var file = urlFiles[url];
@@ -59,7 +67,6 @@ Url = new function() {
 			return file;
 		},
 
-		// TODO: This should not really be in Net, but where?
 		getLastModified: function(url) {
 			// This retruns the modficitation date of files represented by 
 			// absolute local urls. It can be used to force loading of script
@@ -67,16 +74,6 @@ Url = new function() {
 			var file = Url.getStaticFile(url);
 			if (file)
 				return file.lastModified;
-		},
-
-		// TODO: Add support for param.timeout somehow
-		load: function(url, param) {
-			try {
-				var res = getURL(url, param.etag || param.date, param.timeout);
-				return res ? new java.lang.String(res.content) : null;
-			} catch (e) {
-				User.logError('Url.load', e);
-			}
 		}
 	};
 };
