@@ -113,7 +113,7 @@ Node.inject({
 				posts[i].render(false, false, res);
 
 			// render post submit only at the end of the list of posts
-			if (index + posts.length == count && this.POST_ALLOW)
+			if (param.postButton && index + posts.length == count)
 				this.renderPostButton({
 					title: param.postButton,
 					expand: param.postButtonExpand
@@ -129,7 +129,7 @@ Node.inject({
 	renderPostButton: function(param, out) {
 		// If the button is required to be clicked, pass the click action
 		// as a third parameter to the editButtons macro
-		if (User.canEdit(this, this.POST_COLLECTION)) {
+		if (this.POST_ALLOW && User.canEdit(this, this.POST_COLLECTION)) {
 			return this.renderTemplate('postButton', {
 				buttons: 'create:' + param.title + (param.click ? ':click' : ''),
 				id: 'new'
