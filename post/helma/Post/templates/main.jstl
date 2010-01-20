@@ -1,7 +1,7 @@
 <%--
 We need to process the text before all the fields / footer / out macros since Markup might param.resources or other param values which are passed to these.
 --%>
-<% $text = <%= this.text | markup resources=param.resources removeUsedResources=true | encode 'paragraphs' %> %>
+<% $text = <%= this.text | markup resources=param.resources removeUsedResources=true | encode 'boots' %> %>
 <div class="<%= param.postClass %> <%= param.styleClass %>">
 <div id="<%= param.id %>">
 <a name="<%= param.id %>" class="anchor"></a>

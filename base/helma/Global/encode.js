@@ -13,6 +13,30 @@ function encodeParagraphs(str) {
 	return formatParagraphs(str).replaceAll('<p></p>', '');
 }
 
+function encodeBoots(str) {
+	// This is the starting point of some sort of boots wide encoding standard
+	// to be used in most apps. So far it wraps paragraphs through encodeParagraphs
+	// and converts dashed lists to real one with the class "list" applied.
+	// The rest of the magic is done through Markup.
+	// TODO: Is there more to add, e.g. titles, italic, bold, numbered lists, etc?
+	if (!str)
+		return str;
+	// Lists
+	// -–—• = \x2d\u2013\u2014\u2022
+	var hasLists = false;
+	str = str.replace(/^(\n*)(?:\s*)[\x2d\u2013\u2014\u2022](?:\s*)(.*)$/gm, function(all, pre, line) {
+		hasLists = true;
+		return pre + '<li>' + line.trim() + '</li>';
+	});
+	if (hasLists) {
+		str = str.replace(/(?:<li>(?:.*?)<\/li>\s*)+/gm, function(all) {
+			var end = all.match(/<\/li>(.*)$/m)[1];
+			return '<ul class="list">' + all.substring(0, all.length - end.length) + '</ul>' + end;
+		});
+	}
+	return encodeParagraphs(str);
+}
+
 function encodeHex(str) {
 	var hex = '';
 	// two \\ needed because it's javascript encoded (for the client side)
