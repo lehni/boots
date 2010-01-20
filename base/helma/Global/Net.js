@@ -2,11 +2,6 @@ Net = new function() {
 	var urlFiles = {};
 
 	return {
-		getHost: function(host) {
-			var hostName = java.net.InetAddress.getByName(host).getCanonicalHostName();
-			return hostName ? hostName : host;
-		},
-
 		parseUrl: function(url) {
 			var values = url.match(/^(?:(\w+):\/\/)?([^:\/]+)(?::([0-9]+))?(\/.*)?/) || [];
 			return {
