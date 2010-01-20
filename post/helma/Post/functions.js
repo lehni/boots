@@ -161,7 +161,7 @@ Post.inject({
 		var node = this.getNode();
 		this.isFirst = node.posts.count() == 0;
 		// Store remote host
-		this.host = Net.getHost();
+		this.host = User.getHost();
 		if (node.onAddPost)
 			node.onAddPost(this);
 	},

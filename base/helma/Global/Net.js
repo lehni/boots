@@ -3,8 +3,6 @@ Net = new function() {
 
 	return {
 		getHost: function(host) {
-			if (!host)
-				host = req.data.http_remotehost;
 			var hostName = java.net.InetAddress.getByName(host).getCanonicalHostName();
 			return hostName ? hostName : host;
 		},
@@ -49,10 +47,8 @@ Net = new function() {
 			return Net.isAbsolute(url) || Net.isRelative(url);
 		},
 
-		getLastModified: function(url) {
-			// This retruns the modficitation date of files represented by 
-			// absolute local urls. It can be used to force loading of script
-			// files...			
+		// TODO: This should not really be in Net, but where?
+		getStaticFile: function(url) {
 			// Caching of url files, to speed up lookup
 			var file = urlFiles[url];
 			if (url && (!file || !file.exists())) {
@@ -65,6 +61,15 @@ Net = new function() {
 					urlFiles[url] = file;
 				}
 			}
+			return file;
+		},
+
+		// TODO: This should not really be in Net, but where?
+		getLastModified: function(url) {
+			// This retruns the modficitation date of files represented by 
+			// absolute local urls. It can be used to force loading of script
+			// files...
+			var file = Net.getStaticFile(url);
 			if (file)
 				return file.lastModified;
 		},

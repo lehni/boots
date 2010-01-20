@@ -39,6 +39,10 @@ User.inject({
 				}
 			}
 			return shortDesc;
+		},
+
+		getHost: function() {
+			return Net.getHost(req.data.http_remotehost);
 		}
 	}
 });
