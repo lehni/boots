@@ -42,7 +42,7 @@ body {
 #cropper-panel {
 	background: url(assets/cropper-panel.png);
 	margin: 0px auto;
-	width: 400px;
+	width: 276px;
 }
 
 #cropper-footer {
@@ -57,7 +57,7 @@ body {
 	height: 16px;
 	position: relative;
 	top: 11px;
-	left: 96px;
+	left: 26px;
 }
 
 #cropper-slider-handle {

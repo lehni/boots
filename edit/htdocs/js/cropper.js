@@ -135,7 +135,7 @@ Cropper = Base.extend(Chain, Callback, {
 
 	buildZoom: function() {
 		this.zoomHandle = $('#cropper-slider-handle');
-		this.sliderRange = 192;
+		this.sliderRange = 200;
 		this.minZoom = 0;
 		this.maxZoom = this.options.maxZoom;
 		this.zoomHandle.addEvents({
@@ -154,6 +154,7 @@ Cropper = Base.extend(Chain, Callback, {
 		var aspectRatio = this.crop.height / this.crop.width;
 		var landscape = this.image.aspectRatio > aspectRatio;
 		var minZoom = (landscape ? this.crop.width : this.crop.height / this.image.aspectRatio) / this.image.size.width;
+		minZoom = 0;
 		if (zoom < minZoom) zoom = minZoom;
 		this.zoom = zoom;
 
