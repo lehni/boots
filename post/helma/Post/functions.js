@@ -105,7 +105,7 @@ Post.inject({
 		// edit form, for scripts, gallery entires, etc, which are nothing more
 		// than a stick first post.
 		if (this.isFirst && node.populateFirstPostEditForm)
-			node.populateFirstPostEditForm(form);
+			node.populateFirstPostEditForm(this, form);
 
 		form.add(form.createItem(param.resources, {
 			label: 'Attachments', type: 'list', name: 'resources',
