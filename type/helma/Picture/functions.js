@@ -1,6 +1,10 @@
 Picture.inject({
 	getEditForm: function(param) {
-		return this.base(Hash.merge({ name: false, hasDimensions: false }, param));
+		if (param.name === undefined)
+			param.name = false;
+		if (param.hasDimensions === undefined)
+			param.hasDimensions = false;
+		return this.base(param);
 	},
 
 	setFile: function(mimeObj) {
@@ -167,6 +171,10 @@ Picture.inject({
 
 	renderImage: function(param, out) {
 		return Html.image(this.processImage(param), out);
+	},
+
+	render: function(param, out) {
+		return this.renderImage(param, out);
 	},
 
 	processTint: function(image, tint) {

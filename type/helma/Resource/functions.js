@@ -1,53 +1,5 @@
 Resource.inject({
-	statics: {
-		/**
-		 * Returns any of these, based on the content type:
-		 * image, audio, video, code, director, flash, pdf, text
-		 */
-		getBasicType: function(mimeType) {
-			if (/^image/.test(mimeType))
-				return 'image';
-			else if (/^video/.test(mimeType))
-			 	return 'video';
-			else if (/^audio/.test(mimeType))
-				return 'audio';
-			else if (mimeType == 'application/x-shockwave-flash')
-				return 'flash';
-			else if (mimeType == 'application/x-director')
-				return 'director';
-			else if (mimeType == 'application/x-javascript')
-				return 'code';
-			else if (mimeType == 'application/pdf')
-				return 'pdf';
-			else if (/^application\/(zip|x-(stuffit|gtar|tar|gzip))$/.test(mimeType))
-				return 'archive';
-			else
-				return 'text';
-		},
-
-		create: function(mimeObj) {
-			if (mimeObj && mimeObj.name) {
-				var type = Resource.getBasicType(File.getContentType(mimeObj.name));
-				if (type) {
-					switch (type) {
-						case 'image':
-							var picture = new Picture(mimeObj);
-							if (picture.isValid()) return picture;
-							else picture.remove();
-							break;
-						case 'video':
-						case 'audio':
-						case 'flash':
-						case 'director':
-							return new Medium(mimeObj);
-						default:
-							return new Resource(mimeObj);
-					}
-				}
-			}
-			return null;
-		}
-	},
+ 	data: new HopProperty('dataXml', { createIfNull: true }),
 
 	initialize: function(mimeObj) {
 		if (mimeObj && mimeObj.name)
@@ -230,6 +182,14 @@ Resource.inject({
 	},
 
 	/**
+	 * The default render function, called from render_macro, to be overridden
+	 * by apps.
+	 */
+	render: function(param, out) {
+		this.renderIcon(param, res);
+	},
+
+	/**
 	 * Returns any of these, based on the content type:
 	 * image, audio, video, code, director, flash, text
 	 */
@@ -241,5 +201,55 @@ Resource.inject({
 		var icon = this.getBasicType();
 		if (small) icon += '_small';
 		return icon + '.gif';
+	},
+
+	statics: {
+		/**
+		 * Returns any of these, based on the content type:
+		 * image, audio, video, code, director, flash, pdf, text
+		 */
+		getBasicType: function(mimeType) {
+			if (/^image/.test(mimeType))
+				return 'image';
+			else if (/^video/.test(mimeType))
+			 	return 'video';
+			else if (/^audio/.test(mimeType))
+				return 'audio';
+			else if (mimeType == 'application/x-shockwave-flash')
+				return 'flash';
+			else if (mimeType == 'application/x-director')
+				return 'director';
+			else if (mimeType == 'application/x-javascript')
+				return 'code';
+			else if (mimeType == 'application/pdf')
+				return 'pdf';
+			else if (/^application\/(zip|x-(stuffit|gtar|tar|gzip))$/.test(mimeType))
+				return 'archive';
+			else
+				return 'text';
+		},
+
+		create: function(mimeObj) {
+			if (mimeObj && mimeObj.name) {
+				var type = Resource.getBasicType(File.getContentType(mimeObj.name));
+				if (type) {
+					switch (type) {
+						case 'image':
+							var picture = new Picture(mimeObj);
+							if (picture.isValid()) return picture;
+							else picture.remove();
+							break;
+						case 'video':
+						case 'audio':
+						case 'flash':
+						case 'director':
+							return new Medium(mimeObj);
+						default:
+							return new Resource(mimeObj);
+					}
+				}
+			}
+			return null;
+		}
 	}
 });

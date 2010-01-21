@@ -3,7 +3,7 @@ simple=true inline=true | encode 'boots' %>
 <% if (param.resources.length > 0) %>
 <p>
 <% foreach ($resource in param.resources) %>
-	<% $resource.thumbnail simple="true" %>
+	<% $resource.render simple="true" %>
 <% end %>
 </p>
 <% end %>

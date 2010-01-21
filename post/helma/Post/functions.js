@@ -212,7 +212,7 @@ Post.inject({
 	render: function(withLink, asFirst, out) {
 		var resources = this.resources.list();
 		var title = encode(this.title);
-		return this.renderTemplate('main', {
+		return this.renderTemplate('post', {
 			id: this.getEditId(),
 			title: withLink ? this.node.renderLink(title) : title,
 			resources: resources,

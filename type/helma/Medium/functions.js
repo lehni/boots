@@ -5,8 +5,10 @@ Medium.inject({
 	MAX_HEIGHT: 480,
 
 	getEditForm: function(param) {
-		// Force name field through param:
-		param = Hash.merge({ name: false, hasDimensions: true }, param);
+		if (param.name === undefined)
+			param.name = false;
+		if (param.hasDimensions === undefined)
+			param.hasDimensions = true;
 		var form = this.base(param);
 		if (param.hasDimensions) {
 			form.insertAfter('file', [
@@ -70,9 +72,9 @@ Medium.inject({
 					type = 'video_flv';
 			}
 			try {
-				this.renderTemplate(type, param, res);
+				this.renderTemplate(type, param, out);
 			} catch (e) {
-				res.write("Unsupported Format: " + type);
+				out.write("Unsupported Format: " + type);
 			}
 		}
 	}.toRender()
