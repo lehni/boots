@@ -56,10 +56,10 @@ PreviewCropImageHandler = EditHandler.extend({
 		if (item.preview) {
 			var crop = req.data.image_crop && Json.decode(req.data.image_crop);
 			if (crop) {
-				form.addResponse({
+				res.write(Json.encode({
 					html: item.renderPreview(crop),
 					name: item.getEditName()
-				});
+				}));
 			}
 		}
 	}
