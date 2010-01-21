@@ -20,7 +20,7 @@ Resource.inject({
 				name: 'file', type: 'file', label: 'File',
 				onApply: this.setFile,
 				preview: this.name && this.renderIcon({ 
-					small: true, details: true
+					iconSmall: true, iconDetails: true
 				})
 			}, true)
 		);
@@ -167,15 +167,16 @@ Resource.inject({
 	renderIcon: function(param, out) {
 		if (!param.name)
 			param.name = encode(this.name);
-		param.src = app.properties.iconUri + this.getIcon(param.small);
-		if (param.details)
+		param.src = app.properties.iconUri + this.getIcon(param.iconSmall);
+		// TODO: Put rendering of details in its own function and macro
+		if (param.iconDetails)
 			param.details = ' (' +
 				// Display image / video size for media
 				(this.instanceOf(Medium) ? this.width + ' \xd7 ' + this.height + ' Pixels, ' : '') +
 				// File size
 				this.getFile().getSizeAsString() + 
 				')';
-		param.width = param.height = param.small ? 16 : 32;
+		param.width = param.height = param.iconSmall ? 16 : 32;
 		return this.renderTemplate('icon', param, out);
 	},
 
