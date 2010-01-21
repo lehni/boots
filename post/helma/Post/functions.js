@@ -144,7 +144,7 @@ Post.inject({
 		var node = this.getNode();
 		if (node) {
 			var count = node.posts.count();
-			if (node.AUTO_POST_TITLE && count > 0 || !node.AUTO_POST_TITLE && count > 1) {
+			if (node.POST_AUTO_TITLE && count > 0) {
 				var lastTitle = node.posts.get(count - 1).title;
 				if (lastTitle)
 					this.title = /^Re: /.test(lastTitle) ? lastTitle : 'Re: ' + lastTitle;
@@ -179,8 +179,8 @@ Post.inject({
 
 	onRemove: function() {
 		var node = this.getNode();
-		// If we're removing the first post, remove all.
-		if (this.isFirst)
+		// If we're removing the first post of a topic, remove the topic too.
+		if (node.instanceOf(Topic) && this.isFirst)
 			node.remove();
 		// If it's the last post, let the node know.
 		if (node.onRemoveLastPost && !node.isRemoving() && node.posts.count() == 1)

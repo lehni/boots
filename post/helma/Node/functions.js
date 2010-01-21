@@ -2,16 +2,17 @@ Node.inject({
 	// Node dependend configurations, can be overriden by sub prototypes.
 	// POST_FIRST_STICKY and POST_PER_PAGE needs to be defined "globaly" per prototype
 	// for Post.redirect() to work
-	POST_BUTTON: 'Reply', // Text to be displayed on the post button 
+	POST_BUTTON: 'Post', // Text to be displayed on the post button 
 	POST_PAGINATION: 'Post', // Text to be displayed in the pagination bar
+	POST_PAGINATION_PLURAL: null, // Word to be used if there are more than one. Default is to autocompose a plural.
 	POST_COLLECTION: 'posts', // The collection in which the post button should create a new entry.
 	POST_CLASS: 'post',
 	POST_CLASS_FIRST: 'first',
 	POST_CLASS_OTHERS: '',
-	POST_FIRST_STICKY: true, // Allways keep the first post in a node on top (for pagination)
+	POST_FIRST_STICKY: false, // Allways keep the first post in a node on top (for pagination)
 	POST_PER_PAGE: 10, // Maximum posts per page
 	POST_REDIRECT_ACTION: '', // Action to be used when redirecting to the node page, to display the post
-	POST_AUTO_TITLE: true, // Automatically create a title for subsequent posts by adding Re: to the previous title
+	POST_AUTO_TITLE: false, // Automatically create a title for subsequent posts by adding Re: to the previous title
 	POST_ALLOW: true, // Deactivate posting alltogether,
 	POST_USERS: true, // Turn on to support system users
 	POST_ANONYMOUS: true, // Turn on for anonymous users
@@ -54,7 +55,7 @@ Node.inject({
 		var users = root.getNotificationUsers(post);
 		for (var i = 0, l = users && users.length; i < l; i++) {
 			var user = users[i];
-			if (!(user.instanceOf(User)))
+			if (!(user instanceof User))
 				user = root.users.get(user);
 			if (user)
 				this.setNotification(true, user);
@@ -100,7 +101,8 @@ Node.inject({
 				maxPerPage: this.POST_PER_PAGE,
 				position: -1,
 				singular: this.POST_PAGINATION,
-				container: param.container
+				plural: this.POST_PAGINATION_PLURAL,
+				container: param.container || 'posts'
 			};
 			this.renderPagination(pagination, res);
 
@@ -112,10 +114,12 @@ Node.inject({
 			for(var i = 0; i < posts.length; i++)
 				posts[i].render(false, false, res);
 
-			// render post submit only at the end of the list of posts
-			if (param.postButton && index + posts.length == count)
+			// Render post submit only at the end of the list of posts
+			// Support both boolean and strings for postButton.
+			// The default is the POST_BUTTON setting.
+			if (param.postButton !== false && index + posts.length == count)
 				this.renderPostButton({
-					title: param.postButton,
+					title: typeof param.postButton == 'string' ? param.postButton : this.POST_BUTTON,
 					click: param.postButtonExpand
 				}, res);
 			posts = res.pop();

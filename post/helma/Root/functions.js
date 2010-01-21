@@ -1,4 +1,10 @@
 Root.inject({
+	getEditForm: function(param) {
+		param.resources = false;
+		param.text = false;
+		return this.base(param);
+	},
+
 	checkNotifications: function() {
 		var notifications = this.notifications.list();
 		var notificationTitle = app.properties.notificationTitle

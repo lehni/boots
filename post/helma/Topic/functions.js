@@ -1,4 +1,6 @@
 Topic.inject({
+	POST_FIRST_STICKY: true,
+
 	initialize: function() {
 		// A topic cannot be created without a first post.
 		var post = new Post();
