@@ -1,6 +1,4 @@
 Resource.inject({
- 	data: new HopProperty('dataXml', { createIfNull: true }),
-
 	initialize: function(mimeObj) {
 		if (mimeObj && mimeObj.name)
 			this.setFile(mimeObj);
