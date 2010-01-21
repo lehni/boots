@@ -71,7 +71,9 @@ HopObject.inject({
 		var multiPage = param.count > param.maxPerPage;
 		if (multiPage || param.prefix) {
 			if (multiPage) {
-				var href = param.href ? param.href : param.container ? this.href('posts') : this.href();
+				// If we're loading into a container, request the action of the same name on the object.
+				// This is convention, the only place this is used right now is for the loading of 'posts'.
+				var href = param.href ? param.href : param.container ? this.href(param.container) : this.href();
 				var pages = [ pos > 0
 					? renderLink({ content: '&lt;', href: href, query: 'pos=' + (pos - 1), update: param.container })
 					: '&lt;'
