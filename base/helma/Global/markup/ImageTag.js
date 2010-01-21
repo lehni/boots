@@ -3,8 +3,8 @@ ImageTag = ResourceTag.extend({
 	_attributes: 'src',
 
 	// Defined outside render() so it can be overridden by applications.
-	renderImage: function(picture, param) {
-		return picture.renderImage(param);
+	renderPicture: function(picture, param) {
+		return picture.render(param);
 	},
 
 	render: function(content, param) {
@@ -12,7 +12,7 @@ ImageTag = ResourceTag.extend({
 		if (!Url.isRemote(src)) {
 			var resource = this.getResource(src, param);
 			if (resource && resource.instanceOf(Picture))
-				return this.renderImage(resource, param);
+				return this.renderPicture(resource, param);
 		} else {
 			return '<img src="' + src + '"/>';
 		}

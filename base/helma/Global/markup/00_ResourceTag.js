@@ -33,14 +33,13 @@ ResourceTag = MarkupTag.extend({
 	},
 
 	// Defined outside render() so it can be overridden by applications.
-	renderIcon: function(resource, param) {
-		// TODO: pass param, and define small as smallIcon or iconSmall ?
-		return resource.renderIcon({ small: true });
+	renderResource: function(resource, param) {
+		return resource.render(param);
 	},
 
 	render: function(content, param) {
 		var resource = this.getResource(content, param);
 		if (resource)
-			return this.renderIcon(resource, param);
+			return this.renderResource(resource, param);
 	}
 });
