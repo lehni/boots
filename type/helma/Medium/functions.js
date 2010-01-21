@@ -19,27 +19,11 @@ Medium.inject({
 
 	setFile: function(mimeObj) {
 		if (this.base(mimeObj)) {
-			if (this.extension == 'video') {
-				// Support for video text file, that defines videos on Youtube or Google
-				var text = this.getFile().readAll();
-				text.split(/\r\n|\n|\r/mg).each(function(line) {
-					line = line.split('=');
-					if (line.length == 2) {
-						switch (line[0]) {
-							case 'width': this.width = parseInt(line[1]); break;
-							case 'height': this.height = parseInt(line[1]); break;
-							case 'googleId': this.type = 'google:' + line[1]; break;
-							case 'youTubeId': this.type = 'youtube:' + line[1]; break;
-						}
-					}
-				}, this);
-			} else {
-				// Determine type based on the basic type of the resource.
-				// See Resource#getBasicType
-				var type = this.getBasicType();
-				if (/^(image|audio|video|flash|director)$/.test(type))
-					this.type = type;
-			}
+			// Determine type based on the basic type of the resource.
+			// See Resource#getBasicType
+			var type = this.getBasicType();
+			if (/^(image|audio|video|flash|director)$/.test(type))
+				this.type = type;
 			if (this.type) {
 				if (!this.width || !this.height) {
 					this.width = this.MAX_WIDTH;
