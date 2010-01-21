@@ -13,10 +13,17 @@ Movie.inject({
 
 	render: function(param, out) {
 		if (this.url) {
-			// TODO: Set width & height from oembed parsing?
-			var html = Markup.render('<video ' + this.url + ' />', param);
-			if (!html)
-				html = encode('Error ' + this.url);
+			var data = OEmbedTag.getData({ url: this.url }, param);
+			var html = data && data.html;
+			if (html) {
+				this.width = param.width;
+				this.height = param.height;
+			} else {
+				html = renderLink({
+					href: this.url,
+					content: param.content || encode(this.url.match(/^(?:\w+:\/\/)?(.*)$/)[1])
+				});
+			}
 			if (out) out.write(html);
 			else return html;
 		}
