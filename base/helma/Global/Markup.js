@@ -136,26 +136,15 @@ MarkupTag = Base.extend(new function() {
 			// Define in subclasses
 		},
 
-		/*
-		cleanUp: function(param) {
-			// Define only if tag needs to clean up something in param
-			// This is only called once per used tag type, not for each tag!
-		}
-		*/
-
-		renderChildren: function(param, encoder, cleanUps) {
+		renderChildren: function(param, encoder) {
 			var buffer = new Array(this.parts.length);
 			for (var i = 0, l = this.parts.length; i < l; i++) {
 				var part = this.parts[i];
 				if (part.render && (!param.allowedTags || param.allowedTags[part.name])) {
 					// This is a tag, render its children first into one content string
-					var content = part.renderChildren(param, encoder, cleanUps);
+					var content = part.renderChildren(param, encoder);
 					// Now render the tag itself and place it in the resulting buffer
 					buffer[i] = part.render(content, param, encoder, this.parts[i - 1], this.parts[i + 1]);
-					// If the object defines the cleanUp function, 
-					// collect it now:
-					if (part.cleanUp)
-						cleanUps[part.name] = part;
 				} else {
 					// A simple string. Just encode it
 					buffer[i] = encoder(this.parts[i]);
@@ -281,13 +270,7 @@ RootTag = MarkupTag.extend({
 		// Determine encoder to be used, default is not encoding anything:
 		var encoder = param.encoding && global['encode' + param.encoding.capitalize()]
 			|| function(val) { return val };
-		// Keep tag objects that need to clean up something in the end. This is
-		// only used for resource rendering in Scriptographer right now. 
-		var cleanUps = {};
-		var str = this.renderChildren(param, encoder, cleanUps);
-		// See if we need to do some clean up now:
-		for (var name in cleanUps)
-			cleanUps[name].cleanUp(param);
+		var str = this.renderChildren(param, encoder);
 		return str;
 	}
 });

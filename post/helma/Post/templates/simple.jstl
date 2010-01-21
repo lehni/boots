@@ -1,4 +1,4 @@
-<%= this.text | markup resources=param.resources removeUsedResources=true
+<%= this.text | markup resources=param.resources
 simple=true inline=true | encode 'boots' %>
 <% if (param.resources.length > 0) %>
 <p>

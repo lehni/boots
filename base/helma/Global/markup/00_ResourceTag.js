@@ -16,19 +16,10 @@ ResourceTag = MarkupTag.extend({
 		}
 		var entry = param.resourceLookup[name];
 		if (entry) {
-			// Mark as used. Scriptographer extends ResourceTag to remove
-			// these in cleanUp
+			// Mark as used. Apps can use ResourceTag.isUsed to filter out
+			// already rendered ones.
 			entry.used = true;
 			return entry.resource;
-		}
-	},
-
-	cleanUp: function(param) {
-		if (param.removeUsedResources && param.resources) {
-			// Remove the resources that have been flaged 'used'
-			for (var i = param.resources.length - 1; i >= 0; i--)
-				if (param.resourceLookup[param.resources[i].name].used)
-					param.resources.splice(i, 1);
 		}
 	},
 
@@ -41,5 +32,28 @@ ResourceTag = MarkupTag.extend({
 		var resource = this.getResource(content, param);
 		if (resource)
 			return this.renderResource(resource, param);
+	},
+
+	statics: {
+		/**
+		 * Offers simple access from the outside to the internal resourceLookup
+		 * data-structure, so apps can know if a given resource was already 
+		 * rendered in the processing of markup.
+		 */
+		isUsed: function(resource, param) {
+			var entry = resource && param.resourceLookup
+					&& param.resourceLookup[resource.name];
+			return entry && entry.used;
+		},
+
+		/**
+		 * Filters out all used resources from an array, using ResourceTag.isUsed
+		 */
+		getUnused: function(resources, param) {
+			return resources.collect(function(resource) {
+				if (!ResourceTag.isUsed(resource, param))
+					return resource;
+			});
+		}
 	}
 });

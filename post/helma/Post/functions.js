@@ -203,9 +203,8 @@ Post.inject({
 
 	// Used by feed lib:
 	renderSimple: function(out) {
-		var resources = this.resources.list();
 		return this.renderTemplate('simple', {
-			resources: resources,
+			resources: this.resources.list(),
 		}, out);
 	},
 
