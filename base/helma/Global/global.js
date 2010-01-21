@@ -80,9 +80,6 @@ renderLink = function(param, out) {
 	// Use single quotes for confirm, since it will be inside double quotes
 	var confirm = param.confirm && 'confirm(' + Json.encode(param.confirm, true) + ')';
 
-	// Collect attributes
-	var attributes = param.attributes && Html.attributes(param.attributes);
-
 	// Handle onClick
 	var onClick = param.onClick;
 	if (onClick) {
@@ -93,7 +90,7 @@ renderLink = function(param, out) {
 			url = '#';
 	} else if (url) {
 		if (param.update) {
-			onClick = "$('" + param.update + "').load('" + url + "');";
+			onClick = "$('#" + param.update + "').load('" + url + "');";
 			url = '#';
 		} else if (param.popup) {
 			onClick = 'new Window(' 
@@ -102,6 +99,7 @@ renderLink = function(param, out) {
 		}
 	}
 
+	var attributes = param.attributes;
 	// Notice: param.text is not the same as param.content:
 	// content is supposed to be encoded already, text is encoded automatically!
 	var content = param.content;
@@ -117,10 +115,13 @@ renderLink = function(param, out) {
 				onClick = onClick 
 					? 'if (' + confirm + ') ' + onClick + ' return false;'
 					: 'return ' + confirm + ';';
-			attributes += ' onclick=' + Json.encode(onClick
-					+ (confirm ? '' : ' return false;'));
+			if (!attributes)
+				attributes = {};
+			attributes.onclick = onClick + (confirm ? '' : ' return false;');
 		}
-		res.write('<a href="' + url + '"' + (attributes ? ' ' + attributes : '') + '>' + content + '</a>');
+		res.write('<a href="' + url + '"' 
+			+ (attributes ? Html.attributes(attributes) : '') + '>' 
+			+ content + '</a>');
 	}
 }.toRender();
 

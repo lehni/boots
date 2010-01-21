@@ -10,6 +10,10 @@ Html = new function() {
 	return {
 		XHTML: false,
 
+		/**
+		 * Renders attributes for an Html tag. The first param is prepended by
+		 * a space, so the tag rendering code does not need to take care of that.
+		 */
 		attributes: function(attributes, out) {
 			var asString = !out;
 			if (asString) (out = res).push();
