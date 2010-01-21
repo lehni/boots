@@ -21,9 +21,9 @@ ChooseImageHandler = EditHandler.extend({
 			}
 		}
 		res.write('</ul>');
-		form.addResponse({
+		res.write(Json.encode({
 			html: res.pop()
-		});
+		}));
 	}
 });
 

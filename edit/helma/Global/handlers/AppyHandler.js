@@ -6,7 +6,7 @@ ApplyHandler = EditHandler.extend({
 		// Use the object from form, which might differ from the one in node!
 		// e.g. in Topic / Post, where editing a Topic actually returns the
 		// editForm for the first post.
-		var object = form.object;
+		object = form.object;
 		if (!User.canEdit(object))
 			return EditForm.NOT_ALLOWED;
 		var parentItem = node.parentItem;
@@ -23,7 +23,9 @@ ApplyHandler = EditHandler.extend({
 			});
 			return EditForm.COMMIT;
 		} catch (e) {
+			User.log('ApplyHandler#handle() caught excetion:', e);
 			if (e instanceof EditException) {
+				User.log(e.message);
 				form.addResponse({
 					error: {
 						name: e.item.getEditName(),

@@ -90,7 +90,11 @@ EditHandler = Base.extend(new function() {
 						EditForm.reportError(e);
 					}
 					var out = res.pop();
-					if (!out && !editResponse.added) {
+					// Assume that if id was not set yet, no form was renderet yet
+					// And we should render the current one. This allows the handlers
+					// to be lazy about rendering of the current form, e.g. when
+					// the ApplyHandler receives an exception.
+					if (!out && !editResponse.id) {
 						// Go back the given amount, if any
 						if (req.data.edit_back) {
 							var back = parseInt(req.data.edit_back);
@@ -118,6 +122,7 @@ EditHandler = Base.extend(new function() {
 					delete editResponse.added;
 					out = Json.encode(editResponse);
 				}
+				User.log('Writing back: ' + out);
 				// Prevent any caching at the remote server or any intermediate proxy 
 				// Tested on most browsers with http://www.mnot.net/javascript/xmlhttprequest/cache.html
 				res.servletResponse.setHeader("Cache-Control", "no-cache,max-age=0");

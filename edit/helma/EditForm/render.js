@@ -334,6 +334,5 @@ EditForm.inject({
 
 	addResponse: function(data) {
 		res.data.editResponse.merge(data);
-		res.data.editResponse.added = true;
 	}
 });
