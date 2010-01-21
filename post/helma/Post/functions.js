@@ -210,15 +210,13 @@ Post.inject({
 	},
 
 	render: function(param, out) {
-		var resources = this.resources.list();
 		var title = encode(this.title);
-		return this.renderTemplate('post', {
-			id: this.getEditId(),
-			title: param.withLink ? this.node.renderLink(title) : title,
-			resources: resources,
-			postClass: this.node.POST_CLASS,
-			styleClass: param.asFirst ? this.node.POST_CLASS_FIRST : this.node.POST_CLASS_OTHERS
-		}, out);
+		param.id = this.getEditId();
+		param.title = param.withLink ? this.node.renderLink(title) : title;
+		param.resources = this.resources.list();
+		param.postClass = this.node.POST_CLASS;
+		param.styleClass = param.asFirst ? this.node.POST_CLASS_FIRST : this.node.POST_CLASS_OTHERS;
+		return this.renderTemplate('post', param, out);
 	},
 
 	getNotification: function() {
