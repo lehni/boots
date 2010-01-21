@@ -122,7 +122,6 @@ EditHandler = Base.extend(new function() {
 					delete editResponse.added;
 					out = Json.encode(editResponse);
 				}
-				User.log('Writing back: ' + out);
 				// Prevent any caching at the remote server or any intermediate proxy 
 				// Tested on most browsers with http://www.mnot.net/javascript/xmlhttprequest/cache.html
 				res.servletResponse.setHeader("Cache-Control", "no-cache,max-age=0");
