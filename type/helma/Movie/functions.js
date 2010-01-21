@@ -16,8 +16,8 @@ Movie.inject({
 			var data = OEmbedTag.getData({ url: this.url }, param);
 			var html = data && data.html;
 			if (html) {
-				this.width = param.width;
-				this.height = param.height;
+				this.width = data.width;
+				this.height = data.height;
 			} else {
 				html = renderLink({
 					href: this.url,
