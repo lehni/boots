@@ -84,8 +84,8 @@ Topic.inject({
 		return post ? post.renderUser(out) : '';
 	},
 
-	render: function(withLink, isFirst, out) {
+	render: function(param, out) {
 		var first = this.getFirstPost();
-		return first ? first.render(withLink, isFirst, out) : '';
+		return first ? first.render(param, out) : '';
 	}
 });

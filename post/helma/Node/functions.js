@@ -89,7 +89,7 @@ Node.inject({
 		if (this.POST_FIRST_STICKY) {
 			var post = this.posts.get(0);
 			if (post) {
-				first = post.render(false, true);
+				first = post.render({ withLink: false, asFirst: true });
 				navigCount--;
 			}
 		}
@@ -112,7 +112,7 @@ Node.inject({
 
 			var posts = this.posts.list(index, this.POST_PER_PAGE);
 			for(var i = 0; i < posts.length; i++)
-				posts[i].render(false, false, res);
+				posts[i].render({ withLink: false, asFirst: false }, res);
 
 			// Render post submit only at the end of the list of posts
 			// Support both boolean and strings for postButton.

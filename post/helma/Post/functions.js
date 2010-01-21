@@ -209,15 +209,15 @@ Post.inject({
 		}, out);
 	},
 
-	render: function(withLink, asFirst, out) {
+	render: function(param, out) {
 		var resources = this.resources.list();
 		var title = encode(this.title);
 		return this.renderTemplate('post', {
 			id: this.getEditId(),
-			title: withLink ? this.node.renderLink(title) : title,
+			title: param.withLink ? this.node.renderLink(title) : title,
 			resources: resources,
 			postClass: this.node.POST_CLASS,
-			styleClass: asFirst ? this.node.POST_CLASS_FIRST : this.node.POST_CLASS_OTHERS
+			styleClass: param.asFirst ? this.node.POST_CLASS_FIRST : this.node.POST_CLASS_OTHERS
 		}, out);
 	},
 
