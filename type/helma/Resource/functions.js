@@ -185,7 +185,7 @@ Resource.inject({
 	 * by apps.
 	 */
 	render: function(param, out) {
-		this.renderIcon(param, res);
+		return this.renderIcon(param, out);
 	},
 
 	/**

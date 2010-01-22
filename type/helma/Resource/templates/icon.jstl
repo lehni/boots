@@ -5,7 +5,7 @@
 <% $icon %>
 <% if (param.iconCentered) %>
 <div><img src="<%= param.src %>" width="<%= param.width %>" height="<%= param.height %>"></div>
-<span><%= param.name %></span>
+<span><%= param.name %></span><%-%>
 <% else %>
-<img src="<%= param.src %>" width="<%= param.width %>" height="<%= param.height %>"><span><%= param.name %></span>
+<img src="<%= param.src %>" width="<%= param.width %>" height="<%= param.height %>"><span><%= param.name %></span><%-%>
 <% end %>
