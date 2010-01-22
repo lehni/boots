@@ -252,8 +252,12 @@ Picture.inject({
 		},
 
 		getScaledCrop: function(crop, scale) {
+			User.log(scale);
 			return scale == 1 ? crop : crop.each(function(value, key) {
-				this[key] = typeof value == 'number' ? Math.round(value * scale) : value;
+				this[key] = typeof value == 'number'
+					? key == 'imageScale' 
+						? value * scale : Math.round(value * scale)
+					: value;
 			}, {});
 		}
 	}
