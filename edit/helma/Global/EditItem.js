@@ -84,12 +84,13 @@ EditItem = Base.extend(new function() {
 
 		setValue: function(value) {
 			if (this.evaluate) {
+//				User.log('EditItem#setValue(): ' + this.evaluate + ' = ' + value);
 				// Evaluate string variable to the content of value:
 				try {
 					new Function('value', this.evaluate + ' = value;').call(this.form.object, value);
 					return true;
 				} catch (e) {
-					User.logError('EditItem#setValue(): ' + this.evaluate, e);
+//					User.logError('EditItem#setValue(): ' + this.evaluate, e);
 				}
 			} else if (this.name) {
 				User.log('EditItem#setValue(): ' + this.name + ' = ' + value);

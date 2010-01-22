@@ -18,7 +18,6 @@ EditHandler = Base.extend(new function() {
 				res.contentType = 'text/javascript';
 				EditNode.onRequest();
 				var editResponse = res.data.editResponse = new Hash();
-				var parent = base.getParent();
 				var mode = req.data.edit_mode || mode || 'edit';
 				var fullId = req.data.edit_id || base.getFullId();
 				var handler = handlers[mode];
@@ -51,7 +50,7 @@ EditHandler = Base.extend(new function() {
 								if (base.isTransient()) {
 									// The object has been removed in the meantime
 									// Redirect to its parent.
-									redirect = base._parent;
+									redirect = base.getParent();
 									if (!redirect) {
 										// Find parent in path:
 										for (var i = path.length - 1; i > 0; i--) {
