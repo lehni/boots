@@ -2909,7 +2909,7 @@ HtmlElement.inject({
 
 	setValue: function(name, val) {
 		var el = this.getElement(name);
-		if (!el) el = this.injectBottom('input', { type: 'hidden', id: name, name: name });
+		if (!el) el = this.injectTop('input', { type: 'hidden', id: name, name: name });
 		return el.setValue(val);
 	},
 
