@@ -74,11 +74,6 @@ Topic.inject({
 		return this.getTitle();
 	},
 
-	renderSimple: function(out) {
-		var post = this.getFirstPost();
-		return post ? post.renderSimple(out) : '';
-	},
-
 	renderUser: function(out) {
 		var post = this.getFirstPost();
 		return post ? post.renderUser(out) : '';

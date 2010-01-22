@@ -1,0 +1,4 @@
+<%= this.text | markup parma=param | encode 'boots' %>
+<% foreach ($resource in this.resources) prefix='<p>' suffix='</p>' %>
+	<% $resource.render param=param %>
+<% end %>

@@ -201,13 +201,6 @@ Post.inject({
 		}
 	}.toRender(),
 
-	// Used by feed lib:
-	renderSimple: function(out) {
-		return this.renderTemplate('simple', {
-			resources: this.resources.list(),
-		}, out);
-	},
-
 	render: function(param, out) {
 		var title = encode(this.title);
 		param.id = this.getEditId();

@@ -8,7 +8,7 @@
 		<generator><%= param.generator %></generator>
 		<language><% param.language %></language>
 <% foreach ($item in param.items) %>
-	<%-- TODO: Make independent from post and introduce more general methods, e.g. renderCreator VS renderUser, renderSimple? getTitle, etc --%>
+	<%-- TODO: Make independent from post and introduce more general methods, e.g. renderCreator VS renderUser, renderFeed? getTitle, etc --%>
 	<% if $item.getTitle %>
 	<% $link = $item.absoluteHref() %>
 		<item>
@@ -17,7 +17,7 @@
 			<guid isPermaLink="true"><%= $link %></guid>
 			<pubDate><%= $item.modificationDate | format "EEE, dd MMM yyyy HH:mm:ss ZZZZ" "US" %></pubDate>
 			<dc:creator><%= $item.renderUser() %></dc:creator>
-			<description><%= encodeXml($item.renderSimple()) %></description>
+			<description><% $item.template 'feed' param=param encoding="xml" %></description>
 		</item>
 	<% end %>
 <% end %>

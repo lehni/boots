@@ -27,7 +27,8 @@ HopObject.inject({
 				generator: app.properties.feedGenerator,
 				link: this.absoluteHref(),
 				date: items[0].modificationDate,
-				items: items
+				items: items,
+				feed: true
 			}, out);
 		}
 	}

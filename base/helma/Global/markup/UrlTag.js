@@ -6,15 +6,15 @@ UrlTag = MarkupTag.extend({
 		var url = this.attributes.url || content;
 		var title = content || url;
 		var str = '<a href="';
-		// allways write domain part of url for simple rendering (e.g. in rss feeds)
+		// Allways write domain part of url for feed rendering
 		var isLocal = Url.isLocal(url);
-		if (param.simple && isLocal)
+		if (param.feed && isLocal)
 			str += app.properties.serverUri;
 		// Make sure the non-local url has a protocol, http is default:
 		if (!isLocal && !Url.isRemote(url))
 			url = 'http://' + url;
 		str += url;
-		// links to local pages do not need to open blank
+		// Links to local pages do not need to open blank
 		if (!isLocal)
 			str += '" target="_blank';
 		str += '">' + title + '</a>';
