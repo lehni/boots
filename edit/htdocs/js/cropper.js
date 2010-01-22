@@ -93,11 +93,10 @@ Cropper = Base.extend(Chain, Callback, {
 		);
 
 		var crop = this.options.crop;
-		this.setZoom(crop && crop.imageWidth
-			? crop.imageWidth / this.image.size.width
-			: crop && crop.imageHeight
-				? crop.imageHeight / this.image.size.height
-				: this.zoom || 1);
+		this.setZoom(crop && (crop.imageScale 
+			|| crop.imageWidth && crop.imageWidth / this.image.size.width
+			|| crop.imageHeight && crop.imageHeight / this.image.size.height)
+			|| this.zoom || 1);
 	},
 
 	setup: function() {
@@ -525,7 +524,7 @@ Cropper = Base.extend(Chain, Callback, {
 			y: crop.top - this.imageBounds.top,
 			imageWidth:  this.imageBounds.width,
 			imageHeight: this.imageBounds.height,
-			zoom: this.imageBounds.width / this.image.size.width
+			imageScale: this.imageBounds.width / this.image.size.width
 		}
 	},
 

@@ -46,9 +46,9 @@ Picture.inject({
 		// The list is is then converted to an id in processImage.
 		var crop = param.crop;
 		return [
-			param.maxWidth, param.maxHeight, param.quality, param.tint,
+			param.maxWidth, param.maxHeight, param.quality, param.tint, param.scale,
 //			param.rotation, param.bgColor,
-			crop && [crop.x, crop.y, crop.width, crop.height, crop.halign, crop.valign, crop.imageWidth, crop.imageHeight],
+			crop && [crop.x, crop.y, crop.width, crop.height, crop.halign, crop.valign, crop.imageScale, crop.imageWidth, crop.imageHeight],
 			param.transparentPixel && [param.transparentPixel.x, param.transparentPixel.y]
 		];
 		return encodeMD5(res.pop());
@@ -64,9 +64,6 @@ Picture.inject({
 		if (!version.exists()) {
 			var file = this.getFile();
 			if (file.exists()) {
-				var crop = param.crop;
-				var maxWidth = crop && crop.imageWidth || param.maxWidth;
-				var maxHeight = crop && crop.imageHeight || param.maxHeight;
 				// Before fully loading the image, use Image.getInfo to see
 				// if we need to.
 				var info = Image.getInfo(file);
@@ -74,9 +71,20 @@ Picture.inject({
 				height = info.height;
 				var image = null;
 
-				// Resize?
+				// Scale
+				var crop = param.crop;
+				var scale = param.scale || crop && (crop.imageScale
+						|| crop.imageWidth && crop.imageWidth / width
+						|| crop.imageHeight && crop.imageHeight / height);
+				if (scale) {
+					width = Math.round(width * scale);
+					height = Math.round(height * scale);
+				}
+
+				// Maximum Size
+				var maxWidth = param.maxWidth;
+				var maxHeight = param.maxHeight;
 				if (width > maxWidth || height > maxHeight) {
-					image = new Image(file);
 					var factor = width / height;
 					if (maxWidth && width > maxWidth) {
 						width = maxWidth;
@@ -86,6 +94,11 @@ Picture.inject({
 						height = maxHeight;
 						width = Math.round(height * factor);
 					}
+				}
+
+				// Resize
+				if (width != info.width || height != info.height) {
+					image = new Image(file);
 					image.resize(width, height);
 				}
 
@@ -105,6 +118,7 @@ Picture.inject({
 						y += (height - cropHeight) *
 							(crop.valign == 'middle' ? 0.5 : crop.valign == 'bottom' ? 1 : 0);
 					}
+					User.log('Crop',x, y, cropWidth, cropHeight,width,height);
 					image.crop(x, y, cropWidth, cropHeight);
 					width = image.width;
 					height = image.height;
