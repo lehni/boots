@@ -90,6 +90,14 @@ function markup_filter(input, param) {
 	return Markup.render(input, param);
 }
 
+function paragraphs_filter(input, param) {
+	return Html.formatParagraphs(input);
+}
+
+function lists_filter(input, param) {
+	return Html.formatLists(input);
+}
+
 function versioned_filter(input, param) {
 	var lastModified = Url.getLastModified(input);
 	if (lastModified)

@@ -51,12 +51,12 @@ Picture.inject({
 			crop && [crop.x, crop.y, crop.width, crop.height, crop.halign, crop.valign, crop.imageScale, crop.imageWidth, crop.imageHeight],
 			param.transparentPixel && [param.transparentPixel.x, param.transparentPixel.y]
 		];
-		return encodeMD5(res.pop());
+		return encodeMd5(res.pop());
 	},
 
 	processImage: function(param) {
 		// Generate a unique id for the characteristics of this image:
-		var id = encodeMD5(this.getUniqueValues(param).join(''));
+		var id = encodeMd5(this.getUniqueValues(param).join(''));
 		var version = this.getVersionFile(id);
 		var width, height;
 		// We use on the fly generation of image versions (e.g. thumbnails).

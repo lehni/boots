@@ -7,13 +7,6 @@
  * http://bootstrap-js.net/ 
  */
 
-if (!global.encodeHtml)
-	encodeHtml = format;
-if (!global.encodeAll)
-	encodeAll = encode;
-if (!global.encodeParagraphs)
-	encodeParagraphs = formatParagraphs;
-
 function Template(object, name, parent) {
 	if (object) {
 		if (object instanceof File)

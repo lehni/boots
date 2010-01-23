@@ -210,7 +210,7 @@ Font = Base.extend({
 	 */
 	truncate: function(text, maxWidth, suffix) {
 		// Cache the results of this process for speed improvements
-		var key = encodeMD5(text + '_' + maxWidth + '_' + this.getUniqueString());
+		var key = encodeMd5(text + '_' + maxWidth + '_' + this.getUniqueString());
 		var cache = Font.truncateCache;
 		var value = cache.lookup[key];
 		if (!value) {
@@ -241,7 +241,7 @@ Font = Base.extend({
 		this.setCharSpacing(param.charSpacing ? parseFloat(param.charSpacing) : 0);
 		var color = param.color || '#000000';
 		var bgColor = param.bgColor || '#ffffff';
-		var filename = encodeMD5(text + color + bgColor + param.maxWidth
+		var filename = encodeMd5(text + color + bgColor + param.maxWidth
 				+ param.lineHeight + param.justification
 				+ this.getUniqueString()) + '.gif';
 		var file = new File(app.properties.fontRenderDir, filename);

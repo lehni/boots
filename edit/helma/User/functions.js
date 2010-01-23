@@ -125,9 +125,9 @@ User.inject({
 
 		encrypt: function(str) {
 			// for MD5:
-			// return encodeMD5(str);
+			// return encodeMd5(str);
 			// for SHA-1:
-			return encodeSHA1(str);
+			return encodeSha1(str);
 		},
 
 		login: function(username, password, remember) {

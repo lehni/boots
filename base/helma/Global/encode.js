@@ -1,3 +1,22 @@
+// "Rename" the already existing ones so they match the encoding="" scheme of
+// skins and templates, and also to provide the additional ones to Template.js
+// that looks them up in the global scope.
+
+/**
+ * Encodes all text with entities but preserves html markup. Replaces \n with <br />
+ */
+encodeHtml = format; // format calls HtmlEncoder.encode internally.
+
+/**
+ * Encodes all text and html markup with entities. Replaces \n with <br />
+ */
+encodeAll = encode; // encode calls HtmlEncoder.encodeAll internally.
+
+/**
+ * Encode all text and html markup with entities.
+ */
+encodeEntities = encodeForm; // encodeForm calls HtmlEncoder.encodeAll with encodeNewline=false internally.
+
 function encodeUrl(str) {
 	return str ? Packages.helma.util.UrlEncoded.encode(str, 'UTF-8').replace('%20', '+') : str;
 }
@@ -8,33 +27,15 @@ function encodeJs(str, singleQuotes) {
 	// return str ? (str = uneval(str)).substring(1, str.length - 1) : str;
 }
 
+/**
+ * Encodes all text with entities but preserves html markup.
+ * Wrapps paragraphs in <p></p> And adds <br /> sometimes (?).
+ * TODO: Seems to cause a row issues, so should maybe be
+ * replaced with JS only solution.
+ */ 
 function encodeParagraphs(str) {
 	// Remove empty paragraphs from formatParagraphs
 	return formatParagraphs(str).replaceAll('<p></p>', '');
-}
-
-function encodeBoots(str) {
-	// This is the starting point of some sort of boots wide encoding standard
-	// to be used in most apps. So far it wraps paragraphs through encodeParagraphs
-	// and converts dashed lists to real one with the class "list" applied.
-	// The rest of the magic is done through Markup.
-	// TODO: Is there more to add, e.g. titles, italic, bold, numbered lists, etc?
-	if (!str)
-		return str;
-	// Lists
-	// -–—• = \x2d\u2013\u2014\u2022
-	var hasLists = false;
-	str = str.replace(/^(\n*)(?:\s*)[\x2d\u2013\u2014\u2022](?:\s*)(.*)$/gm, function(all, pre, line) {
-		hasLists = true;
-		return pre + '<li>' + line.trim() + '</li>';
-	});
-	if (hasLists) {
-		str = str.replace(/(?:<li>(?:.*?)<\/li>\s*)+/gm, function(all) {
-			var end = all.match(/<\/li>(.*)$/m)[1];
-			return '<ul class="list">' + all.substring(0, all.length - end.length) + '</ul>' + end;
-		});
-	}
-	return encodeParagraphs(str);
 }
 
 function encodeHex(str) {
@@ -49,7 +50,7 @@ function encodeHex(str) {
 	return hex;
 }
 
-function encodeMD5(str) {
+function encodeMd5(str) {
 	return Packages.helma.util.MD5Encoder.encode(str);
 }
 
@@ -62,7 +63,7 @@ function encodeDigest(str, type) {
     return hex;
 }
 
-function encodeSHA1(str) {
+function encodeSha1(str) {
 	return encodeDigest(str, 'SHA-1');
 }
 
