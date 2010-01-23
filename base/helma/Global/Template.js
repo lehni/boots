@@ -36,10 +36,8 @@ function Template(object, name, parent) {
 }
 
 Template.prototype = {
-	render: function(object, param, parentParam, out) {
+	render: function(object, param, out) {
 		try {
-			if (parentParam)
-				param = this.inherit(param, parentParam);
 			var asString = !out;
 			if (asString)
 				(out = res).push();
@@ -78,7 +76,9 @@ Template.prototype = {
 		var template = this.subTemplates[name];
 		if (!template)
 			throw 'Unknown sub template: ' + name;
-		return template.render(object, param, parentParam, out);
+		if (parentParam)
+			param = this.inherit(param, parentParam);
+		return template.render(object, param, out);
 	},
 
 	parse: function(lines) {
@@ -621,7 +621,7 @@ Template.prototype = {
 						return (that.parent || that).renderSubTemplate(object, name, prm, param);
 					} else {
 						var template = object.getTemplate(name);
-						return template && template.render(object, prm, param);
+						return template && template.render(object, prm);
 					}
 				}
 			} else {
@@ -793,6 +793,6 @@ getTemplate = HopObject.prototype.getTemplate = function(template) {
 renderTemplate = HopObject.prototype.renderTemplate = function(template, param, out) {
 	template = this.getTemplate(template);
 	if (template)
-		return template.render(this, param, null, out);
+		return template.render(this, param, out);
 }
 
