@@ -160,6 +160,10 @@ Picture.inject({
 					else
 						file.writeToFile(version);
 				}
+			} else {
+				User.logError('Picture#processImage()', 'Picture resource ' 
+					+ this._id + '.' + this.extension + ' missing.');
+				return null;
 			}
 		} 
 		if (param.returnImage) {
@@ -183,7 +187,8 @@ Picture.inject({
 	},
 
 	renderImage: function(param, out) {
-		return Html.image(this.processImage(param), out);
+		var image = this.processImage(param);
+		return image && Html.image(image, out);
 	},
 
 	render: function(param, out) {
