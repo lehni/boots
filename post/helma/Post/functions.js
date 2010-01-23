@@ -193,13 +193,14 @@ Post.inject({
 
 	renderUser: function(out) {
 		if (this.username) {
-			var name = encode(this.username);
-			out.write(this.website ? '<a href="' + this.website 
-				+ '" target="_blank">' + name + '</a>' : name);
+			return renderLink({
+				href: this.website,
+				text: this.username
+			}, out);
 		} else if (this.creator) {
-			this.creator.renderLink(null, out);
+			return this.creator.renderLink(null, out);
 		}
-	}.toRender(),
+	},
 
 	render: function(param, out) {
 		var title = encode(this.title);

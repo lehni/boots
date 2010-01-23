@@ -52,7 +52,7 @@ EditableListItem = ListItem.extend({
 	renderEntry: function(baseForm, name, object, param, out) {
 		// Force a newly created form each time we're rendering
 		var form = this.getEditForm(object, param.id, param.width, true);
-		baseForm.renderTemplate('listItem#entry', {
+		return baseForm.renderTemplate('listItem#entry', {
 			id: name + '_' + form.entryId,
 			name: name,
 			proto: object._prototype,
@@ -71,7 +71,7 @@ EditableListItem = ListItem.extend({
 				entryId: form.entryId
 			}).onClick
 		}, out);
-	}.toRender(),
+	},
 
 	render: function(baseForm, name, value, param, out) {
 		// Add the button only once to the form!

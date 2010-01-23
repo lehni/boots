@@ -41,9 +41,11 @@ Template.prototype = {
 			if (parentParam)
 				param = this.inherit(param, parentParam);
 			var asString = !out;
-			if (asString) (out = res).push();
+			if (asString)
+				(out = res).push();
 			this.__render__.call(object, param, this, out);
-			if (asString) return out.pop();
+			if (asString)
+				return out.pop();
 		} catch (e) {
 			if (typeof e != 'string') {
 				this.throwError(e);

@@ -44,7 +44,11 @@ function executeProcess() {
 	};
 }
 
-renderLink = function(param, out) {
+function renderLink(param, out) {
+	var asString = !out;
+	if (asString)
+		(out = res).push();
+
 	if (!param || typeof param == 'string')
 		param = { content: param };
 	var url = '';
@@ -123,7 +127,10 @@ renderLink = function(param, out) {
 			+ (attributes ? Html.attributes(attributes) : '') + '>' 
 			+ content + '</a>');
 	}
-}.toRender();
+
+	if (asString)
+		return out.pop();
+}
 
 // Simple helper for debugging
 

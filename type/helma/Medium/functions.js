@@ -71,11 +71,7 @@ Medium.inject({
 				if (type == 'video' && this.extension == 'flv')
 					type = 'video_flv';
 			}
-			try {
-				this.renderTemplate(type, param, out);
-			} catch (e) {
-				out.write("Unsupported Format: " + type);
-			}
+			return this.renderTemplate(type, param, out);
 		}
-	}.toRender()
+	}
 });
