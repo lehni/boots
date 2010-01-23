@@ -245,6 +245,10 @@ Picture.inject({
 			// Similar to CropTag
 			var picture = crop && HopObject.get(crop.id);
 			if (picture) {
+				// Use Bootstrap's param.extend to create a new param object that
+				// inherits from param and can be modified without changing the
+				// passed param object.
+				param = param.extend();
 				param.crop = crop;
 				return picture.renderImage(param, out);
 			}

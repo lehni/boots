@@ -82,6 +82,10 @@ Node.inject({
 	},
 
 	renderPosts: function(param, out) {
+		// Use Bootstrap's param.extend to create a new param object that
+		// inherits from param and can be modified without changing the
+		// passed param object.
+		param = param.extend();
 		var count = this.posts.count();
 		var navigCount = count;
 		param.withLink = false;

@@ -46,6 +46,10 @@ Medium.inject({
 
 	render: function(param, out) {
 		if (this.type) {
+			// Use Bootstrap's param.extend to create a new param object that
+			// inherits from param and can be modified without changing the
+			// passed param object.
+			param = param.extend();
 			param.width = this.width;
 			param.height = this.height;
 			if (param.width > param.maxWidth || param.height > param.maxHeight) {

@@ -165,6 +165,10 @@ Resource.inject({
 	},
 
 	renderIcon: function(param, out) {
+		// Use Bootstrap's param.extend to create a new param object that
+		// inherits from param and can be modified without changing the
+		// passed param object.
+		param = param.extend();
 		if (!param.name)
 			param.name = encode(this.name);
 		param.src = app.properties.iconUri + this.getIcon(param.iconSmall);
