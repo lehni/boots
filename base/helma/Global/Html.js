@@ -198,7 +198,7 @@ Html = new function() {
 			// leads to a speed increase of * 2.
 			var lineBreak = (input.match(/(\r\n|\n|\r)/) || [, '\n'])[1];
 			var lines = input.split(lineBreak);
-			var isParagraph = false, wasParagraph = false, isSuffix = false;
+			var isParagraph = false, wasParagraph = false, isSuffix = false, wasSuffix = false;
 			var out = [];
 			var breakTag = Html.lineBreak();
 			for (var i = 0, l = lines.length; i < l; i++) {
@@ -213,9 +213,13 @@ Html = new function() {
 						out.push(lineBreak, '</p>')
 						isParagraph = false;
 					} else {
-						out.push(breakTag);
+						// Only add one break on empty lines if the previous line
+						// wsa a suffix. See bellow for explanations.
+						if (wasSuffix)
+							out.push(breakTag);
 					}
 				} else {
+					wasSuffix = false;
 					var match;
 					if (match = line.match(/^<(\w*)/)) {
 						var tag = match[1], isBlockTag = blockTags[tag];
@@ -284,9 +288,11 @@ Html = new function() {
 											// a snippet of text that followed a block tag
 											// on the same line. We don't want these to
 											// be rendered in a new paragraph. Instead
-											// it shoudl just follow the block tag and
+											// it should just follow the block tag and
 											// be terminated with a br tag. iSuffix handles
-											// that.
+											// that. This might not be a suffix thought but
+											// another block tag. The parsing of the line
+											// that's been put back will tell...
 											isSuffix = true;
 										}
 										break;
@@ -313,6 +319,7 @@ Html = new function() {
 					// Suffixes are outside paragraphs and therefore need a break after.
 					if (isSuffix) {
 						out.push(breakTag);
+						wasSuffix = true;
 						isSuffix = false;
 					}
 				}
