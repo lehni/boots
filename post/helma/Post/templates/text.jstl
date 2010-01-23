@@ -1,0 +1,3 @@
+<%-- The text template is used by the post template. It is seperate so it
+can be overridden by apps --%>
+<%= this.text | markup param=param encoding='entities' | lists | paragraphs %>
