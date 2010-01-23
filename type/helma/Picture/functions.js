@@ -118,7 +118,6 @@ Picture.inject({
 						y += (height - cropHeight) *
 							(crop.valign == 'middle' ? 0.5 : crop.valign == 'bottom' ? 1 : 0);
 					}
-					User.log('Crop',x, y, cropWidth, cropHeight,width,height);
 					image.crop(x, y, cropWidth, cropHeight);
 					width = image.width;
 					height = image.height;
@@ -252,7 +251,6 @@ Picture.inject({
 		},
 
 		getScaledCrop: function(crop, scale) {
-			User.log(scale);
 			return scale == 1 ? crop : crop.each(function(value, key) {
 				this[key] = typeof value == 'number'
 					? key == 'imageScale' 
