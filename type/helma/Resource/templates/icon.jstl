@@ -1,11 +1,7 @@
-<div class="<%= param.iconSmall ? "icon-small" : "icon" %>">
+<div class="icon<%= ' icon-small' if=param.iconSmall %><%= param.iconClass prefix=' ' %>">
 <% this.link $icon %><%= param.details %>
 </div><%-%>
 
 <% $icon %>
-<% if (param.iconCentered) %>
-<div><img src="<%= param.src %>" width="<%= param.width %>" height="<%= param.height %>"></div>
-<span><%= param.name %></span><%-%>
-<% else %>
-<img src="<%= param.src %>" width="<%= param.width %>" height="<%= param.height %>"><span><%= param.name %></span><%-%>
-<% end %>
+<div class="icon-image"><img src="<%= param.src %>" width="<%= param.width %>" height="<%= param.height %>"></div><%-%>
+<div class="icon-label"><%= param.name %></div><%-%>
