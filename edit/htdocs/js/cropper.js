@@ -63,40 +63,25 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	setupImage: function() {
-		if (!this.image.size) {
-			this.image.size = this.image.getSize();
-			this.image.setStyle('position', 'absolute');
-			this.image.aspectRatio = this.image.size.height / this.image.size.width;
-		}
+		var size = this.image.size;
+		if (!size)
+			size = this.image.size = this.image.getSize();
 
 		var bounds = this.canvas.getBounds();
 		bounds.height -= this.footer.getHeight();
 
-		var aspectRatio = bounds.height / bounds.width;
-		// scale the image to fit within the wrapper only if it's larger than the wrapper
-		var landscape = this.image.aspectRatio > aspectRatio;
-
-		// scale the image to fit within the wrapper & crop area, if its larger than them;
-		var width = bounds.width > this.crop.width ? bounds.width : this.crop.width;
-		var height = bounds.height > this.crop.height ? bounds.height : this.crop.height;
-		var scaledSize = {
-			width: landscape ? width : (height / this.image.aspectRatio),
-			height: landscape ? width * this.image.aspectRatio : height
-		};
-
-		if (scaledSize.width > this.image.size.width || scaledSize.height > this.image.size.height)
-			scaledSize = this.image.size;
-
+		// Center image on canvas
 		this.setImageBounds(
-			bounds.width / 2, bounds.height / 2,
-			scaledSize.width, scaledSize.height
+			(bounds.width - size.width) / 2,
+			(bounds.height - size.height) / 2,
+			size.width, size.height
 		);
 
 		var crop = this.options.crop;
 		this.setZoom(crop && (crop.imageScale 
-			|| crop.imageWidth && crop.imageWidth / this.image.size.width
-			|| crop.imageHeight && crop.imageHeight / this.image.size.height)
-			|| this.zoom || 1);
+			|| crop.imageWidth && crop.imageWidth / size.width
+			|| crop.imageHeight && crop.imageHeight / size.height)
+			|| this.image.scale || 1);
 	},
 
 	setup: function() {
@@ -107,9 +92,7 @@ Cropper = Base.extend(Chain, Callback, {
 		// We need to setup image now for imageBounds
 		this.setupImage();
 
-		var width = this.options.min.width;
-		var height = this.options.min.height;
-		//center the crop on the canvas
+		// Center the crop on the canvas
 		var crop = this.options.crop;
 		if (crop) {
 			this.cropArea.setBounds({
@@ -119,11 +102,13 @@ Cropper = Base.extend(Chain, Callback, {
 				top: crop.y + this.imageBounds.top
 			});
 		} else {
+			// Center the minimum crop size the image
+			var min = this.options.min;
 			this.cropArea.setBounds({
-				width: width, 
-				height: height,
-				left: (this.canvas.getWidth() - width) / 2,
-				top: (this.canvas.getHeight() - height) / 2
+				width: min.width, 
+				height: min.height,
+				left: (this.imageBounds.left + this.imageBounds.right - min.width) / 2,
+				top: (this.imageBounds.top + this.imageBounds.bottom - min.height) / 2
 			});
 		}
 		this.current.crop = this.crop = this.cropArea.getBounds();
@@ -149,32 +134,36 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	setZoom: function(zoom) {
-		// find out the minimum zoom allowed by the croparea
-		var aspectRatio = this.crop.height / this.crop.width;
-		var landscape = this.image.aspectRatio > aspectRatio;
-		var minZoom = (landscape ? this.crop.width : this.crop.height / this.image.aspectRatio) / this.image.size.width;
+		// Find out the minimum zoom allowed by the croparea
+		var minZoom = Math.max(
+			this.crop.width / this.image.size.width,
+			this.crop.height / this.image.size.height); 
 		if (zoom < minZoom) zoom = minZoom;
-		this.zoom = zoom;
-
+		this.image.scale = zoom;
+		// Even if the zoom is bigger than 1 (in case the image had to be scaled
+		// to allow the crop area to fit), crop to 1 for the slider, which won't
+		// be able to move in this case.
+		if (zoom > 1)
+			zoom = 1;
 		this.zoomHandle.setLeft(zoom * this.sliderRange);
-
+		// Calculate the center of the crop area and zoom in and out on that.
+		var bounds = this.current.crop || this.imageBounds;
+		var x = bounds.left + bounds.width / 2;
+		var y = bounds.top + bounds.height / 2;
+		var width = this.image.size.width * this.image.scale;
+		var height = this.image.size.height * this.image.scale;
+		// Calculate the amount of scale between last zoom and now and use it
+		// for the centering.
+		var factor = width / this.imageBounds.width;
 		this.setImageBounds(
-			this.imageBounds.left + this.imageBounds.width / 2,
-			this.imageBounds.top + this.imageBounds.height / 2,
-			this.image.size.width * zoom,
-			this.image.size.height * zoom
+			x - (x - this.imageBounds.left) * factor,
+			y - (y - this.imageBounds.top) * factor,
+			width, height
 		);
 	},
 
-	setImageBounds: function(centerX, centerY, width, height) {
-		width = Math.round(width);
-		height = Math.round(height);
-		var left = Math.round(centerX - width / 2);
-		var top = Math.round(centerY - height / 2);
-		this.imageBounds = {
-			left: left, top: top,
-			width: width, height: height
-		};
+	setImageBounds: function(x, y, width, height) {
+		this.imageBounds = { left: x, top: y, width: width, height: height };
 		this.updateImageBounds();
 	},
 
@@ -185,26 +174,16 @@ Cropper = Base.extend(Chain, Callback, {
 			x: bounds.width < crop.width,
 			y: bounds.height < crop.height
 		};
-
-		// test the left edge
-		if (bounds.left > crop.left || keepInside.x)
+		if (crop.left !== undefined && (bounds.left > crop.left || keepInside.x))
 			bounds.left = crop.left;
-
-		// test the top edge
-		if (bounds.top > crop.top || keepInside.y)
+		if (crop.top !== undefined && (bounds.top > crop.top || keepInside.y))
 			bounds.top = crop.top;
-
-		// test the right edge
 		if (!keepInside.x && ((bounds.left + bounds.width) < (crop.left + crop.width)))
 			bounds.left = (crop.left + crop.width) - bounds.width;
-
-		// test the bottom edge
 		if (!keepInside.y && (bounds.top + bounds.height) < (crop.top + crop.height))
 			bounds.top = (crop.top + crop.height) - bounds.height;
-
 		bounds.right = bounds.left + bounds.width;
 		bounds.bottom = bounds.top + bounds.height;
-
 		this.image.setBounds(bounds);
 	},
 
@@ -499,7 +478,7 @@ Cropper = Base.extend(Chain, Callback, {
 		}, function(style, side) {
 			this.sides[side] = this.cropArea.injectTop('div', { styles: Hash.merge({
 				position: 'absolute', width: 1, height: 1, overflow: 'hidden', zIndex: 1,
-				backgroundImage: 'url(/static/edit/css/assets/cropper-ants.gif)'
+				backgroundImage: 'url(/static/edit/css/assets/cropper-ants' + (/[ne]/.test(side) ? '' : '-reverse') + '.gif)'
 			}, style) });
 		}, this);
 	},
@@ -516,15 +495,15 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	getCropInfo: function() {
-		var crop = this.current.crop;
+		var crop = this.current.crop, bounds = this.imageBounds;
 		return {
 			width: crop.width,
 			height: crop.height,
-			x: crop.left - this.imageBounds.left,
-			y: crop.top - this.imageBounds.top,
-			imageWidth:  this.imageBounds.width,
-			imageHeight: this.imageBounds.height,
-			imageScale: this.imageBounds.width / this.image.size.width
+			x: Math.round(crop.left - bounds.left),
+			y: Math.round(crop.top - bounds.top),
+			imageWidth:  Math.round(bounds.width),
+			imageHeight: Math.round(bounds.height),
+			imageScale: this.image.scale
 		}
 	},
 

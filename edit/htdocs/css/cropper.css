@@ -19,6 +19,10 @@ body {
 	overflow: hidden;
 }
 
+#cropper-image {
+	position: absolute;
+}
+
 #cropper-loader {
 	position: absolute;
 	width: 100%;
