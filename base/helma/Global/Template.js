@@ -600,11 +600,14 @@ Template.prototype = {
 	processArguments: function(args, param) {
 		var prm = args.arguments[0];
 		if (prm && prm.param) {
-			if (args.length == 1 && prm.param == param) {
-				prm = param;
+			if (args.length == 1) {
+				prm = prm.param;
 			} else {
-				prm = this.inherit(prm, prm.param);
-				delete prm.param;
+				var src = prm;
+				prm = prm.param;
+				delete src.param;
+				for (var i in src)
+					prm[i] = src[i];
 			}
 			args.arguments[0] = prm;
 		}
