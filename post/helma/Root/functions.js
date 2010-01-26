@@ -7,7 +7,7 @@ Root.inject({
 
 	checkNotifications: function() {
 		var notifications = this.notifications.list();
-		var notificationTitle = app.properties.notificationTitle
+		var notificationSubject = app.properties.notificationSubject
 				|| app.properties.serverName + ': Discussion Notification';
 		for (var i = 0; i < notifications.length; i++) {
 			// notifications are grouped, so walk through the subgroup and find the topics
@@ -38,7 +38,7 @@ Root.inject({
 						var mail = new Mail();
 						mail.setFrom(app.properties.serverEmail);
 						mail.setTo(username + ' <' + email + '>');
-						mail.setSubject();
+						mail.setSubject(notificationSubject);
 						mail.addPart(text);
 						mail.send();
 					} catch (e) {
