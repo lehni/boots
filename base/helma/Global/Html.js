@@ -233,9 +233,6 @@ Html = new function() {
 							isParagraph = true;
 						}
 						if (isBlockTag && !emptyTags[tag]) {
-							// This line might be the rest of a previously processed
-							// line (see bellow). If it is a block tag, turn suffix off.
-							isSuffix = false;
 							// Find the end of this outside tag. We need to count the
 							// nesting of opening and closing tags in order to make sure
 							// the whole block is detected.
@@ -247,9 +244,14 @@ Html = new function() {
 							for (; i < l; i++) {
 								line = lines[i];
 //								if (report) User.log('Adding', line);
-								if (i > 0)
+								// If the line is the rest of a previously processed
+								// line (see bellow), do not add a newline before it.
+								// This is crucual e.g. for rendering of inlined image
+								// resources in Scriptographer .block .text.
+								if (!isSuffix && i > 0)
 									out.push(lineBreak);
 								out.push(line);
+								isSuffix = false;
 								var closeIndex = line.indexOf(close, searchIndex);
 								var openIndex = line.indexOf(open, searchIndex);
 								searchIndex = 0;
