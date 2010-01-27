@@ -1,5 +1,6 @@
 Resource.inject({
 	render_macro: function(param) {
-		this.render(param, res);
+ 		if (!param.unused || !ResourceTag.isUsed(this, param))
+			this.render(param, res);
 	}
 });
