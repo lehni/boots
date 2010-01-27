@@ -441,7 +441,10 @@ EditForm = Base.extend({
 	},
 
 	getSelectedTag: function(field, tag) {
-		var text = field.getValue(), pos = field.getCaret();
+		var sel = field.getSelection(), text = field.getValue();
+		// Decrease end by 1 if it's not just a caret so we're sure to be inside
+		// the tag, not at its boundary.
+		var pos = sel.start < sel.end ? sel.end - 1 : sel.end;
 		var start = text.substring(0, pos + tag.length + 1).lastIndexOf('<' + tag);
 		if (start != -1) {	
 			var end = text.indexOf('</' + tag + '>', pos - tag.length - 3);
@@ -453,7 +456,7 @@ EditForm = Base.extend({
 				if (end == -1 || end2 < end)
 					end = end2;
 			}
-			if (start <= pos && end >= pos) {
+			if (start <= pos && end > pos) {
 				return {
 					tag: text.substring(start, end),
 					start: start,
