@@ -48,9 +48,8 @@ EditItem = Base.extend(new function() {
 		},
 
 		convertBreaks: function(str) {
-			// Helper function: convert any possible kind of line breaks to \n
-			// TODO: exchange with platform linebreak here...
-			// this can be used when retrieveing values from forms
+			// Helper function: convert any possible kind of line breaks to \n.
+			// This can be used when retrieveing values from forms
 			return str ? str.replace(/\r\n|\n\r|\r/mg, '\n') : str;
 		},
 
