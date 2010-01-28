@@ -203,11 +203,13 @@ Html = new function() {
 			var breakTag = Html.lineBreak();
 			for (var i = 0, l = lines.length; i < l; i++) {
 				var line = lines[i];
-/*				if (report) {
+				/*
+				if (report) {
 					User.log('#', i, line);
 					var start = out.length;
 				}
-*/				if (!line || /^\s*$/.test(line)) {
+				*/
+				if (!line || /^\s*$/.test(line)) {
 					// what if line |= '' but only contains \s*?
 					if (isParagraph) {
 						out.push(lineBreak, '</p>')
@@ -228,11 +230,12 @@ Html = new function() {
 							isParagraph = false;
 							wasParagraph = false;
 						} else if (!isParagraph && !isBlockTag && !isSuffix) {
-//							if (report) User.log('Starting', tag);
+							// if (report) User.log('Tag', tag);
 							out.push(lineBreak, '<p>')
 							isParagraph = true;
 						}
 						if (isBlockTag && !emptyTags[tag]) {
+							// if (report) User.log('Block Tag', tag);
 							// Find the end of this outside tag. We need to count the
 							// nesting of opening and closing tags in order to make sure
 							// the whole block is detected.
@@ -243,7 +246,7 @@ Html = new function() {
 							var nesting = 1, searchIndex = open.length; 
 							for (; i < l; i++) {
 								line = lines[i];
-//								if (report) User.log('Adding', line);
+								// if (report) User.log('Adding', line);
 								// If the line is the rest of a previously processed
 								// line (see bellow), do not add a newline before it.
 								// This is crucual e.g. for rendering of inlined image
@@ -251,57 +254,63 @@ Html = new function() {
 								if (!isSuffix && i > 0)
 									out.push(lineBreak);
 								out.push(line);
+								// if (report) User.log('Nesting', nesting, line);
 								isSuffix = false;
-								var closeIndex = line.indexOf(close, searchIndex);
-								var openIndex = line.indexOf(open, searchIndex);
-								searchIndex = 0;
-								/* Simple version without nesting counting
-								if (closeIndex != -1) {
-									if (closeIndex < line.length - close.length)
-										out.push(lineBreak);
-									break;
-								}
-								*/
-								if (closeIndex != -1) {
-									if (openIndex != -1) {
-										if (closeIndex < openIndex) {
-											// We're closing before opening again, reduce
-											// nesting and see what is to be done after.
+								while (true) {
+									var closeIndex = line.indexOf(close, searchIndex);
+									var openIndex = line.indexOf(open, searchIndex);
+									if (closeIndex != -1) {
+										if (openIndex != -1) {
+											if (closeIndex < openIndex) {
+												// We're closing before opening again, reduce
+												// nesting and see what is to be done after.
+												nesting--;
+												searchIndex = openIndex;
+											} else {
+												// Else we're opening a new one and closing it
+												// again, so nesting stays the same.
+												searchIndex = closeIndex + close.length;
+											}
+										} else {
 											nesting--;
+											searchIndex = closeIndex + close.length;
 										}
-										// Else we're opening a new one and closing it
-										// again, so nesting stays the same.
+										if (nesting == 0) {
+											// if (report) User.log('Closed', line);
+											isParagraph = false;
+											var index = closeIndex + close.length;
+											if (index < line.length) {
+												// If there is more right after, put it back
+												// into lines and reduce i by 1, so this line
+												// will be iterated and processed again.
+												// if (report) User.log('Suffix', line.substring(index));
+												lines[i--] = line.substring(index);
+												// Replace the full line with what has been
+												// processed already.
+												out[out.length - 1] = line.substring(0, index);
+												// Mark this as a so called suffix, which is
+												// a snippet of text that followed a block tag
+												// on the same line. We don't want these to
+												// be rendered in a new paragraph. Instead
+												// it should just follow the block tag and
+												// be terminated with a br tag. iSuffix handles
+												// that. This might not be a suffix thought but
+												// another block tag. The parsing of the line
+												// that's been put back will tell...
+												isSuffix = true;
+											}
+											break;
+										}
+									} else if (openIndex != -1) {
+										nesting++;
+										searchIndex = openIndex + open.length;
 									} else {
-										nesting--;
-									}
-									if (nesting == 0) {
-										isParagraph = false;
-										var index = closeIndex + close.length;
-										if (index < line.length) {
-											// If there is more right after, put it back
-											// into lines and reduce i by 1, so this line
-											// will be iterated and processed again.
-//											if (report) User.log('Suffix', line.substring(index));
-											lines[i--] = line.substring(index);
-											// Replace the full line with what has been
-											// processed already.
-											out[out.length - 1] = line.substring(0, index);
-											// Mark this as a so called suffix, which is
-											// a snippet of text that followed a block tag
-											// on the same line. We don't want these to
-											// be rendered in a new paragraph. Instead
-											// it should just follow the block tag and
-											// be terminated with a br tag. iSuffix handles
-											// that. This might not be a suffix thought but
-											// another block tag. The parsing of the line
-											// that's been put back will tell...
-											isSuffix = true;
-										}
+										searchIndex = 0;
 										break;
 									}
-								} else if (openIndex != -1) {
-									nesting++;
 								}
+								if (nesting == 0)
+									break;
 							}
 							continue;
 						}
@@ -326,11 +335,11 @@ Html = new function() {
 					}
 				}
 				wasParagraph = isParagraph;
-//				if (report) User.log(' ->', out.slice(start, out.length).join(''));
+				// if (report) User.log(' ->', out.slice(start, out.length).join(''));
 			}
 			var ret = out.join('');
-//			User.log('Time', Date.now() - t);
-//			if (report) User.log(ret);
+			// User.log('Time', Date.now() - t);
+			//	if (report) User.log(ret);
 			return ret;
 		},
 
