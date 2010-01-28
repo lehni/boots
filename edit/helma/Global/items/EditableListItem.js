@@ -31,7 +31,7 @@ EditableListItem = ListItem.extend({
 				// Can we use bootstrap's internal version number?
 				// Should this be exposed through a method on Function even?
 				// Or simpy caching within 'this'...
-				var html = this.renderEntry(baseForm, name, new ctor(), {
+				var html = this.renderEntry(baseForm, name, new ctor(this), {
 					add: param.add, width: param.width,
 					id: '{%' + name + '_id%}'
 				});
