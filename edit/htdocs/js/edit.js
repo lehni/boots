@@ -677,12 +677,12 @@ EditForm.inject(new function() {
 				handlers.merge(items);
 			},
 
-			handle: function(form, action, element) {
-				form = form instanceof EditForm ? form : EditForm.get(form);
+			handle: function(formOrId, action, element) {
+				var form = formOrId instanceof EditForm ? formOrId : EditForm.get(formOrId);
 				if (form)
 					return form.handle.apply(form, Array.slice(arguments, 1));
 				else
-					alert('Cannot find form: ' + id);
+					alert('Cannot find form: ' + formOrId);
 			}
 		}
 	};
