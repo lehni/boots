@@ -83,16 +83,20 @@ EditItem = Base.extend(new function() {
 
 		setValue: function(value) {
 			if (this.evaluate) {
-//				User.log('EditItem#setValue(): ' + this.evaluate + ' = ' + value);
+				if (app.properties.debugEdit)
+					User.log('EditItem#setValue(): ' + this.evaluate + ' = ' + Json.encode(value).truncate(100, '...'));
 				// Evaluate string variable to the content of value:
 				try {
+					if (app.properties.debugEdit)
+						User.log('EditItem#setValue(): ' + this.evaluate + ' = ' + Json.encode(value).truncate(100, '...'));
 					new Function('value', this.evaluate + ' = value;').call(this.form.object, value);
 					return true;
 				} catch (e) {
-//					User.logError('EditItem#setValue(): ' + this.evaluate, e);
+					User.logError('EditItem#setValue(): ' + this.evaluate, e);
 				}
 			} else if (this.name) {
-				User.log('EditItem#setValue(): ' + this.name + ' = ' + value);
+				if (app.properties.debugEdit)
+					User.log('EditItem#setValue(): ' + this.name + ' = ' + Json.encode(value).truncate(100, '...'));
 				this.form.object[this.name] = value;
 				return true;
 			}

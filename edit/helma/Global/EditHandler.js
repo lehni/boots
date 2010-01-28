@@ -20,6 +20,14 @@ EditHandler = Base.extend(new function() {
 				var editResponse = res.data.editResponse = new Hash();
 				var mode = req.data.edit_mode || mode || 'edit';
 				var fullId = req.data.edit_id || base.getFullId();
+				User.log('Edit Request:', fullId, "'" + mode + "'");
+				if (app.properties.debugEdit) {
+					var values = [];
+					for (var i in req.data)
+						if (!/^(http_host|HopSession|http_language|http_remotehost|autoLogin|http_browser|http_referer)$/.test(i))
+							values.push(i + ': ' + Json.encode(req.data[i]).truncate(100, '...'));
+					User.log('Edit Data:\n' + values.join('\n'));
+				}
 				var handler = handlers[mode];
 				var out = null;
 				// Only allow editing modes if the edi stack is valid.
