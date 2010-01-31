@@ -153,6 +153,20 @@ HopObject.inject({
 				id = parts[1];
 			}
 			return HopObject.getById(id, prototype);
+		},
+
+		/**
+		 * Returns object identified by a local url, or null if no object can be found.
+		 */
+		getByUrl: function(url) {
+			var path = decodeUrl(url).split('/');
+			var obj = root;
+			for (var i = 0, l = path.length; i < l && obj != null; i++) {
+				var name = path[i];
+				if (name)
+					obj = obj.getChildElement(name);
+			}
+			return obj;
 		}
 	}
 });
