@@ -102,13 +102,25 @@ HopObject.inject(new function() {
 			return this.getFullId();
 		},
 
-		// getEditParent returns the correct parent for both newly created object's that
-		// are still to be inserted into the database
-		// and already existing ones by determining the parent from the edit stack for 
+		// getEditParent returns the correct parent for both newly created
+		// object's that are still to be inserted into the database and already
+		// existing ones by determining the parent from the edit stack for 
 		// items about to be created and this.getParent() for the others.
-		// this parent can also be overridden by realParent
+		// this parent can also be overridden by realParent.
+		// Node that an editing parent is not always the same as _parent,
+		// e.g. for resources that live in the parent.resources collection!, and
+		// where _parent points to that instead.
 		getEditParent: function(realParent) {
-			var parent = realParent || this.getParent();
+			var parent;
+			if (realParent) {
+				parent = realParent;
+			} else {
+				parent = this.getParent();
+				// If the parent returned by getParent is a plain HopObject, it is
+				// a collection e.g. resources, and we need to step one up further.
+				if (parent && parent.constructor == HopObject)
+					parent = parent.getParent();
+			}
 			if (!parent) {
 				// See if there is a cached edit node, and if so, determine future
 				// parent from it:
