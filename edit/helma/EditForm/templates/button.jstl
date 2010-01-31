@@ -1,5 +1,5 @@
 <% #button %>
-<span><a href="#" onclick="<%= param.onClick encoding="all" %>" class="edit-button<%= param.className prefix=" " %>" id="<%= param.name %>"><%= param.value %></a></span><%-%>
+<span><a href="#" onclick="<%= param.onClick encoding='entities' %>" class="edit-button<%= param.className prefix=" " %>" id="<%= param.name %>"><%= param.value %></a></span><%-%>
 
 <% #buttons -%>
 <% foreach ($button in param.buttons) prefix=<%= '<div class="edit-buttons-left">' if=param.wrapped %> suffix=<%= '</div>' if=param.wrapped %> %>
