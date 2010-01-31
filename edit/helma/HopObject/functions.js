@@ -111,20 +111,15 @@ HopObject.inject(new function() {
 		// node stack.
 		// Note that an editing parent is not always the same as _parent,
 		// e.g. for resources that live in the parent.resources collection!
-		getEditParent: function(realParent) {
-			var parent;
-			if (realParent) {
-				parent = realParent;
-			} else {
-				parent = this.getParent();
-				// If the parent returned by getParent is a plain HopObject, it is
-				// a collection e.g. resources, and we need to step one up further.
-				if (parent && parent.constructor == HopObject)
-					parent = parent.getParent();
-			}
+		getEditParent: function() {
+			var parent = this.getParent();
+			// If the parent returned by getParent is a plain HopObject, it is
+			// a collection e.g. resources, and we need to step one up further.
+			if (parent && parent.constructor == HopObject)
+				parent = parent.getParent();
 			if (!parent) {
 				// See if there is a cached edit node, and if so, determine future
-				// parent from it:
+				// edit parent from it:
 				var node = EditNode.getCached(this);
 				if (node && node.parent)
 					parent = node.parent.object;

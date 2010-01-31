@@ -9,7 +9,7 @@ Post.inject({
 	},
 
 	getNode: function() {
-		return this.getEditParent(this.node);
+		return this.getEditParent();
 	},
 
 	getEditForm: function(param) {
@@ -110,7 +110,7 @@ Post.inject({
 		form.add(form.createItem(param.resources, {
 			label: 'Attachments', type: 'list', name: 'resources',
 			collection: this.allResources, prototypes: 'Resource',
-			addButton: 'Attach',
+			addButton: 'Attach', visibility: true,
 			autoRemove: true, sortable: true,
 			onCreate: function(ctor, values) {
 				// Create a resource type based on file mime type
