@@ -1,9 +1,4 @@
 Medium.inject({
-	// MANUAL: Set MAX_WIDTH, MAX_HEIGHT to your value in your app!
-	// TODO: consider app.properties.maxMediumWidth;
-	MAX_WIDTH: 640,
-	MAX_HEIGHT: 480,
-
 	getEditForm: function(param) {
 		if (param.name === undefined)
 			param.name = false;
@@ -27,14 +22,6 @@ Medium.inject({
 			if (/^(image|audio|video|flash|director)$/.test(type))
 				this.type = type;
 			if (this.type) {
-				if (!this.width || !this.height) {
-					this.width = this.MAX_WIDTH;
-					this.height = this.MAX_HEIGHT;
-				} else if (this.width > this.MAX_WIDTH) {
-					var factor = this.height / this.width;
-					this.width = this.MAX_WIDTH;
-					this.height = Math.round(this.MAX_WIDTH * factor);
-				}
 				return true;
 			} else {
 				// Remove again if the file is not recognized as a movie
