@@ -116,7 +116,7 @@ MarkupTag = Base.extend(new function() {
 				list[i].defaultsFollow = defaultsFollow;
 				defaultsFollow = defaultsFollow || list[i].defaultValue !== undefined;
 			}
-			return list;
+			return list.length > 0 ? list : null;
 		} else {
 			// Normal tag parsing.
 			// Return name, unnamed arguments and named attributes for further
@@ -162,24 +162,63 @@ MarkupTag = Base.extend(new function() {
 					: '/>');
 		},
 
+		mergeAttributes: function(attributes) {
+			// If _attributes were defined, use the attributes object produced
+			// by parseDefinition in MarkupTag.inject now to scan through
+			// defined named attributes and unnamed arguments,
+			// and use default values if available.
+			var index = 0;
+			for (var i = 0, l = attributes.length; i < l; i++) {
+				var attrib = attributes[i];
+				// If the tag does not define this predefined attribute,
+				// either take its value from the unnamed arguments,
+				// and increase index, or use its default value.
+				if (this.attributes[attrib.name] === undefined) {
+					this.attributes[attrib.name] = index < this.arguments.length
+						? this.arguments[index++]
+						: attrib.defaultValue; // Use default value if running out of unnamed args
+				}
+				// If the _attributes definition does not contain any more defaults
+				// and we are running out of unnamed arguments, we might as well
+				// drop out of the loop since there won't be anything to be done.
+				if (!attrib.defaultsFollow && index >= this.arguments.length)
+					break;
+			}
+			// Cut away consumed unnamed arguments
+			if (index > 0)
+				this.arguments.splice(0, index);
+		},
+
 		statics: {
 			extend: function(src) {
+				return this.base().inject(src);
+			},
+
+			inject: function(src) {
 				// Parse _attributes definition through the same tag parsing mechanism
 				// parseDefinition contains special logic to produce an info object
 				// for attribute / argument parsing further down in MarkupTag.create
 				// If no new attributes are defined, inherit from above.
 				// No merging sof far!
-				var attributes = src._attributes || this.prototype._attributes;
-				attributes = attributes && parseDefinition(attributes, true);
-				var context = src._context || 'default';
-				var store = tags[context] = tags[context] || {};
-				return (src._tags && src._tags.split(',') || []).each(function(tag) {
-					// Store attributes information and a reference to prototype in tags
-					store[tag] = {
-						attributes: attributes,
-						proto: this.prototype
-					};
-				}, this.base(src));
+				var attributes = src && src._attributes && parseDefinition(src._attributes, true);
+				if (attributes)
+					src._attributes = attributes;
+				// Now call base to inject it all.
+				this.base(src);
+				if (src && src._tags) {
+					// Create lookup per tag name for prototype to be used.
+					// TODO: What happens if only _context is injected, or
+					// if _tags exists already and is modified later?
+					// Should _tags be turned into an array on this.prototype,
+					// and new tags added and contexts of old tags changed?
+					var context = src._context || 'default';
+					var store = tags[context] = tags[context] || {};
+					src._tags.split(',').each(function(tag) {
+						// Store attributes information and a reference to prototype in tags
+						store[tag] = this.prototype;
+					}, this);
+				}
+				return this;
 			},
 
 			create: function(definition, parent, param) {
@@ -187,42 +226,16 @@ MarkupTag = Base.extend(new function() {
 				var def = definition == 'root' ? { name: 'root' } : parseDefinition(definition);
 				// Render any undefined tag through the UndefinedTag.
 				var store = param && tags[param.context] || tags['default'];
-				var obj = store[def.name] || tags['default'][def.name] || store['undefined'] || tags['default']['undefined'];
-				if (obj.attributes) {
-					// If _attributes were defined, use the info object produced
-					// by parseDefinition in MarkupTag.extend now to scan through
-					// defined named attributes and unnamed arguments,
-					// and use default values if available.
-					var index = 0;
-					for (var i = 0, l = obj.attributes.length; i < l; i++) {
-						var attrib = obj.attributes[i];
-						// If the tag does not define this predefined attribute,
-						// either take its value from the unnamed arguments,
-						// and increase index, or use its default value.
-						if (def.attributes[attrib.name] === undefined) {
-							def.attributes[attrib.name] = index < def.arguments.length
-								? def.arguments[index++]
-								: attrib.defaultValue; // Use default value if running out of unnamed args
-						}
-						// If the _attributes definition does not contain any more defaults
-						// and we are running out of unnamed arguments, we might as well
-						// drop out of the loop since there won't be anything to be done.
-						if (!attrib.defaultsFollow && index >= def.arguments.length)
-							break;
-					}
-					// Cut away consumed unnamed arguments
-					if (index > 0)
-						def.arguments.splice(0, index);
-				}
+				var proto = store[def.name] || tags['default'][def.name] || store['undefined'] || tags['default']['undefined'];
 				// Instead of using the empty tag initializers that are a bit
 				// slow through bootstrap's #initalize support, produce a pure
 				// js object and then set its __proto__ field on Rhino,
 				// to speed things up.
 				// This hack works on Rhino but not on every browser.
 				// On Browsers, you would do this instead:
-				// var tag = new obj.proto();
+				// var tag = new proto();
 				var tag = {};
-				tag.__proto__ = obj.proto;
+				tag.__proto__ = proto;
 				// This part stays the same:
 				tag.name = def.name;
 				tag.attributes = def.attributes;
@@ -239,6 +252,9 @@ MarkupTag = Base.extend(new function() {
 						tag.previous.next = tag;
 					siblings.push(tag);
 				}
+				var attributes = proto._attributes;
+				if (attributes)
+					tag.mergeAttributes(attributes);
 				// Simulate calling initialize, since we're creating tags in an odd
 				// way above... The difference to the normal initialize is that
 				// all the fields are already set on tag, e.g. name, attibutes, etc.

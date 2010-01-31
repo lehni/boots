@@ -22,7 +22,10 @@ OEmbedTag = MarkupTag.extend(new function() {
 				// overriding the tags's prefix, suffix and endpoint setting.
 				var settings = providers[getHost(this.attributes.url)];
 				if (settings) {
-					this._provider = settings._provider;
+					// If the given provider defines attributes, merge these
+					// into the tag ones.
+					if (settings._attributes)
+						this.mergeAttributes(settings._attributes);
 					this._endpoint = settings._endpoint;
 					this._prefix = settings._prefix;
 					this._suffix = settings._suffix;
@@ -47,14 +50,18 @@ OEmbedTag = MarkupTag.extend(new function() {
 
 		statics: {
 			extend: function(src) {
-				// Store the _provider / _endpoint / _prefix / _suffix settings
-				// for this provider.
-				providers[getHost(src._prefix)] = src;
-				return this.base(src);
+				var ctor = this.base(src);
+				// Store the _endpoint / _prefix / _suffix settings for this
+				// provider by referencing the newly created prototype that
+				// contains these fields.
+				providers[getHost(src._prefix)] = ctor.prototype;
+				return ctor;
 			},
 
 			getData: function(attributes, param, settings) {
-				var id = [attributes.url, attributes.maxwidth || param.maxWidth, attributes.maxheight || param.maxHeight].join(' ');
+				// Let's use toSource here as attributes will never contain many
+				// fields and no HopObject, unlike param...
+				var id = attributes.toSource();
 				var data = cache[id];
 				// Support cache control through cache_age
 				if ((!data || data.cache_age && (Date.now() - data.time) / 1000 >= data.cache_age)
@@ -66,6 +73,7 @@ OEmbedTag = MarkupTag.extend(new function() {
 						settings = providers[getHost(url)];
 						if (!settings)
 							return null;
+						// TODO: Call mergeAttributes here too somehow. Static?
 					}
 					// Support both urls and ids
 					if (!Url.isRemote(url))
