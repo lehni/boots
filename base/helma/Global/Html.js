@@ -44,7 +44,7 @@ Html = new function() {
 					out.write(name);
 					if (value != null) {
 						out.write('="');
-						out.write(encode(value));
+						out.write(encodeForm(value));
 						out.write('"');
 					}
 				}
@@ -143,7 +143,6 @@ Html = new function() {
 				} else {
 					delete option.selected;
 				}
-				option.name = option.name ? encodeForm(option.name) : '';
 				Html.element('option', option, option.name, out);
 			}
 			out.write('</select>');
@@ -154,10 +153,6 @@ Html = new function() {
 
 		input: function(attributes, out) {
 			switch(attributes.type) {
-				case 'text':
-				case 'password':
-					attributes.value = attributes.value ? encodeForm(attributes.value) : '';
-					break;
 				case 'radio':
 				case 'checkbox':
 					if (!attributes.value) attributes.value = 1;
