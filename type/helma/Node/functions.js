@@ -17,14 +17,20 @@ Node.inject({
 					notNull: true, maxLength: 64
 				},
 				onApply: function(value) {
-					this.title = value;
+					var name;
 					// Generate a url friendly and unique name based on title:
 					if (this == root) {
-						this.name = 'root';
+						name = 'root';
 					} else {
-						this.name = this.getEditParent().getUniqueChildName(this,
+						name = this.getEditParent().getUniqueChildName(this,
 							value, (app.properties.maxNameLength || 64).toInt());
 					}
+					if (this.name != name || this.title != value) {
+						this.name = name;
+						this.title = value;
+						return true;
+					}
+					return false;
 				}
 			}, false),
 			form.createItem(param.children, {

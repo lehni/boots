@@ -89,8 +89,14 @@ EditForm.inject({
 				// too. This is cleared again in #afterApply.
 				item.appliedValue = value;
 				if (item.onApply && item.onApply != EditForm.DO_NOTHING) {
-					// Call the handler 
-					if (item.onApply.call(item.form.object, value, item))
+					// Call the handler
+					if (app.properties.debugEdit)
+						User.log('EditItem#onApply(): [' + item.name + '], value = ' + Json.encode(value));
+					var res = item.onApply.call(item.form.object, value, item);
+					// If an onApply handler has not returned true or false, 
+					// assume that it has done some changes (this is prefered to
+					// not detect changes).
+					if (res || res === undefined)
 						return true;
 				}
 				// Otherwise use the default behavior for applying values
