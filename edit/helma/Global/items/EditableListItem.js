@@ -3,8 +3,6 @@ EditableListItem = ListItem.extend({
 
 	getEditForm: function(object, id, width, force) {
 		var form = EditForm.get(object, force);
-		// Update the edit form's variablePrefix to group by this
-		// edit item.
 		// TODO: Since we're using cached forms, this means we cannot use
 		// the same form elsewhere at the same time.
 		if (id == null)
@@ -14,6 +12,8 @@ EditableListItem = ListItem.extend({
 		// taken care of it.
 		if (form.getWidth() >= width)
 			form.setWidth(this.form.getInnerWidth(width, this.padding));
+		// Update the edit form's variablePrefix to group by this
+		// edit item.
 		form.variablePrefix = this.getEditName() + '_' + id + '_';
 		return form;
 	},
@@ -56,8 +56,8 @@ EditableListItem = ListItem.extend({
 			id: name + '_' + form.entryId,
 			name: name,
 			proto: object._prototype,
-			hide: object.visible !== undefined
-					// Default for new items is visible.
+			hide: this.visibility
+					// Default for new items is visible in editable lists.
 					? object.visible == null || object.visible ? 0 : 1
 					: null,
 			width: param.width,
@@ -74,11 +74,19 @@ EditableListItem = ListItem.extend({
 	},
 
 	render: function(baseForm, name, value, param, out) {
+		var width = param.calculatedWidth;
+		var buttonWidth = 16;
+		if (this.addEntries)
+			width -= buttonWidth;
+		if (this.sortable)
+			width -= buttonWidth;
+		if (this.hideable || true)
+			width -= buttonWidth;
 		// Add the button only once to the form!
 		// TODO: Rename addButton to better name?
 		if (this.addButton && !this.initialized) {
 			var button = this.getAddPrototypeButton(baseForm, name, {
-				width: param.calculatedWidth,
+				width: width,
 				value: this.addButton
 			});
 			baseForm.addButtons(button);
@@ -90,7 +98,7 @@ EditableListItem = ListItem.extend({
 		for (var i = 0; i < list.length; i++) {
 			var obj = list[i];
 			entries.push(this.renderEntry(baseForm, name, obj, {
-				width: param.calculatedWidth
+				width: width
 			}));
 			ids.push(obj._id);
 		}
