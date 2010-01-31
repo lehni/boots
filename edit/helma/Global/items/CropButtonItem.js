@@ -37,7 +37,7 @@ CropButtonItem = EditItem.extend({
 		var id = this.getEditName() + '_preview';
 		var size = this.preview !== true ? this.preview : { width: 100, height: 80 };
 		if (crop) {
-			var scale = Math.min(size.width / crop.width, size.height / crop.height);
+			var scale = Math.min(1, Math.min(size.width / crop.width, size.height / crop.height));
 			crop = Picture.getScaledCrop(crop, scale);
 			return Picture.renderCrop(crop, { 
 				attributes: { id: id } 

@@ -1087,7 +1087,9 @@ EditForm.register(new function() {
 					field.setValue(crop);
 					param.image_crop = crop;
 					this.load('crop_preview', param, function(result) {
-						$('#' + result.name + '_preview', this.form).replaceWith(result.html);
+						var image =  element.getParent('.edit-item').getElement('.edit-crop-preview img');
+						if (image)
+							image.replaceWith(result.html);
 					});
 				} else {
 					// TODO: Find a way to produce this through EditSettings too, maybe

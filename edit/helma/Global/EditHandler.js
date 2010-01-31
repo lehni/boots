@@ -50,6 +50,18 @@ EditHandler = Base.extend(new function() {
 							var item = req.data.edit_item !== undefined
 								? form.getItem(req.data.edit_item, req.data.edit_group)
 								: null;
+							// If the item could not be found and edit_entry_id is
+							// set, the item is to be found in a editable list entry.
+							if (item == null && req.data.edit_entry_id) {
+								// Find the form through the entry edit node, and
+								// the item from there.
+								var entryNode = EditNode.get(req.data.edit_entry_id);
+								// Do not override node with entryNode, as editable
+								// list entries do not have nodes, they are inlined.
+								var entryForm = entryNode && entryNode.getForm(mode == 'edit');
+								if (entryForm)
+									item = entryForm.getItem(req.data.edit_item, req.data.edit_group);
+							}
 							var oldHref = base.href();
 							var result = handler.handle(base, node.object, node, form, item);
 							if (result == EditForm.COMMIT) {

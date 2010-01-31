@@ -8,6 +8,9 @@ EditableListItem = ListItem.extend({
 		if (id == null)
 			id = object._id;
 		form.entryId = id;
+		// Let edit param know about edit_entry_id to be sent back
+		// from client side to identify editable list entry form items.
+		form.listEntryId = object.getFullId();
 		// Only shrink if it does not fit. It might be the user has already
 		// taken care of it.
 		if (form.getWidth() >= width)

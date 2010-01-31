@@ -116,10 +116,18 @@ EditItem = Base.extend(new function() {
 		},
 
 		getEditParam: function(params) {
-			return Hash.merge({
+			var obj = {
 				edit_item: this.name,
 				edit_group: this.form.name
-			}, params);
+			};
+			// Add the list entry id needed to identify forms for editable list
+			// entries, or pass it on if the editing request already came from
+			// such an entry.
+			if (this.form.listEntryId)
+				obj.edit_entry_id = this.form.listEntryId;
+			else if (req.data.edit_entry_id)
+				obj.edit_entry_id = req.data.edit_entry_id;
+			return Hash.merge(obj, params);
 		},
 
 		getPrototypes: function() {
