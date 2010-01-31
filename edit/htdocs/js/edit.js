@@ -445,7 +445,10 @@ EditForm = Base.extend({
 		// Decrease end by 1 if it's not just a caret so we're sure to be inside
 		// the tag, not at its boundary.
 		var pos = sel.start < sel.end ? sel.end - 1 : sel.end;
-		var start = text.substring(0, pos + tag.length + 1).lastIndexOf('<' + tag);
+		var exp = new RegExp('<' + tag + '[^\n\r]*$');
+		var start = text.substring(0, pos).search(exp)
+		if  (start == -1)
+			start = text.substring(0, pos + tag.length + 1).search(exp);
 		if (start != -1) {	
 			var end = text.indexOf('</' + tag + '>', pos - tag.length - 3);
 			if (end != -1)
@@ -682,7 +685,7 @@ EditForm.inject(new function() {
 				if (form)
 					return form.handle.apply(form, Array.slice(arguments, 1));
 				else
-					alert('Cannot find form: ' + formOrId);
+					alert('Cannot find form: ' + formOrId + ' ' + Json.encode(EditForm.data));
 			}
 		}
 	};
@@ -1187,8 +1190,8 @@ EditForm.register(new function() {
 
 	return {
 		// TODO: Instead of passing names and using ids excessively, rely
-		// on the new element, class names and dom query functions, to produce
-		// shorter html.
+		// on the newly passed element, class names and dom query functions,
+		// to produce shorter html.
 		list_add: function(element, name, html, entryId) {
 			var list = getList(this, name);
 			list.element.counter = list.element.counter || 0;
