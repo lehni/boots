@@ -51,7 +51,6 @@ Picture.inject({
 			crop && [crop.x, crop.y, crop.width, crop.height, crop.halign, crop.valign, crop.imageScale, crop.imageWidth, crop.imageHeight],
 			param.transparentPixel && [param.transparentPixel.x, param.transparentPixel.y]
 		];
-		return encodeMd5(res.pop());
 	},
 
 	processImage: function(param) {
@@ -71,33 +70,39 @@ Picture.inject({
 				height = info.height;
 				var image = null;
 
-				// Scale
-				var crop = param.crop;
-				var scale = param.scale || crop && (crop.imageScale
-						|| crop.imageWidth && crop.imageWidth / width
-						|| crop.imageHeight && crop.imageHeight / height);
-				if (scale) {
-					width = Math.round(width * scale);
-					height = Math.round(height * scale);
-				}
-
-				// Maximum Size
+				// Scale and maximum Size
 				var maxWidth = param.maxWidth;
 				var maxHeight = param.maxHeight;
-				if (width > maxWidth || height > maxHeight) {
-					var factor = width / height;
-					if (maxWidth && width > maxWidth) {
-						width = maxWidth;
-						height = Math.round(width / factor);
+				var crop = param.crop;
+				var scale = param.scale || 1;
+
+				if (crop) {
+					// Calculate imageScale if it was not set directly, but
+					// indirectly through imageWidht / Height.
+					if (!crop.imageScale)
+						crop.imageScale = crop.imageWidth && crop.imageWidth / width
+						|| crop.imageHeight && crop.imageHeight / height 
+						|| 1;
+					// Scale crop according to param.scale and to fit
+					// maxWidth / Height.
+					if (crop.width * scale > maxWidth || crop.height * scale > maxHeight) {
+						crop = Picture.getScaledCrop(crop, Math.min(
+							maxWidth / crop.width * scale,
+							maxHeight / crop.height * scale
+						) * scale);
 					}
-					if (maxHeight && height > maxHeight) {
-						height = maxHeight;
-						width = Math.round(height * factor);
-					}
+					scale = crop.imageScale;
+				} else if (width * scale > maxWidth || height * scale > maxHeight) {
+					scale *= Math.min(
+						maxWidth / (width * scale),
+						maxHeight / (height * scale)
+					);
 				}
 
-				// Resize
-				if (width != info.width || height != info.height) {
+				// Resize before crop
+				if (scale != 1.0) {
+					width = Math.round(width * scale);
+					height = Math.round(height * scale);
 					image = new Image(file);
 					image.resize(width, height);
 				}
@@ -118,6 +123,7 @@ Picture.inject({
 						y += (height - cropHeight) *
 							(crop.valign == 'middle' ? 0.5 : crop.valign == 'bottom' ? 1 : 0);
 					}
+					User.log('Log', x, y, cropWidth, cropHeight, image.width, image.height);
 					image.crop(x, y, cropWidth, cropHeight);
 					width = image.width;
 					height = image.height;
@@ -243,6 +249,17 @@ Picture.inject({
 		gray.flush();
 		// and then tint with color:
 		return new Image(col);
+	},
+
+	getScaledSize: function(param) {
+		var scale = Math.min(
+			param.maxWidth / this.width,
+			param.maxHeight / this.height
+		);
+		return {
+			width: this.width * scale,
+			height: this.height * scale
+		};
 	},
 
 	statics: {
