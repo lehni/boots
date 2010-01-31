@@ -93,6 +93,7 @@ function encodeAttribute(str, singles) {
 var encodeSql = encodeJs;
 
 function decodeUrl(str) {
+	// TODO: Does this need to use the app charset?
 	return str ? Packages.helma.util.UrlEncoded.decode(str, 'UTF-8') : str;
 }
 
