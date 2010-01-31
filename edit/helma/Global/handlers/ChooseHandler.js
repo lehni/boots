@@ -32,9 +32,9 @@ ChooseHandler = EditHandler.extend({
 				}
 			}
 			res.write('</ul>');
-			res.write(Json.encode({
+			form.sendResponse({
 				html: res.pop()
-			}));
+			});
 		}
 	}
 });

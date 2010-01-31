@@ -9,21 +9,20 @@ ChooseImageHandler = EditHandler.extend({
 		for (var i = 0; i < resources.length; i++) {
 			var resource = resources[i];
 			if (resource && resource.instanceOf(Picture)) {
-				var name = EditForm.getEditName(resource);
 				res.write('<li class="edit-choose-image">');
 				res.write('<a href="javascript:'
 					+ form.renderHandle(this.mode + '_select', item.getEditParam({
-						image_name: name,
+						image_name: resource.name,
 						image_id: resource.getFullId()
 					})) + '">'
 					+ resource.renderImage({ maxWidth: 30, maxHeight: 50 })
-					+ '<span>' + name + '</span></a></li>');
+					+ '<span>' + EditForm.getEditName(resource) + '</span></a></li>');
 			}
 		}
 		res.write('</ul>');
-		res.write(Json.encode({
+		form.sendResponse({
 			html: res.pop()
-		}));
+		});
 	}
 });
 
@@ -44,6 +43,7 @@ ChooseCropImageHandler = ChooseImageHandler.extend({
 	handle: function(base, object, node, form, item) {
 		var tag = req.data.crop_tag, crop;
 		if (tag) {
+			// Use Markup.render to parse the crop tag into a object.
 			var param = { context: 'edit' };
 			Markup.render(tag, param);
 			crop = param.crop;
@@ -55,7 +55,7 @@ ChooseCropImageHandler = ChooseImageHandler.extend({
 			crop.each(function(value, key) {
 				crop[key] = value.toInt();
 			});
-			form.addResponse(item.getEditParam({
+			form.sendResponse(item.getEditParam({
 				image_name: EditForm.getEditName(picture),
 				image_id: picture.getFullId(),
 				// Double encode this so it's passed through as a string

@@ -332,7 +332,20 @@ EditForm.inject({
 		}, out);
 	},
 
+	/**
+	 * addResponse / res.data.editResponse is only to be used to add values for
+	 * the response when edit forms are to be rendered. To send other values back,
+	 * e.g. for CropImageHandler, use sendResponse(data)
+	 */
 	addResponse: function(data) {
 		res.data.editResponse.merge(data);
+	},
+
+	/**
+	 * Send back a raw repsonse, without rendering edit form stuff. Used for
+	 * image / link choosers and image crop stuff.
+	 */
+	sendResponse: function(data) {
+		res.write(Json.encode(data));
 	}
 });
