@@ -10,19 +10,23 @@ Resource.inject({
 			removable: true, width: param.width
 		});
 
-		// Allow sub-prototypes to display a name field easily through param
 		form.add(
+			// Allow sub-prototypes to easily display name, file and caption
+			// fields through param:
 			form.createItem(param.name, {
 				name: 'name', type: 'string', label: 'Name',
 				length: 64
 			}, false),
-			form.createItem(param.file, {
+			form.createItem(param.file, { 
 				name: 'file', type: 'file', label: 'File',
 				onApply: this.setFile,
 				preview: this.name && this.renderIcon({ 
 					iconSmall: true, iconDetails: true
 				})
-			}, true)
+			}, true),
+			form.createItem(param.caption, {
+				name: 'caption', type: 'string', label: 'Caption'
+			}, false)
 		);
 		return form;
 	},
