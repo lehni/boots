@@ -124,6 +124,8 @@ Html = new function() {
 			out.write('>');
 			for (var i = 0; i < options.length; i++) {
 				var option = options[i];
+				if (option == null)
+					continue;
 				if (typeof option == 'object') {
 					if (option.name == null) {
 						option.name = option.value;

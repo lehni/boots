@@ -248,7 +248,7 @@ HopObject.inject(new function() {
 						item = {
 							mode: 'remove', title: title || 'Delete',
 							// Can't use double quotes here since they break html attributes.
-							// TODO: Find a way around this, e.g. using encodeAttributes
+							// TODO: Find a way around this, e.g. using encodeAttribute
 							confirm: 'Do you really want to delete\n\''
 									+ EditForm.getEditName(this) + '\'' + '?',
 							edit_item: param.item, edit_back: 1
