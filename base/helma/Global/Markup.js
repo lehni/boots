@@ -6,11 +6,12 @@ Markup = {
 		if (text) {
 			// Create the root tag as a container for all the other bits
 			var rootTag = MarkupTag.create('root');
-			var start = 0, end = 0;
+			var start = 0, end = 0, offset = 0;
 			// Current tag:
 			var tag = rootTag;
 			while (start != -1) { 
-				start = text.indexOf('<', end);
+				start = text.indexOf('<', end + offset);
+				offset = 0;
 				if (start > end)
 					tag.parts.push(text.substring(end, start));
 				if (start >= 0) {
@@ -24,6 +25,15 @@ Markup = {
 					// empty = contentless tag: <tag/>
 					var empty = !closing && text.charAt(end - 2) == '/';
 					var definition = text.substring(start + (closing ? 2 : 1), end - (empty ? 2 : 1));
+					// This could be something else than a tag, e.g. some code.
+					// For now, the convention simply is to allow tag definitions
+					// to be only one line long.
+					if (/[\n\r]/.test(definition)) {
+						end = start;
+						// Skip the < when searching for the next tag
+						offset = 1;
+						continue;
+					}
 					// There is a special convention in place here for empty tags:
 					// These are interpretated as empty tags:
 					// <tag/>, <tag />, <tag param />
