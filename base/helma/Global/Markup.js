@@ -162,31 +162,8 @@ MarkupTag = Base.extend(new function() {
 					: '/>');
 		},
 
-		mergeAttributes: function(attributes) {
-			// If _attributes were defined, use the attributes object produced
-			// by parseDefinition in MarkupTag.inject now to scan through
-			// defined named attributes and unnamed arguments,
-			// and use default values if available.
-			var index = 0;
-			for (var i = 0, l = attributes.length; i < l; i++) {
-				var attrib = attributes[i];
-				// If the tag does not define this predefined attribute,
-				// either take its value from the unnamed arguments,
-				// and increase index, or use its default value.
-				if (this.attributes[attrib.name] === undefined) {
-					this.attributes[attrib.name] = index < this.arguments.length
-						? this.arguments[index++]
-						: attrib.defaultValue; // Use default value if running out of unnamed args
-				}
-				// If the _attributes definition does not contain any more defaults
-				// and we are running out of unnamed arguments, we might as well
-				// drop out of the loop since there won't be anything to be done.
-				if (!attrib.defaultsFollow && index >= this.arguments.length)
-					break;
-			}
-			// Cut away consumed unnamed arguments
-			if (index > 0)
-				this.arguments.splice(0, index);
+		mergeAttributes: function(definition) {
+			MarkupTag.mergeAttributes(definition, this.attributes, this.arguments);
 		},
 
 		statics: {
@@ -261,6 +238,34 @@ MarkupTag = Base.extend(new function() {
 				if (tag.initialize)
 					tag.initialize();
 				return tag;
+			},
+
+			mergeAttributes: function(definition, attributes, arguments) {
+				// definition is the result of parsing _attribuets definition
+				// in inject. If _attributes were defined, use the attributes
+				// object produced by parseDefinition in MarkupTag.inject now
+				// to scan through defined named attributes and unnamed arguments,
+				// and use default values if available.
+				var index = 0;
+				for (var i = 0, l = definition.length; i < l; i++) {
+					var attrib = definition[i];
+					// If the tag does not define this predefined attribute,
+					// either take its value from the unnamed arguments,
+					// and increase index, or use its default value.
+					if (attributes[attrib.name] === undefined) {
+						attributes[attrib.name] = arguments && index < arguments.length
+							? arguments[index++]
+							: attrib.defaultValue; // Use default value if running out of unnamed args
+					}
+					// If the _attributes definition does not contain any more defaults
+					// and we are running out of unnamed arguments, we might as well
+					// drop out of the loop since there won't be anything to be done.
+					if (!attrib.defaultsFollow && (!arguments || index >= arguments.length))
+						break;
+				}
+				// Cut away consumed unnamed arguments
+				if (arguments && index > 0)
+					arguments.splice(0, index);
 			}
 		}
 	}

@@ -61,7 +61,7 @@ OEmbedTag = MarkupTag.extend(new function() {
 			getData: function(attributes, param, settings) {
 				// Let's use toSource here as attributes will never contain many
 				// fields and no HopObject, unlike param...
-				var id = attributes.toSource();
+				var id = [attributes.toSource(), param.maxWidth, param.maxHeight].join();
 				var data = cache[id];
 				// Support cache control through cache_age
 				if ((!data || data.cache_age && (Date.now() - data.time) / 1000 >= data.cache_age)
@@ -73,7 +73,12 @@ OEmbedTag = MarkupTag.extend(new function() {
 						settings = providers[getHost(url)];
 						if (!settings)
 							return null;
-						// TODO: Call mergeAttributes here too somehow. Static?
+						// Merge in default attributes so even when using the static
+						// getData directly without providing settings, the default
+						// settings from the various oEmbed provider tags are used
+						// and can be overridden by apps through inject().
+						if (settings._attributes)
+							MarkupTag.mergeAttributes(settings._attributes, attributes);
 					}
 					// Support both urls and ids
 					if (!Url.isRemote(url))
