@@ -5,7 +5,7 @@ NodeTag = MarkupTag.extend({
 	_tags: 'node',
 	_attributes: 'id',
 
-	render: function(content) {
+	render: function(content, param, encoder) {
 		var id = this.attributes.id;
 		if (!id) {
 			id = content;
@@ -14,5 +14,7 @@ NodeTag = MarkupTag.extend({
 		var node = HopObject.get(id);
 		if (node)
 			return node.renderLink(content);
+		else
+			return (content || '') + encoder(' [missing: ' + id + ']'); 
 	}
 });
