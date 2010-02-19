@@ -15,8 +15,9 @@ body {
 #cropper-canvas {
 	position: absolute;
 	width: 100%;
-	height: 100%;
-	overflow: hidden;
+	top: 0;
+	bottom: 0;
+	overflow: auto;
 }
 
 #cropper-image {
@@ -29,10 +30,8 @@ body {
 	height: 100%;
 	z-index: 1;
 	background: #000;
-	text-align: center;
 	font-size: 18px;
 	color: #666;
-	border-spacing: 0;
 	margin: 0;
 	border: 0;
 }
@@ -55,6 +54,14 @@ body {
 	bottom: 0;
 	width: 100%;
 	z-index: 2;
+}
+
+#cropper-indicator {
+	position: absolute;
+	z-index: 1;
+	padding: 4px;
+	background: #fdf2a4;
+	border: 1px solid #bba82a;
 }
 
 #cropper-slider {

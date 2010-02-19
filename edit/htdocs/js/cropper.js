@@ -37,16 +37,10 @@ Cropper = Base.extend(Chain, Callback, {
 		this.setOptions(options);
 
 		this.cropper = $('#cropper');
-		this.canvas = $('#cropper-canvas', this.cropper);
+		this.canvas = $('cropper-canvas', this.cropper);
 		this.footer = $('cropper-footer', this.cropper);
 		this.image = $('#cropper-image', this.cropper);
-
-		// Use asset to wait for image tio load in order to get load event either way
-		Asset.image(this.image.getProperty('src'), {
-			onLoad: function() {
-				$('#cropper-loader', this.cropper).setStyle({ display: 'none' });
-			}.bind(this)
-		});
+		this.image.setStyle({ display: 'none' });
 
 		this.buildButtons();
 		this.buildSizePresets();
@@ -54,11 +48,19 @@ Cropper = Base.extend(Chain, Callback, {
 		this.buildZoom();
 		this.buildIndicator();
 
-		this.setup();
+		this.canvas.setStyle('bottom', this.footer.getHeight());
+
+		// Use asset to wait for image tio load in order to get load event either way
+		Asset.image(this.image.getProperty('src'), {
+			onLoad: function() {
+				$('#cropper-loader', this.cropper).setStyle({ display: 'none' });
+				this.image.setStyle({ display: 'block' });
+				this.setup();
+			}.bind(this)
+		});
 
 		$window.addEvent('resize', function(e) {
-			this.updateMasks();
-			this.updateImageBounds();
+			this.setZoom(this.image.scale);
 		}.bind(this));
 	},
 
@@ -66,18 +68,11 @@ Cropper = Base.extend(Chain, Callback, {
 		var size = this.image.size;
 		if (!size)
 			size = this.image.size = this.image.getSize();
-
-		var bounds = this.canvas.getBounds();
-		bounds.height -= this.footer.getHeight();
-
-		// Center image on canvas
-		this.setImageBounds(
-			(bounds.width - size.width) / 2,
-			(bounds.height - size.height) / 2,
-			size.width, size.height
-		);
-
+		this.imageBounds = size;
 		var crop = this.options.crop;
+		this.scrollCanvas(
+			crop && (crop.left + crop.width / 2) || size.width / 2,
+			crop && (crop.top + crop.height / 2) || size.height / 2);
 		this.setZoom(crop && (crop.imageScale 
 			|| crop.imageWidth && crop.imageWidth / size.width
 			|| crop.imageHeight && crop.imageHeight / size.height)
@@ -91,30 +86,25 @@ Cropper = Base.extend(Chain, Callback, {
 		this.crop = this.options.crop || this.options.min;
 		// We need to setup image now for imageBounds
 		this.setupImage();
+		this.setupHandles();
 
-		// Center the crop on the canvas
 		var crop = this.options.crop;
 		if (crop) {
-			this.cropArea.setBounds({
-				width: crop.width, 
-				height: crop.height,
-				left: crop.x + this.imageBounds.left,
-				top: crop.y + this.imageBounds.top
-			});
+			crop = {
+				left: crop.x, top: crop.y,
+				width: crop.width, height: crop.height
+			};
 		} else {
 			// Center the minimum crop size the image
 			var min = this.options.min;
-			this.cropArea.setBounds({
-				width: min.width, 
-				height: min.height,
-				left: (this.imageBounds.left + this.imageBounds.right - min.width) / 2,
-				top: (this.imageBounds.top + this.imageBounds.bottom - min.height) / 2
-			});
+			crop = {
+				left: (this.imageBounds.width - min.width) / 2,
+				top: (this.imageBounds.height - min.height) / 2,
+				width: min.width, height: min.height
+			};
 		}
-		this.current.crop = this.crop = this.cropArea.getBounds();
-		this.setupHandles();
-		this.updateMasks();
-		this.updateHandles();
+		this.setCrop(crop);
+		this.crop = this.current.crop;
 	},
 
 	buildZoom: function() {
@@ -146,45 +136,29 @@ Cropper = Base.extend(Chain, Callback, {
 		if (zoom > 1)
 			zoom = 1;
 		this.zoomHandle.setLeft(zoom * this.sliderRange);
-		// Calculate the center of the crop area and zoom in and out on that.
-		var bounds = this.current.crop || this.imageBounds;
-		var x = bounds.left + bounds.width / 2;
-		var y = bounds.top + bounds.height / 2;
 		var width = this.image.size.width * this.image.scale;
 		var height = this.image.size.height * this.image.scale;
-		// Calculate the amount of scale between last zoom and now and use it
-		// for the centering.
 		var factor = width / this.imageBounds.width;
-		this.setImageBounds(
-			x - (x - this.imageBounds.left) * factor,
-			y - (y - this.imageBounds.top) * factor,
-			width, height
-		);
+		var size = size = this.canvas.getSize();
+		// Center image warpper on canvas
+		this.wrapper.setOffset(Math.max(0, (size.width - width) / 2), Math.max(0, (size.height - height) / 2));
+		this.imageBounds = { width: width, height: height };
+		this.image.setSize(width, height);
+		// Adjust scrolling
+		var offset = this.canvas.getScrollOffset();
+		var x = offset.x + size.width / 2, y = offset.y + size.height / 2;
+		this.scrollCanvas(x * factor, y * factor);
+		var crop = this.current.crop;
+		if (crop) {
+			crop.left = (crop.left + crop.width / 2) * factor - crop.width / 2;
+			crop.top = (crop.top + crop.height / 2) * factor - crop.height / 2;
+			this.setCrop(crop);
+		}
 	},
 
-	setImageBounds: function(x, y, width, height) {
-		this.imageBounds = { left: x, top: y, width: width, height: height };
-		this.updateImageBounds();
-	},
-
-	updateImageBounds: function() {
-		var bounds = this.imageBounds;
-		var crop = this.crop;
-		var keepInside = {
-			x: bounds.width < crop.width,
-			y: bounds.height < crop.height
-		};
-		if (crop.left !== undefined && (bounds.left > crop.left || keepInside.x))
-			bounds.left = crop.left;
-		if (crop.top !== undefined && (bounds.top > crop.top || keepInside.y))
-			bounds.top = crop.top;
-		if (!keepInside.x && ((bounds.left + bounds.width) < (crop.left + crop.width)))
-			bounds.left = (crop.left + crop.width) - bounds.width;
-		if (!keepInside.y && (bounds.top + bounds.height) < (crop.top + crop.height))
-			bounds.top = (crop.top + crop.height) - bounds.height;
-		bounds.right = bounds.left + bounds.width;
-		bounds.bottom = bounds.top + bounds.height;
-		this.image.setBounds(bounds);
+	scrollCanvas: function(x, y) {
+		var size = this.canvas.getSize();
+		this.canvas.setScrollOffset(x - size.width / 2, y - size.height / 2);
 	},
 
 	dragStart: function(event, handle) {
@@ -207,85 +181,90 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	drag: function(event) {
+		var min = this.options.min;
+		var handle = this.current.handle;
+
+		var resizing = handle.length <= 2;
 		var xdiff = this.current.x - event.page.x;
 		var ydiff = this.current.y - event.page.y;
 
-		var min = this.options.min;
-		var crop = this.crop;
-		var handle = this.current.handle;
-		var keepInside = {
-			x: this.imageBounds.width < crop.width,
-			y: this.imageBounds.height < crop.height
-		};
-
-		var bounds = {};
-		var dragging = handle.length > 2;
-
-		if (handle.contains('s')) {
-			if (keepInside.y || (crop.bottom - ydiff > this.imageBounds.bottom))
-				ydiff = Math.round(crop.bottom - this.imageBounds.bottom); // box south
-			if (!dragging) {
-				if (crop.height - ydiff < min.height)
-					ydiff = crop.height -  min.height; // size south
-				bounds.height = crop.height - ydiff; // South handles only
-			}
-		}
-
+		var crop = Base.clone(this.crop);
 		if (handle.contains('n')) {
-			if (!keepInside.y && (crop.top - ydiff < this.imageBounds.top))
-				ydiff = crop.top - this.imageBounds.top; //box north
-			if (!dragging) {
-				if (crop.height + ydiff <  min.height)
-					ydiff = min.height - crop.height; // size north
-				bounds.height = crop.height + ydiff; // North handles only
-			}
-			bounds.top = crop.top - ydiff; // both Drag and N handles
+			if (resizing)
+				crop.height += ydiff; // North handles only
+			crop.top -= ydiff; // both drag and north handles
 		}
-
-		if (handle.contains('e')) {
-			if (!keepInside.x && (crop.right - xdiff > this.imageBounds.right))
-				xdiff = Math.round(crop.right - this.imageBounds.right); //box east
-			if (!dragging) {
-				if (crop.width - xdiff <  min.width)
-					xdiff = crop.width -  min.width; // size east
-				bounds.width = crop.width - xdiff;
-			}
+		if (handle.contains('s')) {
+			if (resizing)
+				crop.height -= ydiff; // South handles only
 		}
-
 		if (handle.contains('w')) {
-			if (keepInside.x || (crop.left - xdiff < this.imageBounds.left))
-				xdiff = Math.round(crop.left - this.imageBounds.left); //box west
-			if (!dragging) {
-				if (crop.width + xdiff <  min.width)
-					xdiff =  min.width - crop.width; //size west
-				bounds.width = crop.width + xdiff;
-			}
-			bounds.left = crop.left - xdiff; // both Drag and W handles
+			if (resizing)
+				crop.width += xdiff;
+			crop.left -= xdiff; // both drag and west handles
 		}
-
-		// update current crop
-		var crop = Hash.merge({}, this.crop, bounds);
-		crop.right = crop.left + crop.width;
-		crop.bottom = crop.top + crop.height;
-		this.current.crop = crop;
-
-		this.cropArea.setBounds(bounds);
-		this.updateMasks();
-		this.updateHandles();
+		if (handle.contains('e')) {
+			if (resizing)
+				crop.width -= xdiff;
+		}
+		this.setCrop(crop, resizing);
 		this.fireEvent('move', [this.current.crop, this.getCropInfo()]);
 	},
 
 	dragImage: function(event) {
-		this.imageBounds.left += event.delta.x;
-		this.imageBounds.top += event.delta.y;
-		this.updateImageBounds();
+	},
+
+	setCrop: function(crop, resizing) {
+		crop.right = crop.left + crop.width;
+		crop.bottom = crop.top + crop.height;
+		var min = this.options.min;
+		if (crop.width < min.width) {
+			crop.width = min.width;
+			crop.right = crop.left + min.width;
+		}
+		if (crop.height < min.height) {
+			crop.height = min.height;
+			crop.bottom = crop.top + min.height;
+		}
+		if (crop.left < 0) {
+			crop.left = 0;
+			if (resizing)
+				crop.width = crop.right;
+			else
+				crop.right = crop.width;
+		}
+		if (crop.top < 0) {
+			crop.top = 0;
+			if (resizing)
+				crop.height = crop.bottom;
+			else
+				crop.bottom = crop.height;
+		}
+		if (crop.right >= this.imageBounds.width) {
+			crop.right = this.imageBounds.width;
+			if (resizing)
+				crop.width = crop.right - crop.left;
+			else
+				crop.left = crop.right - crop.width;
+		}
+		if (crop.bottom >= this.imageBounds.height) {
+			crop.bottom = this.imageBounds.height;
+			if (resizing)
+				crop.height = crop.bottom - crop.top;
+			else
+				crop.top = crop.bottom - crop.height;
+		}
+		this.cropArea.setBounds(crop);
+		this.current.crop = crop;
+		this.updateMasks();
+		this.updateHandles();
 	},
 
 	updateMasks: function() {
 		if (!this.options.showMask)
 			return;
-		var size = this.canvas.getSize();
-		var crop = this.current.crop;
+		var crop = this.current.crop || this.crop;
+		var size = this.imageBounds;
 		this.masks.n.setSize(size.width, Math.max(0, crop.top));
 		this.masks.s.setBounds({
 			top: crop.bottom,
@@ -305,7 +284,7 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	updateHandles: function() {
-		var crop = this.current.crop;
+		var crop = this.current.crop || this.crop;
 		var size = Math.ceil(this.options.handleSize / 2);
 		if (this.resize.height) {
 			this.handles.n.setOffset(crop.width / 2 - size, -size);
@@ -332,25 +311,24 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	buildIndicator: function() {
-		var indicator = this.canvas.injectTop('div', {
-			styles: {
-				position: 'absolute', zIndex: 1,
-				padding: '4px', opacity: '.75',
-				background: '#fdf2a4', border: '1px solid #bba82a'
-			},
-			text: '.'
+		var indicator = this.wrapper.injectTop('div', {
+			text: '.',
+			id: 'cropper-indicator',
+			styles: { opacity: '.75' }
 		});
-		var distance = 10, height = indicator.getHeight() + distance;
+		var distance = 10, scrollBarSize = 16;
+		var height = indicator.getHeight() + distance;
 		indicator.setStyle('display', 'none');
 
 		var update = function(crop, info) {
-			indicator.setOffset(crop.left, crop.bottom < this.canvas.getHeight() - this.footer.getHeight() - height
+			indicator.setOffset(crop.left,
+				crop.bottom < this.canvas.getScrollOffset().y + this.canvas.getHeight() - height - scrollBarSize
 					? crop.bottom + distance
 					: crop.top - height)
-				.setText('w: '+ info.width + ' h: ' + info.height + ' x: ' + info.x + ' y: ' + info.y);
+				.setText('w:\xa0' + info.width + '\xa0h:\xa0' + info.height + '\xa0x:\xa0' + info.x + '\xa0y:\xa0' + info.y);
 		}.bind(this);
 
-		 // when dragging/resizing begins show indicator
+		 // When dragging/resizing begins show indicator
 		 this.addEvents({
 			start: function(crop, info, handle) {
 				indicator.setStyle('display', 'block');
@@ -412,15 +390,9 @@ Cropper = Base.extend(Chain, Callback, {
 
 	buildOverlay: function() {
 		var opts = this.options;
-		this.wrapper = this.image.injectBefore('div', {
-			styles: {
-				position: 'absolute',
-				width: '100%', height: '100%',
-				overflow: 'hidden'
-			},
-			id: 'wrapper'
+		this.wrapper = this.image.wrap('div', {
+			styles: { position: 'absolute' }
 		});
-		this.wrapper.injectInside(this.image);
 
 		var events = {
 			dragstart: this.dragStart.bind(this),
@@ -495,24 +467,19 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	getCropInfo: function() {
-		var crop = this.current.crop, bounds = this.imageBounds;
+		var crop = this.current.crop;
 		return {
-			width: crop.width,
-			height: crop.height,
-			x: Math.round(crop.left - bounds.left),
-			y: Math.round(crop.top - bounds.top),
-			imageWidth:  Math.round(bounds.width),
-			imageHeight: Math.round(bounds.height),
+			width: Math.round(crop.width),
+			height: Math.round(crop.height),
+			x: Math.round(crop.left),
+			y: Math.round(crop.top),
+			imageWidth:  Math.round(this.imageBounds.width),
+			imageHeight: Math.round(this.imageBounds.height),
 			imageScale: this.image.scale
 		}
 	},
 
 	getPreset: function() {
 		return this.presets && this.options.presets[this.presets.getValue()];
-	},
-
-	removeOverlay: function() {
-		this.wrapper.remove();
-		this.image.setStyle({ display: 'block' });
 	}
 });
