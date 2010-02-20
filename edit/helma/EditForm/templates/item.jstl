@@ -8,7 +8,7 @@
 <% begin prefix='class="' suffix='"' %>
 <%= 'edit-scale' if=param.scaleToFit -%>
 <%= param.className prefix=<%= ' ' if=param.scaleToFit %> -%>
-<% end %>
+<% end %>>
 <%= param.content -%>
 </td>
 
