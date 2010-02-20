@@ -1009,13 +1009,10 @@ DomNode = Base.extend(new function() {
 		(src._properties || []).each(function(name) {
 			var part = name.capitalize();
 			src['get' + part] = function() {
-				return this.$[name];
+				return this.getProperty(name);
 			}
 			src['set' + part] = function(value) {
-				if (value == null && typeof this.$[name] == 'string')
-					value = '';
-				this.$[name] = value;
-				return this;
+				return this.setProperty(name, value);
 			}
 		});
 		delete src._methods;
@@ -1195,6 +1192,7 @@ DomNode.inject(new function() {
 	}
 
 	var fields = {
+		_properties: ['text'],
 
 		set: function(name, value) {
 			switch (Base.type(name)) {
@@ -1364,14 +1362,6 @@ DomNode.inject(new function() {
 
 		removeProperties: function() {
 			return Base.each(arguments, this.removeProperty, this);
-		},
-
-		getText: function() {
-			return this.getProperty('text');
-		},
-
-		setText: function(text) {
-			return this.setProperty('text', text);
 		}
 	};
 
@@ -1484,13 +1474,10 @@ DomElement.inject(new function() {
 	}
 
 	return {
+		_properties: ['id'],
 
 		getTag: function() {
 			return (this.$.tagName || '').toLowerCase();
-		},
-
-		getId: function() {
-			return this.$.id;
 		},
 
 		getPrevious: function(match) {
@@ -2620,6 +2607,7 @@ HtmlElement = DomElement.extend({
 });
 
 HtmlElement.inject({
+	_properties: ['html'],
 
 	getClass: function() {
 		return this.$.className;
@@ -2650,14 +2638,6 @@ HtmlElement.inject({
 
 	hasClass: function(name) {
 		return this.$.className.contains(name, ' ');
-	},
-
-	getHtml: function() {
-		return this.getProperty('html');
-	},
-
-	setHtml: function(html) {
-		return this.setProperty('html', html);
 	}
 });
 
