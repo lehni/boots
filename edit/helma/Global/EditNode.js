@@ -4,23 +4,23 @@ EditNode = Base.extend({
 		var parts = fullId.split('-');
 		if (!object) {
 			var prototype = parts[0], id = parts[1];
+			object = HopObject.get(id, prototype);
 			// If we're asked to produce a transient object that has gone in 
 			// the meantime as the editData cache was lost, just reproduce a new
 			// object that will be stored in the nodes cache under the
 			// transient id of the old one.
-			if (id[0] == 't') {
+			if (!object && id[0] == 't') {
 				User.log('WARNING: Lost transient object, producing new one ('
 						+ prototype + ', ' + id + ')');
 				object = new global[prototype]();
 				// Pass previously associated id, so this object's node can
 				// still be found in EditNode.get. See HopObject#getFullId
 				object.setCreating(true, id);
-			} else {
-				object = HopObject.get(id, prototype);
 			}
 		}
 		this.object = object;
 		this.id = fullId;
+		// TODO: Is this still in use?
 		this.group = parts[2];
 		// Nodes are by default invisible, and get visible only when they are rendered.
 		this.visible = false;
@@ -39,6 +39,8 @@ EditNode = Base.extend({
 		var data = EditNode.getEditData();
 		if (!this.form || force || this.form.dontCache
 				|| this.form.version != data.version) {
+			User.log('Getting New Form for object', this.object.getFullId(),
+				'Version', data.version, this.form && this.form.version);
 			try {
 				if (!this.object.getEditForm)
 					throw "The prototype '" + this.object._prototype
@@ -129,8 +131,10 @@ EditNode = Base.extend({
 					fullId = fullIdOrObject;
 				}
 				node = data.nodes[fullId];
-				if (!cached && !node)
+				if (!cached && !node) {
+					User.log('Creating new EditNode for', fullId, parentItem);
 					node = data.nodes[fullId] = new EditNode(fullId, object);
+				}
 				// Update parent.
 				// It might be requried in getEditForm(), e.g. getEditParent()
 				if (node && parentItem) {
@@ -186,10 +190,24 @@ EditNode = Base.extend({
 				// Synchronize the local node cache with the client sided
 				// version.
 				// Filter out nodes that do not have a listing in nodes
+				/*
+				// TODO: This filtering causes problems with EditNodes that
+				// only exist on the server side, e.g. with EditableListItems
+				// These nodes are never sent to the client, therefore also
+				// cannot be restored from there. Right now they are only
+				// required for minor things such as CropPicture editing,
+				// so in case of a restart this would break for newly added 
+				// temporary items, which is not too bad. But are there any risks
+				// involved with deactivating this filtering?
+				// If this is a problem, we need to introduce a way how to
+				// send editData to the client for such invisible nodes too,
+				// along with the data for visible ones, as these are children.
+				// Shouldn't be too hard.
 				editData.nodes = editData.nodes.each(function(val, fullId) {
 					if (clientData.nodes[fullId])
 						this[fullId] = val;
 				}, {});
+				*/
 				// Now make sure all client nodes exist, and create if necessary
 				clientData.nodes.each(function(clientNode, fullId) {
 					// Get the parentItem from the client's parent description

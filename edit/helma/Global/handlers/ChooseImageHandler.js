@@ -10,11 +10,11 @@ ChooseImageHandler = EditHandler.extend({
 			var resource = resources[i];
 			if (resource && resource.instanceOf(Picture)) {
 				res.write('<li class="edit-choose-image">');
-				res.write('<a href="javascript:'
+				res.write('<a href="#" onclick="'
 					+ form.renderHandle(this.mode + '_select', item.getEditParam({
 						image_name: resource.name,
 						image_id: resource.getFullId()
-					})) + '">'
+					})) + '; return false;">'
 					+ resource.renderImage({ maxWidth: 30, maxHeight: 50 })
 					+ '<span>' + EditForm.getEditName(resource) + '</span></a></li>');
 			}

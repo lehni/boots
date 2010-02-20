@@ -1026,10 +1026,10 @@ EditForm.register(new function() {
 	var field = null;
 	var json = false;
 
-	function choose(form, name, action, param) {
+	function choose(form, element, name, action, param) {
 		if (!chooser)
 			chooser = new ImageChooser();
-		chooser.choose(form, name, action, param);
+		chooser.choose(form, element, name, action, param);
 	}
 
 	return {
@@ -1038,7 +1038,7 @@ EditForm.register(new function() {
 			var tag = this.getSelectedTag(field, 'image');
 			if (tag)
 				field.setSelection(tag);
-			choose(this, name + '_image', 'choose_image', param);
+			choose(this, element, name + '_image', 'choose_image', param);
 		},
 
 		choose_image_select: function(element, param) {
@@ -1069,10 +1069,19 @@ EditForm.register(new function() {
 					param.crop_tag = tag.tag;
 				}
 			}
-			choose(this, name + '_crop', 'choose_crop', param);
+			choose(this, element, name + '_crop', 'choose_crop', param);
 		},
 
 		choose_crop_select: function(element, param) {
+			// TODO: choose_crop_select is sometimes called from ImageChooser 
+			// (mostly). Check if it is, and fetch the original element from
+			// there, as we might use it for crop_preview (where image ids)
+			// do not work... TODO: Fix this on server and decide whether
+			// element should be used like this or not. Stop passing it to
+			// ImageChooser.choose if not needed.
+			var chooser = EditChooser.getChooser(element);
+			if (chooser)
+				element = chooser.target;
 			var win = new Window({
 				name: param.image_name,
 				url: this.getUrl('crop', param),
@@ -1088,8 +1097,15 @@ EditForm.register(new function() {
 					param.image_crop = crop;
 					this.load('crop_preview', param, function(result) {
 						var image =  element.getParent('.edit-item').getElement('.edit-crop-preview img');
-						if (image)
-							image.replaceWith(result.html);
+						if (image) {
+							var id = image.getId();
+							image = image.replaceWith(result.html);
+							// TODO: We need to set id correctly, as the server
+							// side looses the EditableListItem's variablePrefix
+							// since this information is not cached on client/server.
+							// TODO: Fix this!
+							image.setId(id);
+						}
 					});
 				} else {
 					// TODO: Find a way to produce this through EditSettings too, maybe
@@ -1386,7 +1402,8 @@ EditChooser = Base.extend({
 		},
 
 		getChooser: function(element) {
-			return $(element).getParent('.edit-chooser').chooser;
+			var chooser = $(element).getParent('.edit-chooser');
+			return chooser ? chooser.chooser : null;
 		}
 	}
 });
@@ -1481,8 +1498,9 @@ ImageChooser = EditChooser.extend({
 		this.base({ padding: 4, className: 'edit-simple-chooser edit-image-chooser' });
 	},
 
-	choose: function(editForm, name, action, param) {
+	choose: function(editForm, target, name, action, param) {
 		this.editForm = editForm;
+		this.target = target;
 		this.base(editForm, name);
 		this.show(false);
 		editForm.load(action, param,
@@ -1491,7 +1509,7 @@ ImageChooser = EditChooser.extend({
 					this.content.setHtml(result.html);
 					this.show(true);
 				} else if (result.image_crop) {
-					editForm.handle('choose_crop_select', null, result);
+					editForm.handle('choose_crop_select', element, result);
 				}
 			}.bind(this)
 		);
