@@ -189,8 +189,10 @@ Resource.inject({
 	},
 
 	/**
-	 * The default render function, called from render_macro, to be overridden
-	 * by apps.
+	 * The default render function that renders the resource in its appropriate
+	 * way. Each resource defines its own, usually refering to a one that is
+	 * more explicitely named. This can be used to overrided per prototype
+	 * behavior for resource rendering.
 	 */
 	render: function(param, out) {
 		return this.renderIcon(param, out);

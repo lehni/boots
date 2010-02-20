@@ -123,7 +123,6 @@ Picture.inject({
 						y += (height - cropHeight) *
 							(crop.valign == 'middle' ? 0.5 : crop.valign == 'bottom' ? 1 : 0);
 					}
-					User.log('Log', x, y, cropWidth, cropHeight, image.width, image.height);
 					image.crop(x, y, cropWidth, cropHeight);
 					width = image.width;
 					height = image.height;
