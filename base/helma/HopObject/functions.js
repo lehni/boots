@@ -163,8 +163,14 @@ HopObject.inject({
 			var obj = root;
 			for (var i = 0, l = path.length; i < l && obj != null; i++) {
 				var name = path[i];
-				if (name)
-					obj = obj.getChildElement(name);
+				if (name) {
+					var next = obj.getChildElement(name);
+					// If next is null, only set obj to null if it is not the
+					// last one or not matching the action on the last object
+					// with the same name.
+					if (next || i < l - 1 || !obj[name + '_action'])
+						obj = next;
+				}
 			}
 			return obj;
 		}
