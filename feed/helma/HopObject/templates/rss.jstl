@@ -17,7 +17,7 @@
 			<guid isPermaLink="true"><%= $link %></guid>
 			<pubDate><%= $item.modificationDate | format "EEE, dd MMM yyyy HH:mm:ss ZZZZ" "US" %></pubDate>
 			<dc:creator><%= $item.renderUser() %></dc:creator>
-			<description><% $item.template 'feed' param=param encoding="xml" %></description>
+			<description><% $item.template 'feed' param=param encoding='xml' %></description>
 		</item>
 	<% end %>
 <% end %>

@@ -1,4 +1,4 @@
-<%= this.text | markup parma=param encoding='entities' | lists | paragraphs %>
+<%= this.text | markup param=param encoding='entities' | lists | paragraphs %>
 <% foreach ($resource in this.resources) prefix='<p>' suffix='</p>' %>
 	<% $resource.render param=param %>
 <% end %>
