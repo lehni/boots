@@ -109,7 +109,7 @@ EditableListItem = ListItem.extend({
 			name: name,
 			addEntries: this.addEntries,
 			addHandler: this.addEntries && this.getAddPrototypeButton(baseForm, name, {
-				width: param.calculatedWidth
+				width: width
 			}).onClick,
 			chooser: this.chooser, // needs to come after getAddPrototypeButton!
 			entries: entries.join(''),
