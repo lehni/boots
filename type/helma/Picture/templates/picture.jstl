@@ -1,0 +1,1 @@
+<a href="javascript:window.close()"><%= param.picture %></a>

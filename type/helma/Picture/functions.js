@@ -250,10 +250,10 @@ Picture.inject({
 	},
 
 	getScaledSize: function(param) {
-		var scale = Math.min(
+		var scale = Math.min(Math.min(
 			param.maxWidth / this.width,
 			param.maxHeight / this.height
-		);
+		), 1);
 		return {
 			width: Math.round(this.width * scale),
 			height: Math.round(this.height * scale)
