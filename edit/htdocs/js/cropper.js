@@ -36,6 +36,8 @@ Cropper = Base.extend(Chain, Callback, {
 
 	initialize: function(options) {
 		this.setOptions(options);
+		this.min = this.options.min;
+		this.resize = this.options.resize;
 
 		this.cropper = $('#cropper');
 		this.canvas = $('cropper-canvas', this.cropper);
@@ -56,7 +58,7 @@ Cropper = Base.extend(Chain, Callback, {
 			onLoad: function() {
 				$('#cropper-loader', this.cropper).setStyle('display', 'none');
 				this.image.setStyle('display', 'block');
-				this.setup();
+				this.setup(true);
 			}.bind(this)
 		});
 
@@ -65,45 +67,47 @@ Cropper = Base.extend(Chain, Callback, {
 		}.bind(this));
 	},
 
-	setupImage: function() {
-		var size = this.image.size;
+	setup: function(scroll) {
+		if (this.resize === true)
+			this.resize = { width: true, height: true };
+		var size = this.image.size, scaled = this.image.scaled;
 		if (!size)
 			size = this.image.size = this.image.getSize();
-		this.image.scaled = this.image.getSize();
-		var crop = this.options.crop;
-		this.setZoom(crop && (crop.imageScale 
-			|| crop.imageWidth && crop.imageWidth / size.width
-			|| crop.imageHeight && crop.imageHeight / size.height)
-			|| this.image.scale || 1);
-		this.scrollTo(
-			crop && (crop.x + crop.width / 2) || size.width / 2,
-			crop && (crop.y + crop.height / 2) || size.height / 2);
-	},
-
-	setup: function() {
-		this.resize = this.options.resize === true
-			? { width: true, height: true } : this.options.resize;
-
-		var crop = this.options.crop;
-		this.crop = crop || this.options.min; // Needed in setupImage / setZoom
-		this.setupImage();
-		this.setupHandles();
-
-		if (crop) {
-			crop = {
-				left: crop.x, top: crop.y,
-				width: crop.width, height: crop.height
-			};
-		} else {
-			// Center the minimum crop size the image
-			var min = this.options.min, scaled = this.image.scaled;
-			crop = {
-				left: (scaled.width - min.width) / 2,
-				top: (scaled.height - min.height) / 2,
-				width: min.width, height: min.height
-			};
+		if (!scaled)
+			scaled = this.image.scaled = size;
+		var crop = this.crop, scale = 1;
+		if (!crop) {
+			var crop = this.options.crop;
+			if (crop) {
+				scale = crop.imageScale 
+					|| crop.imageWidth && crop.imageWidth / size.width
+					|| crop.imageHeight && crop.imageHeight / size.height;
+				crop = {
+					left: Base.pick(crop.x, crop.left),
+					top: Base.pick(crop.y, crop.top),
+					width: crop.width, height: crop.height
+				};
+			} else {
+				// Center the minimum crop size the image
+				crop = {
+					left: (scaled.width - this.min.width) / 2,
+					top: (scaled.height - this.min.height) / 2,
+					width: this.min.width, height: this.min.height
+				};
+			}
 		}
+		if (!this.resize.width && crop.width > this.min.width)
+			crop.width = this.min.width;
+		if (!this.resize.height && crop.height > this.min.height)
+			crop.height = this.min.height;
+		this.crop = crop; // Needed by setZoom
+		this.setupHandles();
+		this.setZoom(scale);
 		this.crop = this.setCrop(crop);
+		if (scroll)
+			this.scrollTo(
+				this.crop.left + this.crop.width / 2,
+				this.crop.top + this.crop.height / 2);
 	},
 
 	buildZoom: function() {
@@ -178,7 +182,6 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	drag: function(event) {
-		var min = this.options.min;
 		var handle = this.current.handle;
 
 		var resizing = handle.length <= 2;
@@ -214,20 +217,19 @@ Cropper = Base.extend(Chain, Callback, {
 	setCrop: function(crop, handle) {
 		crop.right = crop.left + crop.width;
 		crop.bottom = crop.top + crop.height;
-		var min = this.options.min;
-		if (crop.width < min.width) {
-			crop.width = min.width;
+		if (crop.width < this.min.width) {
+			crop.width = this.min.width;
 			if (handle && handle.contains('w'))
-				crop.left = crop.right - min.width;
+				crop.left = crop.right - this.min.width;
 			else
-				crop.right = crop.left + min.width;
+				crop.right = crop.left + this.min.width;
 		}
-		if (crop.height < min.height) {
-			crop.height = min.height;
+		if (crop.height < this.min.height) {
+			crop.height = this.min.height;
 			if (handle && handle.contains('n'))
-				crop.top = crop.bottom - min.height;
+				crop.top = crop.bottom - this.min.height;
 			else
-				crop.bottom = crop.top + min.height;
+				crop.bottom = crop.top + this.min.height;
 		}
 		var resizing = handle && handle.length <= 2;
 		if (crop.left < 0) {
@@ -375,9 +377,15 @@ Cropper = Base.extend(Chain, Callback, {
 					change: function() {
 						var preset = this.getPreset();
 						if (preset) {
-							if (preset.resize)
-								this.options.resize = preset.resize;
-							this.options.min = preset;
+							if (preset.resize) {
+								this.resize = preset.resize;
+							} else {
+								this.resize = {
+									width: preset.width === undefined,
+									height: preset.height === undefined
+								};
+							}
+							this.min = preset;
 							this.setup();
 						}
 					}.bind(this)
@@ -386,9 +394,9 @@ Cropper = Base.extend(Chain, Callback, {
 			this.presets.injectBottom('option', { text: 'Presets', value: '' });
 			this.options.presets.each(function(preset, i) {
 				this.presets.injectBottom('option', {
-					text: preset.name,
+					text: preset && preset.name,
 					value: i,
-					selected: !!preset.selected
+					selected: preset && !!preset.selected
 				});
 			}, this);
 		}

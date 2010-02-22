@@ -6,7 +6,7 @@ CropPicture.inject({
 		param.hasDimensions = false;
 		param.caption = false;
 		var form = this.base(param);
-		form.add({
+		form.add(form.createItem(param.crop, {
 			label: 'Crop', name: 'crop', type: 'crop', title: 'Choose',
 			json: true, value: this.crop, preview: true,
 			resources: this.getEditParent().resources,
@@ -17,7 +17,7 @@ CropPicture.inject({
 					this.height = crop.height;
 				}
 			}
-		});
+		}));
 		return form;
 	},
 
