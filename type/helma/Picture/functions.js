@@ -1,4 +1,6 @@
 Picture.inject({
+	MAX_POPUP_SIZE: { maxWidth: 1000, maxHeight: 700 },
+
 	getEditForm: function(param) {
 		if (param.name === undefined)
 			param.name = false;
@@ -32,11 +34,8 @@ Picture.inject({
 			// Only set the popup if this is actually linking to the image.
 			// if href or object is set, the image is probably taking us to 
 			// another page, so don't popup!
-			param.popup = {
-				name: this.name,
-				width: this.width,
-				height: this.height
-			};
+			param.popup = this.getScaledSize(this.MAX_POPUP_SIZE);
+			param.popup.name = this.name.urlize();
 		}
 	 	return this.base(param, out);
 	},
@@ -256,8 +255,8 @@ Picture.inject({
 			param.maxHeight / this.height
 		);
 		return {
-			width: this.width * scale,
-			height: this.height * scale
+			width: Math.round(this.width * scale),
+			height: Math.round(this.height * scale)
 		};
 	},
 

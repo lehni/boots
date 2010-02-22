@@ -1,9 +1,9 @@
 function main_action() {
 	if (/\/$/.test(req.path)) { // Path ends with / -> we're in a popup
 		this.renderPopup({
-			content: '<a href="javascript:window.close()"><img src="' +
-				this.getUri() + '" width="' + this.width + ' height="' +
-				this.height + '" border="0" alt="0"></a>'
+			content: this.renderTemplate('picture', {
+				picture: this.renderImage(this.MAX_POPUP_SIZE)
+			})
 		}, res);
 	} else { // Just the file
 		// Make sure it's a valid thumbnail id:
