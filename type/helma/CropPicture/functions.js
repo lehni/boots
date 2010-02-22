@@ -4,9 +4,8 @@ CropPicture.inject({
 	getEditForm: function(param) {
 		param.file = false;
 		param.hasDimensions = false;
-		param.caption = false;
 		var form = this.base(param);
-		form.add(form.createItem(param.crop, {
+		form.insertAt(0, form.createItem(param.crop, {
 			label: 'Crop', name: 'crop', type: 'crop', title: 'Choose',
 			json: true, value: this.crop, preview: true,
 			resources: this.getEditParent().resources,
