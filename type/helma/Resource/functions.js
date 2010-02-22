@@ -25,7 +25,8 @@ Resource.inject({
 				})
 			}, true),
 			form.createItem(param.caption, {
-				name: 'caption', type: 'string', label: 'Caption'
+				name: 'caption', type: 'text', label: 'Caption',
+				cols: 40, rows: 2
 			}, false)
 		);
 		return form;
