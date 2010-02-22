@@ -15,7 +15,7 @@ Post.inject({
 	getEditForm: function(param) {
 		var node = this.getNode();
 		var form = new EditForm(this, {
-			previewable: false, removable: true, showTitle: false,
+			previewable: param.previewable, removable: true, showTitle: false,
 			titles: { create: 'Post' }, width: param.width
 		});
 
