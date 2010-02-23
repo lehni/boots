@@ -131,7 +131,6 @@ EditForm.inject({
 		var str = Json.encode(args, true);
 		// Remove [] from string:
 		str = str.substring(1, str.length - 1);
-		str = encodeAttribute(str);
 		// Pass the element on which this handler is called and the form id to each call.
 		// Sequence: form, action, elment
 		str = "'" + this.id + "','"  + action + "',this" + (str ? ',' + str : '');
