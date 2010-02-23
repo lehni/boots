@@ -81,8 +81,7 @@ function renderLink(param, out) {
 			param.attributes.target = '_blank';
 	}
 
-	// Use single quotes for confirm, since it will be inside double quotes
-	var confirm = param.confirm && 'confirm(' + Json.encode(param.confirm, true) + ')';
+	var confirm = param.confirm && 'confirm(' + Json.encode(param.confirm) + ')';
 
 	// Handle onClick
 	var onClick = param.onClick;
@@ -98,7 +97,7 @@ function renderLink(param, out) {
 			url = '#';
 		} else if (param.popup) {
 			onClick = 'new Window(' 
-					+ Json.encode(Hash.merge({ url: url }, param.popup), true) + ');';
+					+ Json.encode(Hash.merge({ url: url }, param.popup)) + ');';
 			url = '#';
 		}
 	}

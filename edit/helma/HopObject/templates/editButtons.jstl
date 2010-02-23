@@ -13,9 +13,9 @@
 
 <% #onclick -%>
 <% if (param.popup) %>
-EditForm.open('<%= param.url %>', <% json singleQuotes="true" include="mode,id,confirm,style,class,edit_item,edit_prototype,edit_back,width,height" param %>);<%-%>
+EditForm.open('<%= param.url %>', <% json properties='mode,id,confirm,style,class,edit_item,edit_prototype,edit_back,width,height' encoding='entities' param %>);<%-%>
 <% else %>
-EditForm.inline('<%= param.url %>', <% json singleQuotes="true" include="mode,id,target,confirm,style,class,edit_item,edit_prototype,edit_back,scroll" param %>);<%-%>
+EditForm.inline('<%= param.url %>', <% json properties='mode,id,target,confirm,style,class,edit_item,edit_prototype,edit_back,scroll' encoding='entities' param %>);<%-%>
 <% end %>
 
 <% #button -%>

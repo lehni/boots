@@ -39,18 +39,7 @@ function stylesheet_macro(param, href) {
 }
 
 function json_macro(param, object) {
-	// If param.include is defined, only include the keys defined in that
-	// coma seperated string:
-	if (param.include) {
-		var include = param.include.split(',').each(function(val) {
-			this[val] = true;
-		}, {});
-		object = object.each(function(val, key) {
-			if (include[key] && val !== undefined)
-				this[key] = val;
-		}, {});
-	}
-	return Json.encode(object, param.singleQuotes == 'true');
+	return Json.encode(object, param.properties && param.properties.split(','));
 }
 
 function link_macro(param) {	
