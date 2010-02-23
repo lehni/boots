@@ -869,11 +869,11 @@ Json = function() {
 						}
 					}) + '}';
 				case 'function':
-					return null;
+					return undefined;
 				default:
 					return obj + '';
 			}
-			return null;
+			return undefined;
 		},
 
 		decode: function(str, secure) {
