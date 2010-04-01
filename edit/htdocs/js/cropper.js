@@ -13,7 +13,7 @@
 Cropper = Base.extend(Chain, Callback, {
 	current: {},
 	options: {
-		min: { width: 50, height: 50 },
+		min: { width: 0, height: 0 },
 		cropperSize: { width: 500, height: 500 },
 		resize: true, // boolean or { width: boolean, height: boolean }
 		showMask: true, // false to remove, helps on slow machines
