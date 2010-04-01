@@ -476,30 +476,38 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * This methods reads all the lines contained in the 
-		 * file and returns them.
+		 * Reads all the lines contained in the 
+		 * file and returns them in an array.
+		 * 
+		 * @return Array of all the lines in the file
+		 * @type String
+		 */
+		readLines: function() {
+			if (!this._file.isFile())
+				throw new Error("File does not exist or is not a regular file");
+			var reader = new java.io.BufferedReader(new java.io.FileReader(this._file));
+			// Read content line by line to setup proper eol
+			var lines = [];
+			while (true) {
+				var line = reader.readLine();
+				if (line == null)
+					break;
+				lines.push(line);
+			}
+			// Close the file
+			reader.close();
+			return lines;
+		},
+
+		/**
+		 * Reads all the lines contained in the 
+		 * file and returns them as one string.
 		 * 
 		 * @return String of all the lines in the file
 		 * @type String
 		 */
 		readAll: function() {
-			if (!this._file.isFile())
-				throw new Error("File does not exist or is not a regular file");
-			var reader = new java.io.BufferedReader(new java.io.FileReader(this._file));
-			// Read content line by line to setup proper eol
-			var buffer = new java.lang.StringBuffer(this._file.length() * 1.1);
-			var lineBreak = java.lang.System.getProperty('line.separator');
-			while (true) {
-				var line = reader.readLine();
-				if (line == null)
-					break;
-				if (buffer.length() > 0)
-					buffer.append(lineBreak);
-				buffer.append(line);
-			}
-			// Close the file
-			reader.close();
-			return buffer.toString();
+			return this.readLines().join(java.lang.System.getProperty('line.separator'));
 		},
 
 		/**
