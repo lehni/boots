@@ -25,7 +25,7 @@ EditHandler = Base.extend(new function() {
 					var values = [];
 					for (var i in req.data)
 						if (!/^(http_host|HopSession|http_language|http_remotehost|autoLogin|http_browser|http_referer)$/.test(i))
-							values.push(i + ': ' + Json.encode(req.data[i]).truncate(100, '...'));
+							values.push(i + ': ' + Json.encode(req.data[i]));
 					User.log('Edit Data:\n' + values.join('\n'));
 				}
 				var handler = handlers[mode];
