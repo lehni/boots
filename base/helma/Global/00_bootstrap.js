@@ -843,7 +843,7 @@ Json = function() {
 	var special = { '\b': '\\b', '\t': '\\t', '\n': '\\n', '\f': '\\f', '\r': '\\r', '"' : '\\"', "'" : "\\'", '\\': '\\\\' };
 	return {
 		encode: function(obj, properties) {
-			if (JSON)
+			if (JSON && Base.type(obj) != 'java')
 				return JSON.stringify(obj, properties);
 			if (Base.type(properties) == 'array') {
 				properties = properties.each(function(val) {
