@@ -21,7 +21,6 @@ ObjectWrapper = Base.extend(new function() {
 			this.param = param;
 			this.dontUnwrap = dontUnwrap;
 			this.javaObj = toJava(object, false);
-			this.hash = this.javaObj.hashCode();
 		},
 
 		getClassName: function() {
@@ -79,7 +78,6 @@ ObjectWrapper = Base.extend(new function() {
 			// values again, in order to detect modifications on any level down the
 			// hierarchy.
 			wrap: synchronize(function(obj, param, dontUnwrap) {
-				// Packages.helma.scripting.rhino.wrapper.ObjectWrapper.wrap(obj, null);
 				if (obj === null) {
 					return null;
 				} else if (obj === undefined || obj === NOT_FOUND) {
@@ -89,12 +87,13 @@ ObjectWrapper = Base.extend(new function() {
 				 	return NOT_FOUND;
 				}
 				var type = typeof obj;
-				var isXml = type == 'xml';
-				if (isXml || type == 'object'
+				if (type == 'xml') {
+					return new JavaAdapter(XMLObject, Wrapper,
+						new XMLObjectWrapper(obj, param, dontUnwrap));
+				} else if (type == 'object'
 						&& !(obj instanceof String || obj instanceof Number)) {
-					return isXml
-						? new JavaAdapter(XMLObject, Wrapper, new XMLObjectWrapper(obj, param, dontUnwrap))
-						: new JavaAdapter(ScriptableObject, Wrapper, new ScriptableObjectWrapper(obj, param, dontUnwrap));
+					return new JavaAdapter(ScriptableObject, Wrapper,
+						new ScriptableObjectWrapper(obj, param, dontUnwrap));
 				} else {
 					// Basic types, no wrapping needed to detect change
 					return obj;
