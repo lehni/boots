@@ -1,7 +1,6 @@
 CropTag = ResourceTag.extend({
 	_tags: 'crop,cropimage',
-	_attributes: 'resource',
-	// attributes: resource imagewidth imageheight y top width height halign valign
+	_attributes: 'resource imageWidth imageHeight x y width height halign valign',
 
 	render: function(content, param) {
 		var attributes = this.attributes;
