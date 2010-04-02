@@ -10,11 +10,12 @@ ChooseImageHandler = EditHandler.extend({
 			var resource = resources[i];
 			if (resource && resource.instanceOf(Picture)) {
 				res.write('<li class="edit-choose-image">');
+				// TODO: Use renderLink instead of hardcoded href / return false;
 				res.write('<a href="#" onclick="'
-					+ form.renderHandle(this.mode + '_select', item.getEditParam({
+					+ encodeEntities(form.renderHandle(this.mode + '_select', item.getEditParam({
 						image_name: resource.name,
 						image_id: resource.getFullId()
-					})) + '; return false;">'
+					}))) + '; return false;">'
 					+ resource.renderImage({ maxWidth: 30, maxHeight: 50 })
 					+ '<span>' + EditForm.getEditName(resource) + '</span></a></li>');
 			}

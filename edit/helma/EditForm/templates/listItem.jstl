@@ -25,18 +25,18 @@
 <div class="edit-list-entry-background">
 <div class="edit-list-buttons">
 <% if (param.sortable) %>
-<a id="edit-list-handle-<%= param.id %>" class="edit-list-handle" href="#" onclick="return false" onmousedown="<% this.handle "list_sort" <%= param.name %> <%= param.id %> %>"></a><%-%>
+<a id="edit-list-handle-<%= param.id %>" class="edit-list-handle" href="#" onclick="return false" onmousedown="<% this.handle "list_sort" <%= param.name %> <%= param.id %> encoding='entities' %>"></a><%-%>
 <% end %>
 <% if (param.create) %>
 <% input type="hidden" name=<%= param.id + '_proto' %> value=param.proto -%>
 <% end %>
 <% if (param.hide != null) %>
-<a id="edit-list-hide-<%= param.id %>" class="edit-list-button edit-list-hide" href="#" onclick="<% this.handle "list_hide" <%= param.name %> <%= param.id %> %> return false;"><%-%>
+<a id="edit-list-hide-<%= param.id %>" class="edit-list-button edit-list-hide" href="#" onclick="<% this.handle "list_hide" <%= param.name %> <%= param.id %> encoding='entities' %> return false;"><%-%>
 <% input type="hidden" name=<%= param.id + '_hide' %> value=param.hide -%>
 <div class="overlay<%= ' hidden' if=<%= param.hide == 0 %>%>"></div>
 </a><%-%>
 <% end %>
-<a id="edit-list-remove-<%= param.id %>" class="edit-list-button edit-list-remove" href="#" onclick="<% this.handle "list_remove" <%= param.name %> <%= param.id %> %> return false;"><%-%>
+<a id="edit-list-remove-<%= param.id %>" class="edit-list-button edit-list-remove" href="#" onclick="<% this.handle "list_remove" <%= param.name %> <%= param.id %> encoding='entities' %> return false;"><%-%>
 <% input type="hidden" name=<%= param.id + '_remove' %> value=0 -%>
 <div class="overlay hidden"></div>
 </a><%-%>
