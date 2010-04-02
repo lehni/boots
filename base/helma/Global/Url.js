@@ -21,11 +21,21 @@ Url = new function() {
 			}
 		},
 
+		hasProtocol: function(url) {
+			return /^\w+:\/\//.test(url);
+		},
+
+		addProtocol: function(url) {
+			return Url.hasProtocol(url) ? url : 'http://' + url;
+		},
+
 		/**
-		 * Returns true if the url is remote, meaning it starts with a protocol.
+		 * Returns true if the url is remote, meaning it either starts with a
+		 * protocol or with www. use hasProtocol to check wether a remote url
+		 * provides a protocol, and add one if it does not.
 		 */
 		isRemote: function(url) {
-			return /^\w+:\/\//.test(url);
+			return Url.hasProtocol(url) || /^www\./.test(url);
 		},
 
 		/**
@@ -37,18 +47,11 @@ Url = new function() {
 		},
 
 		/**
-		 * Returns true when the url is relative, meaning it starts with a word which
-		 * is not describing a protocol.
+		 * Returns true when the url is a relative local path, false othrwise.
+		 * This is the case when it is not absolute and not remote.
 		 */
 		isRelative: function(url) {
-			return /^\w+(?!\w*\:\/\/)/.test(url);
-		},
-
-		/**
-		 * Returns true when the url is a absolute or relative local url.
-		 */
-		isLocal: function(url) {
-			return Url.isAbsolute(url) || Url.isRelative(url);
+			return /^\w/.test(url) && !Url.isRemote(url);
 		},
 
 		getStaticFile: function(url) {
