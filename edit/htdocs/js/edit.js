@@ -72,7 +72,8 @@ EditForm = Base.extend({
 		// won't work...
 		fields.each(function(field) {
 			function width(val) {
-				return field.getStyle('border-' + val + '-width').toInt() + field.getStyle('padding-' + val).toInt();
+				return field.getStyle('border-' + val + '-width').toInt()
+						+ field.getStyle('padding-' + val).toInt();
 			}
 			var width = field.getWidth() - 2 * (width('left') + width('right')) + 'px';
 			field.setStyles({
@@ -106,7 +107,8 @@ EditForm = Base.extend({
 			this.url = this.form.getAction();
 			var tab = $('div.tab-pane', this.form);
 			this.tab = tab && tab.tabPane;
-			// Set a reference to the editForm so TabPane can call autoSize if needed (on Lineto)
+			// Set a reference to the editForm so TabPane can call autoSize
+			// if needed (on Lineto)
 			if (this.tab)
 				this.tab.editForm = this;
 
@@ -1007,12 +1009,17 @@ EditForm.register(new function() {
 					var text = prompt('Enter link text (empty = same as URL):',
 						field.getSelectedText());
 					if (text || text == '') {
-						var link = text ? EditSettings.urlLink : EditSettings.unnamedUrlLink;
+						var link;
+						// Handle emails seperately
 						if (/^([a-zA-Z0-9\-\.\_]+)(\@)([a-zA-Z0-9\-\.]+)(\.)([a-zA-Z]{2,4})$/.test(url)) {
-							if (!text) text = 'Email';
 							link = EditSettings.emailLink;
+							if (!text)
+								text = 'Email';
+						} else {
+							link = text ? EditSettings.urlLink : EditSettings.unnamedUrlLink;
+							if (!text)
+								text = url;
 						}
-						if (!text) text = url;
 						field.replaceSelectedText(link.replace('@link', url).replace('@text', text));
 					}
 				}
