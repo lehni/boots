@@ -56,6 +56,8 @@ function renderText_macro(param) {
 		var font = Font.getInstance(param.font);
 		if (font) {
 			font.renderText(param.text, param, res);
+		} else {
+			app.log('Font Missing: ' + param.font);
 		}
 	}
 }
