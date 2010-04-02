@@ -1010,7 +1010,7 @@ EditForm.register(new function() {
 						var link = text ? EditSettings.urlLink : EditSettings.unnamedUrlLink;
 						if (/^([a-zA-Z0-9\-\.\_]+)(\@)([a-zA-Z0-9\-\.]+)(\.)([a-zA-Z]{2,4})$/.test(url)) {
 							if (!text) text = 'Email';
-							link = EditSettings.mailLink;
+							link = EditSettings.emailLink;
 						}
 						if (!text) text = url;
 						field.replaceSelectedText(link.replace('@link', url).replace('@text', text));

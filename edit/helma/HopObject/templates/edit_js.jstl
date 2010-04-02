@@ -1,7 +1,7 @@
 EditSettings = {
 	objectLink: '<node "@link">@text</node>',
 	unnamedObjectLink: '<node @link />',
-	mailLink: '<mail "@link">@text</mail>',
+	emailLink: '<email "@link">@text</email>',
 	urlLink: '<url "@link">@text</url>',
 	unnamedUrlLink: '<url "@link" />',
 	image: '<image "@name" />',

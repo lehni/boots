@@ -1,5 +1,5 @@
-MailTag = MarkupTag.extend({
-	_tags: 'mail',
+EMailTag = MarkupTag.extend({
+	_tags: 'email,mail',
 	_attributes: 'email',
 
 	render: function(content, param, encoder) {
