@@ -39,7 +39,7 @@ Node.inject({
 				prototypes: 'Node',
 				sortable: true, showOptions: true,
 				editable: true, autoRemove: true,
-				movable: false,
+				movable: true,
 				size: 6
 			}, true),
 			form.createItem(param.resources, {
@@ -48,7 +48,7 @@ Node.inject({
 				prototypes: 'Resource,Medium,Picture',
 				sortable: true,	showOptions: true,
 				editable: true, autoRemove: true,
-				movable: false,
+				movable: true,
 				size: 6
 			}, true)
 		);

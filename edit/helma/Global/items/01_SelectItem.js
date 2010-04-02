@@ -71,12 +71,10 @@ SelectItem = ListItem.extend({
 			});
 		}
 		if (this.movable) {
-			var move =  name + '_move';
 			buttons.push({
 				value: 'Move',
-				name: move,
-				onClick: baseForm.renderHandle('select_move', move, selParam,
-					Hash.merge({ edit_prototype: this.destPrototype || '' }, editParam))
+				name: name + '_move',
+				onClick: baseForm.renderHandle('select_move', name, selParam, editParam)
 			});
 		}
 		if (this.prototypes) {

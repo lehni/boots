@@ -372,12 +372,19 @@ EditForm = Base.extend({
 							current = status.current;
 						}
 					});
+					/*
 					this.uploadTimer = (function() {
 						request.send();
 						that.uploadTimer = (function() {
 							request.send();
 						}).periodic(500);
-					}).delay(50);
+					}).delay(500);
+					*/
+					// TODO: Find cause of weird 'overlaying' of handling on server
+					// when the initial delay is set lower, to 50ms. The server
+					// log appears to handle two overlaying requests in the same
+					// thread, and gets confused. But how is this even possible?
+					// Investigate!
 				}
 			}
 			// Set / add fields to form as elements and use the form as param.
@@ -836,10 +843,7 @@ EditForm.register(new function() {
 		select_move: function(element, name, sels, param) {
 			var sel = getSelected(this, sels);
 			if (sel) {
-				sel.param = param;
-				sel.move = true;
-				// TODO: Finish porting. Pass sel, etc
-				this.handle('choose_move', element, name);
+				this.handle('choose_move', element, name, param, sel);
 			}
 		}
 	};
@@ -972,8 +976,14 @@ EditForm.register(new function() {
 			});
 		},
 
-		choose_move: function(element, name, param) {
-			choose(this, name, param, function(id, title) {
+		choose_move: function(element, name, param, sel) {
+			choose(this, name + '_move', param, function(id, title) {
+				param.confirm = 'Do you really want to move ' +
+					(sel.values.length > 1 ? 'these items: "' + sel.names :
+					'"' + sel.names) + '" to "' + title + '"?';
+				param.edit_object_ids = sel.ids;
+				param.edit_object_id = id;
+				this.execute('move', param);
 				return true;
 			});
 		},
@@ -1509,7 +1519,7 @@ ImageChooser = EditChooser.extend({
 					this.content.setHtml(result.html);
 					this.show(true);
 				} else if (result.image_crop) {
-					editForm.handle('choose_crop_select', element, result);
+					editForm.handle('choose_crop_select', null, result);
 				}
 			}.bind(this)
 		);

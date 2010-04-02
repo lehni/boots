@@ -5,6 +5,10 @@
 // Abstract baes for SelectItem and EditableListItem
 ListItem = EditItem.extend({
 
+	getPosition: function(object) {
+		// TODO: Implement
+	},
+
 	/**
 	 * We are supporting two modes of sorting / hiding in lists and multiselects:
 	 *
@@ -39,6 +43,25 @@ ListItem = EditItem.extend({
 			 	return this.collection.addAt(position, object);
 		}
 		return false;
+	},
+
+	isVisible: function(object) {
+		return true;
+		// TODO: Implement
+	},
+
+	setVisible: function(object, visible) {
+		// TODO: Implement
+	},
+
+	/**
+	 * Returns a hash containing all full ids of this collection in sequentual
+	 * order.
+	 */
+	getIdHash: function() {
+		return this.value.list().each(function(obj) {
+			this[obj.getFullId()] = true;
+		}, new Hash());
 	},
 
 	store: function(object) {
