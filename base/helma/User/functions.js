@@ -10,10 +10,10 @@ User.inject({
 		logError: function(title, e) {
 			var shortDesc = e.fileName
 				? 'Error in ' + e.fileName + ', Line ' + e.lineNumber + ': ' + e
-				: e;
+				: 'Error: ' + e;
 
 			if (req.path)
-				shortDesc += '(' + req.path + ')';
+				shortDesc += '\n(' + req.path + ')';
 			// Generate the stacktrace:
 			var longDesc = shortDesc;
 			if (e.javaException) {
