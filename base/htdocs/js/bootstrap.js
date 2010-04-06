@@ -885,9 +885,16 @@ Browser = new function() {
 		XPATH: !!document.evaluate,
 		QUERY: !!document.querySelector
 	};
+	fields[name.toUpperCase()] = true;
+
+	function getVersion(prefix, min, max) {
+		var ver = (new RegExp(prefix + '([\\d.]+)', 'i').exec(navigator.userAgent) || [0, '0'])[1].split('.');
+		return (ver.slice(0, min).join('') + '.' + ver.slice(min, max || ver.length).join('')).toFloat();
+	}
+
 	var engines = {
 		presto: function() {
-			return !window.opera ? false : arguments.callee.caller ? 960 : document.getElementsByClassName ? 950 : 925;
+			return !window.opera ? false : getVersion('Presto/', 2);
 		},
 
 		trident: function() {
@@ -896,13 +903,14 @@ Browser = new function() {
 		},
 
 		webkit: function() {
-			return navigator.taintEnabled ? false : fields.XPATH ? fields.QUERY ? 525 : 420 : 419;
+			return navigator.taintEnabled ? false : getVersion('WebKit/', 1, 2);
 		},
 
 		gecko: function() {
-			return !document.getBoxObjectFor ? false : document.getElementsByClassName ? 19 : 18;
+			return !document.getBoxObjectFor && window.mozInnerScreenX == null ? false : getVersion('rv:', 2);
 		}
 	};
+
 	for (var engine in engines) {
 		var version = engines[engine]();
 		if (version) {
@@ -914,7 +922,6 @@ Browser = new function() {
 			break;
 		}
 	}
-	fields[name.toUpperCase()] = true;
 
 	fields.log = function() {
 		if (!Browser.TRIDENT && window.console && console.log)
@@ -3155,7 +3162,7 @@ Request = Base.extend(Chain, Callback, new function() {
 				|| Browser.TRIDENT && new ActiveXObject('Microsoft.XMLHTTP');
 	}
 
-	function createFrame(that, form) {
+	function createFrame(that) {
 		var id = 'request_' + unique++, load = that.onFrameLoad.bind(that);
 		var div = DomElement.get('body').injectBottom('div', {
 				styles: {
@@ -3168,7 +3175,7 @@ Request = Base.extend(Chain, Callback, new function() {
 			]
 		);
 		that.frame = {
-			id: id, div: div, form: form,
+			id: id, div: div,
 			iframe: window.frames[id] || document.getElementById(id),
 			element: DomElement.get(id)
 		};
@@ -3334,9 +3341,9 @@ Request = Base.extend(Chain, Callback, new function() {
 			var url = params.url || opts.url;
 			switch (Base.type(data)) {
 				case 'element':
-					var el = DomNode.wrap(data);
-					if (el.getTag() != 'form' || !el.hasElement('input[type=file]'))
-						data = el.toQueryString();
+				 	data = DomNode.wrap(data);
+					if (data.getTag() != 'form' || !data.hasElement('input[type=file]'))
+						data = data.toQueryString();
 					break;
 				case 'object':
 					data = Base.toQueryString(data);
@@ -3358,7 +3365,7 @@ Request = Base.extend(Chain, Callback, new function() {
 					method = 'get';
 				}
 			} else if (!this.frame) {
-		 		createFrame(this, !string && DomNode.wrap(data));
+ 				createFrame(this);
 			}
 			if (string && data && method == 'get') {
 				url += (url.contains('?') ? '&' : '?') + data;
@@ -3367,16 +3374,18 @@ Request = Base.extend(Chain, Callback, new function() {
 			this.running = true;
 			this.url = url;
 			if (this.frame) {
-				if (this.frame.form)
-					this.frame.form.set({
+				var form = !string && data;
+				if (form) {
+					form.set({
 						target: this.frame.id, action: url, method: method,
 						enctype:  method == 'get'
 							? 'application/x-www-form-urlencoded'
 							: 'multipart/form-data',
 						'accept-charset': opts.encoding || ''
 					}).submit();
-				else
+				} else {
 					this.frame.element.setProperty('src', url);
+				}
 			} else if (this.transport) {
 				try {
 					this.transport.open(method.toUpperCase(), url, opts.async);
