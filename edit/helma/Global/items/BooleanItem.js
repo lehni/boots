@@ -10,6 +10,8 @@ BooleanItem = EditItem.extend({
 	},
 
 	convert: function(value) {
-		return value == null ? 0 : value;
+		if (value != null)
+			return value.toInt() != 0;
+		return false;
 	}
 });
