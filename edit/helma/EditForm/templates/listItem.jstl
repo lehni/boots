@@ -5,7 +5,7 @@
 	if=<%= param.addHandler && param.addEntries == 'top' %>
 	prefix='<div class="edit-list-buttons">' suffix='</div>' %>
 <% if (param.chooser) %>
-<% input type="hidden" name=<%= param.chooser.name %> value=<% json param.chooser.list %> -%>
+<div id="<%= param.chooser.name %>" class="hidden"><% json param.chooser.list encoding='entities' %></div>
 <% end %>
 <% input type="hidden" name=param.name value=param.ids %>
 </div>

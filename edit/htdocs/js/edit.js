@@ -797,7 +797,7 @@ EditForm.register(new function() {
 	return {
 		select_new: function(element, name, prototypes, param) {
 			if (typeof prototypes == 'string') {
-				var str = $('#' + prototypes).getValue();
+				var str = $('#' + prototypes).getText();
 				// name: listId_entryId_new
 				var match = name.match(/((.*)_(?:[^_]*))_new$/);
 				var entryId = match[1], listId = match[2];
