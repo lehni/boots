@@ -350,45 +350,6 @@ EditForm = Base.extend({
 		if (post) {
  			// Post values using internal form
 			method = 'post';
-			if (this.form.hasElement('input[type=file]')) {
-				// Display upload progress
-				var uploadId = Math.random().toString(36).substring(2);
-				url += '?upload_id=' + uploadId;
-				if (this.uploadTimer)
-					this.uploadTimer.clear();
-				var startTime = new Date().getTime(), current;
-				var uploadStatus = $('.edit-upload', this.container);
-				if (uploadStatus) {
-					var maxWidth = uploadStatus.getParent().getWidth();
-					var request = new Request({
-						url: url, method: 'get', json: true,
-						data: this.getData('upload_status')
-					}, function(status) {
-						if (that.uploadTimer && status && status.total) {
-							if (status.current == status.total
-								|| current == status.current
-								&& new Date().getTime() - startTime > 6000)
-									that.uploadTimer = that.uploadTimer.clear();
-							uploadStatus.setWidth(status.current / status.total * maxWidth);
-							// .setHtml(status.current + ' of ' + status.total + ' uploaded.');
-							current = status.current;
-						}
-					});
-					/*
-					this.uploadTimer = (function() {
-						request.send();
-						that.uploadTimer = (function() {
-							request.send();
-						}).periodic(500);
-					}).delay(500);
-					*/
-					// TODO: Find cause of weird 'overlaying' of handling on server
-					// when the initial delay is set lower, to 50ms. The server
-					// log appears to handle two overlaying requests in the same
-					// thread, and gets confused. But how is this even possible?
-					// Investigate!
-				}
-			}
 			// Set / add fields to form as elements and use the form as param.
 			param = this.form.setValues(param);
 		}
@@ -409,6 +370,45 @@ EditForm = Base.extend({
 				alert('Error: ' + values + ' Status: ' + this.status);
 			}
 		}).send();
+
+		if (post && this.form.hasElement('input[type=file]')) {
+			// Display upload progress
+			var uploadId = Math.random().toString(36).substring(2);
+			url += '?upload_id=' + uploadId;
+			if (this.uploadTimer)
+				this.uploadTimer.clear();
+			var startTime = new Date().getTime(), current;
+			var uploadStatus = $('.edit-upload', this.container);
+			if (uploadStatus) {
+				var maxWidth = uploadStatus.getParent().getWidth();
+				var request = new Request({
+					url: url, method: 'get', json: true, iframe: false && Browser.WEBKIT,
+					data: this.getData('upload_status')
+				}, function(status) {
+					// alert(Json.encode(status));
+					if (that.uploadTimer && status && status.total) {
+						if (status.current == status.total
+							|| current == status.current
+							&& new Date().getTime() - startTime > 6000)
+								that.uploadTimer = that.uploadTimer.clear();
+						uploadStatus.setWidth(status.current / status.total * maxWidth);
+						// .setHtml(status.current + ' of ' + status.total + ' uploaded.');
+						current = status.current;
+					}
+				});
+				this.uploadTimer = (function() {
+					request.send();
+					that.uploadTimer = (function() {
+						request.send();
+					}).periodic(500);
+				}).delay(50);
+				// TODO: Find cause of weird 'overlaying' of handling on server
+				// when the initial delay is set lower, to 50ms. The server
+				// log appears to handle two overlaying requests in the same
+				// thread, and gets confused. But how is this even possible?
+				// Investigate!
+			}
+		}
 	},
 
 	getData: function(mode, param) {
