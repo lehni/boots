@@ -36,10 +36,12 @@
 <div class="overlay<%= ' hidden' if=<%= param.hide == 0 %>%>"></div>
 </a><%-%>
 <% end %>
+<% if (param.removable) %>
 <a id="edit-list-remove-<%= param.id %>" class="edit-list-button edit-list-remove" href="#" onclick="<% this.handle "list_remove" <%= param.name %> <%= param.id %> encoding='entities' %> return false;"><%-%>
 <% input type="hidden" name=<%= param.id + '_remove' %> value=0 -%>
 <div class="overlay hidden"></div>
 </a><%-%>
+<% end %>
 <% this.template '#addButton' if=param.addHandler %>
 </div>
 <table class="edit-list-content">
@@ -50,4 +52,4 @@
 
 <% #addButton -%>
 <%-- id cannot be edit-list-add-ID, as select_new relies on ID_new... --%>
-<a id="<%= param.id %>_new" class="edit-list-button edit-list-add" href="#" onclick="<%= param.addHandler %> return false;"></a><%-%>
+<a id="<%= param.id %>_new" class="edit-list-button edit-list-add" href="#" onclick="<%= param.addHandler encoding='entities' %> return false;"></a><%-%>

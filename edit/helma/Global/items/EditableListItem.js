@@ -59,13 +59,14 @@ EditableListItem = ListItem.extend({
 			id: name + '_' + form.entryId,
 			name: name,
 			proto: object._prototype,
-			hide: this.visibility
+			hide: this.hideable
 					// Default for new items is visible in editable lists.
 					? object.visible == null || object.visible ? 0 : 1
 					: null,
 			width: param.width,
 			create: object.isTransient(),
 			sortable: this.sortable,
+			removable: this.removable,
 			items: form.renderItems(baseForm, {
 				itemsOnly: true
 			}),
@@ -78,12 +79,15 @@ EditableListItem = ListItem.extend({
 
 	render: function(baseForm, name, value, param, out) {
 		var width = param.calculatedWidth;
+		// Calculate the width available to the nested forms
 		var buttonWidth = 16;
 		if (this.addEntries)
 			width -= buttonWidth;
 		if (this.sortable)
 			width -= buttonWidth;
-		if (this.hideable || true)
+		if (this.hideable)
+			width -= buttonWidth;
+		if (this.removable)
 			width -= buttonWidth;
 		// Add the button only once to the form!
 		// TODO: Rename addButton to better name?
