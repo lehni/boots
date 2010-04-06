@@ -166,7 +166,7 @@ Html = new function() {
 
 			}
 			// Form elements should have both id and name
-			if (!attributes.id)
+			if (attributes.id === undefined)
 				attributes.id = attributes.name;
 			delete attributes.current;
 			return Html.element('input', attributes, null, out);

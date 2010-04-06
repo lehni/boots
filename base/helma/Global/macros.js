@@ -1,11 +1,11 @@
 function input_macro(param) {
 	if (param.name) {
-		var value = req.data[param.name];
-		if (value) {
-			value = value.toString();
-			if (param.type == 'radio' || param.type == 'checkbox')
-				param.current = value;
-			else param.value = value;
+		var name = param.type == 'radio' || param.type == 'checkbox'
+				? 'current' : 'value';
+		if (param[name] === undefined) {
+			var value = req.data[param.name];
+			if (value != null)
+				param[name] = value.toString();
 		}
 	}
 	Html.input(param, res);
