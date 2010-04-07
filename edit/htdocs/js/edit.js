@@ -509,7 +509,7 @@ EditForm = Base.extend({
 				alert('Cannot find edit form for object ' + param.id);
 			} else if (!param.confirm || confirm(param.confirm)) {
 				var offset = target.getOffset(); // for scrolling
-				var elements = $('#edit-elements-' + param.id + '.edit-elements');
+				var elements = $('#edit-elements-' + param.target + '.edit-elements');
 				var progress = $('.edit-progress', elements);
 				var buttons = $('.edit-buttons', elements);
 				if (progress) {
