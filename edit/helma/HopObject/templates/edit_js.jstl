@@ -26,16 +26,17 @@ EditForm = {
 
 	inline: function(url, param) {
 		if (!param.confirm || confirm(param.confirm)) {
-			var elements = $('#edit-elements-' + param.target + '.edit-elements');
+			var elements = $('#edit-elements-' + param.target + '-' + param.id + '.edit-elements');
 			var progress = $('.edit-progress', elements);
 			var buttons = $('.edit-buttons', elements);
 			if (progress) {
-				var height = elements.getHeight();
+				var height = elements.getStyle('height');
 				if (EditSettings.hideButtons)
 					buttons.addClass('hidden');
 				progress.removeClass('hidden');
-				elements.setHeight(height);
+				elements.setStyle('height', height);
 			}
+			return;
 			var callee = arguments.callee;
 			Asset.stylesheet('<%= '/static/edit/css/edit.css' | versioned %>');
 			Asset.script('<%= '/static/base/js/tabs.js' | versioned %>', { onLoad: function() {
