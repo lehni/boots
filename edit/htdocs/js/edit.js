@@ -363,7 +363,7 @@ EditForm = Base.extend({
 				if (uploadStatus) {
 					var maxWidth = uploadStatus.getParent().getWidth();
 					var request = new Request({
-						url: url, method: 'get', json: true, iframe: true || Browser.WEBKIT && Browser.VERSION < 531.22,
+						url: url, method: 'get', json: true, iframe: Browser.WEBKIT && Browser.VERSION < 531.22,
 						data: this.getData('upload_status')
 					}, function(status) {
 						if (that.uploadTimer && status && status.total) {
