@@ -179,8 +179,16 @@
 /* elements */
 
 #edit .edit-progress {
-	float: right;
-	padding: 8px;
+	text-align: right;
+	padding: 10px;
+	margin-bottom: -35px;
+}
+
+#edit .edit-upload {
+	width: 0;
+	height: 35px;
+	background: #ff0;
+	margin-bottom: -35px;
 }
 
 #edit .edit-ruler {
@@ -341,7 +349,7 @@
 	position: relative;
 }
 
-#edit .tab-pane .row {
+#edit .tab-pane .tab-row {
 	z-index: 1;
 	white-space: nowrap;
 }
@@ -373,21 +381,10 @@
 #edit .tab-pane .edit-title {
 	border-bottom: 1px dotted #999;
 	padding: 8px;
-	/* for layering over the edit-upload progress bar */
-	position: relative;
-	z-index: 2;
 }
 
 #edit .tab-pane .edit-content {
 	margin: 6px 8px 6px 8px;
-}
-
-#edit .edit-upload {
-	position: absolute;
-	background: #ff0;
-	z-index: 1;
-	width: 0;
-	height: 34px;
 }
 
 /* icons */

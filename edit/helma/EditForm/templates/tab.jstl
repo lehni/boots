@@ -11,12 +11,12 @@
 <% end %>
 
 <% #pane %>
-<div class="tab-pane">
-	<div class="row">
 <% if (param.showProgress) %>
-		<div class="edit-upload"></div>
-		<div class="edit-progress hidden"><img src="/static/edit/assets/progress.gif" width="15" height="15"></div>
+<div class="edit-progress hidden"><img src="/static/edit/assets/progress.gif" width="15" height="15"></div>
+<div class="edit-upload"></div>
 <% end %>
+<div class="tab-pane">
+	<div class="tab-row">
 		<%= param.title prefix="<div class=\"edit-title\">" suffix="</div>" %>
 	</div>
 <%= param.tabs %>

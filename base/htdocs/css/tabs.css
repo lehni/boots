@@ -3,7 +3,7 @@
 	margin: -2px -2px 0 -2px;
 }
 
-.tab-pane .row {
+.tab-pane .tab-row {
 	padding-top: 2px;
 	z-index: 1;
 	white-space: nowrap;
