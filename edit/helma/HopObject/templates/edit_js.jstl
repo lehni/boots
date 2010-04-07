@@ -36,7 +36,6 @@ EditForm = {
 				progress.removeClass('hidden');
 				elements.setStyle('height', height);
 			}
-			return;
 			var callee = arguments.callee;
 			Asset.stylesheet('<%= '/static/edit/css/edit.css' | versioned %>');
 			Asset.script('<%= '/static/base/js/tabs.js' | versioned %>', { onLoad: function() {
