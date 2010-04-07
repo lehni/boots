@@ -513,9 +513,11 @@ EditForm = Base.extend({
 				var progress = $('.edit-progress', elements);
 				var buttons = $('.edit-buttons', elements);
 				if (progress) {
+					var height = elements.getHeight();
 					if (EditSettings.hideButtons)
 						buttons.addClass('hidden');
 					progress.removeClass('hidden');
+					elements.setHeight(height);
 				}
 				var form = $('form', buttons);
 				form.enable(false);

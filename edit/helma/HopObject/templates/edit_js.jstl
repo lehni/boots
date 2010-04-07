@@ -30,9 +30,11 @@ EditForm = {
 			var progress = $('.edit-progress', elements);
 			var buttons = $('.edit-buttons', elements);
 			if (progress) {
+				var height = elements.getHeight();
 				if (EditSettings.hideButtons)
 					buttons.addClass('hidden');
 				progress.removeClass('hidden');
+				elements.setHeight(height);
 			}
 			var callee = arguments.callee;
 			Asset.stylesheet('<%= '/static/edit/css/edit.css' | versioned %>');
