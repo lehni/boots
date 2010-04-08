@@ -7,6 +7,10 @@ Movie.inject({
 		var form = this.base(param);
 		form.insertAt(0, {
 			name: 'url', type: 'string', label: 'Movie',
+			requirements: {
+				notNull: true,
+				url: true
+			},
 			onApply: function(url) {
 				if (this.url != url) {
 					this.url = url;
