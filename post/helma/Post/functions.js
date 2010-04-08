@@ -51,7 +51,7 @@ Post.inject({
 				form.createItem(param.website, {
 					label: 'Website', type: 'string', name: 'website',
 					requirements: {
-						uri: true
+						url: true
 					}
 				}, true)
 			], [
