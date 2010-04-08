@@ -116,11 +116,13 @@ EditForm.inject({
 					return true;
 			}
 		} catch (e) {
-			if (typeof e != 'string')
+			if (typeof e == 'string') {
+				User.log("EditForm#applyItem() throw new EditException('"  + e + "');");
+				e = new EditException(item, e, value);
+			} else if (!(e instanceof EditException)) {
 				User.logError('EditForm#applyItem()', e);
-			else
-				User.log('EditForm#applyItem() EditException:', e);
-				throw new EditException(item, e, value);
+			}
+			throw e;
 		}
 		return false;
 	}
