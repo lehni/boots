@@ -6,8 +6,9 @@
 <link rel="stylesheet" href="/static/css/style.css">
 <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 <link rel="shortcut icon" href="/static/favicon.ico">
-<script type="text/javascript" src="/static/base/js/bootstrap.js"></script>
-<script type="text/javascript" src="/edit.js?<% random %>"></script>
+<% script "/static/base/js/bootstrap.js" %></script>
+<% script "/static/edit/js/editshim.js" %></script>
+<% this.editSettings %>
 <%= param.head -%>
 </head>
 <body>

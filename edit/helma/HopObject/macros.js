@@ -5,5 +5,9 @@ HopObject.inject({
 
 	editButtons_macro: function(param) {
 		this.renderEditButtons(param, res);
+	},
+
+	editSettings_macro: function() {
+		this.renderTemplate('editSettings', { inline: true }, res);
 	}
 });

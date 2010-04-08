@@ -20,8 +20,8 @@ HopObject.inject({
 		this.handleLogout();
 	},
 
-	edit_js_action: function() {
+	editsettings_js_action: function() {
 		res.contentType = 'text/javascript';
-		this.renderTemplate('edit_js', {}, res);
+		this.renderTemplate('editSettings', {}, res);
 	}
 });

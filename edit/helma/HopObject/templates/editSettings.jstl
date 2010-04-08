@@ -1,0 +1,15 @@
+<% if (param.inline) %>
+<script type="text/javascript">
+<% end %>
+EditSettings.inject({
+	cssFiles: [
+		'<%= '/static/edit/css/edit.css' | versioned %>'
+	],
+	scriptFiles: [
+		'<%= '/static/base/js/tabs.js' | versioned %>',
+		'<%= '/static/edit/js/edit.js' | versioned %>'
+	]
+});
+<% if (param.inline) %>
+</script><%-%>
+<% end %>

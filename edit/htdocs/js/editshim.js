@@ -1,4 +1,12 @@
-EditSettings = {
+EditSettings = new Hash({
+	cssFiles: [
+		'/static/edit/css/edit.css'
+	],
+	scriptFiles: [
+		'/static/base/js/tabs.js',
+		'/static/edit/js/edit.js'
+	],
+
 	objectLink: '<node "@link">@text</node>',
 	unnamedObjectLink: '<node @link />',
 	emailLink: '<email "@link">@text</email>',
@@ -8,7 +16,7 @@ EditSettings = {
 
 	useButtons: true,
 	hideButtons: true
-};
+});
 
 EditForm = {
 	open: function(url, param) {
@@ -26,6 +34,8 @@ EditForm = {
 
 	inline: function(url, param) {
 		if (!param.confirm || confirm(param.confirm)) {
+			// This code is identical with the one found in full version of
+			// edit.js's Editform.inline(). Make sure it stays synced.
 			var elements = $('#edit-elements-' + param.target + '-' + param.id + '.edit-elements');
 			var progress = $('.edit-progress', elements);
 			var buttons = $('.edit-buttons', elements);
@@ -36,15 +46,22 @@ EditForm = {
 				progress.removeClass('hidden');
 				elements.setStyle('height', height);
 			}
-			var callee = arguments.callee;
-			Asset.stylesheet('<%= '/static/edit/css/edit.css' | versioned %>');
-			Asset.script('<%= '/static/base/js/tabs.js' | versioned %>', { onLoad: function() {
-				Asset.script('<%= '/static/edit/js/edit.js' | versioned %>', { onLoad: function() {
+			// Now load the needed files.
+			var callee = arguments.callee, index = 0;
+			function loadScript() {
+				var src = EditSettings.scriptFiles[index++];
+				if (src) {
+					Asset.script(src, { onLoad: loadScript });
+				} else {
 					// Avoid endless recursion if something went wrong
 					if (EditForm.inline != callee)
 						EditForm.inline(url, param);
-				}});
-			}});
+				}
+			}
+			EditSettings.cssFiles.each(function(src) {
+				Asset.stylesheet(src);
+			});
+			loadScript();
 		}
 	}
 };
