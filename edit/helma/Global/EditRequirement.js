@@ -112,13 +112,13 @@ EmailRequirement = EditRequirement.extend({
 	}
 });
 
-UriRequirement = EditRequirement.extend({
-	_types: 'uri,url',
+UrlRequirement = EditRequirement.extend({
+	_types: 'url',
 
 	check: function(value) {
 		if (value != null && this.value
 				&& !/(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/.test(value))
-			throw 'is not a valid URI.';
+			throw 'is not a valid URL.';
 	}
 });
 
