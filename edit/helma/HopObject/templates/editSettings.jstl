@@ -1,13 +1,14 @@
 <% if (param.inline) %>
 <script type="text/javascript">
 <% end %>
-EditSettings.inject({
-	cssFiles: [
-		'<%= '/static/edit/css/edit.css' | versioned %>'
-	],
-	scriptFiles: [
+// Override default edit css and script files with versioned urls.
+EditSettings.merge({
+	scripts: [
 		'<%= '/static/base/js/tabs.js' | versioned %>',
 		'<%= '/static/edit/js/edit.js' | versioned %>'
+	],
+	stylesheets: [
+		'<%= '/static/edit/css/edit.css' | versioned %>'
 	]
 });
 <% if (param.inline) %>

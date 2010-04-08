@@ -1,21 +1,23 @@
 EditSettings = new Hash({
-	cssFiles: [
-		'/static/edit/css/edit.css'
-	],
-	scriptFiles: [
+	scripts: [
 		'/static/base/js/tabs.js',
 		'/static/edit/js/edit.js'
 	],
-
-	objectLink: '<node "@link">@text</node>',
-	unnamedObjectLink: '<node @link />',
-	emailLink: '<email "@link">@text</email>',
-	urlLink: '<url "@link">@text</url>',
-	unnamedUrlLink: '<url "@link" />',
-	image: '<image "@name" />',
-
-	useButtons: true,
-	hideButtons: true
+	stylesheets: [
+		'/static/edit/css/edit.css'
+	],
+	tags: {
+		object: '<node "@link">@text</node>',
+		objectUnnamed: '<node @link />',
+		email: '<email "@link">@text</email>',
+		url: '<url "@link">@text</url>',
+		urlUnnamed: '<url "@link" />',
+		image: '<image "@name" />',
+	},
+	buttons: {
+		convert: true,
+		hide: true
+	}
 });
 
 EditForm = {
@@ -41,7 +43,7 @@ EditForm = {
 			var buttons = $('.edit-buttons', elements);
 			if (progress) {
 				var height = elements.getStyle('height');
-				if (EditSettings.hideButtons)
+				if (EditSettings.buttons.hide)
 					buttons.addClass('hidden');
 				progress.removeClass('hidden');
 				elements.setStyle('height', height);
@@ -49,7 +51,7 @@ EditForm = {
 			// Now load the needed files.
 			var callee = arguments.callee, index = 0;
 			function loadScript() {
-				var src = EditSettings.scriptFiles[index++];
+				var src = EditSettings.scripts[index++];
 				if (src) {
 					Asset.script(src, { onLoad: loadScript });
 				} else {
@@ -58,7 +60,7 @@ EditForm = {
 						EditForm.inline(url, param);
 				}
 			}
-			EditSettings.cssFiles.each(function(src) {
+			EditSettings.stylesheets.each(function(src) {
 				Asset.stylesheet(src);
 			});
 			loadScript();

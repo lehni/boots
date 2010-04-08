@@ -25,8 +25,8 @@ EditForm = Base.extend({
 		// buttons on one page, as if they were all thrown into one container,
 		// and redistributed by picking blindy. The workaround is to not produce
 		// buttons in edit forms, but use <a> tags, and replace them with buttons
-		// here, if useButtons is set to true:
-		if (EditSettings.useButtons) {
+		// here, if buttons.convert is set to true:
+		if (EditSettings.buttons.convert) {
 			$$('a.edit-button', obj).each(function(el, index) {
 				var id = el.getId();
 				// el.removeClass('button'); // For getClass bellow
@@ -93,9 +93,9 @@ EditForm = Base.extend({
 		if (values.applied)
 			this.applied = true;
 		this.html = values.html;
-		// On safari, remove buttons before setting of new html, to prevent
+		// On Safari, remove buttons before setting of new html, to prevent
 		// the odd bug described bellow from happening.
-		if (EditSettings.useButtons && Browser.WEBKIT)
+		if (EditSettings.buttons.convert && Browser.WEBKIT)
 			$$('input[type=button]', this.container).remove();
 		this.container.setHtml(this.html);
 		this.form = $('form', this.container);
@@ -514,7 +514,7 @@ EditForm = Base.extend({
 				var buttons = $('.edit-buttons', elements);
 				if (progress) {
 					var height = elements.getStyle('height');
-					if (EditSettings.hideButtons)
+					if (EditSettings.buttons.hide)
 						buttons.addClass('hidden');
 					progress.removeClass('hidden');
 					elements.setStyle('height', height);
@@ -527,7 +527,7 @@ EditForm = Base.extend({
 				}, function(values) {
 					if (progress) {
 						progress.addClass('hidden');
-						if (EditSettings.hideButtons)
+						if (EditSettings.buttons.hide)
 							buttons.removeClass('hidden');
 					}
 					form.enable(true);
@@ -926,7 +926,7 @@ EditForm.register(new function() {
 				if (field) {
 					var text = field.getSelectedText();
 					field.replaceSelectedText(
-						EditSettings[text ? 'objectLink' : 'unnamedObjectLink']
+						EditSettings.tags[text ? 'object' : 'objectUnnamed']
 							.replace('@link', id).replace('@text', text)
 					);
 				}
@@ -1007,11 +1007,11 @@ EditForm.register(new function() {
 						var link;
 						// Handle emails seperately
 						if (/^([a-zA-Z0-9\-\.\_]+)(\@)([a-zA-Z0-9\-\.]+)(\.)([a-zA-Z]{2,4})$/.test(url)) {
-							link = EditSettings.emailLink;
+							link = EditSettings.tags.email;
 							if (!text)
 								text = 'Email';
 						} else {
-							link = text ? EditSettings.urlLink : EditSettings.unnamedUrlLink;
+							link = EditSettings.tags[text ? 'url' : 'urlUnnamed'];
 							if (!text)
 								text = url;
 						}
@@ -1056,7 +1056,7 @@ EditForm.register(new function() {
 		choose_image_select: function(element, param) {
 			var text = field.getSelectedText();
 			field.replaceSelectedText(
-				EditSettings.image.replace('@name', param.image_name).replace('@text', text)
+				EditSettings.tags.image.replace('@name', param.image_name).replace('@text', text)
 			);
 			EditChooser.closeAll();
 		},
