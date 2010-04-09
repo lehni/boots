@@ -211,9 +211,27 @@
 }
 
 #edit .edit-error {
-	color: #ff3300;
+	position: absolute;
 	display: inline;
-	margin-left: 4px;
+}
+
+#edit .edit-error .edit-error-bubble {
+	position: absolute;
+	bottom: -14px;
+	padding: 5px 10px;
+	background: #ffe1e0;
+	border: 1px solid #d81e00;
+	-moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
+}
+
+#edit .edit-error-tip {
+	position: absolute;
+	bottom: -19px;
+	left: 20px;
+	width: 11px;
+	height: 7px;
+	background: transparent url(assets/error-tip.gif) no-repeat;
 }
 
 #edit .edit-count {
