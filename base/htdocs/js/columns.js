@@ -1,9 +1,10 @@
-// Bootstrap Multi Columns Script, based on CSS3MultiColumn, a javascript
-// implementation of the CSS3 multi-column module
+// Bootstrap Multi Columns Script
+// 
+// based on CSS3MultiColumn, a javascript implementation of CSS3 multi-columns
 // Copyright (c) 2005 Cdric Savarese <pro@4213miles.com>
 // Licensed under the CC-GNU LGPL <http://creativecommons.org/licenses/LGPL/2.1/>
-
-// Changes by Juerg Lehni, 2009
+//
+// Changes by (c) 2009 - 2010 Juerg Lehni
 
 HtmlElement.inject(new function() {
 
