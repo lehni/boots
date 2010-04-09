@@ -830,7 +830,9 @@ Json = function() {
 	return {
 		encode: function(obj, properties) {
 			if (JSON)
-				return JSON.stringify(obj, properties);
+				return JSON.stringify(obj, properties || Browser.TRIDENT && function(key, value) {
+					return key == '__proto__' ? undefined : value;
+				});
 			if (Base.type(properties) == 'array') {
 				properties = properties.each(function(val) {
 					this[val] = true;
