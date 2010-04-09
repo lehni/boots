@@ -213,6 +213,8 @@
 #edit .edit-error {
 	position: absolute;
 	display: inline;
+	opacity: 0.9;
+	cursor: pointer;
 }
 
 #edit .edit-error div {

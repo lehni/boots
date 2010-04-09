@@ -116,15 +116,20 @@ EditForm = Base.extend({
 	},
 
 	reportError: function(error) {
-		$('#edit-label-' + error.name + ' > .edit-error', this.form)
-			.setHtml('<div>' + error.message + '</div>')
-			.removeClass('hidden');
 		this.setSelectedTab(error.tab);
 		var field = $('#' + error.name, this.form);
 		if (field && field.focus) {
 			field.setValue(error.value);
 			field.setCaret(0);
 		}
+		$('#edit-label-' + error.name + ' > .edit-error', this.form)
+			.setHtml('<div>' + error.message + '</div>')
+			.removeClass('hidden')
+			.addEvent('click', function() {
+				this.addClass('hidden');
+				if (field && field.focus)
+					field.setCaret(0);
+			});
 	},
 
 	show: function(show) {
