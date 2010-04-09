@@ -118,9 +118,10 @@ EditForm = Base.extend({
 	reportError: function(error) {
 		this.setSelectedTab(error.tab);
 		var field = $('#' + error.name, this.form);
-		if (field && field.focus) {
-			field.setValue(error.value);
-			field.setCaret(0);
+		if (field && field.setCaret) {
+			var value = error.value || '';
+			field.setValue(value);
+			field.setCaret(value.length);
 		}
 		$('#edit-label-' + error.name + ' > .edit-error', this.form)
 			.setHtml('<div>' + error.message + '</div>')
@@ -128,7 +129,7 @@ EditForm = Base.extend({
 			.addEvent('click', function() {
 				this.addClass('hidden');
 				if (field && field.focus)
-					field.setCaret(0);
+					field.focus();
 			});
 	},
 
