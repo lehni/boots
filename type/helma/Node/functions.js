@@ -22,7 +22,7 @@ Node.inject({
 					if (this == root) {
 						name = 'root';
 					} else {
-						name = this.getEditParent().getUniqueChildName(this,
+						name = this.getParentNode().getUniqueChildName(this,
 							value, (app.properties.maxNameLength || 64).toInt());
 					}
 					if (this.name != name || this.title != value) {

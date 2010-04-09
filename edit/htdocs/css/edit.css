@@ -230,6 +230,10 @@
 	background: none;
 }
 
+#edit .hidden {
+	display: none;
+}
+
 /* image / cropper */
 
 #edit .edit-crop-preview img {

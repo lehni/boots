@@ -192,7 +192,7 @@ User.inject({
 				while (obj) {
 					if (session.data.createdObjects.find(obj))
 						return true;
-					obj = obj.getEditParent();
+					obj = obj.getParentNode();
 				}
 			}
 			return false;

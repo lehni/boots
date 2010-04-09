@@ -8,7 +8,7 @@ CropPicture.inject({
 		form.insertAt(0, form.createItem(param.crop, {
 			label: 'Crop', name: 'crop', type: 'crop', title: 'Choose',
 			json: true, value: this.crop, preview: true,
-			resources: this.getEditParent().resources,
+			resources: this.getParentNode().resources,
 			onApply: function(crop) {
 				if (crop) {
 					this.crop = crop;

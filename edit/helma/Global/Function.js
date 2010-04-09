@@ -19,7 +19,7 @@ Function.inject({
 			proto.constructor = function(param) {
 				if (param !== ctor.dont) {
 					this.setCreating(true);
-					// Now get the node. This gets getEditParent to work.
+					// Now get the node. This gets getParentNode to work.
 					// Support passing an EditItem to the constructor, so
 					// the editing parent can be determined from it. This
 					// is then passed to EditNode.get...

@@ -27,7 +27,7 @@ HopObject.inject({
 	getChildElement: function(name) {
 		var obj = this.get(name);
 		if (!obj) {
-			var parent = this.getParent();
+			var parent = this.getParentNode();
 			if (parent.instanceOf(Node) && User.canEdit(parent)) {
 				// For collection HopObjects, this._id points to the collection's
 				// name. 'all' + this._id.capitalize() therefore should return the
@@ -81,7 +81,7 @@ HopObject.inject({
 	isVisible: function() {
 		var obj = this;
 		while (obj && obj != root && obj.visible)
-			obj = obj.getEditParent();
+			obj = obj.getParentNode();
 		return obj == root;
 	}
 });

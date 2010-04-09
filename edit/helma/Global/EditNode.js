@@ -136,7 +136,7 @@ EditNode = Base.extend({
 					node = data.nodes[fullId] = new EditNode(fullId, object);
 				}
 				// Update parent.
-				// It might be requried in getEditForm(), e.g. getEditParent()
+				// It might be requried in getEditForm(), e.g. getParentNode()
 				if (node && parentItem) {
 					node.parentItem = parentItem;
 					// Allways access the root form to get the node,

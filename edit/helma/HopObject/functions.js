@@ -102,20 +102,25 @@ HopObject.inject(new function() {
 			return this.getFullId();
 		},
 
-		// getEditParent returns the anchestor that is repsonsible for editing
-		// this child or grand child. Bare HopObject collections such as
-		// node.resources in Resource are not returned but their parents instead,
-		// as they are not defining edit forms.
-		// getEditParent works for newly created objects too that are still to be
-		// inserted into the database by determining the parent from the edit
-		// node stack.
-		// Note that an editing parent is not always the same as _parent,
-		// e.g. for resources that live in the parent.resources collection!
-		getEditParent: function() {
+		/**
+		 * Returns the first anchestor that is not a HopObject collection.
+		 * This is also the object repsonsible for editing this child or grand
+		 * child. Bare HopObject collections such as node.resources in Resource
+		 * are not returned but their parents instead, as they are not defining
+		 * edit forms.
+		 *
+		 * getParentNode works for newly created objects too that are still to be
+		 * inserted into the database by determining the parent from the edit
+		 * node stack.
+		 *
+		 * Note that a parent node is not always the same as _parent,
+		 * e.g. for resources that live in the parent.resources collection.
+		 */
+		getParentNode: function() {
 			var parent = this.getParent();
 			// If the parent returned by getParent is a plain HopObject, it is
 			// a collection e.g. resources, and we need to step one up further.
-			if (parent && parent.constructor == HopObject)
+			while (parent && parent.constructor == HopObject)
 				parent = parent.getParent();
 			if (!parent) {
 				// See if there is a cached edit node, and if so, determine future

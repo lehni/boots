@@ -22,7 +22,7 @@ NewHandler = EditHandler.extend({
 					// Pass the item through which the object is created to the
 					// constructor, so it can determine the editing parent.
 					// This all happens automatically, by the time initialize
-					// is called, getEditParent works as expected.
+					// is called, getParentNode works as expected.
 					// See edit/Global/Function.js for further explanations.
 					var object = new ctor(item);
 					var node = EditNode.get(object);

@@ -9,7 +9,7 @@ Post.inject({
 	},
 
 	getNode: function() {
-		return this.getEditParent();
+		return this.getParentNode();
 	},
 
 	getEditForm: function(param) {
@@ -158,6 +158,7 @@ Post.inject({
 	},
 
 	onCreate: function() {
+		User.log('Post#onCreate()');
 		var node = this.getNode();
 		this.isFirst = node.posts.count() == 0;
 		// Store remote host
@@ -234,6 +235,7 @@ Post.inject({
 		var query = '';
 		if (!this.isFirst || !this.node.POST_FIRST_STICKY) {
 			var pos = this.node.indexOf(this);
+			User.log('Post#redirect()', pos);
 			if (this.node.POST_FIRST_STICKY)
 				pos--;
 			pos = Math.floor(pos / this.node.POST_PER_PAGE);
