@@ -117,7 +117,7 @@ EditForm = Base.extend({
 
 	reportError: function(error) {
 		$('#edit-label-' + error.name + ' > .edit-error', this.form)
-			.setHtml('<div class="edit-error-bubble">' + error.message + '</div><div class="edit-error-tip"></div>')
+			.setHtml('<div>' + error.message + '</div>')
 			.removeClass('hidden');
 		this.setSelectedTab(error.tab);
 		var field = $('#' + error.name, this.form);

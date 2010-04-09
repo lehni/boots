@@ -215,9 +215,9 @@
 	display: inline;
 }
 
-#edit .edit-error .edit-error-bubble {
+#edit .edit-error div {
 	position: absolute;
-	bottom: -14px;
+	bottom: -15px;
 	padding: 5px 10px;
 	background: #ffe1e0;
 	border: 1px solid #d81e00;
@@ -225,13 +225,18 @@
 	-webkit-border-radius: 6px;
 }
 
-#edit .edit-error-tip {
+#edit .edit-error div:after {
+	content: url(assets/error-tip.gif);
 	position: absolute;
-	bottom: -19px;
+	bottom: -7px;
 	left: 20px;
 	width: 11px;
 	height: 7px;
-	background: transparent url(assets/error-tip.gif) no-repeat;
+}
+
+/* move the error over if there's a label */
+#edit div.edit-label + div.edit-error {
+	margin-left: 4px;
 }
 
 #edit .edit-count {
