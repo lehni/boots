@@ -112,6 +112,7 @@ Post.inject({
 			collection: this.allResources, prototypes: 'Resource',
 			addButton: 'Attach', autoRemove: true,
 			hideable: true, sortable: true, removable: true,
+			showLabels: false,
 			onCreate: function(ctor, values) {
 				// Create a resource type based on file mime type
 				var resource = values.file && Resource.create(values.file);

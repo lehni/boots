@@ -219,7 +219,7 @@
 
 #edit .edit-error div {
 	position: absolute;
-	bottom: -15px;
+	bottom: 7px;
 	padding: 5px 10px;
 	background: #ffe1e0;
 	border: 1px solid #d81e00;
@@ -236,9 +236,10 @@
 	height: 7px;
 }
 
-/* move the error over if there's a label */
-#edit div.edit-label + div.edit-error {
+/* Move the error over and down if there's a label, as it's position in relation to it */
+#edit div.edit-label + div.edit-error div {
 	margin-left: 4px;
+	bottom: -15px;
 }
 
 #edit .edit-count {

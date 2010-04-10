@@ -307,6 +307,28 @@ EditForm.inject(new function() {
 			return this.width;
 		},
 
+		getShowTitle: function() {
+			return EditForm.SHOW_TITLE && this.showTitle !== false;
+		},
+
+		getShowPath: function() {
+			return EditForm.SHOW_PATH && this.showPath !== false;
+		},
+
+		getShowProgress: function() {
+			return EditForm.SHOW_PROGRESS && this.showProgress !== false;
+		},
+
+		getShowPrototype: function() {
+			return EditForm.SHOW_PROTOTYPE && this.showPrototype !== false;
+		},
+
+		getShowLabels: function(showLabels) {
+			// optional showLabels is needed for EditableListItem
+			showLabels = Base.pick(showLabels, this.showLabels, EditForm.SHOW_LABELS);
+			return showLabels != 'none' ? showLabels : null;
+		},
+
 		setParent: function(parent) {
 			this.parent = parent;
 			// Determine root by walking up the parent chain:

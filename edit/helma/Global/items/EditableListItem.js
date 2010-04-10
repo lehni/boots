@@ -18,6 +18,9 @@ EditableListItem = ListItem.extend({
 		// Update the edit form's variablePrefix to group by this
 		// edit item.
 		form.variablePrefix = this.getEditName() + '_' + id + '_';
+		// Copy over labels setting, to allow list to control whether labels
+		// appear or not.
+		form.showLabels = this.showLabels;
 		return form;
 	},
 
@@ -79,16 +82,19 @@ EditableListItem = ListItem.extend({
 
 	render: function(baseForm, name, value, param, out) {
 		var width = param.calculatedWidth;
-		// Calculate the width available to the nested forms
-		var buttonWidth = 16;
-		if (this.addEntries)
-			width -= buttonWidth;
-		if (this.sortable)
-			width -= buttonWidth;
-		if (this.hideable)
-			width -= buttonWidth;
-		if (this.removable)
-			width -= buttonWidth;
+		if (baseForm.getShowLabels(this.showLabels) != 'top') {
+			// If there are no labels at the top, remove the width for the
+			// editing buttons from the width available to the nested forms
+			var buttonWidth = 16;
+			if (this.addEntries)
+				width -= buttonWidth;
+			if (this.sortable)
+				width -= buttonWidth;
+			if (this.hideable)
+				width -= buttonWidth;
+			if (this.removable)
+				width -= buttonWidth;
+		}
 		// Add the button only once to the form!
 		// TODO: Rename addButton to better name?
 		if (this.addButton && !this.initialized) {

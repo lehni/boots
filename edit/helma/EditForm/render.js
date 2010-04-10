@@ -22,10 +22,10 @@ EditForm.inject({
 
 				var itemsParam = {
 					width: param.width,
-					showProgress: EditForm.SHOW_PROGRESS
+					showProgress: this.getShowProgress()
 				};
 
-				if (EditForm.SHOW_TITLE && this.showTitle !== false)
+				if (this.getShowTitle())
 					itemsParam.title = this.renderTitle(node, mode);
 
 				param.items = this.renderItems(this, itemsParam);
@@ -143,10 +143,11 @@ EditForm.inject({
 
 	renderTitle: function(node, mode) {
 		var nodes = [];
+		var showPath = this.getShowPath();
 		while (node) {
 			nodes.unshift(node);
 			node = node.parent;
-			if (!EditForm.SHOW_PATH)
+			if (!showPath)
 				break;
 		}
 		var last = nodes.length - 1, lastForm = nodes.last.form;
@@ -155,7 +156,7 @@ EditForm.inject({
 			if (node.visible) {
 				// TODO: Template
 				var title = '<span class="edit-node-title">' + node.getTitle() + '</span>', form = node.getForm();
-				if (EditForm.SHOW_PROTOTYPE && form && !form.title
+				if (this.getShowPrototype() && form && !form.title
 					&& mode == 'edit' && this.object != root)
 						title += ' <span class="edit-node-type">(' + EditForm.getPrototypeName(node.object) + ')</span>';
 				// XXX:
@@ -308,10 +309,12 @@ EditForm.inject({
 			}
 		}
 		// At least one item needs to be rendered
+		var showLabels = this.getShowLabels();
 		if  (items.length > 0) {
 			baseForm.renderTemplate('item#row', {
-				labels: hasLabels ? labels : null,
-				firstLabel: labels[0], // for EditForm.LABEL_LEFT
+				showLabels: showLabels && hasLabels,
+				labels: hasLabels && labels,
+				labelLeft: showLabels == 'left' && hasLabels && labels[0],
 				items: items,
 				index: index
 				// TODO: Fix this

@@ -14,13 +14,13 @@
 
 <% #row %>
 <%-- Label row above the items --%>
-<% if (!EditForm.LABEL_LEFT) %>
-<% this.template '#labels' prefix='<tr class="edit-labels">' suffix='</tr>' labels=param.labels %>
+<% if (!param.labelLeft) %>
+<% this.template '#labels' prefix='<tr class="edit-labels">' suffix='</tr>' %>
 <% end %>
 <tr class="edit-items">
 <%-- Label to the left of the item --%>
-<% if (EditForm.LABEL_LEFT) %>
-<% this.template '#label' param=param.firstLabel %>
+<% if (param.labelLeft) %>
+<% this.template '#label' param=param.labelLeft %>
 <% end %>
 <%= param.items.join('') %>
 <% if (param.addEmptyCell) %>
@@ -33,7 +33,7 @@
 <td></td>
 <% end %>
 <td <%= param.name prefix='id="edit-label-' suffix='"' %> <%= param.span prefix=' colspan="' suffix='"' -%>>
-<% if (param.label) %>
+<% if (param.label && param.showLabels) %>
 <div class="edit-label"><%= param.label suffix=":" encoding="html" -%></div><%-%>
 <% end %>
 <% if (param.name) %>
