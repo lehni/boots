@@ -58,7 +58,7 @@ NotNullRequirement = EditRequirement.extend({
 
 	check: function(value) {
 		if (this.value && value == null)
-			throw 'Please enter a text.';
+			throw 'This cannot be empty.';
 	}
 });
 
