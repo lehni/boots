@@ -58,7 +58,7 @@ NotNullRequirement = EditRequirement.extend({
 
 	check: function(value) {
 		if (this.value && value == null)
-			throw 'cannot be empty.';
+			throw 'Please enter a text.';
 	}
 });
 
@@ -68,7 +68,7 @@ LengthRequirement = EditRequirement.extend({
 
 	check: function(value) {
 		if (value != null && value.length != this.value)
-			throw 'needs to contain exactly ' + 
+			throw 'Please enter exactly ' + 
 				this.value + ' characters.';
 	}
 });
@@ -78,7 +78,7 @@ MinLengthRequirement = EditRequirement.extend({
 
 	check: function(value) {
 		if (value != null && value.length < this.value)
-			throw 'needs to contain at least ' + 
+			throw 'Please enter at least ' + 
 				this.value + ' characters.';
 	}
 });
@@ -88,7 +88,7 @@ MaxLengthRequirement = EditRequirement.extend({
 
 	check: function(value) {
 		if (value != null && value.length > this.value)
-			throw 'cannot contain more than ' + 
+			throw 'Please enter no more than ' + 
 				this.value + ' characters.';
 	}
 });
@@ -98,7 +98,7 @@ MatchRequirement = EditRequirement.extend({
 
 	check: function(value) {
 		if (value != null && (!this.value.test || !this.value.test(value)))
-			throw 'is not correctly formated.';
+			throw 'This is not correctly formated.';
 	}
 });
 
@@ -108,7 +108,7 @@ EmailRequirement = EditRequirement.extend({
 	check: function(value) {
 		if (value != null && this.value
 				&& !/^([a-zA-Z0-9\-\.\_]+)(\@)([a-zA-Z0-9\-\.]+)(\.)([a-zA-Z]{2,4})$/.test(value))
-			throw 'is not a valid address.';
+			throw 'Please enter a valid address.';
 	}
 });
 
@@ -118,7 +118,7 @@ UrlRequirement = EditRequirement.extend({
 	check: function(value) {
 		if (value != null && this.value
 				&& !/(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?/.test(value))
-			throw 'is not a valid URL.';
+			throw 'Please enter a valid URL.';
 	}
 });
 
@@ -128,7 +128,7 @@ UniqueInRequirement = EditRequirement.extend({
 	check: function(value, item) {
 		var obj = this.value.get(value);
 		if (obj != null && obj != item.form.object)
-			throw 'is already in use.';
+			throw 'This name is already in use.';
 	}
 });
 

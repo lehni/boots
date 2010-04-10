@@ -44,7 +44,7 @@ Post.inject({
 						notNull: true,
 						uniqueIn: { 
 							value: root.users, message:
-							'\nThis user already exists.\nChoose a different name.'
+							'This user already exists.\nChoose a different name.'
 						}
 					}
 				}, true),
@@ -63,7 +63,7 @@ Post.inject({
 						},
 						uniqueIn: {
 							value: root.usersByEmail, message:
-							'\nThis address is already in use.\nChoose a different address.'
+							'This address is already in use.\nChoose a different address.'
 						},
 						email: true
 					}
