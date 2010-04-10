@@ -207,7 +207,8 @@
 
 #edit .edit-label {
 	font-weight: bold;
-	display: inline;
+	/* Allows padding to be applied to labels, but also errors positioned in realtion to it */
+	display: inline-block;
 }
 
 #edit .edit-error {
