@@ -39,8 +39,9 @@ EditNode = Base.extend({
 		var data = EditNode.getEditData();
 		if (!this.form || force || this.form.dontCache
 				|| this.form.version != data.version) {
-			User.log('Getting New Form for object', this.object.getFullId(),
-				'Version', data.version, this.form && this.form.version);
+			if (app.properties.debugEdit)
+				User.log('Getting New Form for object', this.object.getFullId(),
+					'Version', data.version, this.form && this.form.version);
 			try {
 				if (!this.object.getEditForm)
 					throw "The prototype '" + this.object._prototype
@@ -132,7 +133,8 @@ EditNode = Base.extend({
 				}
 				node = data.nodes[fullId];
 				if (!cached && !node) {
-					User.log('Creating new EditNode for', fullId, parentItem);
+					if (app.properties.debugEdit)
+						User.log('Creating new EditNode for', fullId, parentItem);
 					node = data.nodes[fullId] = new EditNode(fullId, object);
 				}
 				// Update parent.
@@ -173,7 +175,8 @@ EditNode = Base.extend({
 			// per request, even when they set the dontCache flag
 			var data = session.data.editData;
 			if (!data && !cached) {
-				User.log('Starting with new EditData');
+				if (app.properties.debugEdit)
+					User.log('Starting with new EditData');
 				data = session.data.editData = {
 					nodes: {},
 					version: 0
@@ -186,7 +189,8 @@ EditNode = Base.extend({
 			var clientData = Json.decode(req.data.edit_data);
 			var editData = EditNode.getEditData();
 			if (clientData && editData.version != clientData.version) {
-				User.log('Edit Nodes: ' + req.data.edit_data);
+				if (app.properties.debugEdit)
+					User.log('Edit Nodes: ' + req.data.edit_data);
 				// Synchronize the local node cache with the client sided
 				// version.
 				// Filter out nodes that do not have a listing in nodes

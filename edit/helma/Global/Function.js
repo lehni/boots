@@ -24,7 +24,8 @@ Function.inject({
 					// the editing parent can be determined from it. This
 					// is then passed to EditNode.get...
 					var isItem = param instanceof EditItem;
-					User.log('Creating', this.getEditId(), isItem, param);
+					if (app.properties.debugEdit)
+						User.log('Creating', this.getEditId(), isItem, param);
 					EditNode.get(this, isItem ? param : null);
 					// Now call initialize that we suppressed above when creating ctor:
 					if (proto.initialize) {
@@ -53,7 +54,8 @@ Function.inject({
 							this.onStore(this.cache.transientId);
 						// This marks the end of editing
 						this.setCreating(false);
-						User.log('Storing', beforeId + ', now:', this.getEditId());
+						if (app.properties.debugEdit)
+							User.log('Storing', beforeId + ', now:', this.getEditId());
 					}
 					if (onPersist)
 						onPersist.apply(this, arguments);

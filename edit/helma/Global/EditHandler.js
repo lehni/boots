@@ -10,6 +10,7 @@ EditHandler = Base.extend(new function() {
 			},
 
 			handle: function(base, mode) {
+				var startTime = Date.now();
 				var editObj = null;
 				// The default for response content-type is javascript for 
 				// outputing json data. If something else  is sent back,
@@ -20,8 +21,8 @@ EditHandler = Base.extend(new function() {
 				var editResponse = res.data.editResponse = new Hash();
 				var mode = req.data.edit_mode || mode || 'edit';
 				var fullId = req.data.edit_id || base.getFullId();
-				User.log('Edit Request:', fullId, "'" + mode + "'");
 				if (app.properties.debugEdit) {
+					User.log('Edit Request:', fullId, "'" + mode + "'");
 					var values = [];
 					for (var i in req.data)
 						if (!/^(http_host|HopSession|http_language|http_remotehost|autoLogin|http_browser|http_referer)$/.test(i))
@@ -152,6 +153,8 @@ EditHandler = Base.extend(new function() {
 				} else {
 					res.write(out);
 				}
+//				if (app.properties.debugEdit)
+					User.log('EditHandler.handle() time: ', Date.now() - startTime);
 				return handled;
 			},
 
