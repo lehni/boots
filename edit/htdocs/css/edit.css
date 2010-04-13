@@ -14,12 +14,12 @@
 
 #edit td, #edit input, #edit select, #edit textarea, #edit a.edit-button, #edit .tab-pane .edit-title {
 	font-family: "Lucida Grande", Geneva, Verdana, Arial, sans-serif;
-	font-size: 10px;
+	font-size: 11px;
 }
 
 #edit td, #edit .tab-pane .edit-title {
-	font-size: 11px;
-	line-height: 17px;
+	font-size: 12px;
+	line-height: 19px;
 }
 
 #edit table {
