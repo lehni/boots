@@ -1,3 +1,4 @@
 <%-- Vertical alignment trick from http://stackoverflow.com/questions/306252/how-to-align-checkboxes-and-their-labels-consistently-cross-browsers/494922#494922 --%>
 <%-- Default value trick from http://iamcam.wordpress.com/2008/01/15/unchecked-checkbox-values/ --%>
-<label><% input type="hidden" name=param.name id='' value="0" %><% input type="checkbox" name=param.name current=param.current className=param.className %><span><%= param.text encoding="html" %></span></label>
+<% input type="hidden" name=param.name value="0" id="" %>
+<label><% input type="checkbox" name=param.name current=param.current className=param.className %><span><%= param.text encoding="html" %></span></label>
