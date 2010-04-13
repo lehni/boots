@@ -138,7 +138,6 @@ HopProperty = Property.extend(new function() {
 		_wrap: true,
 
 		get: function(obj, property, value, param) {
-//			app.log('HOP/XML GET ' + value);
 			if (!value) {
 				// Create the object on the fly if createIfNull is set 
 				// to either true or the prototype to be created. 
@@ -150,17 +149,24 @@ HopProperty = Property.extend(new function() {
 				}
 				return value;
 			} else {
-				return Xml.readFromString(prefix + value + suffix);
+				return HopProperty.decode(value);
 			}
 		},
 
 		set: function(obj, property, value) {
-			if (value) {
+			return value ? HopProperty.encode(value) : value;
+		},
+
+		statics: {
+			// Expose these simplified versions through HopProperty.encode / decode:
+			encode: function(value) {
 				value = writeToString(value);
-				value = value.substring(prefix.length, value.length - suffix.length);
+				return value.substring(prefix.length, value.length - suffix.length);
+			},
+
+			decode: function(value) {
+				return value ? Xml.readFromString(prefix + value + suffix) : null;
 			}
-//			app.log('HOP/XML SET ' + value);
-			return value;
 		}
 	};
 });
