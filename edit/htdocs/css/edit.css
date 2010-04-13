@@ -420,15 +420,23 @@
 
 /* icons */
 
+#edit .icon .icon-label {
+	display: inline;
+	padding: 0 0 1px 4px;
+}
+
+#edit .icon .icon-image {
+	display: inline;
+}
+
+#edit .icon .icon-image img {
+	vertical-align: middle;
+}
+
 #edit .icon a {
 	border-bottom: 0;
 }
 
-#edit .icon-small img {
-	vertical-align: middle;
-}
-
 #edit .icon-small a {
 	padding: 0 2px 3px 0;
-	border-bottom: 0;
 }
