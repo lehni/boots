@@ -5,7 +5,7 @@ Movie.inject({
 		if (param.hasDimensions === undefined)
 			param.hasDimensions = false;
 		var form = this.base(param);
-		form.insertAt(0, {
+		form.insertAt(0, form.createItem(param.url, {
 			name: 'url', type: 'string', label: 'Movie',
 			requirements: {
 				notNull: true,
@@ -25,7 +25,7 @@ Movie.inject({
 				}
 				return false;
 			}
-		});
+		}, true));
 		return form;
 	},
 
