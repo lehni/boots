@@ -9,8 +9,9 @@ User.inject({
 
 		logError: function(title, e) {
 			var shortDesc = e.fileName
-				? 'Error in ' + e.fileName + ', Line ' + e.lineNumber + ': ' + e
-				: 'Error: ' + e;
+				? 'Error in ' + e.fileName + ', Line ' + e.lineNumber
+				: 'Error'
+					+ ' (' + title + '): ' + e;
 
 			if (req.path)
 				shortDesc += '\n(' + req.path + ')';
@@ -21,7 +22,7 @@ User.inject({
 				e.javaException.printStackTrace(new java.io.PrintWriter(sw));
 				longDesc += '\nStacktrace:\n' + sw.toString();
 			}
-			User.log(title + ':\n' + longDesc);
+			User.log(longDesc);
 			var from = app.properties.errorFromAddress || app.properties.serverAddress;
 			var to = app.properties.errorToAddress;
 			if (from && to) {
