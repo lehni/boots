@@ -91,7 +91,7 @@ OEmbedTag = MarkupTag.extend(new function() {
 						if (name != 'url')
 							href += '&' + name + '=' + attributes[name];
 					// Request json
-					var json = Url.load(href + '&format=json', { timeout: param.timeout || 500 });
+					var json = Url.load(href + '&format=json', { timeout: param.timeout || 1000 });
 					var data = json && Json.decode(json);
 					if (data) {
 						// Youtube sometimes ignores maxWidth / height, so fix it here:
