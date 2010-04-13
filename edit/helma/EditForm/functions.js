@@ -228,6 +228,11 @@ EditForm.inject(new function() {
 	 * Public functions
 	 */
 	return {
+		// Tell Helma's ObjectWrapper code that EditForms do not need to be
+		// observed or changes.
+
+		__ignoreChanges__: true,
+
 		// Since EditForm is a HopObject, setting object relations on it to
 		// other HopObjects messes with their _parent setting, so EditForm
 		// in fact becomes their parent simply by setting this.object = object
