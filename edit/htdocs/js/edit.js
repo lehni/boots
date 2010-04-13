@@ -748,10 +748,12 @@ EditForm.register({
 			item.setValue(val);
 	},
 
+	// TODO: Implement as bootstrap behavior instead, the new way, like all else
 	text_count: function(element) {
 		// Split at punctiation. Values taken from Java's \p{Punct}
-		var count = element.getValue().trim().split(/[!"#$%&'()*+,-.\/:;<=>?@[\]^_`{|}~]*/g).length;
-		if (count)
+		var words = element.getValue().trim().split(/[!"#$%&'()*+,-.\/:;<=>?@[\]^_`{|}~\s]+/g);
+		var count = words.length;
+		if (count && !words[count - 1])
 			count--;
 		var name = element.getId();
 		var label = $('#edit-label-' + name);
