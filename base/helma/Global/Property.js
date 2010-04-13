@@ -61,17 +61,11 @@ Property = Base.extend({
 
 	wrap: function(obj, property, value, param) {
 		var that = this;
-		return ObjectWrapper.wrap(
-			value, {
-				// onChange handler for the object and any of its children:
-				onChange: function() {
-					// TODO: Call param.onChange handler as well?
-					that.markDirty(obj, property);
-				},
-
-				modifiers: that._modifiers
-			}
-		);
+		return wrapObject(value, function() {
+			// onChange handler for the object and any of its children.
+			// TODO: Call param.onChange handler as well?
+			that.markDirty(obj, property);
+		});
 	},
 
 	markDirty: function(obj, property) {
@@ -142,8 +136,6 @@ HopProperty = Property.extend(new function() {
 	return {
 		_cache: true,
 		_wrap: true,
-		// HopObject methods that change the object
-		_modifiers: ['add', 'addAt', 'remove', 'removeChild'],
 
 		get: function(obj, property, value, param) {
 //			app.log('HOP/XML GET ' + value);
