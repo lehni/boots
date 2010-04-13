@@ -3339,10 +3339,8 @@ Request = Base.extend(Chain, Callback, new function() {
 			switch (Base.type(data)) {
 				case 'element':
 				 	data = DomNode.wrap(data);
-					if (data.getTag() != 'form' || !data.hasElement('input[type=file]')) {
+					if (data.getTag() != 'form' || !data.hasElement('input[type=file]'))
 						data = data.toQueryString();
-						alert(data);
-					}
 					break;
 				case 'object':
 					data = Base.toQueryString(data);
