@@ -95,8 +95,8 @@ function renderLink(param, out) {
 			onClick = "$('#" + param.update + "').load('" + url + "');";
 			url = '#';
 		} else if (param.popup) {
-			onClick = 'new Window(' 
-					+ Json.encode(Hash.merge({ url: url }, param.popup)) + ');';
+			onClick = 'new Window('
+					+ Json.encode(Hash.merge({ url: url, name: 'popup' }, param.popup)) + ');';
 			url = '#';
 		}
 	}

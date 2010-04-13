@@ -35,7 +35,6 @@ Picture.inject({
 			// if href or object is set, the image is probably taking us to 
 			// another page, so don't popup!
 			param.popup = this.getScaledSize(this.MAX_POPUP_SIZE);
-			param.popup.name = this.name.urlize();
 		}
 	 	return this.base(param, out);
 	},

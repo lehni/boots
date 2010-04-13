@@ -62,6 +62,9 @@ HopObject.inject({
 			if (!param.content)
 				return null;
 		}
+		// Make sure popup has a name to be used for th window.
+		if (param.popup && !param.popup.name)
+			param.popup.name = this.getDisplayName().urlize();
 		return renderLink(param, out);
 	},
 
