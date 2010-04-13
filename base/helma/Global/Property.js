@@ -23,8 +23,8 @@ Property = Base.extend({
 			var value = this[property];
 			if (that.get)
 				value = that.get(this, property, value, param);
-			if (value != null && that._wrap)
-				value = that.wrap(this, property, value, param);
+			if (value != null && that._observe)
+				value = that.observe(this, property, value, param);
 			// Store in cache after conversion from native type
 			if (cache)
 				cache[property] = value;
@@ -49,8 +49,8 @@ Property = Base.extend({
 				cache = this.cache._properties;
 				if (!cache)
 					cache = this.cache._properties = {};
-				if (value != null && that._wrap)
-					value = that.wrap(this, property, value, param);
+				if (value != null && that._observe)
+					value = that.observe(this, property, value, param);
 				cache[property] = value;
 			}
 			if (that.set)
@@ -59,9 +59,9 @@ Property = Base.extend({
 		}
 	},
 
-	wrap: function(obj, property, value, param) {
+	observe: function(obj, property, value, param) {
 		var that = this;
-		return wrapObject(value, function() {
+		return createObserver(value, function() {
 			// onChange handler for the object and any of its children.
 			// TODO: Call param.onChange handler as well?
 			that.markDirty(obj, property);
@@ -135,7 +135,7 @@ HopProperty = Property.extend(new function() {
 
 	return {
 		_cache: true,
-		_wrap: true,
+		_observe: true,
 
 		get: function(obj, property, value, param) {
 			if (!value) {
@@ -173,7 +173,7 @@ HopProperty = Property.extend(new function() {
 
 JsonProperty = Property.extend({
 	_cache: true,
-	_wrap: true,
+	_observe: true,
 	
 	get: function(obj, property, value) {
 //		app.log('JSON GET ' + Json.decode(value));
@@ -188,7 +188,7 @@ JsonProperty = Property.extend({
 
 XmlProperty = Property.extend({
 	_cache: true,
-	_wrap: true,
+	_observe: true,
 
 	get: function(obj, property, value) {
 		return new XML(value);
