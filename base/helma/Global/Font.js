@@ -12,10 +12,10 @@
 Font = Base.extend({
 	initialize: function(filename, antialias, fractionalMetrics) {
 		// Cache the native objects for each font, so creation of new
-		// instances of font objects can be very fust.
+		// instances of font objects can be very fast.
 		// This is better than caching the  font objects itself, since they
-		// s are not thread safe.
-		var fontObj = Font.fontObjects[filename];
+		// are not thread safe.
+		var fontObj = Font.fontCache[filename];
 		if (!fontObj) {
 			var file = new File(filename);
 			if (file.exists()) {
@@ -28,26 +28,34 @@ Font = Base.extend({
 				// Don't use the internal font cache!
 				var kernedFont = BaseFont.createFont(filename, BaseFont.WINANSI,
 						false, false, null, null);
-				fontObj = Font.fontObjects[filename] = {
+				fontObj = Font.fontCache[filename] = {
+					name: kernedFont.getPostscriptFontName(),
 					nativeFont: nativeFont,
-					kernedFont: kernedFont,
-					size: nativeFont.size
+					kernedFont: kernedFont
 				};
 			}
 		}
 		if (fontObj) {
+			this.filename = filename;
+			this.name = fontObj.name;
 			this.nativeFont = fontObj.nativeFont;
 			this.kernedFont = fontObj.kernedFont;
-			this.size = fontObj.size;
+			this.size = this.nativeFont.size;
 			this.antialias = antialias;
+			this.fractionalMetrics = fractionalMetrics;
 			this.charSpacing = 0;
-			this.filename = filename;
-			this.renderInfo = Font.getRenderInfos(antialias, fractionalMetrics);
 		}
+	},
+
+	getRenderInfo: function() {
+		if (!this.renderInfo)
+			this.renderInfo = Font.getRenderInfo(
+					this.antialias, this.fractionalMetrics);
+		return this.renderInfo;
 	},
 	
 	getRenderingHints: function() {
-		return this.renderInfo.hints;
+		return this.getRenderInfo().hints;
 	},
 	
 	finalize: function() {
@@ -86,6 +94,7 @@ Font = Base.extend({
 		if (this.antialias != antialias) {
 			this.antialias = antialias;
 			this.uniqueString = null;
+			this.renderInfo = null;
 		}
 		return this;
 	},
@@ -104,12 +113,15 @@ Font = Base.extend({
 
 	processGlyphLine: function(text, maxWidth, layout) {
 		if (this.nativeFont) {
+			var renderInfo = this.getRenderInfo();
 			var glyphs = this.nativeFont.createGlyphVector(
-					this.renderInfo.context, text);
+					renderInfo.context, text);
 			// Call getCharSpacing with a the text, so subclasses of Font
-			// can alter spacing depending on the case of the chars (used in Lineto)
+			// can alter spacing depending on the case of the chars
+			// (used in Lineto)
 			var charSpacing = this.getCharSpacing(text);
-			// Use the font's size, not this.size, as the font may be scaled (used in Lineto)
+			// Use the font's size, not this.size, as the font may be scaled
+			// (used in Lineto)
 			var size = this.nativeFont.getSize();
 			var x = 0;
 			var num = glyphs.getNumGlyphs();
@@ -128,7 +140,7 @@ Font = Base.extend({
 					if (layout) {
 						// Reproduce glyph vector
 						var newGlyphs = this.nativeFont.createGlyphVector(
-									this.renderInfo.context, text);
+									renderInfo.context, text);
 						for (var j = 0; j < i; j++)
 							newGlyphs.setGlyphPosition(j,
 									glyphs.getGlyphPosition(j));
@@ -150,7 +162,8 @@ Font = Base.extend({
 			// general ones, depending on the height of font only:
 			// this makes code like correctBaseLines in FontRenderer.js obsolete
 			// and solves many problems with very differently mastered fonts:
-			// the values 0.3 and 1.3 are trial & error values which look quite nice...
+			// the values 0.3 and 1.3 are trial & error values which look
+			// quite nice...
 			// var bounds = glyphs.getLogicalBounds();
 			desc.baseLine = this.size * 0.3; // bounds.getMaxY()
 			desc.height = this.size * 1.3; // bounds.getHeight()
@@ -171,10 +184,12 @@ Font = Base.extend({
 	// getUniqueString returns a string that represents this font identically.
 	// This is used for the image rendering
 	getUniqueString: function() {
-		return this.uniqueString || (this.uniqueString =
-				this.kernedFont.getPostscriptFontName() +
-				(this.antialias ? '_1_' : '_0_') +
-				this.size.format('#0.00') + '_' + this.charSpacing);
+		return this.uniqueString || (this.uniqueString = [
+				this.fontName,
+				this.antialias ? '1' : '0',
+				Math.round(this.size * 100) / 100,
+				this.charSpacing
+			].join(','));
 	},
 
 	/**
@@ -204,13 +219,13 @@ Font = Base.extend({
 	},
 
 	/**
-	 * This cuts a string at maxWidth and appends an optional suffix so the string fits into
-	 * the width. This can be used to cut client sided strings, if a web TTF
-	 * file is used for calculation of the width of the string.
+	 * This cuts a string at maxWidth and appends an optional suffix so the
+	 * string fits into the width. This can be used to cut client sided strings,
+	 * if a web TTF file is used for calculation of the width of the string.
 	 */
 	truncate: function(text, maxWidth, suffix) {
 		// Cache the results of this process for speed improvements
-		var key = encodeMd5(text + '_' + maxWidth + '_' + this.getUniqueString());
+		var key = encodeMd5([ text, maxWidth, this.getUniqueString() ].join(','));
 		var cache = Font.truncateCache;
 		var value = cache.lookup[key];
 		if (!value) {
@@ -236,79 +251,98 @@ Font = Base.extend({
 		return suffix && value.truncated ? value.text + suffix : value.text;
 	},
 
-	renderText: function(text, param, out) {
-		this.setSize(param.size ? parseFloat(param.size) : 16);
-		this.setCharSpacing(param.charSpacing ? parseFloat(param.charSpacing) : 0);
-		var color = param.color || '#000000';
-		var bgColor = param.bgColor || '#ffffff';
-		var filename = encodeMd5(text + color + bgColor + param.maxWidth
-				+ param.lineHeight + param.justification
-				+ this.getUniqueString()) + '.gif';
-		var file = new File(app.properties.fontRenderDir, filename);
-
-		if (!file.exists()) {
-			var str = text;
-			if (param.transform) {
-				var method = ({
-					uppercase: 'toUpperCase',
-					lowercase: 'toLowerCase',
-					capitalize: 'capitalize'
-				})[param.transform];
-				if (method)
-					str = str[method]();
+	renderImage: function(text, param) {
+		if (param.transform) {
+			var method = ({
+				uppercase: 'toUpperCase',
+				lowercase: 'toLowerCase',
+				capitalize: 'capitalize'
+			})[param.transform];
+			if (method)
+				text = text[method]();
+		}
+		var lines = this.breakIntoLines(text, param.maxWidth);
+		if (lines.length > 0) {
+			var width = 0;
+			for (var i = 0, l = lines.length; i < l; i++) {
+				var desc = lines[i] = this.layoutGlyphLine(lines[i]);
+				width = Math.max(width, desc.width);
 			}
-			var lines = this.breakIntoLines(str, param.maxWidth);
-			if (lines.length > 0) {
-				var width = 0;
-				for (var i = 0, l = lines.length; i < l; i++) {
-					var desc = lines[i] = this.layoutGlyphLine(lines[i]);
-					width = Math.max(width, desc.width);
-				}
-				var desc = lines[0];
-				var calcHeight = Math.ceil(desc.height);
-				var lineHeight = param.lineHeight ? param.lineHeight : calcHeight;
-				var height = lineHeight * (lines.length - 1) + calcHeight;
-				var image = new Image(width, height);
-				var g2d = image.getGraphics();
-				g2d.setColor(java.awt.Color.decode(bgColor));
-				g2d.fillRect(0, 0, width, height);
-				g2d.setColor(java.awt.Color.decode(color));
-				g2d.setRenderingHints(this.getRenderingHints());
+			var desc = lines[0];
+			var calcHeight = Math.ceil(desc.height);
+			var lineHeight = param.lineHeight
+					? param.lineHeight : calcHeight;
+			var height = lineHeight * (lines.length - 1) + calcHeight;
+			var image = new Image(width, height);
+			var g2d = image.getGraphics();
+			g2d.setColor(java.awt.Color.decode(param.bgColor || '#ffffff'));
+			g2d.fillRect(0, 0, width, height);
+			g2d.setColor(java.awt.Color.decode(param.color || '#000000'));
+			g2d.setRenderingHints(this.getRenderingHints());
 
-				var multiplier = param.justification == 'right' ? 1 :
-						param.justification == 'centered' ? 0.5 : 0; // 0 == 'left' / default
-				for (var i = 0, l = lines.length; i < l; i++) {
-					var desc = lines[i];
-					this.drawGlyphs(g2d, desc,
-							(width - desc.width) * multiplier,
-							i * lineHeight);
-				}
+			var multiplier = param.justification == 'right' ? 1 :
+					param.justification == 'centered' ? 0.5 : 0; // 0 == 'left' / default
+			for (var i = 0, l = lines.length; i < l; i++) {
+				var desc = lines[i];
+				this.drawGlyphs(g2d, desc,
+						(width - desc.width) * multiplier,
+						i * lineHeight);
+			}
 
-				image.reduceColors(16, false, true);
-				image.setTransparentPixel(image.getPixel(0, 0));
+			image.reduceColors(16, false, true);
+			image.setTransparentPixel(image.getPixel(0, 0));
+			return image;
+		}
+	},
+
+	renderText: function(text, param, out) {
+		this.setSize((param.size || 16).toFloat());
+		this.setCharSpacing((param.charSpacing || 0).toFloat());
+		var id = [ 
+				this.getUniqueString(), text,
+				param.color, param.bgColor, param.maxWidth,
+				param.lineHeight, param.justification
+			].join(',');
+		var entry = Font.renderCache[id];
+		if (!entry) {
+			var filename = encodeMd5(id) + '.gif';
+			var file = new File(app.properties.fontRenderDir, filename);
+			var width, height;
+			if (!file.exists()) {
+				var image = this.renderImage(text, param);
+				width = image.width;
+				height = image.height;
 				image.saveAs(file.getPath(), 1, true);
 				image.dispose();
+			} else {
+				var info = Image.getInfo(file);
+				if (info) {
+					width = info.getWidth();
+					height = info.getHeight();
+				}
 			}
-		} else {
-			var info = Image.getInfo(file);
-			if (info) {
-				var width = info.getWidth();
-				var height = info.getHeight();
+			if (width && height) {
+				entry = Font.renderCache[id] = {
+					src: app.properties.fontRenderUri + filename,
+					width: width,
+					height: height
+				};
 			}
 		}
 		var image = param.attributes || {};
-		image.src = app.properties.fontRenderUri + filename;
-		image.width = width;
-		image.height = height;
+		image.src = entry.src;
+		image.width = entry.width;
+		image.height = entry.height;
 		if (!image.alt)
 			image.alt = text.replace('\n', ' ');
 		return Html.image(image, out);
 	},
 	
 	statics: {
-		renderInfos: {},
+		fontCache: {},
+		renderInfoCache: {},
 
-		fontObjects: {},
+		renderCache: {},
 
 		truncateCache: {
 			keys: [],
@@ -327,20 +361,20 @@ Font = Base.extend({
 			) : null;
 		},
 
-		getRenderInfos: function(antialias, fractionalMetrics) {
+		getRenderInfo: function(antialias, fractionalMetrics) {
 			// set defaults if undefined:
-			if (antialias == undefined)
+			if (antialias === undefined)
 				antialias = true;
 
-			if (fractionalMetrics == undefined)
+			if (fractionalMetrics === undefined)
 				fractionalMetrics = true;
 	
-			// create a infoId an cash the renderingInfos
+			// create a infoId an cash the renderingInfo
 			var id = (antialias ? '1' : '0') + (fractionalMetrics ? '1' : '0');
 	
-			var infos = this.renderInfos[id];
+			var entry = this.renderInfoCache[id];
 			// only create if it's not cached already
-			if (!infos) {
+			if (!entry) {
 				var RenderingHints = java.awt.RenderingHints;
 				var map = new java.util.HashMap();
 				map.put(RenderingHints.KEY_DITHERING,
@@ -357,13 +391,13 @@ Font = Base.extend({
 						: RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
 				map.put(RenderingHints.KEY_COLOR_RENDERING,
 						RenderingHints.VALUE_COLOR_RENDER_QUALITY);
-				infos = this.renderInfos[id] = {
+				entry = this.renderInfoCache[id] = {
 					context: new java.awt.font.FontRenderContext(null,
 							!!antialias, !!fractionalMetrics),
 					hints: new RenderingHints(map)
 				};
 			}
-			return infos;
+			return entry;
 		}
 	}
 });
