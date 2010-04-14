@@ -60,12 +60,8 @@ Template.prototype = {
 				obj[i] = parent[i];
 			parent = obj;
 		}
-		function inherit() {};
-		inherit.prototype = parent;
-		var obj = new inherit();
-		for (var i in object)
-			obj[i] = object[i];
-		return obj;
+		object.__proto__ = parent;
+		return object;
 	},
 
 	getSubTemplate: function(name) {
@@ -612,38 +608,34 @@ Template.prototype = {
 	},
 
 	renderMacro: function(command, object, name, param, args, out) {
-		var unhandled = false, value, macro;
 		if (object) {
-			if (name == 'template') {
-				var that = this;
-				macro = function(prm, name) {
-					if (name[0] == '#') {
-						return (that.parent || that).renderSubTemplate(object, name, prm, param);
+			try {
+				args = this.processArguments(args, param);
+				if (name == 'template') {
+					var prm = args[0], nm = args[1];
+					if (nm[0] == '#') {
+						return (this.parent || this).renderSubTemplate(
+								object, nm, prm, param);
 					} else {
-						var template = object.getTemplate(name);
-						return template && template.render(object, prm);
+						var template = object.getTemplate(nm);
+						if (template)
+							return template.render(object, prm);
 					}
-				}
-			} else {
-				macro = object[name + '_macro'];
+				} else {
+					var macro = object[name + '_macro'];
+					if (macro) {
+						return macro.apply(object, args);
+					} else {
+						value = object[name];
+						if (value !== undefined)
+							return value;
+					}
+				} 
+			} catch (e) {
+				this.reportMacroError(e, command, out);
 			}
-			if (macro) {
-				try {
-					value = macro.apply(object, this.processArguments(args, param));
-				} catch (e) {
-					this.reportMacroError(e, command, out);
-				}
-			} else {
-				value = object[name];
-				if (value === undefined)
-					unhandled = true;
-			}
-		} else {
-			unhandled = true;
 		}
-		if (unhandled)
-			out.write('[Macro unhandled: "' + command + '"]');
-		return value;
+		out.write('[Macro unhandled: "' + command + '"]');
 	},
 
 	reportMacroError: function(error, command, out) {
@@ -692,10 +684,7 @@ Template.prototype = {
 			this.renderTemplates = [];
 			var code = this.parse(lines);
 			var cx = Packages.org.mozilla.javascript.Context.getCurrentContext();
-			var level = cx.getOptimizationLevel();
-			cx.setOptimizationLevel(-1);
 			cx.evaluateString(this, code, this.pathName, 0, null);
-			cx.setOptimizationLevel(level);
 		} catch (e) {
 			this.throwError(e);
 		}
