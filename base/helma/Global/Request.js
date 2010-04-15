@@ -321,6 +321,8 @@ Request = Base.extend(new function() {
 			} catch (e) {
 				return {
 					error: true,
+					// TODO: An exception is not a response message. Find a way
+					// to distinguish them.
 					message: e
 				}
 			}
