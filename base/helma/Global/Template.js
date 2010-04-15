@@ -60,6 +60,12 @@ Template.prototype = {
 				obj[i] = parent[i];
 			parent = obj;
 		}
+		if (object.__proto__ !== Object.prototype) {
+			var obj = {};
+			for (var i in object)
+				obj[i] = object[i];
+			object = obj;
+		}
 		object.__proto__ = parent;
 		return object;
 	},
