@@ -13,12 +13,15 @@ Url = new function() {
 		},
 
 		load: function(url, param) {
-			try {
-				var res = getURL(url, param.etag || param.date, param.timeout);
-				return res ? new java.lang.String(res.content) : null;
-			} catch (e) {
-				User.logError('Url.load', e);
+			var response = new Request({
+				url: url,
+				timeout: param.timeout
+			}).send();
+			if (response.error) {
+				app.log('Error in Url.load: ' + response.status + ': ' 
+						+ response.message);
 			}
+			return response.data;
 		},
 
 		hasProtocol: function(url) {
