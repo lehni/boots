@@ -91,45 +91,65 @@ OEmbedTag = MarkupTag.extend(new function() {
 						if (name != 'url')
 							href += '&' + name + '=' + attributes[name];
 					// Request json
-					var json = Url.load(href + '&format=json', { timeout: param.timeout || 1000 });
-					var data = json && Json.decode(json);
-					if (data) {
-						// Youtube sometimes ignores maxWidth / height, so fix it here:
-						if (param.maxWidth && data.width > param.maxWidth ||
-							param.maxHeight && data.height > param.maxHeight) {
-							var old = { width: data.width, height: data.height };
-							var bar = data.provider_name == 'YouTube' ? 25 : 0;
-							var ratio = data.width / (data.height - bar);
-							if (param.maxWidth && data.width > param.maxWidth) {
-								data.width = param.maxWidth;
-								data.height = data.width / ratio + bar;
+					var response = new Request({
+						url: href + '&format=json',
+						json: true,
+						timeout: param.timeout || 1000
+					}).send();
+					if (response) {
+						var data;
+						if (response.error) {
+							User.log('Network Error in OEmbedTag.getData() url: ' + url
+									+ ', status: ' + response.status
+									+ ', message: ' + response.message);
+							// If an error happened, produce a data object anyhow,
+							// containing the link to the source as html, and a
+							// cache_age set so we're not immediately trying again.
+							data = {
+								status: response.status,
+								error: response.message,
+								cache_age: 3600, // Try again in one hour if there was an error
+								html: renderLink({ href: url })
+							};
+						} if (response.data) {
+							data = response.data;
+							// Youtube sometimes ignores maxWidth / height, so fix it here:
+							if (param.maxWidth && data.width > param.maxWidth ||
+								param.maxHeight && data.height > param.maxHeight) {
+								var old = { width: data.width, height: data.height };
+								var bar = data.provider_name == 'YouTube' ? 25 : 0;
+								var ratio = data.width / (data.height - bar);
+								if (param.maxWidth && data.width > param.maxWidth) {
+									data.width = param.maxWidth;
+									data.height = data.width / ratio + bar;
+								}
+								if (param.maxHeight && data.height > param.maxHeight) {
+									data.height = param.maxHeight;
+									data.width = ratio * (data.height - bar);
+								}
+								if (data.html)
+									['width', 'height'].each(function(name) {
+										data.html = data.html.replace(new RegExp(name + '=(?:["\']|)'
+											+ old[name] + '(?:["\']|)', 'g'), name + '="' + data[name] + '"');
+									});
 							}
-							if (param.maxHeight && data.height > param.maxHeight) {
-								data.height = param.maxHeight;
-								data.width = ratio * (data.height - bar);
-							}
-							if (data.html)
-								['width', 'height'].each(function(name) {
-									data.html = data.html.replace(new RegExp(name + '=(?:["\']|)'
-										+ old[name] + '(?:["\']|)', 'g'), name + '="' + data[name] + '"');
-								});
-						}
-						if (!data.html) {
-							// Compose html from the other info
-							switch (data.type) {
-							case 'photo':
-								data.html = Html.image({
-									width: data.width,
-									height: data.height,
-									src: data.url,
-									alt: data.title
-								});
-								if (param.linkPhotos)
-									data.html = renderLink({ content: data.html, href: url });
-								break;
-							default:
-								User.log('ERROR: Unsupported oEmbed result: ' + json);
-								return null;
+							if (!data.html) {
+								// Compose html from the other info
+								switch (data.type) {
+								case 'photo':
+									data.html = Html.image({
+										width: data.width,
+										height: data.height,
+										src: data.url,
+										alt: data.title
+									});
+									if (param.linkPhotos)
+										data.html = renderLink({ content: data.html, href: url });
+									break;
+								default:
+									User.log('ERROR: Unsupported oEmbed result: ' + Json.encode(data));
+									return null;
+								}
 							}
 						}
 						// Default value for cache age is 1 hour.
