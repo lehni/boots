@@ -105,9 +105,13 @@ function renderLink(param, out) {
 	// Notice: param.text is not the same as param.content:
 	// content is supposed to be encoded already, text is encoded automatically!
 	var content = param.content;
-	if (!content && param.text)
-		content = encode(param.text);
-
+	if (!content) {
+		if (param.text) {
+			content = encode(param.text);
+		} else if (url) {
+			content = url.match(/^(?:\w+:\/\/)?(.*)$/)[1];
+		}
+	}
 	if (!url) {
 		// Simply render the content without a link.
 		res.write(content);
