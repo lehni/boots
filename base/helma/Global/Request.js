@@ -306,8 +306,8 @@ Request = Base.extend(new function() {
 				if (this.maxResponseSize && response.length > this.maxResponseSize)
 						throw new Error('Maximum allowed response size is exceeded');
 
-				var pos = response.type && response.type.indexOf('charset=');
-				if (pos > 0) {
+				var pos = response.type ? response.type.indexOf('charset=') : -1;
+				if (pos >= 0) {
 					var charset = response.type.substring(pos + 8);
 					charset = charset.replace(/[;']/g, '').trim();
 					response.charset = charset;
