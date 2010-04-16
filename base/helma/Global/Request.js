@@ -11,21 +11,17 @@ Request = Base.extend(new function() {
 				cookie.value = m[2] ? m[2].trim() : '';
 			}
 			while ((m = pattern.exec(cookieStr)) != null) {
-				var key = m[1].trim();
+				var key = m[1].trim().toLowerCase();
 				var value = m[2] ? m[2].trim() : '';
-				switch (key.toLowerCase()) {
-					case 'expires':
-						// try to parse the expires date string into a date object
-						try {
-							cookie.expires = dateFormat.parse(value);
-						} catch (e) {
-							// ignore
-						}
-						break;
-					default:
-						cookie[key.toLowerCase()] = value;
-						break;
+				if (key == 'expires') {
+					// try to parse the expires date string into a date object
+					try {
+						value = dateFormat.parse(value);
+					} catch (e) {
+						// ignore
+					}
 				}
+				cookie[key] = value;
 			}
 			return cookie;
 		}
