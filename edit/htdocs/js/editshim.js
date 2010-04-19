@@ -12,7 +12,7 @@ EditSettings = new Hash({
 		email: '<email "@link">@text</email>',
 		url: '<url "@link">@text</url>',
 		urlUnnamed: '<url "@link" />',
-		image: '<image "@name" />',
+		image: '<image "@name" />'
 	},
 	buttons: {
 		convert: true,

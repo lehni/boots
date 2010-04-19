@@ -241,14 +241,12 @@ EditForm.inject(new function() {
 		// with _).
 		// TODO: Find an elegant way to define EditForm, allow apps to override
 		// it, have template files and not rely on it being a HopObject.
-		object: {
-			_get: function() {
-				return this._object;
-			},
+		get object() {
+			return this._object;
+		},
 
-			_set: function(object) {
-				this._object = object;
-			}
+		set object(object) {
+			this._object = object;
 		},
 
 		/**

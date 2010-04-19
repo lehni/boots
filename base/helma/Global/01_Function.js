@@ -8,7 +8,7 @@ Function.inject({
 	 */
 
 	toRender: function(count) {
-		var length = count == undefined ? this.parameters.length : count;
+		var length = count == undefined ? this.getParameters().length : count;
 		var last = length ? length - 1 : 0;
 		var that = this;
 		return function() {

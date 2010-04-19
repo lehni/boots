@@ -15,11 +15,8 @@ Request = Base.extend(new function() {
 				var value = m[2] ? m[2].trim() : '';
 				if (key == 'expires') {
 					// try to parse the expires date string into a date object
-					try {
-						value = dateFormat.parse(value);
-					} catch (e) {
-						// ignore
-					}
+					try { value = dateFormat.parse(value); }
+					catch (e) {}
 				}
 				cookie[key] = value;
 			}

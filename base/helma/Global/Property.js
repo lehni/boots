@@ -1,5 +1,8 @@
 Property = Base.extend({
 	_cache: false,
+	// Property descriptor values
+	configurable: true,
+	enumerable: false,
 
 	initialize: function(property, param) {
 		if (!param)
@@ -10,7 +13,7 @@ Property = Base.extend({
 
 		// Define get getter that inject will use for the propery. This part is 
 		// define in Boots.
-		this._get = function() {
+		this.get = function() {
 			var cache = null;
 			if (that._cache) {
 				cache = this.cache._properties;
@@ -22,7 +25,7 @@ Property = Base.extend({
 			}
 			var value = this[property];
 			if (that.get)
-				value = that.get(this, property, value, param);
+				value = that._get(this, property, value, param);
 			if (value != null && that._observe)
 				value = that.observe(this, property, value, param);
 			// Store in cache after conversion from native type
@@ -33,7 +36,7 @@ Property = Base.extend({
 
 		// Define get setter that inject will use for the propery. This part is 
 		// define in Boots.
-		this._set = function(value) {
+		this.set = function(value) {
 			// Lookup function if it's a string
 			if (onChange) {
 				if (typeof onChange == 'string')
@@ -54,7 +57,7 @@ Property = Base.extend({
 				cache[property] = value;
 			}
 			if (that.set)
-				value = that.set(this, property, value, param);
+				value = that._set(this, property, value, param);
 			this[property] = value;
 		}
 	},
@@ -89,7 +92,7 @@ Property = Base.extend({
 				var object = entry.object, properties = entry.properties;
 				for (var name in properties) {
 					var property = properties[name];
-					property._set.call(object, property._get.call(object));
+					property.set.call(object, property.get.call(object));
 				}
 			}
 			this.objects = {};
@@ -100,11 +103,11 @@ Property = Base.extend({
 	// To be defined in inheriting classes, to convert to and from the database 
 	// representation of the values, mostly strings.
 
-	get: function(obj, property, value, param) {
+	_get: function(obj, property, value, param) {
 		return value;
 	}
 
-	set: function(obj, property, value, param) {
+	_set: function(obj, property, value, param) {
 		return value;
 	}
 	*/
@@ -137,7 +140,7 @@ HopProperty = Property.extend(new function() {
 		_cache: true,
 		_observe: true,
 
-		get: function(obj, property, value, param) {
+		_get: function(obj, property, value, param) {
 			if (!value) {
 				// Create the object on the fly if createIfNull is set 
 				// to either true or the prototype to be created. 
@@ -153,7 +156,7 @@ HopProperty = Property.extend(new function() {
 			}
 		},
 
-		set: function(obj, property, value) {
+		_set: function(obj, property, value) {
 			return value ? HopProperty.encode(value) : value;
 		},
 
@@ -175,12 +178,12 @@ JsonProperty = Property.extend({
 	_cache: true,
 	_observe: true,
 	
-	get: function(obj, property, value) {
+	_get: function(obj, property, value) {
 //		app.log('JSON GET ' + Json.decode(value));
 		return Json.decode(value);
 	},
 
-	set: function(obj, property, value) {
+	_set: function(obj, property, value) {
 //		app.log('JSON SET ' + Json.encode(value));
 		return Json.encode(value);
 	}
@@ -190,11 +193,11 @@ XmlProperty = Property.extend({
 	_cache: true,
 	_observe: true,
 
-	get: function(obj, property, value) {
+	_get: function(obj, property, value) {
 		return new XML(value);
 	},
 
-	set: function(obj, property, value) {
+	_set: function(obj, property, value) {
 		return value + '';
 	}
 });
