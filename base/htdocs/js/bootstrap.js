@@ -5,16 +5,33 @@ if (!this.__proto__) {
 }
 
 new function() { 
-	function inject(dest, src, base, generics) {
-		function field(name, generics) {
-			var val = src[name], func = typeof val == 'function', res = val, prev;
-			if (generics && func) generics[name] = function(bind) {
+	var has = {}.hasOwnProperty
+		? function(obj, name) {
+			return obj.hasOwnProperty(name);
+		}
+		: function(obj, name) {
+			return obj[name] !== (obj.__proto__ || Object.prototype)[name];
+		}
+
+	var keys = Object.keys || function(obj) {
+		var ids = [];
+		for (var i in obj)
+			if (has(obj, i))
+				ids.push(i);
+		return ids;
+	};
+
+	function inject(dest, src, enumerable, base, generics) {
+		function field(name, generics, dontCheck) {
+			var val = src[name], func = typeof val == 'function', res = val,
+				prev = dest[name];
+			if (generics && func && (!src._preserve || !generics[name])) generics[name] = function(bind) {
 				return bind && dest[name].apply(bind,
 					Array.prototype.slice.call(arguments, 1));
 			}
-			if (val !== (src.__proto__ || Object.prototype)[name]) {
+			if ((dontCheck || val !== undefined && has(src, name)) && (!prev || !src._preserve)) {
 				if (func) {
-					if ((prev = dest[name]) && /\bthis\.base\b/.test(val)) {
+					if (prev && /\bthis\.base\b/.test(val)) {
 						var fromBase = base && base[name] == prev;
 						res = (function() {
 							var tmp = this.base;
@@ -28,9 +45,9 @@ new function() {
 			}
 		}
 		if (src) {
-			for (var name in src)
-				if (visible(src, name) && !/^(prototype|constructor|toString|valueOf|statics|_generics)$/.test(name))
-					field(name, generics);
+			for (var names = keys(src), name, i = 0, l = names.length; i < l; i++)
+				if (!/^(prototype|constructor|toString|valueOf|statics|_generics|_preserve)$/.test(name = names[i]))
+					field(name, generics, true);
 			field('toString');
 			field('valueOf');
 		}
@@ -49,15 +66,13 @@ new function() {
 		return ctor;
 	}
 
-	function visible(obj, name) {
-		return (!obj.__proto__ || obj[name] !== obj.__proto__[name]);
-	}
-
 	inject(Function.prototype, {
 		inject: function(src) {
-			var proto = this.prototype, base = proto.__proto__ && proto.__proto__.constructor;
-			inject(proto, src, base && base.prototype, src && src._generics && this);
-			inject(this, src && src.statics, base);
+			if (src) {
+				var proto = this.prototype, base = proto.__proto__ && proto.__proto__.constructor;
+				inject(proto, src, false, base && base.prototype, src._generics && this);
+				inject(this, src.statics, true, base);
+			}
 			for (var i = 1, l = arguments.length; i < l; i++)
 				this.inject(arguments[i]);
 			return this;
@@ -66,8 +81,8 @@ new function() {
 		extend: function(src) {
 			var proto = new this(this.dont), ctor = proto.constructor = extend(proto);
 			ctor.dont = {};
-			inject(ctor, this);
-			return this.inject.apply(ctor, arguments);
+			inject(ctor, this, true);
+			return arguments.length ? this.inject.apply(ctor, arguments) : ctor;
 		},
 
 		pretend: function(fn) {
@@ -81,9 +96,18 @@ new function() {
 		}
 	});
 
+	function each(obj, iter, bind) {
+		return obj ? (typeof obj.length == 'number'
+			? Array : Hash).prototype.each.call(obj, iter, bind) : bind;
+	}
+
 	Base = Object.extend({
 		has: function(name) {
-			return visible(this, name);
+			return has(this, name);
+		},
+
+		each: function(iter, bind) {
+			return each(this, iter, bind);
 		},
 
 		inject: function() {
@@ -98,11 +122,518 @@ new function() {
 		},
 
 		statics: {
-			has: visible
+			has: has,
+			keys: keys,
+			each: each,
+
+			type: function(obj) {
+				return (obj || obj === 0) && (
+					obj._type || obj.nodeName && (
+						obj.nodeType == 1 && 'element' ||
+						obj.nodeType == 3 && 'textnode' ||
+						obj.nodeType == 9 && 'document')
+						|| obj.location && obj.frames && obj.history && 'window'
+						|| typeof obj) || null;
+			},
+
+			check: function(obj) {
+				return !!(obj || obj === 0);
+			},
+
+			pick: function() {
+				for (var i = 0, l = arguments.length; i < l; i++)
+					if (arguments[i] !== undefined)
+						return arguments[i];
+				return null;
+			},
+
+			iterator: function(iter) {
+				return !iter
+					? function(val) { return val }
+					: typeof iter != 'function'
+						? function(val) { return val == iter }
+						: iter;
+			},
+
+			stop: {}
 		}
 	});
-
 }
+
+$each = Base.each;
+$type = Base.type;
+$check = Base.check;
+$pick = Base.pick;
+$stop = $break = Base.stop;
+
+Enumerable = {
+	_generics: true,
+	_preserve: true,
+
+	findEntry: function(iter, bind) {
+		var that = this, iter = Base.iterator(iter), ret = null;
+		Base.each(this, function(val, key) {
+			var res = iter.call(bind, val, key, that);
+			if (res) {
+				ret = { key: key, value: val, result: res };
+				throw Base.stop;
+			}
+		});
+		return ret;
+	},
+
+	find: function(iter, bind) {
+		var entry = this.findEntry(iter, bind);
+		return entry && entry.result;
+	},
+
+	contains: function(obj) {
+		return !!this.findEntry(obj);
+	},
+
+	remove: function(iter, bind) {
+		var entry = this.findEntry(iter, bind);
+		if (entry) {
+			delete this[entry.key];
+			return entry.value;
+		}
+	},
+
+	filter: function(iter, bind) {
+		var that = this;
+		return Base.each(this, function(val, i) {
+			if (iter.call(bind, val, i, that))
+				this[this.length] = val;
+		}, []);
+	},
+
+	map: function(iter, bind) {
+		var that = this;
+		return Base.each(this, function(val, i) {
+			this[this.length] = iter.call(bind, val, i, that);
+		}, []);
+	},
+
+	every: function(iter, bind) {
+		var that = this;
+		return this.find(function(val, i) {
+			return !iter.call(this, val, i, that);
+		}, bind || null) == null;
+	},
+
+	some: function(iter, bind) {
+		return this.find(iter, bind || null) != null;
+	},
+
+	collect: function(iter, bind) {
+		var that = this, iter = Base.iterator(iter);
+		return Base.each(this, function(val, i) {
+		 	val = iter.call(bind, val, i, that);
+			if (val != null)
+				this[this.length] = val;
+		}, []);
+	},
+
+	max: function(iter, bind) {
+		var that = this;
+		return Base.each(this, function(val, i) {
+			val = iter.call(bind, val, i, that);
+			if (val >= (this.max || val)) this.max = val;
+		}, {}).max;
+	},
+
+	min: function(iter, bind) {
+		var that = this;
+		return Base.each(this, function(val, i) {
+			val = iter.call(bind, val, i, that);
+			if (val <= (this.min || val)) this.min = val;
+		}, {}).min;
+	},
+
+	pluck: function(prop) {
+		return this.map(function(val) {
+			return val[prop];
+		});
+	},
+
+	sortBy: function(iter, bind) {
+		var that = this;
+		return this.map(function(val, i) {
+			return { value: val, compare: iter.call(bind, val, i, that) };
+		}, bind).sort(function(left, right) {
+			var a = left.compare, b = right.compare;
+			return a < b ? -1 : a > b ? 1 : 0;
+		}).pluck('value');
+	},
+
+	toArray: function() {
+		return this.map();
+	}
+};
+
+Hash = Base.extend(Enumerable, {
+	_generics: true,
+
+	initialize: function(arg) {
+		if (typeof arg == 'string') {
+			for (var i = 0, l = arguments.length; i < l; i += 2)
+				this[arguments[i]] = arguments[i + 1];
+		} else {
+			this[arguments.length == 1 ? 'append' : 'merge'].apply(this, arguments);
+		}
+		return this;
+	},
+
+	each: function(iter, bind) {
+		if (!bind) bind = this;
+		iter = Base.iterator(iter);
+		try {
+			if (Object.keys) {
+				for (var keys = Object.keys(this), key, i = 0, l = keys.length; i < l; i++)
+					iter.call(bind, this[key = keys[i]], key, this);
+			} else {
+				for (var i in this)
+					if (this.hasOwnProperty(i))
+						iter.call(bind, this[i], i, this);
+			}
+		} catch (e) {
+			if (e !== Base.stop) throw e;
+		}
+		return bind;
+	},
+
+	append: function() {
+		for (var i = 0, l = arguments.length; i < l; i++) {
+			var obj = arguments[i];
+			for (var key in obj)
+				if (Base.has(obj, key))
+					this[key] = obj[key];
+		}
+		return this;
+	},
+
+	merge: function() {
+		return Array.each(arguments, function(obj) {
+			Base.each(obj, function(val, key) {
+				this[key] = Base.type(this[key]) == 'object'
+					? Hash.prototype.merge.call(this[key], val)
+					: Base.type(val) == 'object' ? Base.clone(val) : val;
+			}, this);
+		}, this);
+	},
+
+	getKeys: function() {
+		return this.map(function(val, key) {
+			return key;
+		});
+	},
+
+	getValues: Enumerable.toArray,
+
+	getSize: function() {
+		return this.each(function() {
+			this.size++;
+		}, { size: 0 }).size;
+	},
+
+	statics: {
+		create: function(obj) {
+			return arguments.length == 1 && obj.constructor == Hash
+				? obj : Hash.prototype.initialize.apply(new Hash(), arguments);
+		}
+	}
+});
+
+$H = Hash.create;
+
+Array.inject({
+	_generics: true,
+	_preserve: true,
+	_type: 'array',
+
+	forEach: function(iter, bind) {
+		for (var i = 0, l = this.length; i < l; i++)
+			iter.call(bind, this[i], i, this);
+	},
+
+	indexOf: function(obj, i) {
+		i = i || 0;
+		if (i < 0) i = Math.max(0, this.length + i);
+		for (var l = this.length; i < l; i++)
+			if (this[i] == obj) return i;
+		return -1;
+	},
+
+	lastIndexOf: function(obj, i) {
+		i = i != null ? i : this.length - 1;
+		if (i < 0) i = Math.max(0, this.length + i);
+		for (; i >= 0; i--)
+			if (this[i] == obj) return i;
+		return -1;
+	},
+
+	filter: function(iter, bind) {
+		var res = [];
+		for (var i = 0, l = this.length; i < l; i++) {
+			var val = this[i];
+			if (iter.call(bind, val, i, this))
+				res[res.length] = val;
+		}
+		return res;
+	},
+
+	map: function(iter, bind) {
+		var res = new Array(this.length);
+		for (var i = 0, l = this.length; i < l; i++)
+			res[i] = iter.call(bind, this[i], i, this);
+		return res;
+	},
+
+	every: function(iter, bind) {
+		for (var i = 0, l = this.length; i < l; i++)
+			if (!iter.call(bind, this[i], i, this))
+				return false;
+		return true;
+	},
+
+	some: function(iter, bind) {
+		for (var i = 0, l = this.length; i < l; i++)
+			if (iter.call(bind, this[i], i, this))
+				return true;
+		return false;
+	},
+
+	reduce: function(fn, value) {
+		var i = 0;
+		if (arguments.length < 2 && this.length) value = this[i++];
+		for (var l = this.length; i < l; i++)
+			value = fn.call(null, value, this[i], i, this);
+		return value;
+	}
+}, Enumerable, {
+	_generics: true,
+
+	each: function(iter, bind) {
+		try {
+			Array.prototype.forEach.call(this, Base.iterator(iter), bind = bind || this);
+		} catch (e) {
+			if (e !== Base.stop) throw e;
+		}
+		return bind;
+	},
+
+	collect: function(iter, bind) {
+		var res = [];
+		for (var i = 0, l = this.length; i < l; i++) {
+		 	var val = iter.call(bind, this[i], i, this);
+			if (val != null)
+				res[res.length] = val;
+		}
+		return res;
+	},
+
+	findEntry: function(iter, bind) {
+		if (typeof iter != 'function') {
+			var i = this.indexOf(iter);
+			return i == -1 ? null : { key: i, value: iter, result: iter };
+		}
+		return Enumerable.findEntry.call(this, iter, bind);
+	},
+
+	remove: function(iter, bind) {
+		var entry = this.findEntry(iter, bind);
+		if (entry.key != null)
+			this.splice(entry.key, 1);
+		return entry.value;
+	},
+
+	contains: function(obj) {
+		return this.indexOf(obj) != -1;
+	},
+
+	remove: function(iter, bind) {
+		var entry = this.findEntry(iter, bind);
+		if (entry) {
+			this.splice(entry.key, 1);
+			return entry.value;
+		}
+	},
+
+	toArray: function() {
+		var res = this.concat([]);
+		return res[0] == this ? Enumerable.toArray.call(this) : res;
+	},
+
+	clone: function() {
+		return this.toArray();
+	},
+
+	clear: function() {
+		this.length = 0;
+	},
+
+	compact: function() {
+		return this.filter(function(value) {
+			return value != null;
+		});
+	},
+
+	append: function(items) {
+		for (var i = 0, l = items.length; i < l; i++)
+			this[this.length++] = items[i];
+		return this;
+	},
+
+	subtract: function(items) {
+		for (var i = 0, l = items.length; i < l; i++)
+			Array.remove(this, items[i]);
+		return this;
+	},
+
+	intersect: function(items) {
+		for (var i = this.length - 1; i >= 0; i--)
+			if (!items.find(this[i]))
+				this.splice(i, 1);
+		return this;
+	},
+
+	associate: function(obj) {
+		if (!obj)
+			obj = this;
+		else if (typeof obj == 'function')
+			obj = this.map(obj);
+		if (obj.length != null) {
+			var that = this;
+			return Base.each(obj, function(name, index) {
+				this[name] = that[index];
+				if (index == that.length)
+					throw Base.stop;
+			}, {});
+		} else {
+			obj = Hash.append({}, obj);
+			return Array.each(this, function(val) {
+				var type = Base.type(val);
+				Base.each(obj, function(hint, name) {
+					if (hint == 'any' || type == hint) {
+						this[name] = val;
+						delete obj[name];
+						throw Base.stop;
+					}
+				}, this);
+			}, {});
+		}
+	},
+
+	flatten: function() {
+		return Array.each(this, function(val) {
+			if (val != null && val.flatten) this.append(val.flatten());
+			else this.push(val);
+		}, []);
+	},
+
+	swap: function(i, j) {
+		var tmp = this[j];
+		this[j] = this[i];
+		this[i] = tmp;
+		return tmp;
+	},
+
+	shuffle: function() {
+		var res = this.clone();
+		var i = this.length;
+		while (i--) res.swap(i, Math.rand(i + 1));
+		return res;
+	},
+
+	pick: function() {
+		return this[Math.rand(this.length)];
+	},
+
+	getFirst: function() {
+		return this[0];
+	},
+
+	getLast: function() {
+		return this[this.length - 1];
+	}
+});
+
+Array.inject(new function() {
+	var proto = Array.prototype;
+
+	var fields = ['push','pop','shift','unshift','sort','reverse','join','slice','splice','forEach',
+		'indexOf','lastIndexOf','filter','map','every','some','reduce','concat'].each(function(name) {
+		this[name] = proto[name];
+	}, { _generics: true, _preserve: true });
+
+	Array.inject(fields);
+
+	Hash.append(fields, proto, {
+		clear: function() {
+			for (var i = 0, l = this.length; i < l; i++)
+				delete this[i];
+			this.length = 0;
+		},
+
+		concat: function(list) {
+			return Browser.WEBKIT
+				? new Array(this.length + list.length).append(this).append(list)
+				: Array.concat(this, list);
+		},
+
+		toString: proto.join,
+
+		length: 0
+	});
+
+	return {
+		statics: {
+			create: function(list) {
+				if (!Base.check(list)) return [];
+				if (Base.type(list) == 'array') return list;
+				if (list.toArray)
+					return list.toArray();
+				if (list.length != null) {
+					var res = [];
+					for (var i = 0, l = list.length; i < l; i++)
+						res[i] = list[i];
+				} else {
+					res = [list];
+				}
+				return res;
+			},
+
+			extend: function(src) {
+				var ret = Base.extend(fields, src);
+				ret.extend = Function.extend;
+				return ret;
+			}
+		}
+	};
+});
+
+$A = Array.create;
+
+Base.inject({
+	_generics: true,
+
+	debug: function() {
+		return /^(string|number|function|regexp)$/.test(Base.type(this)) ? this
+			: Base.each(this, function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
+	},
+
+	clone: function() {
+		return Base.each(this, function(val, i) {
+			this[i] = val;
+		}, new this.constructor());
+	},
+
+	toQueryString: function() {
+		return Base.each(this, function(val, key) {
+			this.push(key + '=' + encodeURIComponent(val));
+		}, []).join('&');
+	}
+});
 
 Function.inject(new function() {
 	function timer(that, type, delay, bind, args) {
@@ -162,472 +693,6 @@ Function.inject(new function() {
 	}
 });
 
-Enumerable = new function() {
-	Base.iterate = function(fn) {
-		return function(iter, bind) {
-			var func = !iter
-				? function(val) { return val }
-				: typeof iter != 'function'
-					? function(val) { return val == iter }
-					: iter;
-			if (!bind) bind = this;
-			return fn.call(this, func, bind, this);
-		};
-	};
-
-	Base.stop = {};
-
-	var each_Array = Array.prototype.forEach || function(iter, bind) {
-		for (var i = 0, l = this.length; i < l; ++i)
-			iter.call(bind, this[i], i, this);
-	};
-
-	var each_Object = function(iter, bind) {
-		if (this.__proto__ == null) {
-			for (var i in this)
-				iter.call(bind, this[i], i, this);
-		} else {
-			for (var i in this)
-				if (this[i] !== this.__proto__ && this[i] !== this.__proto__[i])
-					iter.call(bind, this[i], i, this);
-		}
-	};
-
-	return {
-		_generics: true,
-
-		each: Base.iterate(function(iter, bind) {
-			try { (typeof this.length == 'number' ? each_Array : each_Object).call(this, iter, bind); }
-			catch (e) { if (e !== Base.stop) throw e; }
-			return bind;
-		}),
-
-		findEntry: Base.iterate(function(iter, bind, that) {
-			return Base.each(this, function(val, key) {
-				this.result = iter.call(bind, val, key, that);
-				if (this.result) {
-					this.key = key;
-					this.value = val;
-					throw Base.stop;
-				}
-			}, {});
-		}),
-
-		find: function(iter, bind) {
-			return this.findEntry(iter, bind).result;
-		},
-
-		remove: function(iter, bind) {
-			var entry = this.findEntry(iter, bind);
-			delete this[entry.key];
-			return entry.value;
-		},
-
-		some: function(iter, bind) {
-			return this.find(iter, bind) != null;
-		},
-
-		every: Base.iterate(function(iter, bind, that) {
-			return this.find(function(val, i) {
-				return !iter.call(this, val, i, that);
-			}, bind) == null;
-		}),
-
-		map: Base.iterate(function(iter, bind, that) {
-			return Base.each(this, function(val, i) {
-				this[this.length] = iter.call(bind, val, i, that);
-			}, []);
-		}),
-
-		collect: Base.iterate(function(iter, bind, that) {
-			return Base.each(this, function(val, i) {
-			 	val = iter.call(bind, val, i, that);
-				if (val != null)
-					this[this.length] = val;
-			}, []);
-		}),
-
-		filter: Base.iterate(function(iter, bind, that) {
-			return Base.each(this, function(val, i) {
-				if (iter.call(bind, val, i, that))
-					this[this.length] = val;
-			}, []);
-		}),
-
-		max: Base.iterate(function(iter, bind, that) {
-			return Base.each(this, function(val, i) {
-				val = iter.call(bind, val, i, that);
-				if (val >= (this.max || val)) this.max = val;
-			}, {}).max;
-		}),
-
-		min: Base.iterate(function(iter, bind, that) {
-			return Base.each(this, function(val, i) {
-				val = iter.call(bind, val, i, that);
-				if (val <= (this.min || val)) this.min = val;
-			}, {}).min;
-		}),
-
-		pluck: function(prop) {
-			return this.map(function(val) {
-				return val[prop];
-			});
-		},
-
-		sortBy: Base.iterate(function(iter, bind, that) {
-			return this.map(function(val, i) {
-				return { value: val, compare: iter.call(bind, val, i, that) };
-			}, bind).sort(function(left, right) {
-				var a = left.compare, b = right.compare;
-				return a < b ? -1 : a > b ? 1 : 0;
-			}).pluck('value');
-		}),
-
-		toArray: function() {
-			return this.map();
-		}
-	};
-}
-
-Base.inject({
-	_generics: true,
-
-	each: Enumerable.each,
-
-	debug: function() {
-		return /^(string|number|function|regexp)$/.test(Base.type(this)) ? this
-			: Base.each(this, function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
-	},
-
-	clone: function() {
-		return Base.each(this, function(val, i) {
-			this[i] = val;
-		}, new this.constructor());
-	},
-
-	toQueryString: function() {
-		return Base.each(this, function(val, key) {
-			this.push(key + '=' + encodeURIComponent(val));
-		}, []).join('&');
-	},
-
-	statics: {
-		inject: function() {
-			var args = arguments;
-			Base.each([Array, Number, RegExp, String], function(ctor) {
-				ctor.inject.apply(ctor, args);
-			});
-			return this.base.apply(this, args);
-		},
-
-		extend: function() {
-			var ret = this.base();
-			ret.extend = Function.extend;
-			ret.inject = Function.inject;
-			ret.inject.apply(ret, arguments);
-			return ret;
-		},
-
-		check: function(obj) {
-			return !!(obj || obj === 0);
-		},
-
-		type: function(obj) {
-			return (obj || obj === 0) && (
-				obj._type || obj.nodeName && (
-					obj.nodeType == 1 && 'element' ||
-					obj.nodeType == 3 && 'textnode' ||
-					obj.nodeType == 9 && 'document')
-					|| obj.location && obj.frames && obj.history && 'window'
-					|| typeof obj) || null;
-		},
-
-		pick: function() {
-			for (var i = 0, l = arguments.length; i < l; i++)
-				if (arguments[i] !== undefined)
-					return arguments[i];
-			return null;
-		}
-	}
-
-}, Base.prototype);
-
-$each = Base.each;
-$stop = $break = Base.stop;
-$check = Base.check;
-$type = Base.type;
-
-Hash = Base.extend(Enumerable, {
-	_generics: true,
-
-	initialize: function(arg) {
-		if (typeof arg == 'string') {
-			for (var i = 0, l = arguments.length; i < l; i += 2)
-				this[arguments[i]] = arguments[i + 1];
-		} else {
-			this.merge.apply(this, arguments);
-		}
-		return this;
-	},
-
-	merge: function() {
-		return Base.each(arguments, function(obj) {
-			Base.each(obj, function(val, key) {
-				this[key] = Base.type(this[key]) == 'object'
-					? Hash.prototype.merge.call(this[key], val)
-					: Base.type(val) == 'object' ? Base.clone(val) : val;
-			}, this);
-		}, this);
-	},
-
-	getKeys: function() {
-		return this.map(function(val, key) {
-			return key;
-		});
-	},
-
-	getValues: Enumerable.toArray,
-
-	getSize: function() {
-		return this.each(function() {
-			this.size++;
-		}, { size: 0 }).size;
-	},
-
-	statics: {
-		create: function(obj) {
-			return arguments.length == 1 && obj.constructor == Hash
-				? obj : Hash.prototype.initialize.apply(new Hash(), arguments);
-		}
-	}
-});
-
-$H = Hash.create;
-
-Array.inject(new function() {
-	var proto = Array.prototype;
-
-	var fields = Hash.merge({}, Enumerable, {
-		_generics: true,
-		_type: 'array',
-
-		indexOf: proto.indexOf || function(obj, i) {
-			i = i || 0;
-			if (i < 0) i = Math.max(0, this.length + i);
-			for (var l = this.length; i < l; ++i)
-				if (this[i] == obj) return i;
-			return -1;
-		},
-
-		lastIndexOf: proto.lastIndexOf || function(obj, i) {
-			i = i != null ? i : this.length - 1;
-			if (i < 0) i = Math.max(0, this.length + i);
-			for (; i >= 0; i--)
-				if (this[i] == obj) return i;
-			return -1;
-		},
-
-		filter: Base.iterate(proto.filter || function(iter, bind, that) {
-			var res = [];
-			for (var i = 0, l = this.length; i < l; ++i)
-				if (iter.call(bind, this[i], i, that))
-					res[res.length] = this[i];
-			return res;
-		}),
-
-		map: Base.iterate(proto.map || function(iter, bind, that) {
-			var res = new Array(this.length);
-			for (var i = 0, l = this.length; i < l; ++i)
-				res[i] = iter.call(bind, this[i], i, that);
-			return res;
-		}),
-
-		every: Base.iterate(proto.every || function(iter, bind, that) {
-			for (var i = 0, l = this.length; i < l; ++i)
-				if (!iter.call(bind, this[i], i, that))
-					return false;
-			return true;
-		}),
-
-		some: Base.iterate(proto.some || function(iter, bind, that) {
-			for (var i = 0, l = this.length; i < l; ++i)
-				if (iter.call(bind, this[i], i, that))
-					return true;
-			return false;
-		}),
-
-		reduce: proto.reduce || function(fn, value) {
-			var i = 0;
-			if (arguments.length < 2 && this.length) value = this[i++];
-			for (var l = this.length; i < l; i++)
-				value = fn.call(null, value, this[i], i, this);
-			return value;
-		},
-
-		findEntry: function(iter, bind) {
-			if (iter && !/^(function|regexp)$/.test(Base.type(iter))) {
-				var i = this.indexOf(iter);
-				return { key: i != -1 ? i : null, value: this[i], result: i != -1 };
-			}
-			return Enumerable.findEntry.call(this, iter, bind);
-		},
-
-		remove: function(iter, bind) {
-			var entry = this.findEntry(iter, bind);
-			if (entry.key != null)
-				this.splice(entry.key, 1);
-			return entry.value;
-		},
-
-		contains: function(obj) {
-			return this.indexOf(obj) != -1;
-		},
-
-		toArray: function() {
-			var res = this.concat([]);
-			return res[0] == this ? Enumerable.toArray.call(this) : res;
-		},
-
-		clone: function() {
-			return this.toArray();
-		},
-
-		clear: function() {
-			this.length = 0;
-		},
-
-		getFirst: function() {
-			return this[0];
-		},
-
-		getLast: function() {
-			return this[this.length - 1];
-		},
-
-		compact: function() {
-			return this.filter(function(value) {
-				return value != null;
-			});
-		},
-
-		append: function(items) {
-			for (var i = 0, l = items.length; i < l; ++i)
-				this[this.length++] = items[i];
-			return this;
-		},
-
-		subtract: function(items) {
-			for (var i = 0, l = items.length; i < l; ++i)
-				Array.remove(this, items[i]);
-			return this;
-		},
-
-		intersect: function(items) {
-			for (var i = this.length - 1; i >= 0; i--)
-				if (!items.find(this[i]))
-					this.splice(i, 1);
-			return this;
-		},
-
-		associate: function(obj) {
-			if (!obj)
-				obj = this;
-			else if (typeof obj == 'function')
-				obj = this.map(obj);
-			if (obj.length != null) {
-				var that = this;
-				return Base.each(obj, function(name, index) {
-					this[name] = that[index];
-					if (index == that.length)
-						throw Base.stop;
-				}, {});
-			} else {
-				obj = Hash.merge({}, obj);
-				return Base.each(this, function(val) {
-					var type = Base.type(val);
-					Base.each(obj, function(hint, name) {
-						if (hint == 'any' || type == hint) {
-							this[name] = val;
-							delete obj[name];
-							throw Base.stop;
-						}
-					}, this);
-				}, {});
-			}
-		},
-
-		flatten: function() {
-			return Array.each(this, function(val) {
-				if (val != null && val.flatten) this.append(val.flatten());
-				else this.push(val);
-			}, []);
-		},
-
-		swap: function(i, j) {
-			var tmp = this[j];
-			this[j] = this[i];
-			this[i] = tmp;
-			return tmp;
-		},
-
-		shuffle: function() {
-			var res = this.clone();
-			var i = this.length;
-			while (i--) res.swap(i, Math.rand(i + 1));
-			return res;
-		},
-
-		pick: function() {
-			return this[Math.rand(this.length)];
-		},
-
-		statics: {
-			create: function(list) {
-				if (!Base.check(list)) return [];
-				if (Base.type(list) == 'array') return list;
-				if (list.toArray)
-					return list.toArray();
-				if (list.length != null) {
-					var res = [];
-					for (var i = 0, l = list.length; i < l; ++i)
-						res[i] = list[i];
-				} else {
-					res = [list];
-				}
-				return res;
-			},
-
-			extend: function(src) {
-				var ret = Base.extend(extend, src);
-				ret.extend = Function.extend;
-				return ret;
-			}
-		}
-	});
-	['push','pop','shift','unshift','sort','reverse','join','slice','splice','concat'].each(function(name) {
-		fields[name] = proto[name];
-	});
-	var extend = Hash.merge({}, fields, {
-		clear: function() {
-			for (var i = 0, l = this.length; i < l; i++)
-				delete this[i];
-			this.length = 0;
-		},
-
-		concat: function(list) {
-			return Browser.WEBKIT
-				? new Array(this.length + list.length).append(this).append(list)
-				: Array.concat(this, list);
-		},
-
-		toString: proto.join
-	});
-	extend.length = 0;
-	return fields;
-});
-
-$A = Array.create;
-
 Number.inject({
 	_type: 'number',
 
@@ -636,7 +701,7 @@ Number.inject({
 	},
 
 	times: function(func, bind) {
-		for (var i = 0; i < this; ++i)
+		for (var i = 0; i < this; i++)
 			func.call(bind, i);
 		return bind || this;
 	},
@@ -746,7 +811,6 @@ Math.rand = function(first, second) {
 }
 
 Array.inject({
-
 	hexToRgb: function(toArray) {
 		if (this.length >= 3) {
 			var rgb = [];
@@ -928,9 +992,9 @@ Browser = new function() {
 	fields.log = function() {
 		if (!Browser.TRIDENT && window.console && console.log)
 			console.log.apply(console, arguments);
-		else 
+		else
 			(window.console && console.log
-				|| window.opera && opera.postError 
+				|| window.opera && opera.postError
 				|| alert)(Array.join(arguments, ' '));
 	}
 
@@ -952,7 +1016,7 @@ DomNodes = Array.extend(new function() {
 		},
 
 		append: function(items) {
-			for (var i = 0, l = items.length; i < l; ++i) {
+			for (var i = 0, l = items.length; i < l; i++) {
 				var el = items[i];
 				if ((el = el && (el._wrapper || DomNode.wrap(el))) && el._unique != this._unique) {
 					el._unique = this._unique;
@@ -990,7 +1054,7 @@ DomNodes = Array.extend(new function() {
 							return values || this;
 						}
 					}
-					this[key] = val; 
+					this[key] = val;
 				}, {}));
 				for (var i = 1, l = arguments.length; i < l; i++)
 					this.inject(arguments[i]);
@@ -1172,7 +1236,7 @@ DomNode.inject(new function() {
 	var bools = ['compact', 'nowrap', 'ismap', 'declare', 'noshade', 'checked',
 		'disabled', 'readonly', 'multiple', 'selected', 'noresize', 'defer'
 	].associate();
-	var properties = Hash.merge({ 
+	var properties = Hash.append({ 
 		text: Browser.TRIDENT || Browser.WEBKIT && Browser.VERSION < 420
 			? function(node) {
 				return node.$.innerText !== undefined ? 'innerText' : 'nodeValue'
@@ -1382,7 +1446,7 @@ DomNode.inject(new function() {
 		},
 
 		removeProperties: function() {
-			return Base.each(arguments, this.removeProperty, this);
+			return Array.each(arguments, this.removeProperty, this);
 		}
 	};
 
@@ -1473,7 +1537,7 @@ DomElement = DomNode.extend({
 			return !el ? false : el.ownerDocument == parent ? true
 				: Browser.WEBKIT && Browser.VERSION < 420
 					? Array.contains(parent.getElementsByTagName(el.tagName), el)
-					: parent.contains 
+					: parent.contains
 						? parent != el && parent.contains(el)
 						: !!(parent.compareDocumentPosition(el) & 16)
 		}
@@ -1903,7 +1967,7 @@ DomEvent = Base.extend(new function() {
 			this.meta = event.metaKey;
 			if (/^(mousewheel|DOMMouseScroll)$/.test(this.type)) {
 				this.wheel = event.wheelDelta ?
-					event.wheelDelta / (window.opera ? -120 : 120) : 
+					event.wheelDelta / (window.opera ? -120 : 120) :
 					- (event.detail || 0) / 3;
 			} else if (/^key/.test(this.type)) {
 				this.code = event.which || event.keyCode;
@@ -1993,7 +2057,7 @@ DomEvent = Base.extend(new function() {
 			}),
 
 			add: function(events) {
-				this.events.merge(events);
+				this.events.append(events);
 			}
 		}
 	};
@@ -2182,7 +2246,7 @@ DomElement.inject(new function() {
 			}
 			var res = (context.ownerDocument || context).evaluate('.//' + items.join(''), context,
 				resolver, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-			for (var i = 0, l = res.snapshotLength; i < l; ++i)
+			for (var i = 0, l = res.snapshotLength; i < l; i++)
 				elements.push(res.snapshotItem(i));
 		}
 	}, { 
@@ -2299,7 +2363,7 @@ DomElement.inject(new function() {
 			separators.push(match.charAt(0));
 			return ':)' + match.charAt(1);
 		}).split(':)');
-		for (var i = 0, l = selector.length; i < l; ++i) {
+		for (var i = 0, l = selector.length; i < l; i++) {
 			var params = parse(selector[i]);
 			if (!params) return elements; 
 			var next = method.getParam(items, separators[i - 1], context, params, data);
@@ -2317,7 +2381,7 @@ DomElement.inject(new function() {
 			selectors = !selectors ? ['*'] : typeof selectors == 'string'
 				? selectors.split(',')
 				: selectors.length != null ? selectors : [selectors];
-			for (var i = 0, l = selectors.length; i < l; ++i) {
+			for (var i = 0, l = selectors.length; i < l; i++) {
 				var selector = selectors[i];
 				if (Base.type(selector) == 'element') elements.push(selector);
 				else filter([], selector, this.$, elements, {});
@@ -2634,7 +2698,7 @@ HtmlElement.inject({
 
 	modifyClass: function(name, add) {
 		if (!this.hasClass(name) ^ !add) 
-			this.$.className = (add ? this.$.className + ' ' + name : 
+			this.$.className = (add ? this.$.className + ' ' + name :
 				this.$.className.replace(name, '')).clean();
 		return this;
 	},
@@ -2856,7 +2920,7 @@ HtmlElement.inject(new function() {
 		},
 
 		getStyles: function() {
-			return arguments.length ? Base.each(arguments, function(name) {
+			return arguments.length ? Array.each(arguments, function(name) {
 				this[name] = that.getStyle(name);
 			}, {}) : this.$.style.cssText;
 		},
@@ -2912,7 +2976,7 @@ HtmlElement.inject({
 		return this.getFormElements().each(function(el) {
 			var name = el.getName(), value = el.getValue();
 			if (name && value !== undefined && !el.getDisabled())
-				this[name] = value; 
+				this[name] = value;
 		}, new Hash());
 	},
 
@@ -2995,7 +3059,7 @@ Select = FormElement.extend({
 	setSelected: function(values) {
 		this.$.selectedIndex = -1;
 		if (values) {
-			Base.each(values.length != null ? values : [values], function(val) {
+			Array.each(values.length != null ? values : [values], function(val) {
 				val = DomElement.unwrap(val);
 				if (val != null)
 					this.getElements('option[value="' + (val.value || val) + '"]').setProperty('selected', true);
@@ -3351,10 +3415,10 @@ Request = Base.extend(Chain, Callback, new function() {
 			var string = typeof data == 'string', method = opts.method;
 			if (opts.emulation && /^(put|delete)$/.test(method)) {
 				if (string) data += '&_method=' + method;
-				else data.setValue('_method', method); 
+				else data.setValue('_method', method);
 				method = 'post';
 			}
-			if (string && !this.options.iframe) { 
+			if (string && !this.options.iframe) {
 				createRequest(this);
 				if (!this.transport) {
 					if (!this.frame)

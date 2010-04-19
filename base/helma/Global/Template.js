@@ -4,7 +4,7 @@
  *
  * Template.js is released under the MIT license
  * http://dev.helma.org/Wiki/JavaScript+Template+Engine/
- * http://bootstrap-js.net/ 
+ * http://bootstrap-js.net/
  */
 
 function Template(object, name, parent) {
@@ -237,7 +237,7 @@ Template.prototype = {
 						else pos = content.length;
 						return getPart();
 					}
-				} 
+				}
 				var next = /[\s=|"'([{<]/g;
 				next.lastIndex = pos + 1;
 				pos = (end = next.exec(content)) ? end.index : content.length;
@@ -255,7 +255,7 @@ Template.prototype = {
 				if (!/^session\.user\b/.test(data)) {
 					return {
 						response: 'res.data',
-						request: 'req.data', 
+						request: 'req.data',
 						session: 'session.data',
 						param: 'param',
 						properties: 'app.properties'
@@ -299,7 +299,7 @@ Template.prototype = {
 				if (isMain) {
 					macro.isControl = allowControls && /^(foreach|begin|if|elseif|else|end)$/.test(next);
 					macro.isData = isEqualTag;
-					macro.isSetter = !isEqualTag && next[0] == '$'; 
+					macro.isSetter = !isEqualTag && next[0] == '$';
 					if (macro.isSetter) {
 						var match = next.match(/(\$\w*)=$/);
 						if (match) {
@@ -636,7 +636,7 @@ Template.prototype = {
 						if (value !== undefined)
 							return value;
 					}
-				} 
+				}
 			} catch (e) {
 				this.reportMacroError(e, command, out);
 			}
@@ -702,7 +702,7 @@ Template.prototype = {
 		if (container) {
 			this.resource = container.getResource(this.resourceName);
 			if (!this.resource)
-				throw 'Cannot find template "' + this.resourceName + '" in "' + 
+				throw 'Cannot find template "' + this.resourceName + '" in "' +
 					(container._prototype ? container._prototype : container) + '".';
 			this.lastModified = 0; 
 			this.tags = null;
