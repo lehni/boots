@@ -3,21 +3,35 @@ new function() {
 		return obj.hasOwnProperty(name);
 	}
 
-	var keys = Object.keys;
+	function define(obj, name, desc) {
+		try {
+			return Object.defineProperty(obj, name, desc);
+		} catch (e) {
+			obj[name] = desc.value;
+		}
+	}
 
-	var define = Object.defineProperty, describe = Object.getOwnPropertyDescriptor;
+	function describe(obj, name) {
+		try {
+			return Object.getOwnPropertyDescriptor(obj, name);
+		} catch (e) {
+			return has(obj, name)
+				? { enumerable: true, configurable: true, writable: true, value: obj[name] }
+				: null;
+		}
+	}
 
 	function inject(dest, src, enumerable, base, generics, version) {
-		function field(name, val, generics, dontCheck) {
+		function field(name, val, dontCheck, generics) {
 			if (!val)
 				val = (val = describe(src, name)) && (val.get ? val : val.value);
 			var type = typeof val, func = type == 'function', res = val,
 				prev = dest[name], bean;
-			if (generics && func && (!src._preserve || !generics[name])) generics[name] = function(bind) {
+			if (generics && func && (!src.preserve || !generics[name])) generics[name] = function(bind) {
 				return bind && dest[name].apply(bind,
 					Array.prototype.slice.call(arguments, 1));
 			}
-			if ((dontCheck || val !== undefined && has(src, name)) && (!prev || !src._preserve)) {
+			if ((dontCheck || val !== undefined && has(src, name)) && (!prev || !src.preserve)) {
 				if (func) {
 					if (prev && /\bthis\.base\b/.test(val)) {
 						while (prev._version && prev._version != version && prev._dest == dest)
@@ -35,12 +49,12 @@ new function() {
 							res._dest = dest;
 						}
 					}
-					if (src._beans && (bean = name.match(/^(get|is)(([A-Z])(.*))$/)))
+					if (src.beans && (bean = name.match(/^(get|is)(([A-Z])(.*))$/)))
 						try {
 							field(bean[3].toLowerCase() + bean[4], {
 								get: src['get' + bean[2]] || src['is' + bean[2]],
 								set: src['set' + bean[2]]
-							});
+							}, true);
 						} catch (e) {}
 				}
 				if (!res || func || !res.get && !res.set)
@@ -53,9 +67,9 @@ new function() {
 			}
 		}
 		if (src) {
-			for (var names = keys(src), name, i = 0, l = names.length; i < l; i++)
-				if (!/^(statics|_generics|_preserve|_beans)$/.test(name = names[i]))
-					field(name, null, generics, true);
+			for (var name in src)
+				if (has(src, name) && !/^(statics|generics|preserve|beans|prototype)$/.test(name))
+					field(name, null, true, generics);
 		}
 	}
 
@@ -77,7 +91,7 @@ new function() {
 				var proto = this.prototype, base = proto.__proto__ && proto.__proto__.constructor;
 				var version = (this == HopObject || proto instanceof HopObject)
 						&& (proto.constructor._version || (proto.constructor._version = 1));
-				inject(proto, src, false, base && base.prototype, src._generics && this, version);
+				inject(proto, src, false, base && base.prototype, src.generics && this, version);
 				inject(this, src.statics, true, base, null, version);
 				if (version) {
 					var update = proto.onCodeUpdate;
@@ -151,7 +165,6 @@ new function() {
 
 		statics: {
 			has: has,
-			keys: keys,
 			each: each,
 			define: define,
 			describe: describe,
@@ -194,8 +207,8 @@ $pick = Base.pick;
 $stop = $break = Base.stop;
 
 Enumerable = {
-	_generics: true,
-	_preserve: true,
+	generics: true,
+	preserve: true,
 
 	findEntry: function(iter, bind) {
 		var that = this, iter = Base.iterator(iter), ret = null;
@@ -299,7 +312,7 @@ Enumerable = {
 };
 
 Hash = Base.extend(Enumerable, {
-	_generics: true,
+	generics: true,
 
 	initialize: function(arg) {
 		if (typeof arg == 'string') {
@@ -344,9 +357,7 @@ Hash = Base.extend(Enumerable, {
 	},
 
 	getKeys: function() {
-		return this.map(function(val, key) {
-			return key;
-		});
+		return Hash.getKeys(this);
 	},
 
 	getValues: Enumerable.toArray,
@@ -361,79 +372,21 @@ Hash = Base.extend(Enumerable, {
 		create: function(obj) {
 			return arguments.length == 1 && obj.constructor == Hash
 				? obj : Hash.prototype.initialize.apply(new Hash(), arguments);
+		},
+
+		getKeys: Object.keys || function(obj) {
+			return Hash.map(function(val, key) {
+				return key;
+			});
 		}
 	}
 });
 
 $H = Hash.create;
 
-Array.inject({
-	_generics: true,
-	_preserve: true,
+Array.inject(Enumerable, {
+	generics: true,
 	_type: 'array',
-
-	forEach: function(iter, bind) {
-		for (var i = 0, l = this.length; i < l; i++)
-			iter.call(bind, this[i], i, this);
-	},
-
-	indexOf: function(obj, i) {
-		i = i || 0;
-		if (i < 0) i = Math.max(0, this.length + i);
-		for (var l = this.length; i < l; i++)
-			if (this[i] == obj) return i;
-		return -1;
-	},
-
-	lastIndexOf: function(obj, i) {
-		i = i != null ? i : this.length - 1;
-		if (i < 0) i = Math.max(0, this.length + i);
-		for (; i >= 0; i--)
-			if (this[i] == obj) return i;
-		return -1;
-	},
-
-	filter: function(iter, bind) {
-		var res = [];
-		for (var i = 0, l = this.length; i < l; i++) {
-			var val = this[i];
-			if (iter.call(bind, val, i, this))
-				res[res.length] = val;
-		}
-		return res;
-	},
-
-	map: function(iter, bind) {
-		var res = new Array(this.length);
-		for (var i = 0, l = this.length; i < l; i++)
-			res[i] = iter.call(bind, this[i], i, this);
-		return res;
-	},
-
-	every: function(iter, bind) {
-		for (var i = 0, l = this.length; i < l; i++)
-			if (!iter.call(bind, this[i], i, this))
-				return false;
-		return true;
-	},
-
-	some: function(iter, bind) {
-		for (var i = 0, l = this.length; i < l; i++)
-			if (iter.call(bind, this[i], i, this))
-				return true;
-		return false;
-	},
-
-	reduce: function(fn, value) {
-		var i = 0;
-		if (arguments.length < 2 && this.length) value = this[i++];
-		for (var l = this.length; i < l; i++)
-			value = fn.call(null, value, this[i], i, this);
-		return value;
-	}
-}, Enumerable, {
-	_beans: true,
-	_generics: true,
 
 	each: function(iter, bind) {
 		try {
@@ -585,7 +538,7 @@ Array.inject(new function() {
 	var fields = ['push','pop','shift','unshift','sort','reverse','join','slice','splice','forEach',
 		'indexOf','lastIndexOf','filter','map','every','some','reduce','concat'].each(function(name) {
 		this[name] = proto[name];
-	}, { _generics: true, _preserve: true });
+	}, { generics: true, preserve: true });
 
 	Array.inject(fields);
 
@@ -630,7 +583,7 @@ Array.inject(new function() {
 $A = Array.create;
 
 Base.inject({
-	_generics: true,
+	generics: true,
 
 	debug: function() {
 		return /^(string|number|function|regexp)$/.test(Base.type(this)) ? this
@@ -653,8 +606,8 @@ Base.inject({
 Function.inject(new function() {
 
 	return {
-		_beans: true,
-		_generics: true,
+		beans: true,
+		generics: true,
 
 		getName: function() {
 			var match = this.toString().match(/^\s*function\s*(\w*)/);
