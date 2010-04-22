@@ -155,7 +155,7 @@ Picture.inject({
 					if (param.returnImage)
 						return image;
 					else
-						image.saveAs(version, quality);
+						image.saveAs(version, quality, true);
 				} else {
 					// No modifications were needed:
 					if (param.returnImage)
