@@ -1,4 +1,5 @@
 new function() { 
+
 	function has(obj, name) {
 		return obj.hasOwnProperty(name);
 	}
@@ -39,10 +40,10 @@ new function() {
 							prev = prev._previous;
 						var fromBase = base && base[name] == prev;
 						res = (function() {
-							var tmp = this.base;
+							var tmp = describe(this, 'base');
 							define(this, 'base', { value: fromBase ? base[name] : prev, configurable: true });
 							try { return val.apply(this, arguments); }
-							finally { this.base = tmp; }
+							finally { tmp ? define(this, 'base', tmp) : delete this.base; }
 						}).pretend(val);
 						if (version) {
 							res._version = version;
@@ -345,8 +346,7 @@ Hash = Base.extend(Enumerable, {
 	},
 
 	each: function(iter, bind) {
-		if (!bind) bind = this;
-		iter = Base.iterator(iter);
+		var bind = bind || this, iter = Base.iterator(iter);
 		try {
 			for (var i in this)
 				if (this.hasOwnProperty(i))

@@ -1,13 +1,12 @@
-if (!this.__proto__) {
-	var fix = [Function, Number, Boolean, String, Array, Date, RegExp];
-	for (var i in fix)
-		fix[i].prototype.__proto__ = fix[i].prototype;
-}
-
 new function() { 
+	var fix = !this.__proto__ && [Function, Number, Boolean, String, Array, Date, RegExp];
+	if (fix)
+		for (var i in fix)
+			fix[i].prototype.__proto__ = fix[i].prototype;
+
 	var has = {}.hasOwnProperty
 		? function(obj, name) {
-			return obj.hasOwnProperty(name);
+			return (!fix || name != '__proto__') && obj.hasOwnProperty(name);
 		}
 		: function(obj, name) {
 			return obj[name] !== (obj.__proto__ || Object.prototype)[name];
@@ -29,7 +28,7 @@ new function() {
 							var tmp = this.base;
 							this.base = fromBase ? base[name] : prev;
 							try { return val.apply(this, arguments); }
-							finally { this.base = tmp; }
+							finally { tmp ? this.base = tmp : delete this.base; }
 						}).pretend(val);
 					}
 				}
@@ -38,7 +37,7 @@ new function() {
 		}
 		if (src) {
 			for (var name in src)
-				if (has(src, name) && !/^(statics|generics|preserve|prototype|constructor|toString|valueOf)$/.test(name))
+				if (has(src, name) && !/^(statics|generics|preserve|prototype|constructor|__proto__|toString|valueOf)$/.test(name))
 					field(name, true, generics);
 			field('toString');
 			field('valueOf');
@@ -47,7 +46,7 @@ new function() {
 
 	function extend(obj) {
 		function ctor(dont) {
-			this.__proto__ = obj;
+			if (fix) this.__proto__ = obj;
 			if (this.initialize && dont !== ctor.dont)
 				return this.initialize.apply(this, arguments);
 		}
@@ -295,18 +294,11 @@ Hash = Base.extend(Enumerable, {
 	},
 
 	each: function(iter, bind) {
-		if (!bind) bind = this;
-		iter = Base.iterator(iter);
+		var bind = bind || this, iter = Base.iterator(iter), has = Base.has;
 		try {
-			if (this.hasOwnProperty) {
-				for (var i in this)
-					if (this.hasOwnProperty(i))
-						iter.call(bind, this[i], i, this);
-			} else {
-				for (var i in this)
-				 	if (this[i] !== (this.__proto__ || Object.prototype)[i])
-						iter.call(bind, this[i], i, this);
-			}
+			for (var i in this)
+				if (has(this, i))
+					iter.call(bind, this[i], i, this);
 		} catch (e) {
 			if (e !== Base.stop) throw e;
 		}
