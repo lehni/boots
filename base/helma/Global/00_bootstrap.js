@@ -197,6 +197,25 @@ new function() {
 
 			stop: {}
 		}
+	}, {
+		generics: true,
+
+		debug: function() {
+			return /^(string|number|function|regexp)$/.test(Base.type(this)) ? this
+				: Base.each(this, function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
+		},
+
+		clone: function() {
+			return Base.each(this, function(val, i) {
+				this[i] = val;
+			}, new this.constructor());
+		},
+
+		toQueryString: function() {
+			return Base.each(this, function(val, key) {
+				this.push(key + '=' + escape(val));
+			}, []).join('&');
+		}
 	});
 }
 
@@ -328,8 +347,9 @@ Hash = Base.extend(Enumerable, {
 		if (!bind) bind = this;
 		iter = Base.iterator(iter);
 		try {
-			for (var keys = Object.keys(this), key, i = 0, l = keys.length; i < l; i++)
-				iter.call(bind, this[key = keys[i]], key, this);
+			for (var i in this)
+				if (this.hasOwnProperty(i))
+					iter.call(bind, this[i], i, this);
 		} catch (e) {
 			if (e !== Base.stop) throw e;
 		}
@@ -386,6 +406,7 @@ $H = Hash.create;
 
 Array.inject(Enumerable, {
 	generics: true,
+	beans: true,
 	_type: 'array',
 
 	each: function(iter, bind) {
@@ -398,13 +419,11 @@ Array.inject(Enumerable, {
 	},
 
 	collect: function(iter, bind) {
-		var res = [];
-		for (var i = 0, l = this.length; i < l; i++) {
-		 	var val = iter.call(bind, this[i], i, this);
-			if (val != null)
-				res[res.length] = val;
-		}
-		return res;
+		var that = this;
+		return this.each(function(val, i) {
+			if ((val = iter.call(bind, val, i, that)) != null)
+				this[this.length] = val;
+		}, []);
 	},
 
 	findEntry: function(iter, bind) {
@@ -582,46 +601,9 @@ Array.inject(new function() {
 
 $A = Array.create;
 
-Base.inject({
-	generics: true,
-
-	debug: function() {
-		return /^(string|number|function|regexp)$/.test(Base.type(this)) ? this
-			: Base.each(this, function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
-	},
-
-	clone: function() {
-		return Base.each(this, function(val, i) {
-			this[i] = val;
-		}, new this.constructor());
-	},
-
-	toQueryString: function() {
-		return Base.each(this, function(val, key) {
-			this.push(key + '=' + escape(val));
-		}, []).join('&');
-	}
-});
-
 Function.inject(new function() {
-
 	return {
-		beans: true,
 		generics: true,
-
-		getName: function() {
-			var match = this.toString().match(/^\s*function\s*(\w*)/);
-			return match && match[1];
-		},
-
-		getParameters: function() {
-			var str = this.toString().match(/^\s*function[^\(]*\(([^\)]*)/)[1];
-			return str ? str.split(/\s*,\s*/) : [];
-		},
-
-		getBody: function() {
-			return this.toString().match(/^\s*function[^\{]*\{([\u0000-\uffff]*)\}\s*$/)[1];
-		},
 
 		bind: function(bind, args) {
 			var that = this;
@@ -834,56 +816,17 @@ String.inject({
 	}
 });
 
-Json = function() { 
-	var JSON = this.JSON;
-	var special = { '\b': '\\b', '\t': '\\t', '\n': '\\n', '\f': '\\f', '\r': '\\r', '"' : '\\"', "'" : "\\'", '\\': '\\\\' };
-	return {
-		encode: function(obj, properties) {
-			if (JSON && Base.type(obj) != 'java')
-				return JSON.stringify(obj, properties);
-			if (Base.type(properties) == 'array') {
-				properties = properties.each(function(val) {
-					this[val] = true;
-				}, {});
-			}
-			switch (Base.type(obj)) {
-				case 'string':
-					return '"' + obj.replace(/[\x00-\x1f\\"]/g, function(chr) {
-						return special[chr] || '\\u' + chr.charCodeAt(0).toPaddedString(4, 16);
-					}) + '"';
-				case 'array':
-					return '[' + obj.collect(function(val) {
-						return Json.encode(val, properties);
-					}) + ']';
-				case 'object':
-				case 'hash':
-					return '{' + Hash.collect(obj, function(val, key) {
-						if (!properties || properties[key]) {
-							val = Json.encode(val, properties);
-							if (val !== undefined)
-								return Json.encode(key) + ':' + val;
-						}
-					}) + '}';
-				case 'function':
-					return undefined;
-				default:
-					return obj + '';
-			}
-			return undefined;
-		},
+Json = {
+	encode: function(obj, properties) {
+		return Base.type(obj) != 'java' ? JSON.stringify(obj, properties) : null;
+	},
 
-		decode: function(str, secure) {
-			try {
-				return Base.type(str) == 'string' && str &&
-					(!secure || JSON || /^[\],:{}\s]*$/.test(
-						str.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, "@")
-							.replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, "]")
-							.replace(/(?:^|:|,)(?:\s*\[)+/g, "")))
-								? JSON ? JSON.parse(str) : (new Function('return ' + str))() : null;
-			} catch (e) {
-				return null;
-			}
+	decode: function(str, secure) {
+		try {
+			return JSON.parse(str);
+		} catch (e) {
+			return null;
 		}
-	};
-}();
+	}
+};
 

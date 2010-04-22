@@ -148,6 +148,25 @@ new function() {
 
 			stop: {}
 		}
+	}, {
+		generics: true,
+
+		debug: function() {
+			return /^(string|number|function|regexp)$/.test(Base.type(this)) ? this
+				: Base.each(this, function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
+		},
+
+		clone: function() {
+			return Base.each(this, function(val, i) {
+				this[i] = val;
+			}, new this.constructor());
+		},
+
+		toQueryString: function() {
+			return Base.each(this, function(val, key) {
+				this.push(key + '=' + encodeURIComponent(val));
+			}, []).join('&');
+		}
 	});
 }
 
@@ -279,10 +298,7 @@ Hash = Base.extend(Enumerable, {
 		if (!bind) bind = this;
 		iter = Base.iterator(iter);
 		try {
-			if (Object.keys) {
-				for (var keys = Object.keys(this), key, i = 0, l = keys.length; i < l; i++)
-					iter.call(bind, this[key = keys[i]], key, this);
-			} else if (this.hasOwnProperty) {
+			if (this.hasOwnProperty) {
 				for (var i in this)
 					if (this.hasOwnProperty(i))
 						iter.call(bind, this[i], i, this);
@@ -422,13 +438,11 @@ Array.inject({
 	},
 
 	collect: function(iter, bind) {
-		var res = [];
-		for (var i = 0, l = this.length; i < l; i++) {
-		 	var val = iter.call(bind, this[i], i, this);
-			if (val != null)
-				res[res.length] = val;
-		}
-		return res;
+		var that = this;
+		return this.each(function(val, i) {
+			if ((val = iter.call(bind, val, i, that)) != null)
+				this[this.length] = val;
+		}, []);
 	},
 
 	findEntry: function(iter, bind) {
@@ -613,63 +627,28 @@ Array.inject(new function() {
 
 $A = Array.create;
 
-Base.inject({
-	generics: true,
-
-	debug: function() {
-		return /^(string|number|function|regexp)$/.test(Base.type(this)) ? this
-			: Base.each(this, function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
-	},
-
-	clone: function() {
-		return Base.each(this, function(val, i) {
-			this[i] = val;
-		}, new this.constructor());
-	},
-
-	toQueryString: function() {
-		return Base.each(this, function(val, key) {
-			this.push(key + '=' + encodeURIComponent(val));
-		}, []).join('&');
-	}
-});
-
 Function.inject(new function() {
-	function timer(that, type, delay, bind, args) {
+	function timer(that, set, delay, bind, args) {
 		if (delay === undefined)
 			return that.apply(bind, args ? args : []);
-		var fn = that.bind(bind, args);
-		var timer = window['set' + type](fn, delay);
-		fn.clear = function() {
+		var func = that.bind(bind, args);
+		var timer = set(func, delay);
+		func.clear = function() {
 			clearTimeout(timer);
 			clearInterval(timer);
 		};
-		return fn;
+		return func;
 	}
 
 	return {
 		generics: true,
 
-		getName: function() {
-			var match = this.toString().match(/^\s*function\s*(\w*)/);
-			return match && match[1];
-		},
-
-		getParameters: function() {
-			var str = this.toString().match(/^\s*function[^\(]*\(([^\)]*)/)[1];
-			return str ? str.split(/\s*,\s*/) : [];
-		},
-
-		getBody: function() {
-			return this.toString().match(/^\s*function[^\{]*\{([\u0000-\uffff]*)\}\s*$/)[1];
-		},
-
 		delay: function(delay, bind, args) {
-			return timer(this, 'Timeout', delay, bind, args);
+			return timer(this, setTimeout, delay, bind, args);
 		},
 
 		periodic: function(delay, bind, args) {
-			return timer(this, 'Interval', delay, bind, args);
+			return timer(this, setInterval, delay, bind, args);
 		},
 
 		bind: function(bind, args) {
@@ -887,60 +866,65 @@ String.inject({
 	}
 });
 
-Json = function() { 
-	var JSON = this.JSON;
+Json = function(JSON) {
 	var special = { '\b': '\\b', '\t': '\\t', '\n': '\\n', '\f': '\\f', '\r': '\\r', '"' : '\\"', "'" : "\\'", '\\': '\\\\' };
 	return {
-		encode: function(obj, properties) {
-			if (JSON)
-				return JSON.stringify(obj, properties || Browser.TRIDENT && function(key, value) {
-					return key == '__proto__' ? undefined : value;
-				});
-			if (Base.type(properties) == 'array') {
-				properties = properties.each(function(val) {
-					this[val] = true;
-				}, {});
-			}
-			switch (Base.type(obj)) {
-				case 'string':
-					return '"' + obj.replace(/[\x00-\x1f\\"]/g, function(chr) {
-						return special[chr] || '\\u' + chr.charCodeAt(0).toPaddedString(4, 16);
-					}) + '"';
-				case 'array':
-					return '[' + obj.collect(function(val) {
-						return Json.encode(val, properties);
-					}) + ']';
-				case 'object':
-				case 'hash':
-					return '{' + Hash.collect(obj, function(val, key) {
-						if (!properties || properties[key]) {
-							val = Json.encode(val, properties);
-							if (val !== undefined)
-								return Json.encode(key) + ':' + val;
-						}
-					}) + '}';
-				case 'function':
-					return undefined;
-				default:
-					return obj + '';
-			}
-			return undefined;
-		},
-
-		decode: function(str, secure) {
-			try {
-				return Base.type(str) == 'string' && (str = str.trim()) &&
-					(!secure || JSON || /^[\],:{}\s]*$/.test(
-						str.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, "@")
-							.replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, "]")
-							.replace(/(?:^|:|,)(?:\s*\[)+/g, "")))
-								? JSON ? JSON.parse(str) : (new Function('return ' + str))() : null;
-			} catch (e) {
+		encode: JSON
+			? JSON.stringify
+			: function(obj, properties) {
+				if (Base.type(properties) == 'array') {
+					properties = properties.each(function(val) {
+						this[val] = true;
+					}, {});
+				}
+				switch (Base.type(obj)) {
+					case 'string':
+						return '"' + obj.replace(/[\x00-\x1f\\"]/g, function(chr) {
+							return special[chr] || '\\u' + chr.charCodeAt(0).toPaddedString(4, 16);
+						}) + '"';
+					case 'array':
+						return '[' + obj.collect(function(val) {
+							return Json.encode(val, properties);
+						}) + ']';
+					case 'object':
+					case 'hash':
+						return '{' + Hash.collect(obj, function(val, key) {
+							if (!properties || properties[key]) {
+								val = Json.encode(val, properties);
+								if (val !== undefined)
+									return Json.encode(key) + ':' + val;
+							}
+						}) + '}';
+					case 'function':
+						return undefined;
+					default:
+						return obj + '';
+				}
 				return null;
+			},
+
+		decode: JSON
+			? function(str, secure) {
+				try {
+					return JSON.parse(str);
+				} catch (e) {
+					return null;
+				}
 			}
-		}
+			: function(str, secure) {
+				try {
+					return Base.type(str) == 'string' && (str = str.trim()) &&
+						(!secure || /^[\],:{}\s]*$/.test(
+							str.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g, "@")
+								.replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, "]")
+								.replace(/(?:^|:|,)(?:\s*\[)+/g, "")))
+									? (new Function('return ' + str))() : null;
+				} catch (e) {
+					return null;
+				}
+			}
 	};
-}();
+}(this.JSON);
 
 Browser = new function() {
 	var name = window.orientation != undefined ? 'ipod'
@@ -959,7 +943,7 @@ Browser = new function() {
 
 	var engines = {
 		presto: function() {
-			return !window.opera ? false : getVersion('Presto/', 2);
+			return !window.opera ? false : getVersion('Presto/', 2) || getVersion('Opera[/ ]', 1);
 		},
 
 		trident: function() {
@@ -1035,8 +1019,7 @@ DomNodes = Array.extend(new function() {
 				this.base(Base.each(src || {}, function(val, key) {
 					if (typeof val == 'function') {
 						var func = val, prev = proto[key];
-						var count = func.getParameters().length,
-							prevCount = prev && prev.getParameters().length;
+						var count = func.length, prevCount = prev && prev.length;
 						val = function() {
 							var args = arguments, values;
 							if (prev && args.length == prevCount
@@ -1236,7 +1219,7 @@ DomNode.inject(new function() {
 		'disabled', 'readonly', 'multiple', 'selected', 'noresize', 'defer'
 	].associate();
 	var properties = Hash.append({ 
-		text: Browser.TRIDENT || Browser.WEBKIT && Browser.VERSION < 420
+		text: Browser.TRIDENT || Browser.WEBKIT && Browser.VERSION < 420 || Browser.PRESTO && Browser.VERSION < 9
 			? function(node) {
 				return node.$.innerText !== undefined ? 'innerText' : 'nodeValue'
 			} : 'textContent',
@@ -1323,7 +1306,7 @@ DomNode.inject(new function() {
 		},
 
 		getChildNodes: function() {
-		 	return new this._collection(this.$.childNodes);
+		 	return new DomNodes(this.$.childNodes);
 		},
 
 		hasChildNodes: function() {
@@ -3261,8 +3244,10 @@ Request = Base.extend(Chain, Callback, new function() {
 			this.setOptions(params.options);
 			if (params.handler)
 				this.addEvent('complete', params.handler);
+			if (this.options.update)
+				this.options.type = 'html';
 			this.headers = new Hash(this.options.headers);
-			if (this.options.json) {
+			if (this.options.type == 'json') {
 				this.setHeader('Accept', 'application/json');
 				this.setHeader('X-Request', 'JSON');
 			}
@@ -3270,8 +3255,6 @@ Request = Base.extend(Chain, Callback, new function() {
 				this.setHeader('Content-Type', 'application/x-www-form-urlencoded' +
 					(this.options.encoding ? '; charset=' + this.options.encoding : ''));
 			}
-			if (this.options.update)
-				this.options.html = true;
 			this.headers.merge(this.options.headers);
 		},
 
@@ -3297,12 +3280,11 @@ Request = Base.extend(Chain, Callback, new function() {
 			if (this.running && frame && loc && (!loc.href || loc.href.indexOf(this.url) != -1)
 				&& /^(loaded|complete|undefined)$/.test(doc.readyState)) {
 				this.running = false;
-				var area = !this.options.html && doc.getElementsByTagName('textarea')[0];
+				var html = this.options.type == 'html', area = !html
+					&& doc.getElementsByTagName('textarea')[0];
 				var text = doc && (area && area.value || doc.body
-					&& (this.options.html && doc.body.innerHTML
-						|| doc.body.textContent || doc.body.innerText)) || '';
-				var head = Browser.TRIDENT && this.options.html && doc.getElementsByTagName('head')[0];
-				text = head ? head.innerHTML + text : text;
+					&& (html && doc.body.innerHTML || doc.body.textContent
+					|| doc.body.innerText)) || '';
 				this.frame.element.setProperty('src', '');
 				this.success(text);
 				if (!this.options.link) {
@@ -3316,7 +3298,8 @@ Request = Base.extend(Chain, Callback, new function() {
 
 		success: function(text, xml) {
 			var args;
-			if (this.options.html) {
+			switch (this.options.type) {
+			case 'html':
 				var match = text.match(/<body[^>]*>([\u0000-\uffff]*?)<\/body>/i);
 				var stripped = this.stripScripts(match ? match[1] : text);
 				if (this.options.update)
@@ -3324,9 +3307,11 @@ Request = Base.extend(Chain, Callback, new function() {
 				if (this.options.evalScripts)
 					this.executeScript(stripped.script);
 				args = [ stripped.html, text ];
-			} else if (this.options.json) {
+				break;
+			case 'json':
 				args = [ Json.decode(text, this.options.secure), text ];
-			} else {
+				break;
+			default: 
 				args = [ this.processScripts(text), xml ]
 			}
 			this.fireEvent('complete', args)
