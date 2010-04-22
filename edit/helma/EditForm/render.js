@@ -340,7 +340,7 @@ EditForm.inject({
 	 * e.g. for CropImageHandler, use sendResponse(data)
 	 */
 	addResponse: function(data) {
-		res.data.editResponse.merge(data);
+		res.data.editResponse.append(data);
 	},
 
 	/**

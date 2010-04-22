@@ -412,7 +412,7 @@ EditForm = Base.extend({
 	},
 
 	getData: function(mode, param) {
-		return Hash.merge({
+		return Hash.append({
 			edit_mode: mode,
 			edit_id: this.id,
 			edit_data: Json.encode(EditForm.data)
@@ -688,7 +688,7 @@ EditForm.inject(new function() {
 
 		statics: {
 			register: function(items) {
-				handlers.merge(items);
+				handlers.append(items);
 			},
 
 			handle: function(formOrId, action, element) {
@@ -1496,7 +1496,7 @@ ObjectChooser = EditChooser.extend({
 		var children = id && $('#edit-choose-children-' + id, this.content) || this.content;
 		var show = children == this.content || children.hasClass('hidden');
 		if (show) {
-			this.editForm.load('choose', Hash.merge({ edit_child_id: id || '' }, this.param),
+			this.editForm.load('choose', Hash.append({ edit_child_id: id || '' }, this.param),
 				function(result) {
 					children.setHtml(result.html);
 					this.setArrow(id, true);

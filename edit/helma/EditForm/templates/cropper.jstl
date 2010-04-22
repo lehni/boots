@@ -7,7 +7,7 @@
 	<script type="text/javascript" src="/static/edit/js/cropper.js"></script>
 	<script>
 		$window.addEvent('load', function() {
-			var cropper = new Cropper(Hash.merge(<% json param.options %>, {
+			var cropper = new Cropper(Hash.append(<% json param.options %>, {
 				cropperSize: $window.getSize()
 			}));
 

@@ -2,7 +2,7 @@
 <script type="text/javascript">
 <% end %>
 // Override default edit css and script files with versioned urls.
-EditSettings.merge({
+EditSettings.append({
 	scripts: [
 		'<%= '/static/base/js/tabs.js' | versioned %>',
 		'<%= '/static/edit/js/edit.js' | versioned %>'

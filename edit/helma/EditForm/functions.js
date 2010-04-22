@@ -557,7 +557,7 @@ EditForm.inject(new function() {
 				if (item == true)
 					return defaults;
 				else
-					return defaults.clone().inject(item);
+					return new Hash(defaults).append(item);
 			} else if (item === undefined && useDefaults)
 				return defaults;
 			return null;

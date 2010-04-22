@@ -182,9 +182,9 @@ Picture.inject({
 				width: width,
 				height: height
 			};
-			// Merge attributes into it before rendering
+			// Append attributes before rendering
 			if (param.attributes)
-				image = Hash.merge(image, param.attributes);
+				image = Hash.append(image, param.attributes);
 			return image;
 		}
 	},

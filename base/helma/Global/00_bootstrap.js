@@ -339,7 +339,7 @@ Hash = Base.extend(Enumerable, {
 			for (var i = 0, l = arguments.length; i < l; i += 2)
 				this[arguments[i]] = arguments[i + 1];
 		} else {
-			this[arguments.length == 1 ? 'append' : 'merge'].apply(this, arguments);
+			this.append.apply(this, arguments);
 		}
 		return this;
 	},

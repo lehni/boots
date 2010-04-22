@@ -127,7 +127,7 @@ EditItem = Base.extend(new function() {
 				obj.edit_entry_id = this.form.listEntryId;
 			else if (req.data.edit_entry_id)
 				obj.edit_entry_id = req.data.edit_entry_id;
-			return Hash.merge(obj, params);
+			return Hash.append(obj, params);
 		},
 
 		getPrototypes: function() {
@@ -149,7 +149,7 @@ EditItem = Base.extend(new function() {
 						handler: renderHandler
 							? renderHandler.call(this, proto)
 							: baseForm.renderHandle('execute', 'new',
-								Hash.merge({ edit_prototype: proto.name }, editParam))
+								Hash.append({ edit_prototype: proto.name }, editParam))
 					};
 				}
 				User.log("WARNING: Prototype '" + name + "' does not exist!");

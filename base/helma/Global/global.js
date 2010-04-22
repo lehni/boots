@@ -96,7 +96,7 @@ function renderLink(param, out) {
 			url = '#';
 		} else if (param.popup) {
 			onClick = 'new Window('
-					+ Json.encode(Hash.merge({ url: url, name: 'popup' }, param.popup)) + ');';
+					+ Json.encode(Hash.append({ url: url, name: 'popup' }, param.popup)) + ');';
 			url = '#';
 		}
 	}

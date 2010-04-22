@@ -431,7 +431,7 @@ Cropper = Base.extend(Chain, Callback, {
 			style: {
 				position: 'absolute', cursor: 'move', opacity: opts.cropOpacity
 			},
-			events: Hash.merge({}, events, {
+			events: Hash.append({}, events, {
 				dragstart: function(e) {
 					this.dragStart(e, 'nesw');
 				}.bind(this)
@@ -446,7 +446,7 @@ Cropper = Base.extend(Chain, Callback, {
 					backgroundColor: opts.handleColor, border: opts.handleBorder, 
 					opacity: opts.handleOpacity, width: opts.handleSize, height: opts.handleSize
 				},
-				events: Hash.merge({}, events, {
+				events: Hash.append({}, events, {
 					dragstart: function(e) {
 						this.dragStart(e, handle);
 					}.bind(this)
@@ -462,7 +462,7 @@ Cropper = Base.extend(Chain, Callback, {
 			s: { bottom: 0, left: 0, width: '100%' },
 			w: { top: 0, left: 0, height: '100%' }
 		}, function(style, side) {
-			this.sides[side] = this.cropArea.injectTop('div', { styles: Hash.merge({
+			this.sides[side] = this.cropArea.injectTop('div', { styles: Hash.append({
 				position: 'absolute', width: 1, height: 1, overflow: 'hidden', zIndex: 1,
 				backgroundImage: 'url(/static/edit/css/assets/cropper-ants' + (/[ne]/.test(side) ? '' : '-reverse') + '.gif)'
 			}, style) });
