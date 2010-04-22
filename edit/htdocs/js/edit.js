@@ -369,7 +369,8 @@ EditForm = Base.extend({
 				if (uploadStatus) {
 					var maxWidth = uploadStatus.getParent().getWidth();
 					var request = new Request({
-						url: url, method: 'get', json: true, iframe: Browser.WEBKIT && Browser.VERSION < 531.22,
+						url: url, method: 'get', type: 'json',
+						iframe: Browser.WEBKIT && Browser.VERSION < 531.22,
 						data: this.getData('upload_status')
 					}, function(status) {
 						if (that.uploadTimer && status && status.total) {
@@ -392,7 +393,7 @@ EditForm = Base.extend({
 			}
 		}
 		this.request = new Request({
-			url: url, method: method, json: true, data: param
+			url: url, method: method, type: 'json', data: param
 		}, function(values) {
 			if (progress)
 				progress.addClass('hidden');
@@ -443,7 +444,7 @@ EditForm = Base.extend({
 
 	load: function(mode, param, callback) {
 		new Request({
-			url: this.url, method: 'get', json: true,
+			url: this.url, method: 'get', type: 'json',
 			data: this.getData(mode, param)
 		}, callback && callback.bind(this)).send();
 	},
@@ -528,7 +529,7 @@ EditForm = Base.extend({
 				var form = $('form', buttons);
 				form.enable(false);
 				editForm.request = new Request({
-					url: url, method: 'get', json: true,
+					url: url, method: 'get', type: 'json',
 					data: editForm.getData(param.mode, param)
 				}, function(values) {
 					if (progress) {

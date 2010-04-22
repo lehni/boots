@@ -40,8 +40,8 @@ Request = Base.extend(new function() {
 			this.readTimeout = Base.pick(param.readTimeout, timeout);
 			this.cookies = Base.pick(param.cookies, {});
 			this.maxResponseSize = param.maxResponseSize;
-			this.json = param.json;
-			if (this.json) {
+			this.type = param.jtypeson;
+			if (this.type == 'json') {
 				this.setHeader('Accept', 'application/json');
 				this.setHeader('X-Request', 'JSON');
 			}
@@ -90,7 +90,7 @@ Request = Base.extend(new function() {
 				// adjust content length
 				if (result.data)
 					result.length = result.data.length;
-				if (this.json && result.data)
+				if (this.type == 'json' && result.data)
 					result.data = Json.decode(result.data);
 			}
 		},
