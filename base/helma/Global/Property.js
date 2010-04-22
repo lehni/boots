@@ -11,8 +11,9 @@ Property = Base.extend({
 		var onChange = param.onChange;
 		var that = this;
 
-		// Define get getter that inject will use for the propery. This part is 
-		// define in Boots.
+		// Define the getter and setter that inject will use for the propery.
+		// Inside these functions, 'this' will point to the HopObject on which
+		// this property will be used, so this.cache is the HopObject's cache.
 		this.get = function() {
 			var cache = null;
 			if (that._cache) {
@@ -24,7 +25,7 @@ Property = Base.extend({
 					return value;
 			}
 			var value = this[property];
-			if (that.get)
+			if (that._get)
 				value = that._get(this, property, value, param);
 			if (value != null && that._observe)
 				value = that.observe(this, property, value, param);
@@ -34,8 +35,6 @@ Property = Base.extend({
 			return value;
 		}
 
-		// Define get setter that inject will use for the propery. This part is 
-		// define in Boots.
 		this.set = function(value) {
 			// Lookup function if it's a string
 			if (onChange) {
@@ -56,7 +55,7 @@ Property = Base.extend({
 					value = that.observe(this, property, value, param);
 				cache[property] = value;
 			}
-			if (that.set)
+			if (that._set)
 				value = that._set(this, property, value, param);
 			this[property] = value;
 		}
