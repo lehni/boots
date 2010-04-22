@@ -2,8 +2,6 @@ Number.inject(new function() {
 	var formats = {};
 
 	return {
-		_beans: true,
-
 		format: function(str) {
 			// Override Helma's format and add DecimalFormat object caching
 			str = str || '#,##0.00';
