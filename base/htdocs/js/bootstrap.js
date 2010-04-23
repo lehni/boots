@@ -939,8 +939,7 @@ Browser = new function() {
 		},
 
 		trident: function() {
-			var ver/*@cc_on=@_jscript_version@*/;
-			return !ver ? false : ver >= 5 && ver < 5.5 ? 5 : ver == 5.5 ? 5.5 : ver * 10 - 50;
+			return !window.ActiveXObject ? false : getVersion('MSIE ', 1);
 		},
 
 		webkit: function() {
@@ -1353,11 +1352,21 @@ DomNode.inject(new function() {
 				var els = el.array;
 				if (els.length > 0)
 					this.$.parentNode.replaceChild(els[0].$, this.$);
-				for (var i = els.length - 1; i >= 1; i--)
+				for (var i = els.length - 1; i > 0; i--)
 					els[i].insertAfter(els[0]);
 				return el.result;
 			}
 			return null;
+		},
+
+		wrap: function() {
+			var el = this.injectBefore.apply(this, arguments), last;
+			do {
+				last = el;
+				el = el.getFirst();
+			} while(el);
+			last.appendChild(this);
+			return last;
 		},
 
 		clone: function(contents) {
@@ -1589,16 +1598,6 @@ DomElement.inject(new function() {
 
 		hasChildren: function(match) {
 			return !!this.getChildren(match).length;
-		},
-
-		wrap: function() {
-			var el = this.injectBefore.apply(this, arguments), last;
-			do {
-				last = el;
-				el = el.getFirst();
-			} while(el);
-			last.appendChild(this);
-			return last;
 		},
 
 		toString: function() {
