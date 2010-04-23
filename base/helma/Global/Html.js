@@ -44,7 +44,7 @@ Html = new function() {
 					out.write(name);
 					if (value != null) {
 						out.write('="');
-						out.write(encodeForm(value));
+						out.write(encodeEntities(value));
 						out.write('"');
 					}
 				}
@@ -88,15 +88,6 @@ Html = new function() {
 		},
 
 		image: function(attributes, out) {
-			if (attributes.title == null) {
-				attributes.title = attributes.alt || '';
-			} else {
-				attributes.title = attributes.title;
-			}
-			if (attributes.border == null)
-				attributes.border = 0;
-			if (attributes.alt == null)
-				attributes.alt = attributes.title;
 			return Html.element('img', attributes, null, out);
 		},
 
@@ -106,7 +97,7 @@ Html = new function() {
 			// Form elements should have both id and name
 			if (!attributes.id)
 				attributes.id = attributes.name;
-			return Html.element('textarea', attributes, value ? encodeForm(value) : '', out);
+			return Html.element('textarea', attributes, value ? encodeEntities(value) : '', out);
 		},
 
 		select: function(attributes, out) {

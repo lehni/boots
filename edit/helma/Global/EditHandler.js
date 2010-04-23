@@ -149,7 +149,7 @@ EditHandler = Base.extend(new function() {
 						&& res.contentType == 'text/javascript') {
 					// Unfortunately an iframe response needs to be inside a textarea...
 					res.contentType = 'text/html';
-					res.write('<html><body><textarea>' + encodeForm(out) + '</textarea></body></html>')
+					res.write('<html><body><textarea>' + encodeEntities(out) + '</textarea></body></html>')
 				} else {
 					res.write(out);
 				}
