@@ -16,19 +16,19 @@ SearchField = Input.extend({
 			var that = this, clear = false;
 			var placeholder = this.getProperty('placeholder');
 			function showPlaceholder(set) {
-				that.setValue(set ? placeholder : '');
-				that.modifyClass('apple-search-placeholder', set);
+				that.set('value', set ? placeholder : '');
+				that.modifyClass('search-field-placeholder', set);
 			};
 			function updateClear() {
-				clear = that.getValue().length > 0;
-				right.modifyClass('apple-search-clear', clear);
+				clear = that.get('value').length > 0;
+				right.modifyClass('search-field-clear', clear);
 			}
 			this.wrap('div', { width: this.getStyle('width') });
-			this.injectBefore('span', { 'class': 'apple-search-left' });
-			var right = this.injectAfter('span', { 'class': 'apple-search-right' });
-			this.addClass('apple-search');
+			this.injectBefore('span', { 'class': 'search-field-left' });
+			var right = this.injectAfter('span', { 'class': 'search-field-right' });
+			this.addClass('search-field-input');
 			this.setWidth(this.getWidth() - 50); // 2 * 19 + 4 * 3
-			var value = this.getValue();
+			var value = this.get('value');
 			if (!value || value == placeholder) {
 				showPlaceholder(true);
 			} else {
@@ -42,12 +42,12 @@ SearchField = Input.extend({
 				click: function() {
 					if (clear) {
 						if (this.focused) {
-							that.setValue('');
+							that.set('value', '');
 							that.focus();
 						} else {
 							showPlaceholder(true);
 						}
-						this.removeClass('apple-search-clear');
+						this.removeClass('search-field-clear');
 						that.fireEvent('search');
 						clear = false;
 					}
@@ -61,22 +61,32 @@ SearchField = Input.extend({
 
 				focus: function() {
 					this.focused = true;
-					if (this.getValue() == placeholder)
+					if (this.get('value') == placeholder)
 						showPlaceholder(false);
 				},
 
 				blur: function() {
 					this.focused = false;
-					if (!this.getValue())
+					if (!this.get('value'))
 						showPlaceholder(true);
 				}
 			});
 
 			this.clear = function() {
-				if (!this.focused && this.getValue() != placeholder) {
+				if (!this.focused && this.get('value') != placeholder) {
 					showPlaceholder(true);
 					this.fireEvent('search');
 				}
+			}
+
+			this.getValue = function() {
+				var value = this.get('value');
+				return value != placeholder ? value : '';
+			}
+
+			this.setValue = function(value) {
+				if (value == '' || value == placeholder) this.clear();
+				else this.set('value', value);
 			}
 		}
 		this.addEvents({
