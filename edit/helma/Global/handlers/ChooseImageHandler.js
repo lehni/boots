@@ -16,7 +16,10 @@ ChooseImageHandler = EditHandler.extend({
 						image_name: resource.name,
 						image_id: resource.getFullId()
 					}))) + '; return false;">'
-					+ resource.renderImage({ maxWidth: 30, maxHeight: 50 })
+					// Make sure we're rendering the thumbnail versioned even if
+					// the site is not using versioning, as it will show in a
+					// different size.
+					+ resource.renderImage({ maxWidth: 30, maxHeight: 50, versioned: true })
 					+ '<span>' + EditForm.getEditName(resource) + '</span></a></li>');
 			}
 		}

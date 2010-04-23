@@ -1,5 +1,6 @@
 Picture.inject({
 	MAX_POPUP_SIZE: { maxWidth: 1000, maxHeight: 700 },
+	VERSIONED: true,
 
 	getEditForm: function(param) {
 		if (param.name === undefined)
@@ -53,8 +54,10 @@ Picture.inject({
 
 	processImage: function(param) {
 		// Generate a unique id for the characteristics of this image:
-		var id = encodeMd5(this.getUniqueValues(param).join(''));
-		var version = this.getVersionFile(id);
+		var versionId = this.VERSIONED || param.versioned
+			? encodeMd5(this.getUniqueValues(param).join(''))
+			: '';
+		var version = this.getVersionFile(versionId);
 		var width, height;
 		// We use on the fly generation of image versions (e.g. thumbnails).
 		// The file's existance is checked each time it's requested, and generated if needed
@@ -177,8 +180,11 @@ Picture.inject({
 				width = info.width;
 				height = info.height;
 			}
+			var src = this.getUri();
+			if (versionId)
+				src += '?v=' + versionId;
 			var image = {
-				src: this.getUri() + '?version=' + id,
+				src: src,
 				width: width,
 				height: height
 			};

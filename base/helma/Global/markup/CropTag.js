@@ -10,7 +10,8 @@ CropTag = ResourceTag.extend({
 			return resource.renderImage({
 				maxWidth: this.attributes.imagewidth,
 				maxHeight: this.attributes.imageheight,
-				crop: this.attributes
+				crop: this.attributes,
+				versioned: true
 			});
 		}
 	}
