@@ -7,8 +7,8 @@ Medium.inject({
 		var form = this.base(param);
 		if (param.hasDimensions) {
 			form.insertAfter('file', [
-				{ label: "Width", name: "width", type: "integer", min: 0, max: 1024 },
-				{ label: "Height", name: "height", type: "integer", min: 0, max: 768 }
+				{ label: 'Width', name: 'width', type: 'integer', min: 0, max: 1024 },
+				{ label: 'Height', name: 'height', type: 'integer', min: 0, max: 768 }
 			]);
 		}
 		return form;
