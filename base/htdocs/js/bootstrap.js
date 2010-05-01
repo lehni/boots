@@ -276,7 +276,9 @@ Enumerable = {
 	},
 
 	toArray: function() {
-		return this.map();
+		return this.map(function(value) {
+			return value;
+		});
 	}
 };
 
@@ -465,8 +467,7 @@ Array.inject({
 	},
 
 	toArray: function() {
-		var res = this.concat([]);
-		return res[0] == this ? Enumerable.toArray.call(this) : res;
+		return Array.prototype.slice.call(this);
 	},
 
 	clone: function() {
@@ -564,10 +565,9 @@ Array.inject({
 });
 
 Array.inject(new function() {
-	var proto = Array.prototype;
-
-	var fields = ['push','pop','shift','unshift','sort','reverse','join','slice','splice','forEach',
-		'indexOf','lastIndexOf','filter','map','every','some','reduce','concat'].each(function(name) {
+	var proto = Array.prototype, fields = ['push','pop','shift','unshift','sort',
+		'reverse','join','slice','splice','forEach','indexOf','lastIndexOf',
+		'filter','map','every','some','reduce','concat'].each(function(name) {
 		this[name] = proto[name];
 	}, { generics: true, preserve: true });
 
@@ -593,19 +593,18 @@ Array.inject(new function() {
 
 	return {
 		statics: {
-			create: function(list) {
-				if (!Base.check(list)) return [];
-				if (Base.type(list) == 'array') return list;
-				if (list.toArray)
-					return list.toArray();
-				if (list.length != null) {
-					var res = [];
-					for (var i = 0, l = list.length; i < l; i++)
-						res[i] = list[i];
-				} else {
-					res = [list];
-				}
-				return res;
+			create: function(obj) {
+				if (obj == null)
+					return [];
+				if (obj.toArray)
+					return obj.toArray();
+				if (typeof obj.length == 'number')
+					return Array.prototype.slice.call(obj);
+				return [obj];
+			},
+
+			convert: function(obj) {
+				return Base.type(obj) == 'array' ? list : Array.create(obj);
 			},
 
 			extend: function(src) {
@@ -620,44 +619,41 @@ Array.inject(new function() {
 $A = Array.create;
 
 Function.inject(new function() {
-	function timer(that, set, delay, bind, args) {
-		if (delay === undefined)
-			return that.apply(bind, args ? args : []);
-		var func = that.bind(bind, args);
-		var timer = set(func, delay);
-		func.clear = function() {
-			clearTimeout(timer);
-			clearInterval(timer);
+
+	function timer(set) {
+		return function(delay, bind, args) {
+			var func = this.wrap(bind, args);
+			if (delay === undefined)
+				return func();
+			var timer = set(func, delay);
+			func.clear = function() {
+				clearTimeout(timer);
+				clearInterval(timer);
+			};
+			return func;
 		};
-		return func;
 	}
 
 	return {
 		generics: true,
+		preserve: true,
 
-		delay: function(delay, bind, args) {
-			return timer(this, setTimeout, delay, bind, args);
-		},
+		delay: timer(setTimeout),
+		periodic: timer(setInterval),
 
-		periodic: function(delay, bind, args) {
-			return timer(this, setInterval, delay, bind, args);
-		},
-
-		bind: function(bind, args) {
-			var that = this;
+		bind: function(bind) {
+			var that = this, slice = Array.prototype.slice,
+				args = arguments.length > 1 ? slice.call(arguments, 1) : null;
 			return function() {
-				return that.apply(bind, args || arguments);
+				return that.apply(bind, args ? arguments.length > 0
+					? args.concat(slice.call(arguments)) : args : arguments);
 			}
 		},
 
-		attempt: function(bind, args) {
+		wrap: function(bind, args) {
 			var that = this;
 			return function() {
-				try {
-					return that.apply(bind, args || arguments);
-				} catch (e) {
-					return e;
-				}
+				return that.apply(bind, args || arguments);
 			}
 		}
 	}
@@ -3374,7 +3370,7 @@ Request = Base.extend(Chain, Callback, new function() {
 						this.cancel();
 						break;
 					case 'chain':
-						this.chain(this.send.bind(this, arguments));
+						this.chain(this.send.wrap(this, arguments));
 					default:
 						return this;
 				}
@@ -3528,7 +3524,7 @@ Asset = new function() {
 			}, getProperties(props)));
 			if (Browser.WEBKIT && Browser.VERSION < 420)
 				new Request({ url: src, method: 'get' }).addEvent('success', function() {
-					script.fireEvent.delay(1, script, ['load']);
+					script.fireEvent('load', [], 1);
 				}).send();
 			return script;
 		},
@@ -3552,7 +3548,7 @@ Asset = new function() {
 				});
 			});
 			if (image.width && image.height)
-				element.fireEvent.delay(1, element, ['load']);
+				element.fireEvent('load', [], 1);
 			return element.setProperties(getProperties(props));
 		},
 
@@ -3783,7 +3779,7 @@ Fx.CSS = new function() {
 
 	return {
 		start: function(element, property, values) {
-			values = Array.create(values);
+			values = Array.convert(values);
 			if (!Base.check(values[1]))
 				values = [ element.getStyle(property), values[0] ];
 			var parsed = values.map(Fx.CSS.set);
@@ -3791,7 +3787,7 @@ Fx.CSS = new function() {
 		},
 
 		set: function(value) {
-			return Array.create(value).map(function(val) {
+			return Array.convert(value).map(function(val) {
 				val = val + '';
 				var res = parsers.find(function(parser, key) {
 					var value = parser.match(val);

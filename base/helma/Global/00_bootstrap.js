@@ -328,7 +328,9 @@ Enumerable = {
 	},
 
 	toArray: function() {
-		return this.map();
+		return this.map(function(value) {
+			return value;
+		});
 	}
 };
 
@@ -455,7 +457,7 @@ Array.inject(Enumerable, {
 	},
 
 	toArray: function() {
-		return this.concat([]);
+		return Array.prototype.slice.call(this);
 	},
 
 	clone: function() {
@@ -553,10 +555,9 @@ Array.inject(Enumerable, {
 });
 
 Array.inject(new function() {
-	var proto = Array.prototype;
-
-	var fields = ['push','pop','shift','unshift','sort','reverse','join','slice','splice','forEach',
-		'indexOf','lastIndexOf','filter','map','every','some','reduce','concat'].each(function(name) {
+	var proto = Array.prototype, fields = ['push','pop','shift','unshift','sort',
+		'reverse','join','slice','splice','forEach','indexOf','lastIndexOf',
+		'filter','map','every','some','reduce','concat'].each(function(name) {
 		this[name] = proto[name];
 	}, { generics: true, preserve: true });
 
@@ -576,19 +577,18 @@ Array.inject(new function() {
 
 	return {
 		statics: {
-			create: function(list) {
-				if (!Base.check(list)) return [];
-				if (Base.type(list) == 'array') return list;
-				if (list.toArray)
-					return list.toArray();
-				if (list.length != null) {
-					var res = [];
-					for (var i = 0, l = list.length; i < l; i++)
-						res[i] = list[i];
-				} else {
-					res = [list];
-				}
-				return res;
+			create: function(obj) {
+				if (obj == null)
+					return [];
+				if (obj.toArray)
+					return obj.toArray();
+				if (typeof obj.length == 'number')
+					return Array.prototype.slice.call(obj);
+				return [obj];
+			},
+
+			convert: function(obj) {
+				return Base.type(obj) == 'array' ? list : Array.create(obj);
 			},
 
 			extend: function(src) {
@@ -603,24 +603,15 @@ Array.inject(new function() {
 $A = Array.create;
 
 Function.inject(new function() {
+
 	return {
 		generics: true,
+		preserve: true,
 
-		bind: function(bind, args) {
+		wrap: function(bind, args) {
 			var that = this;
 			return function() {
 				return that.apply(bind, args || arguments);
-			}
-		},
-
-		attempt: function(bind, args) {
-			var that = this;
-			return function() {
-				try {
-					return that.apply(bind, args || arguments);
-				} catch (e) {
-					return e;
-				}
 			}
 		}
 	}
