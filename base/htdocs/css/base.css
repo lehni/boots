@@ -1,0 +1,70 @@
+select, input, textarea {
+	margin: 0;
+	color: #000;
+}
+
+form {
+	margin: 0;
+}
+
+img {
+	border: 0;
+}
+
+/* table */
+
+table {
+	border-spacing: 0;
+	margin: 0;
+	border: 0;
+}
+
+td {
+	padding: 0;
+	vertical-align: top;
+}
+
+/* checkbox */
+
+label {
+	display: block;
+	float: left;
+	white-space: nowrap;
+}
+
+input[type=checkbox] {
+	vertical-align: middle;
+}
+
+label span {
+	padding-left: 4px;
+	vertical-align: middle;
+}
+
+/* helpers */
+
+.clear {
+	clear: both;
+}
+
+.float-left {
+	float: left;
+}
+
+.float-right {
+	float: right;
+}
+
+.hidden {
+	display: none;
+}
+
+.popup-body {
+	margin: 0px;
+}
+
+/* edditing */
+
+.edit-login td {
+	padding: 0 8px 4px 0;
+}
