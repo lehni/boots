@@ -92,8 +92,7 @@ OEmbedTag = MarkupTag.extend(new function() {
 							href += '&' + name + '=' + attributes[name];
 					// Request json
 					var response = new Request({
-						url: href + '&format=json',
-						type: 'json',
+						url: href + '&format=json', type: 'json',
 						timeout: param.timeout || 1000
 					}).send();
 					if (response) {

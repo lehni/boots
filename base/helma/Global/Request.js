@@ -40,7 +40,7 @@ Request = Base.extend(new function() {
 			this.readTimeout = Base.pick(param.readTimeout, timeout);
 			this.cookies = Base.pick(param.cookies, {});
 			this.maxResponseSize = param.maxResponseSize;
-			this.type = param.jtypeson;
+			this.type = param.type;
 			if (this.type == 'json') {
 				this.setHeader('Accept', 'application/json');
 				this.setHeader('X-Request', 'JSON');
@@ -72,7 +72,7 @@ Request = Base.extend(new function() {
 					body.write(buf, 0, len);
 					currentSize += len;
 					if (this.maxResponseSize && currentSize > this.maxResponseSize)
-					throw new Error('Maximum allowed response size is exceeded');
+						throw new Error('Maximum allowed response size is exceeded');
 				}
 				try {
 					input.close();
