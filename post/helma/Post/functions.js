@@ -235,8 +235,7 @@ Post.inject({
 		// in the redirect url bellow:
 		var query = '';
 		if (!this.isFirst || !this.node.POST_FIRST_STICKY) {
-			var pos = this.node.indexOf(this);
-			User.log('Post#redirect()', pos);
+			var pos = this.node.posts.indexOf(this);
 			if (this.node.POST_FIRST_STICKY)
 				pos--;
 			pos = Math.floor(pos / this.node.POST_PER_PAGE);
