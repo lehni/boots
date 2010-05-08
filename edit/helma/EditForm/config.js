@@ -38,6 +38,8 @@ EditForm.SHOW_PROGRESS = true;
 // Overridden by EditForm#showPrototype
 EditForm.SHOW_PROTOTYPE = false;
 
+EditForm.SHOW_DETAILS= false;
+
 // Display labels: 'top', 'left', 'none'
 // Overridden by EditForm#shoLabelss
 EditForm.SHOW_LABELS = 'top';

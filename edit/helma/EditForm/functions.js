@@ -597,7 +597,9 @@ EditForm.inject(new function() {
 				if (!name) {
 					name = obj.getDisplayName && obj.getDisplayName() || obj.name;
 					if (name) {
-						name = name.truncate(28, '...') + (detailed ? ' [' + obj._id + ']' : '');
+						name = name.truncate(28, '...')
+							+ (detailed && EditForm.SHOW_DETAILS
+								? ' [' + obj._id + ']' : '');
 					} else {
 						name = '[' + obj.getFullId() + ']';
 					}
