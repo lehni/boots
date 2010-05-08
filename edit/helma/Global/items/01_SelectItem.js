@@ -78,7 +78,7 @@ SelectItem = ListItem.extend({
 			});
 		}
 		if (this.prototypes) {
-			buttons.push(this.getPrototypeChooserButton(baseForm, { value: 'New '}), {
+			buttons.push(this.getPrototypeChooserButton(baseForm, { value: 'New' }), {
 				value: 'Delete',
 				onClick: baseForm.renderHandle('select_remove', selParam, editParam)
 			});

@@ -621,7 +621,7 @@ File = Base.extend(new function() {
 	            file = object;
 	        } else if (object instanceof String) {
 	            file = new java.io.File(object);
-	        } 
+	        }
 	        return file && file.equals(this._file);
 		},
 

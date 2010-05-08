@@ -37,6 +37,7 @@ EditHandler = Base.extend(new function() {
 				var handled = true;
 				if (req.data.helma_upload_error) {
 					EditForm.alert(req.data.helma_upload_error);
+					User.log('Upload Error', req.data.helma_upload_error);
 				} else if (handler) {
 					res.push();
 					try {
@@ -93,16 +94,18 @@ EditHandler = Base.extend(new function() {
 								} else {
 									// Render the updated html and cause edit.js
 									// to update on the fly.
-									var renderAction = EditForm.ACTION_RENDER + '_action';
-									if (base[renderAction]) {
+									// See if there is a render_action on the object
+									var render = EditForm.ACTION_RENDER
+										&& base[EditForm.ACTION_RENDER + '_action'];
+									if (render) {
 										// Render the page into editResponse.page:
 										res.push();
-										base[renderAction]();
+										render.call(base);
 										editResponse.page = res.pop();
 									}
 								}
 							} else if (result == EditForm.NOT_ALLOWED) {
-								EditForm.setMessage("editNotAllowed");
+								EditForm.setMessage('editNotAllowed');
 								handled = false;
 							}
 						}
@@ -144,7 +147,7 @@ EditHandler = Base.extend(new function() {
 				}
 				// Prevent any caching at the remote server or any intermediate proxy 
 				// Tested on most browsers with http://www.mnot.net/javascript/xmlhttprequest/cache.html
-				res.servletResponse.setHeader("Cache-Control", "no-cache,max-age=0");
+				res.servletResponse.setHeader('Cache-Control', 'no-cache,max-age=0');
 				if (/^multipart\/form-data/.test(req.servletRequest.contentType)
 						&& res.contentType == 'text/javascript') {
 					// Unfortunately an iframe response needs to be inside a textarea...
