@@ -3,8 +3,7 @@
 <head>
 <title><%= param.title %></title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8">
-<link rel="stylesheet" href="/static/css/style.css" />
-<link rel="icon" href="/static/favicon.ico" type="image/x-icon">
+<% stylesheet "/static/base/css/base.css" %>
 </head>
 <body class="popup-body">
 <table width="100%" height="100%">
