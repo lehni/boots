@@ -14,7 +14,7 @@ EditForm.inject({
 					mode = 'create';
 
 				var param = {
-					action: base.href(EditForm.ACTION_EDIT),
+					action: base.href(EditForm.ACTION_EDIT) + '?uid=' + Date.now(),
 					width: this.width + this.widthUnit
 				};
 

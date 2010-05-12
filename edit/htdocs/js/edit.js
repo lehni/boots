@@ -104,7 +104,8 @@ EditForm = Base.extend({
 			this.setup(this.form);
 			TabPane.setup();
 			this.empty = false;
-			this.url = this.form.getAction();
+			// Remove datestamp from url
+			this.url = this.form.getAction().match(/(^[^?]*)/)[1];
 			var tab = $('div.tab-pane', this.form);
 			this.tab = tab && tab.tabPane;
 			// Set a reference to the editForm so TabPane can call autoSize
@@ -415,7 +416,8 @@ EditForm = Base.extend({
 		return Hash.append({
 			edit_mode: mode,
 			edit_id: this.id,
-			edit_data: Json.encode(EditForm.data)
+			edit_data: Json.encode(EditForm.data),
+			uid: Date.now()
 		}, param);
 	},
 
