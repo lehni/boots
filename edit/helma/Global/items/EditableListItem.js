@@ -107,8 +107,6 @@ EditableListItem = ListItem.extend({
 		}
 		var entries = [];
 		var ids = [];
-		app.log('Collection: ' + this);
-		app.log(this.collection);
 		var list = this.collection.list();
 		for (var i = 0; i < list.length; i++) {
 			var obj = list[i];
