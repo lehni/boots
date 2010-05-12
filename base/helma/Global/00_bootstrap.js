@@ -588,7 +588,7 @@ Array.inject(new function() {
 			},
 
 			convert: function(obj) {
-				return Base.type(obj) == 'array' ? list : Array.create(obj);
+				return Base.type(obj) == 'array' ? obj : Array.create(obj);
 			},
 
 			extend: function(src) {

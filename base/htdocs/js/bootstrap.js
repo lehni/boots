@@ -604,7 +604,7 @@ Array.inject(new function() {
 			},
 
 			convert: function(obj) {
-				return Base.type(obj) == 'array' ? list : Array.create(obj);
+				return Base.type(obj) == 'array' ? obj : Array.create(obj);
 			},
 
 			extend: function(src) {
@@ -3244,7 +3244,7 @@ Request = Base.extend(Chain, Callback, new function() {
 				this.setHeader('Accept', 'application/json');
 				this.setHeader('X-Request', 'JSON');
 			}
-			if (this.options.urlEncoded && this.options.method == 'post') {
+			if (this.options.urlEncoded && /^(post|put)$/.test(this.options.method)) {
 				this.setHeader('Content-Type', 'application/x-www-form-urlencoded' +
 					(this.options.encoding ? '; charset=' + this.options.encoding : ''));
 			}
