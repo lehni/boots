@@ -80,7 +80,9 @@ Html = new function() {
 		},
 
 		script: function(attributes, out) {
-			return Html.element('script', attributes, null, out);
+			// Render with empty content so tag is not rendered as an empty tag
+			// and gets closed again (</script>).
+			return Html.element('script', attributes, '', out);
 		},
 
 		link: function(attributes, out) {
@@ -97,7 +99,8 @@ Html = new function() {
 			// Form elements should have both id and name
 			if (!attributes.id)
 				attributes.id = attributes.name;
-			return Html.element('textarea', attributes, value ? encodeEntities(value) : '', out);
+			return Html.element('textarea', attributes, value
+					? encodeEntities(value) : '', out);
 		},
 
 		select: function(attributes, out) {
@@ -172,21 +175,25 @@ Html = new function() {
 		/* Html Formating functions */
 
 		/**
-		 * Performs something similar to Helma's own formatParagraphs, but handles
-		 * 'suffixes' (bits of text after tags on the same line) differently, by
-		 * not wrapping them in paragraphs. This seems more logical.
-		 * This is highly optimised but roughly 8 times slower than the Java version.
-		 * TODO: Fix then internal formatParagraphs to do the same and fork Helma.
+		 * Performs something similar to Helma's own formatParagraphs, but
+		 * handles 'suffixes' (bits of text after tags on the same line)
+		 * differently, by not wrapping them in paragraphs. This seems more
+		 * logical.
+		 * This is highly optimised but roughly 8 times slower than the Java
+		 * version.
+		 * TODO: Fix then internal formatParagraphs to do the same on the
+		 * helma-in-boots fork.
 		 */
 		formatParagraphs: function(input) {
 //			var t = Date.now();
-			// Determine used lineBreak sequence and use it to break input into lines.
-			// This is much faster than using the regexp directly in split, which itself
-			// is still faster than finding lines using indexOf. All in all this alone
-			// leads to a speed increase of * 2.
+			// Determine used lineBreak sequence and use it to break input into
+			// lines. This is much faster than using the regexp directly in
+			// split, which itself is still faster than finding lines using
+			// indexOf. All in all this alone leads to a speed increase of * 2.
 			var lineBreak = (input.match(/(\r\n|\n|\r)/) || [, '\n'])[1];
 			var lines = input.split(lineBreak);
-			var isParagraph = false, wasParagraph = false, isSuffix = false, wasSuffix = false;
+			var isParagraph = false, wasParagraph = false,
+				isSuffix = false, wasSuffix = false;
 			var out = [];
 			var breakTag = Html.lineBreak();
 			for (var i = 0, l = lines.length; i < l; i++) {
@@ -204,7 +211,7 @@ Html = new function() {
 						isParagraph = false;
 					} else {
 						// Only add one break on empty lines if the previous line
-						// wsa a suffix. See bellow for explanations.
+						// was a suffix. See bellow for explanations.
 						if (wasSuffix)
 							out.push(breakTag);
 					}
@@ -308,8 +315,8 @@ Html = new function() {
 							isParagraph = true;
 						}
 					}
-					// wasParagraph is used to know that we are on lines 2nd and beyond
-					// within a paragraph, so we can add break tags.
+					// wasParagraph is used to know that we are on lines 2nd and
+					// beyond within a paragraph, so we can add break tags.
 					if (wasParagraph)
 						out.push(breakTag);
 					if (i > 0)
