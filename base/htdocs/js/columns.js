@@ -8,22 +8,25 @@
 
 HtmlElement.inject(new function() {
 
-	function isSplitable(node) {
+	// The tolerance is for tweaking.. allowing lines to fit more easily
+	var tolerance = 2;
+
+	function isSplittable(node) {
 		return /^(p|div|span|blockquote|address|pre|em|i|strong|b|cite|ol|ul)$/.test(node.getTag())
 			&& !node.hasClass('nonbreakable');
 	}
 
-	// Find the deepest splitable element that sits on the split point.
+	// Find the deepest splittable element that sits on the split point.
 	function findSplitPoint(node, height, wrapper, result) {
 		if (!result)
 			result = { start: node, min: Number.MAX_VALUE, max: 0 };
 		if (node instanceof DomElement) {
 			var bounds = node.getBounds(wrapper), top = bounds.top, bottom = bounds.bottom;
-//		 	Browser.log(node, 'height', height, 'top', top, 'bottom', bottom);
+		 	// Browser.log(node, 'height', height, 'top', top, 'bottom', bottom);
 			if (top < height && bottom > height) {
 				if (node != result.start)
 					result.first = node;
-				if (isSplitable(node)) {
+				if (isSplittable(node)) {
 					node.getChildNodes().each(function(child) {
 						findSplitPoint(child, height, wrapper, result);
 					});
@@ -45,8 +48,7 @@ HtmlElement.inject(new function() {
 	function splitElement(node, height, col1, col2) {
 		node = node;
 		var child = node.getLastNode(), previous = null;
-		// The + 2 is for tweaking.. allowing lines to fit more easily
-		height += 2;
+		height += tolerance;
 		while (child) {
 			// If the child node is a text node
 			if (child instanceof DomTextNode && !/^\s*$/.test(child.getText())) {
@@ -65,7 +67,7 @@ HtmlElement.inject(new function() {
 					// Depending on the prediction, either one or the other of
 					// the following loops is needed.
 					// Now first go backwards until the height fits.
-					while (true) {
+					while (pos > 0) {
 						var str = left.substring(0, pos);
 						child.setText(str);
 						// Find the previous word using regexp, including whitespace.
@@ -94,10 +96,15 @@ HtmlElement.inject(new function() {
 					// (the last word made the node grow), so just compare with that.
 					// But do not append it if it only contains white space, since it
 					// be needed for layout (e.g. \n).
-					var curHeight = node.getHeight();
-					child.setText(left);
-					if (node.getHeight() == curHeight && !/^\s*$/.test(stripped))
-						break;
+					// Also, do not fix widows if the previously processed element
+					// ( = the next as we're processing backwards) is inlined.
+					if (!previous || previous instanceof DomTextNode
+							|| !/inline/.test(previous.getStyle('display'))) {
+						var curHeight = node.getHeight();
+						child.setText(left);
+						if (node.getHeight() == curHeight && !/^\s*$/.test(stripped))
+							break;
+					}
 					right = stripped + right;
 					child.setText(left.substring(0, pos));
 				}
@@ -188,28 +195,29 @@ HtmlElement.inject(new function() {
 
 			// Find the split point (a child element, sitting on the column split point)
 			var splits = findSplitPoint(elem, height, wrapper);
+			// Browser.log('Split Points', splits.first, splits.second, splits.third);
 			var split = splits.first || splits.second || splits.third;
-			// TODO: diff can come from findSplitPoint, where it is calculated?
-			var bounds = split.getBounds(wrapper), splitable = isSplitable(split);
-			// Browser.log('Splitting', split.getText().trim().substring(0, 100));
+			var bounds = split.getBounds(wrapper), splittable = isSplittable(split);
+			// Browser.log('Splitting', split.getHtml());
 			createAncestors(split, elem, col, 'bottom');
 			// Move all elements after the element to be splitted (split) to the new column
 			var ref = split;
 			while (ref && ref != elem) {
 				// If the element is not splittable, move it over here fully too
-				var next = ref == split && !splitable ? ref : ref.getNext();
-				ref = ref.getParent();
+				var next = ref == split && !splittable ? ref : ref.getNextNode();
+				ref = ref.getParentNode();
 				while (next) {
 					var child = next;
-					next = next.getNext();
+					next = next.getNextNode();
+					// Browser.log('Moving', child.getText());
 					createAncestors(child, elem, col, 'bottom').appendChild(child);
 				}
 			}
-			if (splitable)
+			if (splittable)
 				splitElement(split, height - bounds.top, elem, col);
 			var h = Math.max(elem.getHeight(), col.getHeight());
-			// Browser.log(h, bounds.bottom);
-			if (start && h >= bounds.bottom) {
+			// Browser.log('Split Result', h, bounds.bottom, 'Left:', elem.getHtml().trim(), 'Right:', col.getHtml().trim());
+			if (start && h >= bounds.bottom + tolerance) {
 				// Browser.log('Restart ', elem.getText().trim());
 				// Detected better layout approach, change height and restart
 				cols.remove();
