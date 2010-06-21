@@ -13,6 +13,10 @@ HopObject.inject({
 		return false;
 	},
 
+	isVisiting: function() {
+		return this == path[path.length - 1];
+	},
+
 	/**
 	 * Parses the text into a helma skin and renders it. This will be deprecated
 	 * in favour of Markup.js and Template.js
