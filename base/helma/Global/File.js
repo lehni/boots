@@ -324,6 +324,18 @@ File = Base.extend(new function() {
 			return this._file.canWrite();
 		},
 
+		getCanonicalFile: function() {
+			return new File(this._file.getCanonicalPath());
+		},
+
+		getCanonicalPath: function() {
+			return this._file.getCanonicalPath();
+		},
+
+		getAbsoluteFile: function() {
+			return new File(this._file.getAbsolutePath());
+		},
+
 		/**
 		 * Returns the absolute pathname string of this file.
 		 *
@@ -475,6 +487,14 @@ File = Base.extend(new function() {
 		 * Returns the internal java file object.
 		 */
 		getFile: function() {
+			return this._file;
+		},
+
+		/**
+		 * Required by Scriptographer's framework that allows JS objects to wrap
+		 * Java objects.
+		 */
+		unwrap: function() {
 			return this._file;
 		},
 
