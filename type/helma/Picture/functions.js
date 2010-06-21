@@ -47,7 +47,9 @@ Picture.inject({
 		return [
 			param.maxWidth, param.maxHeight, param.quality, param.tint, param.scale,
 //			param.rotation, param.bgColor,
-			crop && [crop.x, crop.y, crop.width, crop.height, crop.halign, crop.valign, crop.imageScale, crop.imageWidth, crop.imageHeight],
+			crop && [crop.x, crop.y, crop.width, crop.height,
+					crop.halign, crop.valign, crop.imageScale,
+					crop.imageWidth, crop.imageHeight],
 			param.transparentPixel && [param.transparentPixel.x, param.transparentPixel.y]
 		];
 	},
