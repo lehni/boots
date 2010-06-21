@@ -24,26 +24,29 @@ Markup = {
 					var closing = text.charAt(start + 1) == '/';
 					// empty = contentless tag: <tag/>
 					var empty = !closing && text.charAt(end - 2) == '/';
-					var definition = text.substring(start + (closing ? 2 : 1), end - (empty ? 2 : 1));
+					var definition = text.substring(start + (closing ? 2 : 1),
+						end - (empty ? 2 : 1));
 					// This could be something else than a tag, e.g. some code.
-					// For now, the convention simply is to allow tag definitions
-					// to be only one line long.
+					// For now, the convention simply is to allow tag
+					// definitions to be only one line long.
 					if (/[\n\r]/.test(definition)) {
 						end = start;
 						// Skip the < when searching for the next tag
 						offset = 1;
 						continue;
 					}
-					// There is a special convention in place here for empty tags:
+					// There is a special convention in place for empty tags:
 					// These are interpretated as empty tags:
 					// <tag/>, <tag />, <tag param />
-					// Thes are not an empty tags. The / is regarded as part of the parameter instead:
+					// Thes are not an empty tags. The / is regarded as part of
+					// the parameter instead:
 					// <tag param/ >, <tag param/>
-					// This is to make unnamed url parameters easy to handle, among other things.
-					// Detect this here:
-					// If the tag definition contains white space, we have parameters.
-					// If such a tag ended with / and the last char is not white, it's not actually an empty
-					// tag but the / is part of the parameter:
+					// This is to make unnamed url parameters easy to handle,
+					// among other things. Detect this here:
+					// If the tag definition contains white space, we have
+					// parameters. If such a tag ended with / and the last char 
+					// is not white, it's not actually an empty tag but the / is
+					// part of the parameter:
 					if (empty && /\s.*[^\s]$/.test(definition)) {
 						empty = false;
 						definition += '/';
@@ -82,10 +85,10 @@ Markup = {
 };
 
 MarkupTag = Base.extend(new function() {
-	// Private function to parse tag definitions (everything wihtout the trailing '<' & '>')
-	// This is used both when creating a tag object from a tag string and when parsing
-	// _attributes definitions, in which case collectAttributes is set to true
-	// and the method collects different information, see bellow.
+	// Private function to parse tag definitions (everything wihtout the trailing
+	// '<' & '>'). This is used both when creating a tag object from a tag string
+	// and when parsing _attributes definitions, in which case collectAttributes
+	// is set to true and the method collects different information, see bellow.
 	function parseDefinition(str, collectAttributes) {
 		var name = null, list = [], attribute = null, attributes = {};
 		// Match name=value pairs, and allow strings with escaped quotes inside too
@@ -93,8 +96,12 @@ MarkupTag = Base.extend(new function() {
 			if (match[1]) { // attribute name
 				attribute = match[1];
 			} else { // string or value
-				// Do not eval match[2] as it might contain line breaks which will throw errors.
-				var value = match[2] ? match[2].substring(1, match[2].length - 1).replace(/\\/g, '') : match[3];
+				// Do not eval match[2] as it might contain line breaks which
+				// will throw errors.
+				var value = match[2];
+				value = value 
+						&& value.substring(1, value.length - 1).replace(/\\/g, '')
+						|| match[3];
 				if (collectAttributes) {
 					// When collecting _attributes, use list array to store them
 					if (!attribute) // attribute with no default value
@@ -103,7 +110,8 @@ MarkupTag = Base.extend(new function() {
 						list.push({ name: attribute, defaultValue: value });
 				} else {
 					// Normal tag parsing:
-					// Find tag name, and store attributes (named) and arguments (unnamed)
+					// Find tag name, and store attributes (named)
+					// and arguments (unnamed)
 					if (!name) { // The first value is the tag name
 						name = value;
 					} else if (attribute) { // named attribute
@@ -124,7 +132,8 @@ MarkupTag = Base.extend(new function() {
 			var defaultsFollow = false;
 			for (var i = list.length - 1; i >= 0; i--) {
 				list[i].defaultsFollow = defaultsFollow;
-				defaultsFollow = defaultsFollow || list[i].defaultValue !== undefined;
+				defaultsFollow = defaultsFollow
+						|| list[i].defaultValue !== undefined;
 			}
 			return list.length > 0 ? list : null;
 		} else {
@@ -150,11 +159,15 @@ MarkupTag = Base.extend(new function() {
 			var buffer = new Array(this.parts.length);
 			for (var i = 0, l = this.parts.length; i < l; i++) {
 				var part = this.parts[i];
-				if (part.render && (!param.allowedTags || param.allowedTags[part.name])) {
-					// This is a tag, render its children first into one content string
+				if (part.render && (!param.allowedTags
+							|| param.allowedTags[part.name])) {
+					// This is a tag, render its children first into one content
+					// string
 					var content = part.renderChildren(param, encoder);
-					// Now render the tag itself and place it in the resulting buffer
-					buffer[i] = part.render(content, param, encoder, this.parts[i - 1], this.parts[i + 1]);
+					// Now render the tag itself and place it in the resulting
+					// buffer
+					buffer[i] = part.render(content, param, encoder,
+								this.parts[i - 1], this.parts[i + 1]);
 				} else {
 					// A simple string. Just encode it
 					buffer[i] = encoder(this.parts[i]);
@@ -164,8 +177,9 @@ MarkupTag = Base.extend(new function() {
 		},
 
 		toString: function() {
-			// Since parts contains both strings and tags, join calls toString on each
-			// of them, resulting in automatic toString recursion for child tags.
+			// Since parts contains both strings and tags, join calls toString on
+			// each of them, resulting in automatic toString recursion for child
+			// tags.
 			var content = this.parts.join('');
 			return '<' + this.definition + (content 
 					? '>' + content + '</' + this.name + '>' 
@@ -182,12 +196,13 @@ MarkupTag = Base.extend(new function() {
 			},
 
 			inject: function(src) {
-				// Parse _attributes definition through the same tag parsing mechanism
-				// parseDefinition contains special logic to produce an info object
-				// for attribute / argument parsing further down in MarkupTag.create
-				// If no new attributes are defined, inherit from above.
-				// No merging sof far!
-				var attributes = src && src._attributes && parseDefinition(src._attributes, true);
+				// Parse _attributes definition through the same tag parsing
+				// mechanism parseDefinition contains special logic to produce
+				// an info object for attribute / argument parsing further down
+				// in MarkupTag.create(). If no new attributes are defined,
+				// inherit from above. No merging sof far!
+				var attributes = src && src._attributes
+						&& parseDefinition(src._attributes, true);
 				if (attributes)
 					src._attributes = attributes;
 				// Now call base to inject it all.
@@ -201,7 +216,8 @@ MarkupTag = Base.extend(new function() {
 					var context = src._context || 'default';
 					var store = tags[context] = tags[context] || {};
 					src._tags.split(',').each(function(tag) {
-						// Store attributes information and a reference to prototype in tags
+						// Store attributes information and a reference to
+						// prototype in tags
 						store[tag] = this.prototype;
 					}, this);
 				}
@@ -209,11 +225,14 @@ MarkupTag = Base.extend(new function() {
 			},
 
 			create: function(definition, parent, param) {
-				// Parse tag definition for attributes (named) and arguments (unnamed).
-				var def = definition == 'root' ? { name: 'root' } : parseDefinition(definition);
+				// Parse tag definition for attributes (named)
+				// and arguments (unnamed).
+				var def = definition == 'root'
+						? { name: 'root' } : parseDefinition(definition);
 				// Render any undefined tag through the UndefinedTag.
 				var store = param && tags[param.context] || tags['default'];
-				var proto = store[def.name] || tags['default'][def.name] || store['undefined'] || tags['default']['undefined'];
+				var proto = store[def.name] || tags['default'][def.name] 
+						|| store['undefined'] || tags['default']['undefined'];
 				// Instead of using the empty tag initializers that are a bit
 				// slow through bootstrap's #initalize support, produce a pure
 				// js object and then set its __proto__ field on Rhino,
@@ -242,9 +261,10 @@ MarkupTag = Base.extend(new function() {
 				var attributes = proto._attributes;
 				if (attributes)
 					tag.mergeAttributes(attributes);
-				// Simulate calling initialize, since we're creating tags in an odd
-				// way above... The difference to the normal initialize is that
-				// all the fields are already set on tag, e.g. name, attibutes, etc.
+				// Simulate calling initialize, since we're creating tags in an
+				// odd way above... The difference to the normal initialize is
+				// that all the fields are already set on tag, e.g. name,
+				// attibutes, etc.
 				if (tag.initialize)
 					tag.initialize();
 				return tag;
@@ -254,8 +274,8 @@ MarkupTag = Base.extend(new function() {
 				// definition is the result of parsing _attribuets definition
 				// in inject. If _attributes were defined, use the attributes
 				// object produced by parseDefinition in MarkupTag.inject now
-				// to scan through defined named attributes and unnamed arguments,
-				// and use default values if available.
+				// to scan through defined named attributes and unnamed
+				// arguments, and use default values if available.
 				var index = 0;
 				for (var i = 0, l = definition.length; i < l; i++) {
 					var attrib = definition[i];
@@ -263,14 +283,17 @@ MarkupTag = Base.extend(new function() {
 					// either take its value from the unnamed arguments,
 					// and increase index, or use its default value.
 					if (attributes[attrib.name] === undefined) {
-						attributes[attrib.name] = arguments && index < arguments.length
-							? arguments[index++]
-							: attrib.defaultValue; // Use default value if running out of unnamed args
+						// Use default value if running out of unnamed args
+						attributes[attrib.name] = arguments
+								&& index < arguments.length ? arguments[index++]
+										: attrib.defaultValue;
 					}
-					// If the _attributes definition does not contain any more defaults
-					// and we are running out of unnamed arguments, we might as well
-					// drop out of the loop since there won't be anything to be done.
-					if (!attrib.defaultsFollow && (!arguments || index >= arguments.length))
+					// If the _attributes definition does not contain any more
+					// defaults and we are running out of unnamed arguments, we
+					// might as well drop out of the loop since there won't be
+					// anything to be done.
+					if (!attrib.defaultsFollow && (!arguments
+							|| index >= arguments.length))
 						break;
 				}
 				// Cut away consumed unnamed arguments
@@ -287,8 +310,8 @@ MarkupTag = Base.extend(new function() {
 RootTag = MarkupTag.extend({
 	_tags: 'root',
 
-	// The RootTag's render function is different as it is used to render the whole tree
-	// and does not receive content or encoder as parameters.
+	// The RootTag's render function is different as it is used to render the
+	// whole tree and does not receive content or encoder as parameters.
 	render: function(param) {
 		if (!param)
 			param = {};
@@ -299,7 +322,8 @@ RootTag = MarkupTag.extend({
 				allowed[names[i]] = true;
 		}
 		// Determine encoder to be used, default is not encoding anything:
-		var encoder = param.encoding && global['encode' + param.encoding.capitalize()]
+		var encoder = param.encoding && global['encode'
+				+ param.encoding.capitalize()]
 			|| function(val) { return val };
 		var str = this.renderChildren(param, encoder);
 		return str;
@@ -307,7 +331,8 @@ RootTag = MarkupTag.extend({
 });
 
 // Special tag to render undefined tag names unmodified.
-// UndefinedTag#render can be overridden and is handling the rendering of all the undefined tags.
+// UndefinedTag#render can be overridden and is handling the rendering of all the
+// undefined tags.
 UndefinedTag = MarkupTag.extend({
 	_tags: 'undefined',
 
