@@ -25,11 +25,13 @@ Codec = new function() {
 
 		/**
 		 * Encodes all text with entities but preserves html markup. Replaces \n with <br />
+		 * TODO: Helma falsy uses <br /> even for non XHTML...
 		 */
 		encodeHtml: format,
 
 		/**
 		 * Encodes all text and html markup with entities. Replaces \n with <br />
+		 * TODO: Helma falsy uses <br /> even for non XHTML...
 		 */
 		encodeAll: encode, // encode calls HtmlEncoder.encodeAll internally.
 
