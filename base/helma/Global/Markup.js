@@ -261,7 +261,8 @@ MarkupTag = Base.extend(new function() {
 			create: function(definition, parent, param) {
 				// Parse tag definition for attributes (named)
 				// and arguments (unnamed).
-				var def = definition == 'root' ? { name: 'root', proto: RootTag.prototype }
+				var def = definition == 'root'
+						? { name: 'root', proto: RootTag.prototype }
 						: parseDefinition(definition, param);
 				// Instead of using the empty tag initializers that are a bit
 				// slow through bootstrap's #initalize support, produce a pure
