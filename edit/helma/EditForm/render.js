@@ -144,7 +144,7 @@ EditForm.inject({
 	renderTitle: function(node, mode) {
 		var nodes = [];
 		var showPath = this.getShowPath();
-		while (node) {
+		while (node && node.visible) {
 			nodes.unshift(node);
 			node = node.parent;
 			if (!showPath)
@@ -159,7 +159,7 @@ EditForm.inject({
 				if (this.getShowPrototype() && form && !form.title
 					&& mode == 'edit' && this.object != root)
 						title += ' <span class="edit-node-type">(' + EditForm.getPrototypeName(node.object) + ')</span>';
-				// XXX:
+				// TODO: Template
 				if (index < last)
 					title = '<a href="javascript:' +
 						lastForm.renderHandle('back', last - index) + '">'
