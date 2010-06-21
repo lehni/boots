@@ -1,9 +1,9 @@
-<% if (res.message) %>
-<p class="error"><%= res.message %></p>
-<% else %>
-<p>Please enter your username and password.</p>
-<% end %>
 <form class="edit-login" method="post" action="<%= this.href(req.action) %>" autocomplete="off">
+	<% if (res.message) %>
+	<p class="error"><%= res.message %></p>
+	<% else %>
+	<p>Please enter your username and password.</p>
+	<% end %>
 	<table>
 		<tr>
 			<td>Username:</td>
