@@ -180,8 +180,8 @@
 
 #edit .edit-progress {
 	text-align: right;
-	padding: 10px;
-	margin-bottom: -35px;
+	padding: 10px 10px 0 0;
+	margin-bottom: -30px; /* 19px (line-height) + 1px (border) + 10px (padding) */
 }
 
 #edit .edit-upload {
