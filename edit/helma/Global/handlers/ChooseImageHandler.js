@@ -30,11 +30,11 @@ ChooseImageHandler = EditHandler.extend({
 	}
 });
 
-CropTagParser = ResourceTag.extend({
-	_tags: 'crop',
+// Use a crop tag with a special edit context as a parses for all crop attributes.
+CropTagParser = CropTag.extend({
+	// Use same settings for _tags as CropTag. _attributes are inherited.
+	_tags: 'crop,cropimage',
 	_context: 'edit',
-	_attributes: 'resource',
-	// attributes: resource imagewidth imageheight y top width height halign valign
 
 	render: function(content, param) {
 		param.crop = this.attributes;

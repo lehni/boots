@@ -81,7 +81,7 @@ Picture.inject({
 
 				if (crop) {
 					// Calculate imageScale if it was not set directly, but
-					// indirectly through imageWidht / Height.
+					// indirectly through imageWidth / Height.
 					if (!crop.imageScale)
 						crop.imageScale = crop.imageWidth && crop.imageWidth / width
 						|| crop.imageHeight && crop.imageHeight / height 

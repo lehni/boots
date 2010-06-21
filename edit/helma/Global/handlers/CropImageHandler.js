@@ -1,4 +1,4 @@
-ChooseCropImageHandler = EditHandler.extend({
+CropImageHandler = EditHandler.extend({
 	mode: 'crop',
 
 	handle: function(base, object, node, form, item) {
@@ -24,15 +24,6 @@ ChooseCropImageHandler = EditHandler.extend({
 			}
 			var crop = req.data.image_crop && Json.decode(req.data.image_crop);
 			if (crop) {
-				// Translate crop values:
-				['imageWidth', 'imageHeight'].each(function(key) {
-					var lower = key.toLowerCase();
-					var value = crop[lower];
-					if (value !== undefined) {
-						crop[key] = value;
-						delete crop[lower];
-					}
-				});
 				if (options.min) {
 					var resize = options.resize || true;
 					if (crop.width < options.min.width || resize !== true && !resize.width)
