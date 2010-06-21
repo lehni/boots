@@ -1133,6 +1133,7 @@ EditForm.register(new function() {
 				} else {
 					// TODO: Find a way to produce this through EditSettings too, maybe
 					// as a function that takes crop and preset?
+					// Only render imageWidth if imageScale != 1
 					var tag = '<crop "' + param.image_name + '" '
 						+ ['x', 'y', 'width', 'height', 'imageWidth'].collect(function(name) {
 							if(crop[name] && (name != 'imageWidth' || crop.imageScale != 1))

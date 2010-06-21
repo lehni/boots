@@ -75,13 +75,14 @@ Cropper = Base.extend(Chain, Callback, {
 			size = this.image.size = this.image.getSize();
 		if (!scaled)
 			scaled = this.image.scaled = size;
-		var crop = this.crop, scale = 1;
+		var crop = this.crop, scale = this.image.scale;
 		if (!crop) {
 			var crop = this.options.crop;
 			if (crop) {
 				scale = crop.imageScale 
 					|| crop.imageWidth && crop.imageWidth / size.width
-					|| crop.imageHeight && crop.imageHeight / size.height;
+					|| crop.imageHeight && crop.imageHeight / size.height
+					|| 1;
 				crop = {
 					left: Base.pick(crop.x, crop.left),
 					top: Base.pick(crop.y, crop.top),
