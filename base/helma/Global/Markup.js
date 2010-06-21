@@ -85,13 +85,24 @@ Markup = {
 };
 
 MarkupTag = Base.extend(new function() {
+
+	var tags = {};
+
 	// Private function to parse tag definitions (everything wihtout the trailing
 	// '<' & '>'). This is used both when creating a tag object from a tag string
 	// and when parsing _attributes definitions, in which case collectAttributes
 	// is set to true and the method collects different information, see bellow.
-	function parseDefinition(str, collectAttributes) {
-		var name = null, list = [], attribute = null, attributes = {};
-		// Match name=value pairs, and allow strings with escaped quotes inside too
+	function parseDefinition(str, param, collectAttributes) {
+		// When collectAttributes is true, list holds the array of attribute
+		// definitions and lookup the lowercase attribute name lookup table.
+		var name = null, list = [], attribute = null, attributes = {},
+			lookup = {}, proto;
+		// Match either name= parts, string parts (supporting both ' and ", and 
+		// escaped quotes inside), and pure value parts (in collectAttributes 
+		// mode these can also be attribute names without default values):
+//		TODO: See which version is faster, replace or repeated calls to exec?
+//		str.replace(/(\w+)=|(["'](?:[^"'\\]*(?:\\["']|\\|(?=["']))+)*["'])|(\S+)/gm, function() {
+//			var match = arguments;
 		for (var match; match = /(\w+)=|(["'](?:[^"'\\]*(?:\\["']|\\|(?=["']))+)*["'])|(\S+)/gm.exec(str);) {
 			if (match[1]) { // attribute name
 				attribute = match[1];
@@ -104,17 +115,38 @@ MarkupTag = Base.extend(new function() {
 						|| match[3];
 				if (collectAttributes) {
 					// When collecting _attributes, use list array to store them
-					if (!attribute) // attribute with no default value
-						list.push({ name: value });
-					else
-						list.push({ name: attribute, defaultValue: value });
+					if (!attribute) {
+						// attribute with no default value
+						attribute = value;
+						value = undefined;
+					}
+					list.push({ name: attribute, defaultValue: value });
+					// See if there's a lowercase version, and if so, put it into
+					// the list of attributes name translation lookup:
+					var lower = attribute.toLowerCase();
+					if (lower != attribute)
+						lookup[lower] = attribute;
 				} else {
 					// Normal tag parsing:
-					// Find tag name, and store attributes (named)
-					// and arguments (unnamed)
-					if (!name) { // The first value is the tag name
+					// Find tag name, and store attributes (named) and arguments
+					// (unnamed)
+					if (!name) {
+						// The first value is the tag name. Once we know it, we
+						// can determine the prototype to be used, and from there
+						// the attributes definition and name translation lookup.
 						name = value;
-					} else if (attribute) { // named attribute
+						// Render any undefined tag through the UndefinedTag.
+						var store = param && tags[param.context]
+							|| tags['default'];
+						proto = store[name] || tags['default'][name]
+							|| store['undefined'] || tags['default']['undefined'];
+						// Now get the attribute name translation lookup:
+						lookup = proto._attributes && proto._attributes.lookup
+								|| lookup;
+					} else if (attribute) {
+						// named attribute. Use definition.lookup to translate to
+						// mixed case name.
+						attribute = lookup[attribute] || attribute;
 						attributes[attribute] = value;
 					} else { // unnamed argument
 						list.push(value);
@@ -135,20 +167,23 @@ MarkupTag = Base.extend(new function() {
 				defaultsFollow = defaultsFollow
 						|| list[i].defaultValue !== undefined;
 			}
-			return list.length > 0 ? list : null;
+			// Return both the attributes definition and the name lookup
+			return list.length > 0 ? {
+				attributes: list,
+				lookup: lookup
+			} : null;
 		} else {
 			// Normal tag parsing.
 			// Return name, unnamed arguments and named attributes for further
 			// scanning in MarkupTag.create, if the tag defines _attributes.
 			return {
 				name: name,
+				proto: proto,
 				arguments: list,
 				attributes: attributes
 			};
 		}
 	}
-
-	var tags = {};
 
 	return {
 		render: function(content, param, encoder) {
@@ -199,10 +234,9 @@ MarkupTag = Base.extend(new function() {
 				// Parse _attributes definition through the same tag parsing
 				// mechanism parseDefinition contains special logic to produce
 				// an info object for attribute / argument parsing further down
-				// in MarkupTag.create(). If no new attributes are defined,
-				// inherit from above. No merging sof far!
+				// in MarkupTag.create().
 				var attributes = src && src._attributes
-						&& parseDefinition(src._attributes, true);
+						&& parseDefinition(src._attributes, null, true);
 				if (attributes)
 					src._attributes = attributes;
 				// Now call base to inject it all.
@@ -227,21 +261,17 @@ MarkupTag = Base.extend(new function() {
 			create: function(definition, parent, param) {
 				// Parse tag definition for attributes (named)
 				// and arguments (unnamed).
-				var def = definition == 'root'
-						? { name: 'root' } : parseDefinition(definition);
-				// Render any undefined tag through the UndefinedTag.
-				var store = param && tags[param.context] || tags['default'];
-				var proto = store[def.name] || tags['default'][def.name] 
-						|| store['undefined'] || tags['default']['undefined'];
+				var def = definition == 'root' ? { name: 'root', proto: RootTag.prototype }
+						: parseDefinition(definition, param);
 				// Instead of using the empty tag initializers that are a bit
 				// slow through bootstrap's #initalize support, produce a pure
 				// js object and then set its __proto__ field on Rhino,
 				// to speed things up.
 				// This hack works on Rhino but not on every browser.
 				// On Browsers, you would do this instead:
-				// var tag = new proto();
+				// var tag = new def.proto();
 				var tag = {};
-				tag.__proto__ = proto;
+				tag.__proto__ = def.proto;
 				// This part stays the same:
 				tag.name = def.name;
 				tag.attributes = def.attributes;
@@ -258,7 +288,10 @@ MarkupTag = Base.extend(new function() {
 						tag.previous.next = tag;
 					siblings.push(tag);
 				}
-				var attributes = proto._attributes;
+				// Merge attribute definitions with the one from the prototype
+				if (!def.proto)
+					app.log('NULL: ' + definition + ' ' + Json.encode(def));
+				var attributes = def.proto._attributes;
 				if (attributes)
 					tag.mergeAttributes(attributes);
 				// Simulate calling initialize, since we're creating tags in an
@@ -276,9 +309,9 @@ MarkupTag = Base.extend(new function() {
 				// object produced by parseDefinition in MarkupTag.inject now
 				// to scan through defined named attributes and unnamed
 				// arguments, and use default values if available.
-				var index = 0;
-				for (var i = 0, l = definition.length; i < l; i++) {
-					var attrib = definition[i];
+				var index = 0, attribs = definition.attributes;
+				for (var i = 0, l = attribs.length; i < l; i++) {
+					var attrib = attribs[i];
 					// If the tag does not define this predefined attribute,
 					// either take its value from the unnamed arguments,
 					// and increase index, or use its default value.
