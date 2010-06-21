@@ -15,6 +15,7 @@ Node.inject({
 	POST_AUTO_TITLE: false, // Automatically create a title for subsequent posts by adding Re: to the previous title
 	POST_ALLOW: true, // Deactivate posting alltogether,
 	POST_USERS: true, // Turn on to support system users
+	POST_ROLE: UserRole.POST, // The role required to post
 	POST_ANONYMOUS: true, // Turn on for anonymous users
 	POST_UPDATE_DATE: false, // Wether adding new posts should modify the node's modification date 
 
@@ -32,6 +33,16 @@ Node.inject({
 			}));
 		}
 		return form;
+	},
+
+	isEditableBy: function(user, item) {
+		if (this.base(user, item))
+			return true;
+		// Allow anonymous users to edit posts if POST_ANONYMOUS is set to true
+		// for this node.
+		return item == this.POST_COLLECTION
+				&& (user && user.hasRole(this.POST_ROLE)
+						|| !user && this.POST_ANONYMOUS);
 	},
 
 	/**
