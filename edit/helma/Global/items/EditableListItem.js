@@ -189,7 +189,7 @@ EditableListItem = ListItem.extend({
 				var proto = values.proto;
 				delete values.proto;
 				var ctor = global[proto];
-				if (!prototypes.contains(ctor))
+				if (prototypes.indexOf(ctor) == -1)
 					throw 'Unsupported prototype: ' + proto;
 				// Support an onCreate handler that can produce special types
 				// e.g. based on the file type. That's also the only reason
