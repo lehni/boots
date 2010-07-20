@@ -17,6 +17,8 @@ Property = Base.extend({
 		this.get = function() {
 			var cache = null;
 			if (that._cache) {
+				if (!this.cache)
+					User.logError('Property#get(), this.cache is null: ' + this);
 				cache = this.cache._properties;
 				if (!cache)
 					cache = this.cache._properties = {};
