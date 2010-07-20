@@ -1,25 +1,41 @@
 Node.inject({
 	// Node dependend configurations, can be overriden by sub prototypes.
-	// POST_FIRST_STICKY and POST_PER_PAGE needs to be defined "globaly" per prototype
-	// for Post.redirect() to work
-	POST_BUTTON: 'Post', // Text to be displayed on the post button 
-	POST_PAGINATION: 'Post', // Text to be displayed in the pagination bar
-	POST_PAGINATION_PLURAL: null, // Word to be used if there are more than one. Default is to autocompose a plural.
-	POST_COLLECTION: 'posts', // The collection in which the post button should create a new entry.
+	// POST_FIRST_STICKY and POST_PER_PAGE needs to be defined 'globaly' per
+	// prototype for Post.redirect() to work
+
+	// Text to be displayed on the post button 
+	POST_BUTTON: 'Post',
+	// Text to be displayed in the pagination bar
+	POST_PAGINATION: 'Post',
+	// Word to be used if there are more than one. Default is to auto-compose a
+	// plural.
+	POST_PAGINATION_PLURAL: null,
+	// The collection in which the post button should create a new entry.
+	POST_COLLECTION: 'posts',
 	POST_CLASS: 'post',
 	POST_CLASS_FIRST: 'first',
 	POST_CLASS_OTHERS: '',
-	POST_FIRST_STICKY: false, // Allways keep the first post in a node on top (for pagination)
-	POST_PER_PAGE: 10, // Maximum posts per page
-	POST_REDIRECT_ACTION: '', // Action to be used when redirecting to the node page, to display the post
-	POST_AUTO_TITLE: false, // Automatically create a title for subsequent posts by adding Re: to the previous title
-	POST_ALLOW: true, // Deactivate posting alltogether,
-	POST_USERS: true, // Turn on to support system users
-	POST_ROLE: UserRole.POST, // The role required to post
-	POST_ANONYMOUS: true, // Turn on for anonymous users
-	POST_UPDATE_DATE: false, // Wether adding new posts should modify the node's modification date 
-
-	HAS_FEED: true, // Show RSS feeds. Used by feed lib
+	// Allways keep the first post in a node on top (for pagination)
+	POST_FIRST_STICKY: false,
+	// Maximum posts per page
+	POST_PER_PAGE: 10,
+	// Action to be used when redirecting to the node page, to display the post
+	POST_REDIRECT_ACTION: '',
+	// Automatically create a title for subsequent posts by adding 'Re: ' to the
+	// previous title
+	POST_AUTO_TITLE: false,
+	// Deactivate posting alltogether,
+	POST_ALLOW: true,
+	// Turn on to support system users
+	POST_USERS: true,
+	// The role required to post
+	POST_ROLE: UserRole.POST,
+	// Turn on for anonymous users
+	POST_ANONYMOUS: true,
+	// Wether adding new posts should modify the node's modification date
+	POST_UPDATE_DATE: false,
+	// Show RSS feeds. Used by feed lib
+	HAS_FEED: true,
 
 	getEditForm: function(param) {
 		var form = this.base(param);
@@ -58,8 +74,8 @@ Node.inject({
 		// Do not count the one for the user who posted this.
 		for (var i = 0, l = notifications.length; i < l; i++) {
 			var notification = notifications[i];
-			if (notification.user != session.user
-					|| !session.user && notification.email != req.data.post_email)
+			if (notification.user != session.user || !session.user
+						&& notification.email != req.data.post_email)
 				notification.counter++;
 		}
 		// Get the list of standard users to notify and go through them.
@@ -137,7 +153,8 @@ Node.inject({
 			// The default is the POST_BUTTON setting.
 			if (param.postButton !== false && index + posts.length == count)
 				this.renderPostButton({
-					title: typeof param.postButton == 'string' ? param.postButton : this.POST_BUTTON,
+					title: typeof param.postButton == 'string'
+							? param.postButton : this.POST_BUTTON,
 					click: param.postButtonExpand
 				}, res);
 			posts = res.pop();
