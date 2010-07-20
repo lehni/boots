@@ -12,10 +12,6 @@ Topic.inject({
 		this.visible = true;
 	},
 
-	getFirstPost: function() {
-		return this.posts.get(0);
-	},
-
 	getEditForm: function(param) {
 		// Redirect to the first post if we're creating a new post and not removing
 		// it. In those cases we need the node form for meta data.

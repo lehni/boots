@@ -10,7 +10,8 @@ Root.inject({
 		var notificationSubject = app.properties.notificationSubject
 				|| app.properties.serverName + ': Discussion Notification';
 		for (var i = 0; i < notifications.length; i++) {
-			// notifications are grouped, so walk through the subgroup and find the topics
+			// Notifications are grouped, so walk through the subgroup and find
+			// the topics
 			var notifications = notifications[i].list();
 			if (notifications.length > 0) {
 				var email = notifications[0].email;
@@ -21,8 +22,9 @@ Root.inject({
 				for (var j = 0; j < notifications.length; j++) {
 					var notification = notifications[j];
 					if (notification.node) {
-						this.renderTemplate('emailTopic', {
-							notification: notification, 
+						this.renderTemplate('notificationTopic', {
+							notification: notification,
+							post: notification.node.getLastPost()
 						}, res);
 						numTopics++;
 					}
@@ -30,7 +32,7 @@ Root.inject({
 				}
 				var nodes = res.pop();
 				if (numTopics > 0) {
-					var text = this.renderTemplate('emailNotification', {
+					var text = this.renderTemplate('notificationEmail', {
 						username: username,
 						nodes: nodes
 					});
@@ -40,6 +42,8 @@ Root.inject({
 						mail.setTo(username + ' <' + email + '>');
 						mail.setSubject(notificationSubject);
 						mail.addPart(text);
+						app.log('Sending Notification to ' + username + ' <'
+								+ email + '>:\n' + text);
 						mail.send();
 					} catch (e) {
 						logError('Root#checkNotifications()' , e);

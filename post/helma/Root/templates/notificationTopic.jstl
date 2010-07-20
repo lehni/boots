@@ -1,0 +1,3 @@
+<%= param.notification.node.getTitle() %>
+<%= param.notification.counter > 1 ? param.notification.counter + ' new replies' : '1 new reply' %> at: <%= app.properties.serverUri %><%= param.post.href() %>
+unsubscribe: <%= app.properties.serverUri %>/unsubscribe/<%= param.notification.hash %>

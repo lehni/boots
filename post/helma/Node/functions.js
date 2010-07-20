@@ -89,6 +89,14 @@ Node.inject({
 		}
 	},
 
+	getFirstPost: function() {
+		return this.posts.get(0);
+	},
+
+	getLastPost: function() {
+		return this.posts.get(this.posts.count() - 1);
+	},
+
 	getNotification: function(email) {
 		return this.notifications.get(email);
 	},
