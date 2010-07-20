@@ -220,7 +220,6 @@
 
 #edit .edit-error div {
 	position: absolute;
-	bottom: 7px;
 	padding: 5px 10px;
 	background: #ffe1e0;
 	border: 1px solid #d81e00;
@@ -231,7 +230,7 @@
 #edit .edit-error div:after {
 	content: url(assets/error-tip.gif);
 	position: absolute;
-	bottom: -7px;
+	bottom: 1px;
 	left: 20px;
 	width: 11px;
 	height: 7px;
@@ -240,7 +239,7 @@
 /* Move the error over and down if there's a label, as it's position in relation to it */
 #edit div.edit-label + div.edit-error div {
 	margin-left: 4px;
-	bottom: -15px;
+	bottom: -20px;
 }
 
 #edit .edit-count {
