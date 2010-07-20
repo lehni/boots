@@ -7,19 +7,18 @@ ButtonItem = EditItem.extend({
 			var params = this.getEditParam({ post: true });
 			if (this.confirm)
 				params.confirm = this.confirm;
-			// if onClick is a string, it's js code to be executed
+			// If onClick is a string, it's js code to be executed
 			// on the client side.
 			// otherwise it's a callback handler on the server
 			if (typeof this.onClick == 'string') {
 				onClick = this.onClick;
 			} else {
-				// TODO: is Json.encode needed here? Doesn't renderHandle do this
-				// for us?
-				onClick = baseForm.renderHandle('execute', 'click', Json.encode(params));
+				onClick = baseForm.renderHandle('execute', 'click' ,params);
 			}
 		}
 		baseForm.renderButton({
-			name: this.name, // TODO: Shouldn't this be name instead of this.name??
+			// TODO: Shouldn't this be name instead of this.name?
+			name: this.name,
 			value: this.value,
 			onClick: onClick,
 			className: this.className
