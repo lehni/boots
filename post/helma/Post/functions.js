@@ -144,11 +144,12 @@ Post.inject({
 	initialize: function() {
 		var node = this.getNode();
 		if (node) {
-			var count = node.posts.count();
-			if (node.POST_AUTO_TITLE && count > 0) {
-				var lastTitle = node.posts.get(count - 1).title;
-				if (lastTitle)
-					this.title = /^Re: /.test(lastTitle) ? lastTitle : 'Re: ' + lastTitle;
+			if (node.POST_AUTO_TITLE && node.posts.count() > 0) {
+				var lastTitle = node.getLastPost().title;
+				if (lastTitle) {
+					this.title = /^Re: /.test(lastTitle) ? lastTitle
+							: 'Re: ' + lastTitle;
+				}
 			}
 		}
 		if (!User.hasRole(UserRole.POST)) {
@@ -171,10 +172,10 @@ Post.inject({
 	onBeforeRemove: function() {
 		// Check if this is a first post, and if so only allow removal
 		// if there are no others
-		var node = this.getNode();
-		if (!User.hasRole(UserRole.EDIT) && this.isFirst && node.posts.count() > 1) {
+		var node = this.getNode(), count = node.posts.count();
+		if (!User.hasRole(UserRole.EDIT) && this.isFirst && count > 1) {
 			var other = node.posts.get(1);
-			throw other.getUserName() + (node.posts.count() > 2 ? ' and others have' : ' has')
+			throw other.getUserName() + (count > 2 ? ' and others have' : ' has')
 					+ ' already answered this post, therefore it cannot be removed.';
 		}
 	},

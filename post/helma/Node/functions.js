@@ -127,7 +127,7 @@ Node.inject({
 		var first = null;
 		// handle POST_FIRST_STICKY:
 		if (this.POST_FIRST_STICKY) {
-			var post = this.posts.get(0);
+			var post = this.getFirstPost();
 			if (post) {
 				param.asFirst = true;
 				first = post.render(param);
