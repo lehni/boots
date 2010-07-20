@@ -196,8 +196,8 @@ Enumerable = {
 		return entry && entry.result;
 	},
 
-	contains: function(obj) {
-		return !!this.findEntry(obj);
+	contains: function(iter) {
+		return !!this.findEntry(iter);
 	},
 
 	remove: function(iter, bind) {
@@ -854,7 +854,11 @@ Json = function(JSON) {
 	var special = { '\b': '\\b', '\t': '\\t', '\n': '\\n', '\f': '\\f', '\r': '\\r', '"' : '\\"', "'" : "\\'", '\\': '\\\\' };
 	return {
 		encode: JSON
-			? JSON.stringify
+			? function(obj, properties) {
+				return JSON.stringify(obj, properties || Browser.TRIDENT && function(key, value) {
+					return key == '__proto__' ? undefined : value;
+				});
+			}
 			: function(obj, properties) {
 				if (Base.type(properties) == 'array') {
 					properties = properties.each(function(val) {
