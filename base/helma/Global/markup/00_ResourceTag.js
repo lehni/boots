@@ -16,14 +16,14 @@ ResourceTag = MarkupTag.extend({
 	},
 
 	// Defined outside render() so it can be overridden by applications.
-	renderResource: function(resource, param) {
+	renderResource: function(resource, content, param) {
 		return resource.render(param);
 	},
 
 	render: function(content, param) {
 		var resource = this.getResource(content, param);
 		if (resource)
-			return this.renderResource(resource, param);
+			return this.renderResource(resource, content, param);
 	},
 
 	statics: {
