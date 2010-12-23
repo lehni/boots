@@ -13,7 +13,7 @@ NodeTag = MarkupTag.extend({
 		}
 		var node = HopObject.get(id);
 		if (node)
-			return node.renderLink(content);
+			return node.renderLink(Hash.merge({ content: content }, this.attributes));
 		else
 			return (content || '') + encoder(' [missing: ' + id + ']'); 
 	}
