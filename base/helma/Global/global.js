@@ -70,6 +70,9 @@ function renderLink(param, out) {
 		url += (param.query[0] == '?' ? '' : url.indexOf('?') != -1 ? '&' : '?')
 				+ param.query;
 
+	if (param.anchor)
+		url += '#' + param.anchor;
+
 	if (url && Url.isRemote(url)) { // Not a local page -> target = '_blank'
 		// Make sure the non-local url has a protocol, http is default:
 		url = Url.addProtocol(url);
