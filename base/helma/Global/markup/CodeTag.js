@@ -9,11 +9,13 @@ CodeTag = MarkupTag.extend({
 			// encodeParagraphs that is somehow too smart about it, so use <pre>
 			// for blocks of code and <tt> for inlined code.
 			if ((typeof before != 'string' || /[\n\r]$|^$/.test(before))
-					&& (typeof after != 'string' || /^[\r\n]|^$/.test(after))) {
-				// Offer a way to pass on starting of line numbering
-				var start = this.attributes.start;
-				return '<pre' + (start ? ' start="' + start + '"' : '') + '>'
-					+ code + '</pre>';
+					&& (typeof after != 'string' || /^[\n\r]|^$/.test(after))) {
+				// Pass on all attributes to the pre tag.
+				var attributes  = Hash.map(this.attributes, function(value, key) {
+					return key + '="' + value + '"';
+				}).join(' ');
+				return (attributes ? '<pre ' + attributes + '>' : '<pre>')
+						+ code + '</pre>';
 			} else {
 				return '<tt>' + code + '</tt>';
 			}
