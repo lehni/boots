@@ -43,7 +43,8 @@ OEmbedTag = MarkupTag.extend(new function() {
 				var url = this.attributes.url;
 				return renderLink({
 					href: url,
-					content: content || encode(url.match(/^(?:\w+:\/\/)?(.*)$/)[1])
+					content: content || encode(url.match(
+							/^(?:\w+:\/\/)?(.*)$/)[1])
 				});
 			}
 		},
@@ -61,104 +62,126 @@ OEmbedTag = MarkupTag.extend(new function() {
 			getData: function(attributes, param, settings) {
 				// Let's use toSource here as attributes will never contain many
 				// fields and no HopObject, unlike param...
-				var id = [attributes.toSource(), param.maxWidth, param.maxHeight].join();
+				var id = [attributes.toSource(), param.maxWidth,
+						param.maxHeight].join();
 				var data = cache[id];
 				// Support cache control through cache_age
-				if ((!data || data.cache_age && (Date.now() - data.time) / 1000 >= data.cache_age)
-				 		&& attributes.url) {
-					// Get the embed html through the oEmbed API
-					var url = attributes.url;
-					// If settings is not set yet, get it from providers
-					if (!settings) {
-						settings = providers[getHost(url)];
-						if (!settings)
-							return null;
-						// Merge in default attributes so even when using the static
-						// getData directly without providing settings, the default
-						// settings from the various oEmbed provider tags are used
-						// and can be overridden by apps through inject().
-						if (settings._attributes)
-							MarkupTag.mergeAttributes(settings._attributes, attributes);
-					}
-					// Support both urls and ids
-					if (!Url.isRemote(url))
-						url = settings._prefix + url + settings._suffix;
-					var href = settings._endpoint + '?url=' + encodeUrl(url);
-					// Support global setting of maxWidth and maxHeight through param
-					attributes.maxwidth = attributes.maxwidth || param.maxWidth;
-					attributes.maxheight = attributes.maxheight || param.maxHeight;
-					for (var name in attributes)
-						if (name != 'url')
-							href += '&' + name + '=' + attributes[name];
-					// Request json
-					var response = new Request({
-						url: href + '&format=json', type: 'json',
-						timeout: param.timeout || 1000
-					}).send();
-					if (response) {
-						var data;
-						if (response.error) {
-							User.log('Network Error in OEmbedTag.getData() url: ' + url
-									+ ', status: ' + response.status
-									+ ', message: ' + response.message);
-							// If an error happened, produce a data object anyhow,
-							// containing the link to the source as html, and a
-							// cache_age set so we're not immediately trying again.
-							data = {
-								status: response.status,
-								error: response.message,
-								cache_age: 3600, // Try again in one hour if there was an error
-								html: renderLink({ href: url })
-							};
-						} if (response.data) {
-							data = response.data;
-							// Youtube sometimes ignores maxWidth / height, so fix it here:
-							if (param.maxWidth && data.width > param.maxWidth ||
-								param.maxHeight && data.height > param.maxHeight) {
-								var old = { width: data.width, height: data.height };
-								var bar = data.provider_name == 'YouTube' ? 25 : 0;
-								var ratio = data.width / (data.height - bar);
-								if (param.maxWidth && data.width > param.maxWidth) {
-									data.width = param.maxWidth;
-									data.height = data.width / ratio + bar;
-								}
-								if (param.maxHeight && data.height > param.maxHeight) {
-									data.height = param.maxHeight;
-									data.width = ratio * (data.height - bar);
-								}
-								if (data.html)
-									['width', 'height'].each(function(name) {
-										data.html = data.html.replace(new RegExp(name + '=(?:["\']|)'
-											+ old[name] + '(?:["\']|)', 'g'), name + '="' + data[name] + '"');
-									});
-							}
-							if (!data.html) {
-								// Compose html from the other info
-								switch (data.type) {
-								case 'photo':
-									data.html = Html.image({
-										width: data.width,
-										height: data.height,
-										src: data.url,
-										alt: data.title
-									});
-									if (param.linkPhotos)
-										data.html = renderLink({ content: data.html, href: url });
-									break;
-								default:
-									User.log('ERROR: Unsupported oEmbed result: ' + Json.encode(data));
-									return null;
-								}
-							}
-						}
-						// Default value for cache age is 1 hour.
-						if (!data.cache_age)
-							data.cache_age = 3600;
-						data.time = Date.now();
-						// TODO: Implement a cron job that clears the cache once per hour,
-						// to remove tags that are not in use anymore and free memory?
+				if ((!data || data.cache_age && (Date.now() - data.time) / 1000
+						>= data.cache_age) && attributes.url) {
+					data = OEmbedTag.fetchData(attributes, param, settings);
+					if (data) {
+						// TODO: Implement a cron job that clears the cache once
+						// per hour, to remove tags that are not in use anymore
+						// and free memory?
 						cache[id] = data;
 					}
+				}
+				return data;
+			},
+
+			fetchData: function(attributes, param, settings) {
+				// Get the embed html through the oEmbed API
+				var url = attributes.url;
+				// If settings is not set yet, get it from providers
+				if (!settings) {
+					settings = providers[getHost(url)];
+					if (!settings)
+						return null;
+					// Merge in default attributes so even when using the static
+					// getData directly without providing settings, the default
+					// settings from the various oEmbed provider  tags are used
+					// and can be overridden by apps through inject().
+					if (settings._attributes)
+						MarkupTag.mergeAttributes(settings._attributes,
+								attributes);
+				}
+				// Support both urls and ids
+				if (!Url.isRemote(url))
+					url = settings._prefix + url + settings._suffix;
+				var href = settings._endpoint + '?url=' + encodeUrl(url);
+				// Support global setting of maxWidth and maxHeight through
+				// param
+				attributes.maxwidth = attributes.maxwidth || param.maxWidth;
+				attributes.maxheight = attributes.maxheight || param.maxHeight;
+				for (var name in attributes)
+					if (name != 'url')
+						href += '&' + name + '=' + attributes[name];
+				// Request json
+				var response = new Request({
+					url: href + '&format=json', type: 'json',
+					timeout: param.timeout || 1000
+				}).send();
+				if (!response)
+					return null;
+				var data = null;
+				if (response.error) {
+					User.log('Network Error in OEmbedTag.getData() url: '
+							+ url + ', status: ' + response.status
+							+ ', message: ' + response.message);
+					// If an error happened, produce a data object
+					// anyhow,  containing the link to the source as
+					// html, and a  cache_age set so we're not
+					// immediately trying again.
+					data = {
+						status: response.status,
+						error: response.message,
+						// Try again in one hour if there was an error
+						cache_age: 3600,
+						html: renderLink({ href: url })
+					};
+				} else if (response.data) {
+					data = response.data;
+					// Youtube sometimes ignores maxWidth / height, so fix it
+					// here:
+					if (param.maxWidth && data.width > param.maxWidth ||
+						param.maxHeight && data.height > param.maxHeight) {
+						var old = { width: data.width, height: data.height };
+						var bar = data.provider_name == 'YouTube' ? 25 : 0;
+						var ratio = data.width / (data.height - bar);
+						if (param.maxWidth && data.width > param.maxWidth) {
+							data.width = param.maxWidth;
+							data.height = data.width / ratio + bar;
+						}
+						if (param.maxHeight && data.height > param.maxHeight) {
+							data.height = param.maxHeight;
+							data.width = ratio * (data.height - bar);
+						}
+						if (data.html)
+							['width', 'height'].each(function(name) {
+								data.html = data.html.replace(new RegExp(name
+										+ '=(?:["\']|)'
+										+ old[name] + '(?:["\']|)', 'g'),
+										name + '="' + data[name] + '"');
+							});
+					}
+					if (!data.html) {
+						// Compose html from the other info
+						switch (data.type) {
+						case 'photo':
+							data.html = Html.image({
+								width: data.width,
+								height: data.height,
+								src: data.url,
+								alt: data.title
+							});
+							if (param.linkPhotos)
+								data.html = renderLink({
+									content: data.html,
+									href: url
+								});
+							break;
+						default:
+							User.log('ERROR: Unsupported oEmbed result: '
+									+ Json.encode(data));
+							return null;
+						}
+					}
+				}
+				if (data) {
+					// Default value for cache age is 1 hour.
+					if (!data.cache_age)
+						data.cache_age = 3600;
+					data.time = Date.now();
 				}
 				return data;
 			}
