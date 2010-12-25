@@ -40,6 +40,7 @@ EditHandler = Base.extend(new function() {
 					User.log('Upload Error', req.data.helma_upload_error);
 				} else if (handler) {
 					res.push();
+					var commited = false;
 					try {
 						var node = EditNode.get(fullId);
 						// check again that we have the rights to edit:
@@ -67,6 +68,7 @@ EditHandler = Base.extend(new function() {
 							var oldHref = base.href();
 							var result = handler.handle(base, node.object, node, form, item);
 							if (result == EditForm.COMMIT) {
+								commited = true;
 								res.commit();
 								var redirect = null;
 								if (base.isTransient()) {
@@ -111,6 +113,14 @@ EditHandler = Base.extend(new function() {
 						}
 					} catch (e) {
 						EditForm.reportError(e);
+						// Rollback changes in case there was an exception
+						// in res.commit() above, as otherwise the same error
+						// will be thrown again at the end of the response
+						// handling in the automatic commit() call. This is
+						// required to make sure error messages get through to
+						// the client.
+						if (commited)
+							res.rollback();
 					}
 					var out = res.pop();
 					// Assume that if id was not set yet, no form was renderet yet
