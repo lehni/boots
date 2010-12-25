@@ -12,26 +12,31 @@ HopObject.inject(new function() {
 					this.cache.creationId = id;
 					transients[id] = this;
 				} else {
-					// Also set the fake id to _id since there are things during apply 
-					// that can force an object to become persited prematurely.
-					// This would prevent it from finding its edit parent since the
-					// fullId would change and the EditNode could not be found.
+					// Also set the fake id to _id since there are things during
+					// apply that can force an object to become persited
+					// prematurely. This would prevent it from finding its edit
+					// parent since the fullId would change and the EditNode
+					// could not be found.
 					this.cache.creationId = this._id;
 				}
-				// Remember transientId so we can check in onPersist if onStore should
-				// be called.
+				// Remember transientId so we can check in onPersist if onStore
+				// should be called.
 				this.cache.transientId = this.cache.creationId;
-				// Update the object's edit properties as it is about to be created.
+				// Update the object's edit properties as it is about to be
+				// created.
 				this.updateEditProperties();
-				// Make sure the object is editable even if there is no registered user.
+				// Make sure the object is editable even if there is no
+				// registered user.
 				User.makeEditable(this);
 			} else {
 				if (this.cache.transientId && this.cache.creationId
 						&& this.cache.transientId != this.cache.creationId) {
 					User.log('ERROR: transientId != creationId: ' + this + ': ' 
-						+ this.cache.transientId + ' != ' +  this.cache.creationId)
-					// TODO: If this error ever happens, we need to use this code as well
-					// I can't think of a situation where this would be the case though.
+							+ this.cache.transientId + ' != '
+							+ this.cache.creationId);
+					// TODO: If this error ever happens, we need to use this
+					// code as well. I can't think of a situation where this
+					// would be the case though.
 					/*
 					if (this.cache.transientId)
 						delete transients[this.cache.transientId];
@@ -67,14 +72,15 @@ HopObject.inject(new function() {
 		},
 
 		/**
-		 * A helper to initalise and update creator and modifier fields if they are
-		 * defined as fields.
+		 * A helper to initalise and update creator and modifier fields if they
+		 * are defined as fields.
 		 */
 		updateEditProperties: function() {
-			// Initialise the creator and update the modifier fields on the object,
-			// Helma returns null for unset existing properties and undefined for
-			// not existing properties. Make sure we're only setting modifier and
-			// date if the properties are actually defined in type.properties
+			// Initialise the creator and update the modifier fields on the
+			// object, Helma returns null for unset existing properties and
+			// undefined for not existing properties. Make sure we're only
+			// setting modifier and date if the properties are actually defined
+			// in type.properties
 			if (this.modifier !== undefined)
 				this.modifier = session.user;
 
@@ -109,8 +115,8 @@ HopObject.inject(new function() {
 		 * are not returned but their parents instead, as they are not defining
 		 * edit forms.
 		 *
-		 * getParentNode works for newly created objects too that are still to be
-		 * inserted into the database by determining the parent from the edit
+		 * getParentNode works for newly created objects too that are still to
+		 * be inserted into the database by determining the parent from the edit
 		 * node stack.
 		 *
 		 * Note that a parent node is not always the same as _parent,
@@ -123,8 +129,8 @@ HopObject.inject(new function() {
 			while (parent && parent.constructor == HopObject)
 				parent = parent.getParent();
 			if (!parent) {
-				// See if there is a cached edit node, and if so, determine future
-				// edit parent from it:
+				// See if there is a cached edit node, and if so, determine
+				// future edit parent from it:
 				var node = EditNode.getCached(this);
 				if (node && node.parent)
 					parent = node.parent.object;
@@ -133,22 +139,26 @@ HopObject.inject(new function() {
 		},
 
 		// remove deletes an object and its subnodes according to the values set
-		// in its edit form. it also calls the onBeforeRemove / onRemove handlers.
+		// in its edit form. it also calls the onBeforeRemove / onRemove
+		// handlers.
 		remove: function() {
 			if (this.onBeforeRemove) {
-				// The onBeforeRemove handler can return false to prevent removal,
-				// or throw a string exception if called from the EditForm framework
+				// The onBeforeRemove handler can return false to prevent
+				// removal, or throw a string exception if called from the
+				// EditForm framework
 				var ret = this.onBeforeRemove();
 				if (ret != undefined && !ret)
 					return false;
 			}
 			var remove = false;
 			if (this.getEditForm) {
-				// this removes an editable object after having called it's onRemove handler:
+				// this removes an editable object after having called it's
+				// onRemove handler:
 				if (User.canEdit(this) && !this.isRemoving()) {
 					this.cache.removing = true;
 					// Do not get form through EditNode, as we need to pass true
-					// for the remove parameter, and do not want things to be cached.
+					// for the remove parameter, and do not want things to be
+					// cached.
 					var form = this.getEditForm({ removing: true });
 					// Only remove objects that are removable
 					if (form.removable) {
@@ -164,16 +174,16 @@ HopObject.inject(new function() {
 										var list = item.collection.list();
 										for (var j = 0; j < list.length; j++) {
 											var child = list[j];
-											User.log('Auto Removing ' + child + ' ' +
-												EditForm.getEditName(child, true));
+											User.log('Auto Removing '
+												+ child.getFullId());
 											item.collection.removeChild(child);
 											child.remove();
 										}
 									} else {
 										var value = item.getValue();
 										if (value) {
-											User.log('Auto Removing ' + value + ' ' +
-												EditForm.getEditName(value, true));
+											User.log('Auto Removing '
+												+ value.getFullId());
 											value.remove();
 										}
 									}
@@ -245,15 +255,18 @@ HopObject.inject(new function() {
 					case 'create':
 						item = {
 							mode: 'new', title: title || 'Create',
-							edit_item: param.item, edit_prototype: param.prototype
+							edit_item: param.item,
+							edit_prototype: param.prototype
 						};
 						break;
 					case 'delete':
 					case 'remove':
 						item = {
 							mode: 'remove', title: title || 'Delete',
-							// Can't use double quotes here since they break html attributes.
-							// TODO: Find a way around this, e.g. using encodeAttribute
+							// Can't use double quotes here since they break
+							// html attributes.
+							// TODO: Find a way around this, e.g. using
+							// encodeAttribute
 							confirm: 'Do you really want to delete\n\''
 									+ EditForm.getEditName(this) + '\'' + '?',
 							edit_item: param.item, edit_back: 1
@@ -298,7 +311,8 @@ HopObject.inject(new function() {
 					var obj = transients[id];
 					// Only return it if it is from the right prototype!
 					if (obj)
-						return !prototype || obj instanceof global[prototype] ? obj : null;
+						return !prototype || obj instanceof global[prototype]
+								? obj : null;
 				}
 				return this.base(id, prototype);
 			}

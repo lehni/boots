@@ -41,7 +41,8 @@ EditForm = {
 			delete param.confirm;
 			// This code is identical with the one found in full version of
 			// edit.js's Editform.inline(). Make sure it stays synced.
-			var elements = $('#edit-elements-' + param.target + '-' + param.id + '.edit-elements');
+			var elements = $('#edit-elements-' + param.target + '-' + param.id
+					+ '.edit-elements');
 			var progress = $('.edit-progress', elements);
 			var buttons = $('.edit-buttons', elements);
 			if (progress) {

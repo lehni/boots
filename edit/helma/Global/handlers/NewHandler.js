@@ -3,7 +3,8 @@ NewHandler = EditHandler.extend({
 
 	handle: function(base, object, node, form, item) {
 		if (item) {
-			// Make sure the passed prototype is in the list of prototypes allowed
+			// Make sure the passed prototype is in the list of prototypes
+			// allowed
 			var prototype = null, prototypes = item.prototypes;
 			if (req.data.edit_prototype) {
 				prototype = req.data.edit_prototype;
