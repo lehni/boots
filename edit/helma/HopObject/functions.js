@@ -176,8 +176,12 @@ HopObject.inject(new function() {
 											var child = list[j];
 											User.log('Auto Removing '
 												+ child.getFullId());
-											item.collection.removeChild(child);
+											// Remove item itself first and
+											// from collection after, so
+											// onRemove can still determine
+											// parent:
 											child.remove();
+											item.collection.removeChild(child);
 										}
 									} else {
 										var value = item.getValue();
