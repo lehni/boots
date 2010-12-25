@@ -49,17 +49,17 @@ EditHandler = Base.extend(new function() {
 				redirect = base;
 			}
 			if (redirect) {
-				editResponse.redirect = redirect.href();
+				res.data.editResponse.redirect = redirect.href();
 			} else {
 				// Render the updated html and cause edit.js to update on the
 				// fly. See if there is a render_action on the object.
 				var render = EditForm.ACTION_RENDER
 						&& base[EditForm.ACTION_RENDER + '_action'];
 				if (render) {
-					// Render the page into editResponse.page:
+					// Render the page into res.data.editResponse.page:
 					res.push();
 					render.call(base);
-					editResponse.page = res.pop();
+					res.data.editResponse.page = res.pop();
 				}
 			}
 		} else if (result == EditForm.NOT_ALLOWED) {
