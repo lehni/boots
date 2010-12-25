@@ -23,28 +23,33 @@ Post.inject({
 			type: 'boolean', name: 'notify', value: !!this.getNotification(),
 			text: 'Notify on subsequent posts',
 			onAfterApply: function(value) {
-				node.setNotification(value, this.creator, this.getUserEmail(), this.getUserName());
+				node.setNotification(value, this.creator, this.getUserEmail(),
+						this.getUserName());
 			}
 		};
-		// If this post was anomyous and now edited by the same user who logged in, 
-		// do still show anomyous editor.
+		// If this post was anomyous and now edited by the same user who logged
+		// in, do still show anomyous editor.
 		if (!this.username && User.hasRole(UserRole.POST)) {
 			form.add([
 				{
-					suffix: '<b>Posting as: </b>' +
-						session.user.renderLink({ attributes: { target: '_top' }})
+					suffix: '<b>Posting as: </b>'
+						+ session.user.renderLink({
+							attributes: { target: '_top' }
+						})
 				},
 				notifyItem
 			]);
 		} else {
 			form.add([
 				form.createItem(param.name, {
-					label: 'Name', type: 'string', name: 'username', length: 32, trim: true,
+					label: 'Name', type: 'string', name: 'username', length: 32,
+					trim: true,
 					requirements: {
 						notNull: true,
 						uniqueIn: { 
-							value: root.users, message:
-							'This user already exists.\nChoose a different name.'
+							value: root.users,
+							message: 'This user already exists.\n'
+									+ 'Choose a different name.'
 						}
 					}
 				}, true),
@@ -56,14 +61,18 @@ Post.inject({
 				}, true)
 			], [
 				form.createItem(param.email, {
-					label: 'Email', type: 'string', name: 'email', length: 255, trim: true,
+					label: 'Email', type: 'string', name: 'email', length: 255,
+					trim: true,
 					requirements: {
 						notNull: {
-							value: true, message: 'Needs to be specified.\nYour address will not be published.'
+							value: true,
+							message: 'Needs to be specified.\n'
+									+ 'Your address will not be published.'
 						},
 						uniqueIn: {
-							value: root.usersByEmail, message:
-							'This address is already in use.\nChoose a different address.'
+							value: root.usersByEmail,
+							message: 'This address is already in use.\n'
+									+ 'Choose a different address.'
 						},
 						email: true
 					}
@@ -73,19 +82,26 @@ Post.inject({
 		}
 		form.add(
 			form.createItem(param.title, {
-				label: node.POST_TITLE, type: 'string', name: 'title', length: 64, trim: true,
+				label: node.POST_TITLE, type: 'string', name: 'title',
+				length: 64, trim: true,
 				requirements: {
-					notNull: { value: true, message: 'Please specify a title.' },
+					notNull: {
+						value: true,
+						message: 'Please specify a title.'
+					}
 				}
 			}, true),
 			form.createItem(param.text, {
-				label: 'Text', type: 'text', name: 'text', cols: '40', rows: '20',
-				trim: true,
+				label: 'Text', type: 'text', name: 'text', cols: '40',
+				rows: '20', trim: true,
 				buttons: {
 					links: true
 				},
 				requirements: {
-					notNull: { value: true, message: 'Please write a text.' }
+					notNull: {
+						value: true,
+						message: 'Please write a text.'
+					}
 				}
 			}, true)
 		);
@@ -180,8 +196,11 @@ Post.inject({
 		var count = node.posts.count();
 		if (!User.hasRole(UserRole.EDIT) && this.isFirst && count > 1) {
 			var other = node.posts.get(1);
-			throw other.getUserName() + (count > 2 ? ' and others have' : ' has')
-					+ ' already answered this post, therefore it cannot be removed.';
+			throw other.getUserName() + (count > 2
+					? ' and others have' 
+					: ' has')
+					+ ' already answered this post,'
+					+ ' therefore it cannot be removed.';
 		}
 	},
 
@@ -191,7 +210,8 @@ Post.inject({
 		if (node.instanceOf(Topic) && this.isFirst)
 			node.remove();
 		// If it's the last post, let the node know.
-		if (node.onRemoveLastPost && !node.isRemoving() && node.posts.count() == 1)
+		if (node.onRemoveLastPost && !node.isRemoving()
+				&& node.posts.count() == 1)
 			node.onRemoveLastPost();
 	},
 
@@ -216,7 +236,9 @@ Post.inject({
 		param.title = param.withLink ? this.node.renderLink(title) : title;
 		param.resources = this.resources.list();
 		param.postClass = this.node.POST_CLASS;
-		param.styleClass = param.asFirst ? this.node.POST_CLASS_FIRST : this.node.POST_CLASS_OTHERS;
+		param.styleClass = param.asFirst
+				? this.node.POST_CLASS_FIRST
+				: this.node.POST_CLASS_OTHERS;
 		return this.renderTemplate('post', param, out);
 	},
 
@@ -237,8 +259,8 @@ Post.inject({
 	},
 
 	redirect: function() {
-		// Calculate the pagination position from the index of the post within the node, to be used 
-		// in the redirect url bellow:
+		// Calculate the pagination position from the index of the post within
+		// the node, to be used in the redirect url bellow:
 		var query = '';
 		if (!this.isFirst || !this.node.POST_FIRST_STICKY) {
 			var pos = this.node.posts.indexOf(this);
