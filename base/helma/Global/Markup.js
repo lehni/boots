@@ -1,80 +1,79 @@
 Markup = {
-	// Parses the passed markup text to a DOM tree contained in a RootTag object,
-	// which can be rendered through RootTag#render. This object can be used
-	// for caching. But that is not a necessity since parsing is very fast. 
+	// Parses the passed markup text to a DOM tree contained in a RootTag
+	// object, which can be rendered through RootTag#render. This object can be
+	// used for caching. But that is not a necessity since parsing is very fast.
 	parse: function(text, param) {
-		if (text) {
-			// Create the root tag as a container for all the other bits
-			var rootTag = MarkupTag.create('root');
-			var start = 0, end = 0, offset = 0;
-			// Current tag:
-			var tag = rootTag;
-			while (start != -1) { 
-				start = text.indexOf('<', end + offset);
-				offset = 0;
-				if (start > end)
-					tag.parts.push(text.substring(end, start));
-				if (start >= 0) {
-					end = text.indexOf('>', start) + 1;
-					if (end <= start) {
-						// Non-closed tag:
-						tag.parts.push(text.substring(start));
-						break;
-					}
-					var closing = text.charAt(start + 1) == '/';
-					// empty = contentless tag: <tag/>
-					var empty = !closing && text.charAt(end - 2) == '/';
-					var definition = text.substring(start + (closing ? 2 : 1),
+		if (!text)
+			return null;
+		// Create the root tag as a container for all the other bits
+		var rootTag = MarkupTag.create('root');
+		var start = 0, end = 0, offset = 0;
+		// Current tag:
+		var tag = rootTag;
+		while (start != -1) { 
+			start = text.indexOf('<', end + offset);
+			offset = 0;
+			if (start > end)
+				tag.parts.push(text.substring(end, start));
+			if (start >= 0) {
+				end = text.indexOf('>', start) + 1;
+				if (end <= start) {
+					// Non-closed tag:
+					tag.parts.push(text.substring(start));
+					break;
+				}
+				var closing = text.charAt(start + 1) == '/';
+				// empty = contentless tag: <tag/>
+				var empty = !closing && text.charAt(end - 2) == '/';
+				var definition = text.substring(start + (closing ? 2 : 1),
 						end - (empty ? 2 : 1));
-					// This could be something else than a tag, e.g. some code.
-					// For now, the convention simply is to allow tag
-					// definitions to be only one line long.
-					if (/[\n\r]/.test(definition)) {
-						end = start;
-						// Skip the < when searching for the next tag
-						offset = 1;
-						continue;
-					}
-					// There is a special convention in place for empty tags:
-					// These are interpretated as empty tags:
-					// <tag/>, <tag />, <tag param />
-					// Thes are not an empty tags. The / is regarded as part of
-					// the parameter instead:
-					// <tag param/ >, <tag param/>
-					// This is to make unnamed url parameters easy to handle,
-					// among other things. Detect this here:
-					// If the tag definition contains white space, we have
-					// parameters. If such a tag ended with / and the last char 
-					// is not white, it's not actually an empty tag but the / is
-					// part of the parameter:
-					if (empty && /\s.*[^\s]$/.test(definition)) {
-						empty = false;
-						definition += '/';
-					}
-					if (!closing || empty)
-						// Opening tag, pass current tag as parent
-						tag = MarkupTag.create(definition, tag, param);
-					if (closing || empty) {
-						// Closing tag
-						var openTag = tag;
-						// Walk up hierarchy until we find opening tag:
-						if (!empty)
-							while(openTag && openTag.name != definition)
-								openTag = openTag.parent;
-						if (openTag && openTag != rootTag) {
-							// Activate parent tag
-						 	tag = openTag.parent;
-							// Add the closed tag to its parent's parts
-							tag.parts.push(openTag);
-						}
+				// This could be something else than a tag, e.g. some code.
+				// For now, the convention simply is to allow tag definitions to
+				// be only one line long.
+				if (/[\n\r]/.test(definition)) {
+					end = start;
+					// Skip the < when searching for the next tag
+					offset = 1;
+					continue;
+				}
+				// There is a special convention in place for empty tags:
+				// These are interpretated as empty tags:
+				// <tag/>, <tag />, <tag param />
+				// Thes are not an empty tags. The / is regarded as part of the
+				// parameter instead:
+				// <tag param/ >, <tag param/>
+				// This is to make unnamed url parameters easy to handle, among
+				// other things. Detect this here:
+				// If the tag definition contains white space, we have
+				// parameters. If such a tag ended with / and the last char is
+				// not white, it's not actually an empty tag but the / is  part
+				// of the parameter:
+				if (empty && /\s.*[^\s]$/.test(definition)) {
+					empty = false;
+					definition += '/';
+				}
+				if (!closing || empty)
+					// Opening tag, pass current tag as parent
+					tag = MarkupTag.create(definition, tag, param);
+				if (closing || empty) {
+					// Closing tag
+					var openTag = tag;
+					// Walk up hierarchy until we find opening tag:
+					if (!empty)
+						while(openTag && openTag.name != definition)
+							openTag = openTag.parent;
+					if (openTag && openTag != rootTag) {
+						// Activate parent tag
+					 	tag = openTag.parent;
+						// Add the closed tag to its parent's parts
+						tag.parts.push(openTag);
 					}
 				}
 			}
-			if (end > start)
-				rootTag.parts.push(text.substring(end));
-			return rootTag;
 		}
-		return null;
+		if (end > start)
+			rootTag.parts.push(text.substring(end));
+		return rootTag;
 	},
 
 	// Parses the passed text into a DOM tree and renders it directly.
@@ -88,10 +87,11 @@ MarkupTag = Base.extend(new function() {
 
 	var tags = {};
 
-	// Private function to parse tag definitions (everything wihtout the trailing
-	// '<' & '>'). This is used both when creating a tag object from a tag string
-	// and when parsing _attributes definitions, in which case collectAttributes
-	// is set to true and the method collects different information, see bellow.
+	// Private function to parse tag definitions (everything wihtout the
+	// trailing '<' & '>'). This is used both when creating a tag object from
+	// a tag string and when parsing _attributes definitions, in which case
+	// collectAttributes  is set to true and the method collects different
+	// information, see bellow.
 	function parseDefinition(str, param, collectAttributes) {
 		// When collectAttributes is true, list holds the array of attribute
 		// definitions and lookup the lowercase attribute name lookup table.
@@ -100,10 +100,12 @@ MarkupTag = Base.extend(new function() {
 		// Match either name= parts, string parts (supporting both ' and ", and 
 		// escaped quotes inside), and pure value parts (in collectAttributes 
 		// mode these can also be attribute names without default values):
-//		TODO: See which version is faster, replace or repeated calls to exec?
-//		str.replace(/(\w+)=|(["'](?:[^"'\\]*(?:\\["']|\\|(?=["']))+)*["'])|(\S+)/gm, function() {
-//			var match = arguments;
-		for (var match; match = /(\w+)=|(["'](?:[^"'\\]*(?:\\["']|\\|(?=["']))+)*["'])|(\S+)/gm.exec(str);) {
+		var parse =
+		 		/(\w+)=|(["'](?:[^"'\\]*(?:\\["']|\\|(?=["']))+)*["'])|(\S+)/gm;
+		// TODO: See which version is faster, replace or repeated calls to exec?
+		// str.replace(parse, function() {
+		// 	var match = arguments;
+		for (var match; match = parse.exec(str);) {
 			if (match[1]) { // attribute name
 				attribute = match[1];
 			} else { // string or value
@@ -111,7 +113,8 @@ MarkupTag = Base.extend(new function() {
 				// will throw errors.
 				var value = match[2];
 				value = value 
-						&& value.substring(1, value.length - 1).replace(/\\/g, '')
+						&& value.substring(1, value.length - 1).replace(
+								/\\/g, '')
 						|| match[3];
 				if (collectAttributes) {
 					// When collecting _attributes, use list array to store them
@@ -121,8 +124,8 @@ MarkupTag = Base.extend(new function() {
 						value = undefined;
 					}
 					list.push({ name: attribute, defaultValue: value });
-					// See if there's a lowercase version, and if so, put it into
-					// the list of attributes name translation lookup:
+					// See if there's a lowercase version, and if so, put it
+					// into the list of attributes name translation lookup:
 					var lower = attribute.toLowerCase();
 					if (lower != attribute)
 						lookup[lower] = attribute;
@@ -132,20 +135,21 @@ MarkupTag = Base.extend(new function() {
 					// (unnamed)
 					if (!name) {
 						// The first value is the tag name. Once we know it, we
-						// can determine the prototype to be used, and from there
-						// the attributes definition and name translation lookup.
+						// can determine the prototype to be used and from there 
+						// the attribs definition and name translation lookup.
 						name = value;
 						// Render any undefined tag through the UndefinedTag.
 						var store = param && tags[param.context]
 							|| tags['default'];
 						proto = store[name] || tags['default'][name]
-							|| store['undefined'] || tags['default']['undefined'];
+							|| store['undefined']
+							|| tags['default']['undefined'];
 						// Now get the attribute name translation lookup:
 						lookup = proto._attributes && proto._attributes.lookup
 								|| lookup;
 					} else if (attribute) {
-						// named attribute. Use definition.lookup to translate to
-						// mixed case name.
+						// named attribute. Use definition.lookup to translate
+						// to mixed case name.
 						attribute = lookup[attribute] || attribute;
 						attributes[attribute] = value;
 					} else { // unnamed argument
@@ -212,9 +216,9 @@ MarkupTag = Base.extend(new function() {
 		},
 
 		toString: function() {
-			// Since parts contains both strings and tags, join calls toString on
-			// each of them, resulting in automatic toString recursion for child
-			// tags.
+			// Since parts contains both strings and tags, join calls toString
+			// on each of them, resulting in automatic toString recursion for
+			// child tags.
 			var content = this.parts.join('');
 			return '<' + this.definition + (content 
 					? '>' + content + '</' + this.name + '>' 
@@ -222,7 +226,8 @@ MarkupTag = Base.extend(new function() {
 		},
 
 		mergeAttributes: function(definition) {
-			MarkupTag.mergeAttributes(definition, this.attributes, this.arguments);
+			MarkupTag.mergeAttributes(definition, this.attributes,
+					this.arguments);
 		},
 
 		statics: {
@@ -365,8 +370,8 @@ RootTag = MarkupTag.extend({
 });
 
 // Special tag to render undefined tag names unmodified.
-// UndefinedTag#render can be overridden and is handling the rendering of all the
-// undefined tags.
+// UndefinedTag#render can be overridden and is handling the rendering of all
+// the undefined tags.
 UndefinedTag = MarkupTag.extend({
 	_tags: 'undefined',
 
