@@ -191,7 +191,7 @@ Post.inject({
 		// if there are no others
 		var node = this.getNode();
 		if (!node)
-			throw 'Post#onBeforeRemove(): Unable to retreive parent node,'
+			throw 'Post#onBeforeRemove(): Unable to retreive parent node, '
 					+ 'although the post is supposed ot have one.';
 		var count = node.posts.count();
 		if (!User.hasRole(UserRole.EDIT) && this.isFirst && count > 1) {

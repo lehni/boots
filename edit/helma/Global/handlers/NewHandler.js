@@ -12,12 +12,14 @@ NewHandler = EditHandler.extend({
 			} else if (prototypes.length == 1) {
 				prototype = prototypes[0];
 			} else {
-				User.log('More than one prototype available, no choice was made: '
-						+ prototypes);
+				User.log(
+					'More than one prototype available, no choice was made:\n'
+					+ prototypes);
 			}
 			if (prototype && (User.canEdit(form.object, item.name))) {
 				// get the prototype constructor and create an instance:
-				var ctor = typeof prototype == 'string' ? global[prototype] : prototype;
+				var ctor = typeof prototype == 'string' ? global[prototype]
+						: prototype;
 				if (ctor) {
 					// Pass the item through which the object is created to the
 					// constructor, so it can determine the editing parent.
@@ -28,12 +30,14 @@ NewHandler = EditHandler.extend({
 					var node = EditNode.get(object);
 					form = node.getForm();
 					if (!form) {
-						EditForm.alert('Unable to retrieve edit form from object:\n'
-								+ EditForm.getEditName(object, true));
+						EditForm.alert(
+							'Unable to retrieve edit form from object:\n'
+							+ EditForm.getEditName(object, true));
 					} else if (form.hasItems()) {
 						node.render(base, 'create');
 					} else {
-						return EditHandler.call('create', base, object, node, form);
+						return EditHandler.call('create', base, object, node,
+								form);
 					}
 				} else {
 					EditForm.alert('Unknown Prototype: ' + prototype);
