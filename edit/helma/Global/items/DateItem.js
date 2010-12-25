@@ -9,7 +9,9 @@ DateItem = EditItem.extend({
 			for (var i = start; i <= end; i++) {
 				options.push({ 
 					value: i,
-					name: months ? new Date(2000, i, 1).format(format) : i.format(format),
+					name: months
+							? new Date(2000, i, 1).format(format)
+							: i.format(format),
 					selected: i == value
 				});
 			}

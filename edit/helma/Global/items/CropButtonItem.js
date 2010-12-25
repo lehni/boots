@@ -4,7 +4,8 @@ CropButtonItem = EditItem.extend({
 
 	render: function(baseForm, name, value, param, out) {
 		if (this.hasPictureResources()) {
-			var cropAction = baseForm.renderHandle('choose_crop', name, this.getEditParam());
+			var cropAction = baseForm.renderHandle('choose_crop', name,
+					this.getEditParam());
 			if (this.preview) {
 				renderLink({
 					content: this.renderPreview(value),
@@ -25,7 +26,9 @@ CropButtonItem = EditItem.extend({
 					className: this.className
 				}
 			], false, res);
-			Html.input({type: 'hidden', name: name, value: Json.encode(value) }, res);
+			Html.input({
+				type: 'hidden', name: name, value: Json.encode(value)
+			}, res);
 		}
 	},
 
@@ -35,9 +38,13 @@ CropButtonItem = EditItem.extend({
 
 	renderPreview: function(crop, out) {
 		var id = this.getEditName() + '_preview';
-		var size = this.preview !== true ? this.preview : { width: 100, height: 80 };
+		var size = this.preview !== true
+				? this.preview
+				: { width: 100, height: 80 };
 		if (crop) {
-			var scale = Math.min(1, Math.min(size.width / crop.width, size.height / crop.height));
+			var scale = Math.min(1, Math.min(
+				size.width / crop.width,
+				size.height / crop.height));
 			crop = Picture.getScaledCrop(crop, scale);
 			return Picture.renderCrop(crop, { 
 				attributes: { id: id } 

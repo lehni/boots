@@ -1,5 +1,5 @@
-// TODO: File is named 01_SelectItem.js to ensure it is compiled before the others
-// that depend on it, but after 00_ListItem.js.
+// TODO: File is named 01_SelectItem.js to ensure it is compiled before the
+// others that depend on it, but after 00_ListItem.js.
 // A better way to support this would be if Helma offered an inlcude() method...
 
 SelectItem = ListItem.extend({
@@ -32,7 +32,8 @@ SelectItem = ListItem.extend({
 		var buttons = this.renderButtons(baseForm, name, true);
 		// Double clicking onto the select input also edits the entry
 		if (buttons)
-			select.onDblClick = baseForm.renderHandle('select_edit', [name], this.getEditParam());
+			select.onDblClick = baseForm.renderHandle('select_edit', [name],
+					this.getEditParam());
 		select.options = options;
 		Html.select(select, out);
 		if (buttons)
@@ -40,7 +41,8 @@ SelectItem = ListItem.extend({
 	},
 
 	convert: function(value) {
-		// Only convert back to HopObject if the options are a HopObject collection
+		// Only convert back to HopObject if the options are a HopObject
+		// collection
 		if ((this.collection || this.options) instanceof HopObject)
 			value = HopObject.get(value);
 		// Only convert if the current value is not the collection itself,
@@ -60,27 +62,32 @@ SelectItem = ListItem.extend({
 	getButtons: function(baseForm, name) {
 		var editParam = this.getEditParam();
 		var selParam = this.type == 'multiselect'
-			? [ name + '_left', name + '_right' ]
-			: [ name ];
+				? [ name + '_left', name + '_right' ]
+				: [ name ];
 
 		var buttons = [];
 		if (this.prototypes || this.editable) {
 			buttons.push({
 				value: 'Edit',
-				onClick: baseForm.renderHandle('select_edit', selParam, editParam)
+				onClick: baseForm.renderHandle('select_edit', selParam,
+						editParam)
 			});
 		}
 		if (this.movable) {
 			buttons.push({
 				value: 'Move',
 				name: name + '_move',
-				onClick: baseForm.renderHandle('select_move', name, selParam, editParam)
+				onClick: baseForm.renderHandle('select_move', name, selParam,
+						editParam)
 			});
 		}
 		if (this.prototypes) {
-			buttons.push(this.getPrototypeChooserButton(baseForm, { value: 'New' }), {
+			buttons.push(this.getPrototypeChooserButton(baseForm, {
+				value: 'New'
+			}), {
 				value: 'Delete',
-				onClick: baseForm.renderHandle('select_remove', selParam, editParam)
+				onClick: baseForm.renderHandle('select_remove', selParam,
+						editParam)
 			});
 		}
 		return buttons;

@@ -14,7 +14,8 @@ EditForm.inject({
 		if (itemsChanged) {
 			changedItems.each(function(item) {
 				if (item.onAfterApply) {
-					item.onAfterApply.call(item.form.object, item.appliedValue, item);
+					item.onAfterApply.call(item.form.object, item.appliedValue,
+							item);
 					delete item.appliedValue;
 				}
 			});
@@ -102,7 +103,8 @@ EditForm.inject({
 			if (item.onApply && item.onApply != EditForm.DO_NOTHING) {
 				// Call the handler
 				if (app.properties.debugEdit)
-					User.log('EditItem#onApply(): [' + item.name + '], value = ' + Json.encode(value));
+					User.log('EditItem#onApply(): [' + item.name + '], value = '
+						+ Json.encode(value));
 				var res = item.onApply.call(item.form.object, value, item);
 				// If an onApply handler has not returned true or false, 
 				// assume that it has done some changes (this is prefered to
@@ -117,7 +119,8 @@ EditForm.inject({
 			}
 		} catch (e) {
 			if (typeof e == 'string') {
-				User.log("EditForm#applyItem() throw new EditException('"  + e + "');");
+				User.log("EditForm#applyItem() throw new EditException('"  + e +
+					"');");
 				e = new EditException(item, e, value);
 			} else if (!(e instanceof EditException)) {
 				User.logError('EditForm#applyItem()', e);

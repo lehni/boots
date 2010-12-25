@@ -8,8 +8,10 @@ TextItem = StringItem.extend({
 			cols: this.cols || '40',
 			rows: this.rows || '5',
 			wrap: this.wrap || 'virtual',
-			className: this.className + (this.countWords ? ' edit-text-count' : ''),
-			onKeyUp: this.countWords ? baseForm.renderHandle('text_count') : null
+			className: this.className + (this.countWords
+					? ' edit-text-count' : ''),
+			onKeyUp: this.countWords
+					? baseForm.renderHandle('text_count') : null
 		}, out);
 		this.renderButtons(baseForm, name, true, out);
 	},
@@ -20,29 +22,34 @@ TextItem = StringItem.extend({
 
 	getButtons: function(baseForm, name) {
 		var buttons = this.base(baseForm, name);
-		var hasImage = (this.buttons.image || this.buttons.crop) && this.hasPictureResources();
+		var hasImage = (this.buttons.image || this.buttons.crop)
+				&& this.hasPictureResources();
 		if (hasImage && this.buttons.image) {
 			buttons.push({
 				name: name + '_image',
 				value: 'Image',
-				onClick: baseForm.renderHandle('choose_image', name, this.getEditParam())
+				onClick: baseForm.renderHandle('choose_image', name,
+					this.getEditParam())
 			});
 		}
 		if (hasImage && this.buttons.crop) {
 			buttons.push({
 				name: name + '_crop',
 				value: 'Crop Image',
-				onClick: baseForm.renderHandle('choose_crop', name, this.getEditParam())
+				onClick: baseForm.renderHandle('choose_crop', name,
+					this.getEditParam())
 			});
 		}
 		return buttons;
 	},
 
 	getPictureResources: function(object) {
-		return this.buttons.crop && this.buttons.crop.resources || this.base(object);
+		return this.buttons.crop && this.buttons.crop.resources
+				|| this.base(object);
 	},
 
 	getCropOptions: function(object) {
-		return this.buttons.crop && this.buttons.crop.options || this.base(object);
+		return this.buttons.crop && this.buttons.crop.options
+				|| this.base(object);
 	}
 });

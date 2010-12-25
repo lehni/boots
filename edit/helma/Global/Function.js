@@ -4,13 +4,13 @@ Function.inject({
 		// Setting proto.constructor defines the HopObject's constructor
 		// function, but retrieving it again still returns the native
 		// HopObject constructor, that internally then calls the Js constructor.
-		// While this is good news since we can still retrieve ctor.dont and count
-		// on proto.constructor to always return the same value, there is no way
-		// to check if a constructor was defined or not, nor call the previous
-		// definition. The solution is to not support constructor in favour of
-		// bootstrap's initialize.
-		// Also, inject first through base and then modfiy after, since otherwise
-		// our constructor is overridden again.
+		// While this is good news since we can still retrieve ctor.dont and
+		// count on proto.constructor to always return the same value, there is
+		// no way to check if a constructor was defined or not, nor call the
+		// previous definition. The solution is to not support constructor in
+		// favour of bootstrap's initialize.
+		// Also, inject first through base and then modfiy after, since
+		// otherwise our constructor is overridden again.
 		this.base.apply(this, arguments);
 		var proto = this.prototype, ctor = proto.constructor;
 		// Keep setting it each time, since  .constructor might be overridden
@@ -27,9 +27,11 @@ Function.inject({
 					if (app.properties.debugEdit)
 						User.log('Creating', this.getEditId(), isItem, param);
 					EditNode.get(this, isItem ? param : null);
-					// Now call initialize that we suppressed above when creating ctor:
+					// Now call initialize that we suppressed above when
+					// creating ctor:
 					if (proto.initialize) {
-						var ret = proto.initialize.apply(this, isItem ? [] : arguments);
+						var ret = proto.initialize.apply(this, isItem
+									? [] : arguments);
 						// TODO: Check if this really works?
 						if (ret && ret != this) {
 							ret.setCreating(true);
@@ -55,7 +57,8 @@ Function.inject({
 						// This marks the end of editing
 						this.setCreating(false);
 						if (app.properties.debugEdit)
-							User.log('Storing', beforeId + ', now:', this.getEditId());
+							User.log('Storing', beforeId + ', now:',
+									this.getEditId());
 					}
 					if (onPersist)
 						onPersist.apply(this, arguments);

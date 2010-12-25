@@ -73,10 +73,10 @@ EditableListItem = ListItem.extend({
 			items: form.renderItems(baseForm, {
 				itemsOnly: true
 			}),
-			addHandler: this.addEntries && this.getAddPrototypeButton(baseForm, name, {
-				width: param.width,
-				entryId: form.entryId
-			}).onClick
+			addHandler: this.addEntries
+				&& this.getAddPrototypeButton( baseForm, name, {
+					width: param.width, entryId: form.entryId
+				}).onClick
 		}, out);
 	},
 
@@ -118,10 +118,12 @@ EditableListItem = ListItem.extend({
 		baseForm.renderTemplate('listItem#list', {
 			name: name,
 			addEntries: this.addEntries,
-			addHandler: this.addEntries && this.getAddPrototypeButton(baseForm, name, {
-				width: width
-			}).onClick,
-			chooser: this.chooser, // needs to come after getAddPrototypeButton!
+			addHandler: this.addEntries
+				&& this.getAddPrototypeButton(baseForm, name, {
+					width: width
+				}).onClick,
+			// Chooser needs to come after getAddPrototypeButton:
+			chooser: this.chooser,
 			entries: entries.join(''),
 			ids: ids
 		}, out);
@@ -171,7 +173,8 @@ EditableListItem = ListItem.extend({
 							if (form)
 								changed = form.applyItems() || changed;
 							// Set the object's visibility and position
-							var visible = Base.pick(req.data[prefix + 'hide'], 0) == 0;
+							var visible = Base.pick(
+									req.data[prefix + 'hide'], 0) == 0;
 							entries[id] = { object: obj, visible: visible };
 						}
 					}
@@ -193,12 +196,16 @@ EditableListItem = ListItem.extend({
 					throw 'Unsupported prototype: ' + proto;
 				// Support an onCreate handler that can produce special types
 				// e.g. based on the file type. That's also the only reason
-				// why we collect all values above, so that onCreate can analyse them.
+				// why we collect all values above, so that onCreate can analyse
+				// them.
 				var obj = this.onCreate && this.onCreate(proto, values);
-				if (!obj)
-					obj = new ctor(this); // Pass the edit item for editing parent stuff.
+				if (!obj) {
+					// Pass the edit item for editing parent stuff.
+					obj = new ctor(this);
+				}
 				if (obj) {
-					// Just like in the rest of edit lib, apply first, persist after
+					// Just like in the rest of edit lib, apply first, persist
+					// after
 					var form = this.getEditForm(obj, id);
 					if (form) {
 						form.applyItems();
@@ -208,12 +215,15 @@ EditableListItem = ListItem.extend({
 				}
 			}
 		}
-		// Now set positions. It is important that this happens in proper sequence,
-		// in case we're modifying memory-only HopObjects through addAt...
+		// Now set positions. It is important that this happens in proper
+		// sequence, in case we're modifying memory-only HopObjects through
+		// addAt...
 		(value || '').split(',').each(function(id, index) {
 			var entry = entries[id];
-			if (entry)
-				changed = this.setPosition(entry.object, index, entry.visible) || changed;
+			if (entry) {
+				changed = this.setPosition(entry.object, index, entry.visible)
+						|| changed;
+			}
 		}, this);
 		return changed;
 	}

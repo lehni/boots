@@ -40,8 +40,8 @@ EditRequirement = Base.extend(new function() {
 			},
 
 			check: function(item, value) {
-				// Check any defined requirements for this item and throw exceptions
-				// if requirements are not met.
+				// Check any defined requirements for this item and throw
+				// exceptions if requirements are not met.
 				// First we allways check for notNull:
 				check(item, 'notNull', value);
 				// Now all the others:
@@ -62,7 +62,8 @@ NotNullRequirement = EditRequirement.extend({
 	}
 });
 
-// TODO: Merge length,minLength,maxLength to one protoype and use compare / throw lookups?
+// TODO: Merge length,minLength,maxLength to one protoype and use
+// compare / throw lookups?
 LengthRequirement = EditRequirement.extend({
 	_types: 'length',
 

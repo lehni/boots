@@ -20,12 +20,13 @@ EditItem = Base.extend(new function() {
 				if (typeof this.prototypes == 'string') {
 					this.prototypes = this.prototypes.split(/\s*,\s*/);
 				} else if (this.prototypes instanceof Function) {
-					// If it's one constructor, create an array containing its name.
+					// If it's one constructor, create an array containing its
+					// name.
 					this.prototypes = [this.prototypes.name];
 				} else if (this.prototypes instanceof Array) {
-					// Make sure the array only contains strings. If constructor functions
-					// are listed, access their name field which seems to be defined
-					// for HopObject constructors:
+					// Make sure the array only contains strings. If constructor
+					// functions are listed, access their name field which seems
+					// to be defined for HopObject constructors:
 					for (var i = 0, j = this.prototypes.length; i < j; i++) {
 						var proto = this.prototypes[i];
 						// If it's a constructor, assume it's a HopObject and
@@ -66,11 +67,13 @@ EditItem = Base.extend(new function() {
 			if (this.value != null) {
 				return this.value;
 			} else if (this.evaluate) {
-				// Evaluates the content of item.evaluate in the object and returns it.
-				// Use a function instead of eval, as only in this way, in "this.evaluate"
-				// "this" will point to the right object.
+				// Evaluates the content of item.evaluate in the object and
+				// returns it. Use a function instead of eval, as only in this
+				// way, in "this.evaluate", "this" will point to the right
+				// object.
 				try {
-					return new Function('return ' + this.evaluate).call(this.form.object);
+					return new Function('return ' + this.evaluate).call(
+							this.form.object);
 				} catch (e) {
 					User.logError('EditItem#getValue(): ' + this.evaluate, e);
 				}
@@ -84,19 +87,23 @@ EditItem = Base.extend(new function() {
 		setValue: function(value) {
 			if (this.evaluate) {
 				if (app.properties.debugEdit)
-					User.log('EditItem#setValue(): ' + this.evaluate + ' = ' + Json.encode(value));
+					User.log('EditItem#setValue(): ' + this.evaluate + ' = '
+							+ Json.encode(value));
 				// Evaluate string variable to the content of value:
 				try {
 					if (app.properties.debugEdit)
-						User.log('EditItem#setValue(): ' + this.evaluate + ' = ' + Json.encode(value));
-					new Function('value', this.evaluate + ' = value;').call(this.form.object, value);
+						User.log('EditItem#setValue(): ' + this.evaluate + ' = '
+								+ Json.encode(value));
+					new Function('value', this.evaluate + ' = value;')
+							.call(this.form.object, value);
 					return true;
 				} catch (e) {
 					User.logError('EditItem#setValue(): ' + this.evaluate, e);
 				}
 			} else if (this.name) {
 				if (app.properties.debugEdit)
-					User.log('EditItem#setValue(): ' + this.name + ' = ' + Json.encode(value));
+					User.log('EditItem#setValue(): ' + this.name + ' = '
+							+ Json.encode(value));
 				this.form.object[this.name] = value;
 				return true;
 			}
@@ -149,7 +156,8 @@ EditItem = Base.extend(new function() {
 						handler: renderHandler
 							? renderHandler.call(this, proto)
 							: baseForm.renderHandle('execute', 'new',
-								Hash.append({ edit_prototype: proto.name }, editParam))
+								Hash.append({ edit_prototype: proto.name },
+									editParam))
 					};
 				}
 				User.log("WARNING: Prototype '" + name + "' does not exist!");
@@ -161,7 +169,9 @@ EditItem = Base.extend(new function() {
 			// chooser values, to be reused for multiple list entries.
 			// In this case pass its name as a string, otherwise, render the
 			// chooser list now and pass it to the select_new function.
-			var value = chooser ? chooser.name : this.getPrototypeChooserList(baseForm);
+			var value = chooser 
+				? chooser.name
+				: this.getPrototypeChooserList(baseForm);
 			param = new Hash(param);
 			param.name = (param.name || this.getEditName()) + '_new';
 			param.onClick = param.onClick || baseForm.renderHandle(
@@ -171,9 +181,9 @@ EditItem = Base.extend(new function() {
 
 		/**
 		 * Used by image related items to receive a hopoject collection that
-		 * contains pictures resources. The list can contain other resources too,
-		 * as it then gets filtered as well. This can be overridden in apps.
-		 * Returning arrays is not supported.
+		 * contains pictures resources. The list can contain other resources
+		 * too, as it then gets filtered as well. This can be overridden in
+		 * apps. Returning arrays is not supported.
 		 */
 		getPictureResources: function(object) {
 			return object.resources;
@@ -203,8 +213,10 @@ EditItem = Base.extend(new function() {
 		toString: function() {
 			var out = [];
 			['type', 'name', 'index', 'row', 'groupForm'].each(function(val) {
-				if (this[val] !== undefined)
-					out.push(val + ': ' + (val == 'row' ? this.row.index : this[val]));
+				if (this[val] !== undefined) {
+					out.push(val + ': ' + (val == 'row' 
+							? this.row.index : this[val]));
+				}
 			}, this);
 			return '{ ' + out.join(', ') + ' }';
 		},

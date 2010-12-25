@@ -10,7 +10,8 @@ ListItem = EditItem.extend({
 	},
 
 	/**
-	 * We are supporting two modes of sorting / hiding in lists and multiselects:
+	 * We are supporting two modes of sorting / hiding in lists and
+	 * multiselects:
 	 *
 	 * - Index mode: visible items are sorted by index, hidden ones
 	 *   are defined by setting index to null
@@ -37,8 +38,8 @@ ListItem = EditItem.extend({
 				return true;
 			}
 		} else {
-			// If we're not filtering by index or position, maybe it is memory only
-			// object that can be sorted through addAt.
+			// If we're not filtering by index or position, maybe it is memory
+			// only object that can be sorted through addAt.
 			if (this.collection.indexOf(object) != position)
 			 	return this.collection.addAt(position, object);
 		}
@@ -65,8 +66,8 @@ ListItem = EditItem.extend({
 	},
 
 	store: function(object) {
-		// This is called by handlers.js when a new object is created in the list
-		// Just add it to the collection and handle position and visible:
+		// This is called by handlers.js when a new object is created in the
+		// list. Just add it to the collection and handle position and visible:
 		// Don't count on this.value to be set, use getValue instead, since it
 		// resolves this.name on the object as well.
 		var value = this.getValue();
@@ -74,14 +75,15 @@ ListItem = EditItem.extend({
 			// Add it to the collection(s):
 			// Support for visible lists and hidden (all) lists. Since the 
 			// object might remain transient for a while, simulate the proper
-			// result of collection filtering here: A visible object appears both
-			// in value and collection, and hidden one only in collection:
+			// result of collection filtering here: A visible object appears
+			// both in value and collection, and hidden one only in collection:
 			var list = this.collection;
 			if (list.get(object.name))
-				throw 'This list already contains an item named "' + object.name + '".';
+				throw 'This list already contains an item named "'
+						+ object.name + '".';
 			list.add(object);
-			// TODO: How to support index based position here? Can we use EditItem.setPosition 
-			// somehow too?
+			// TODO: How to support index based position here? Can we use
+			// EditItem.setPosition somehow too?
 			if (object.visible && value instanceof HopObject && value != list) {
 				// If visible, add it to this.value as well, and use that for
 				// position bellow
