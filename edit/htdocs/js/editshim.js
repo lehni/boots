@@ -36,6 +36,9 @@ EditForm = {
 
 	inline: function(url, param) {
 		if (!param.confirm || confirm(param.confirm)) {
+			// Delete confirm since we're passing param on to the real
+			// EditForm.inline() below.
+			delete param.confirm;
 			// This code is identical with the one found in full version of
 			// edit.js's Editform.inline(). Make sure it stays synced.
 			var elements = $('#edit-elements-' + param.target + '-' + param.id + '.edit-elements');
