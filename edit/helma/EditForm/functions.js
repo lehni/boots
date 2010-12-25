@@ -616,13 +616,13 @@ EditForm.inject(new function() {
 			},
 
 			reportError: function(e) {
-				User.log(e);
+				var desc = User.logError('EditForm.reportError', e);
 				if (typeof e == 'string') {
 					EditForm.alert(e);
 				} else {
 					EditForm.addMessage('editError', [
 						new Date().format('yyyy/MM/dd HH:mm:ss'), 
-						User.logError('Error During Edit', e) 
+						 desc
 					]);
 				}
 			},
