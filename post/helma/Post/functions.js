@@ -160,7 +160,8 @@ Post.inject({
 	},
 
 	onCreate: function() {
-		User.log('Post#onCreate()');
+		if (app.properties.debugEdit)
+			User.log('Post#onCreate()');
 		var node = this.getNode();
 		this.isFirst = node.posts.count() == 0;
 		// Store remote host
@@ -172,7 +173,11 @@ Post.inject({
 	onBeforeRemove: function() {
 		// Check if this is a first post, and if so only allow removal
 		// if there are no others
-		var node = this.getNode(), count = node.posts.count();
+		var node = this.getNode();
+		if (!node)
+			throw 'Post#onBeforeRemove(): Unable to retreive parent node,'
+					+ 'although the post is supposed ot have one.';
+		var count = node.posts.count();
 		if (!User.hasRole(UserRole.EDIT) && this.isFirst && count > 1) {
 			var other = node.posts.get(1);
 			throw other.getUserName() + (count > 2 ? ' and others have' : ' has')

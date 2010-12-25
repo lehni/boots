@@ -5,7 +5,12 @@ ChooseImageHandler = EditHandler.extend({
 		// TODO: Use Template
 		res.push();
 		res.write('<ul>');
-		var resources = item.getPictureResources(object).list();
+		if (!item)
+			throw 'ChooseImageHandler#handle(): item not set';
+		var resources = item.getPictureResources(object);
+		if (!resources)
+			throw 'ChooseImageHandler#handle(): resources not set';
+		resources = resources.list();
 		for (var i = 0; i < resources.length; i++) {
 			var resource = resources[i];
 			if (resource && resource.instanceOf(Picture)) {
