@@ -14,7 +14,8 @@ Node.inject({
 			form.createItem(param.title, {
 				name: 'title', type: 'string', label: 'Title',
 				requirements: {
-					notNull: true, maxLength: 64
+					notNull: true,
+					maxLength: 64
 				},
 				onApply: function(value) {
 					var name;
