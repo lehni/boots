@@ -54,7 +54,7 @@ EditHandler = Base.extend(new function() {
 				// Render the updated html and cause edit.js to update on the
 				// fly. See if there is a render_action on the object.
 				var render = EditForm.ACTION_RENDER
-					&& base[EditForm.ACTION_RENDER + '_action'];
+						&& base[EditForm.ACTION_RENDER + '_action'];
 				if (render) {
 					// Render the page into editResponse.page:
 					res.push();

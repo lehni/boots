@@ -22,20 +22,21 @@ EditNode = Base.extend({
 		this.id = fullId;
 		// TODO: Is this still in use?
 		this.group = parts[2];
-		// Nodes are by default invisible, and get visible only when they are rendered.
+		// Nodes are by default invisible, and get visible only when they are
+		// rendered.
 		this.visible = false;
 	},
 
 	/** 
 	 * Instead of directly storing the form in EditNode.get, use getForms to
-	 * retrieve it late. Like this, we have time to call initialize and do things
-	 * there before getEditForm is called. 
+	 * retrieve it late. Like this, we have time to call initialize and do
+	 * things there before getEditForm is called. 
 	 */
 	getForm: function(force) {
 		if (!this.object)
 			return null;
-		// Use versioning so even when dontCache is true, the form is only created
-		// once every request.
+		// Use versioning so even when dontCache is true, the form is only
+		// created once every request.
 		var data = EditNode.getEditData();
 		if (!this.form || force || this.form.dontCache
 				|| this.form.version != data.version) {
@@ -106,7 +107,8 @@ EditNode = Base.extend({
 	},
 
 	log: function(mode) {
-		var str = 'Edit Action: \'' + mode + '\', ' + this.id + ' (' + this.object;
+		var str = 'Edit Action: \'' + mode + '\', ' + this.id
+				+ ' (' + this.object;
 		var form = this.getForm();
 		if (form && form.object != this.object)
 			str += ', ' + form.object;
@@ -134,7 +136,8 @@ EditNode = Base.extend({
 				node = data.nodes[fullId];
 				if (!cached && !node) {
 					if (app.properties.debugEdit)
-						User.log('Creating new EditNode for', fullId, parentItem);
+						User.log('Creating new EditNode for', fullId,
+							parentItem);
 					node = data.nodes[fullId] = new EditNode(fullId, object);
 				}
 				// Update parent.
@@ -201,8 +204,8 @@ EditNode = Base.extend({
 				// cannot be restored from there. Right now they are only
 				// required for minor things such as CropPicture editing,
 				// so in case of a restart this would break for newly added 
-				// temporary items, which is not too bad. But are there any risks
-				// involved with deactivating this filtering?
+				// temporary items, which is not too bad. But are there any
+				// risks involved with deactivating this filtering?
 				// If this is a problem, we need to introduce a way how to
 				// send editData to the client for such invisible nodes too,
 				// along with the data for visible ones, as these are children.

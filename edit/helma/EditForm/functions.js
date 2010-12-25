@@ -82,7 +82,7 @@ EditForm.inject(new function() {
 			var obj = args[i];
 			if (obj) {
 				// Create the row object and add it:
-				// add the items for that row
+				// Add the items for that row
 				var row = (obj instanceof Array) ? obj : [obj];
 				// Store references to index and form.
 				row.index = index;
@@ -95,7 +95,7 @@ EditForm.inject(new function() {
 				index++;
 			}
 		}
-		// update row indices above:
+		// Update row indices above:
 		for (var i = index; i < that.rows.length; i++)
 			that.rows[i].index = i;
 		return startIndex != index;
@@ -115,7 +115,7 @@ EditForm.inject(new function() {
 					initializeItem(that, item, row, itemIndex++);
 				}
 			}
-			// update item indices above:
+			// Update item indices above:
 			for (var i = itemIndex; i < row.length; i++)
 				row[i].index = i;
 		}
@@ -125,9 +125,9 @@ EditForm.inject(new function() {
 	function createGroupItem(that, type, name, label, args) {
 		var form = null;
 		var startIndex = 2;
-		// Parameter 'label' can be skipped in the functiosn addTab, createGroupItem
-		// bellow! In this case, name is assumed to be the label and then converted
-		// to lowerCase for the real name
+		// Parameter 'label' can be skipped in the functiosn addTab,
+		// createGroupItem bellow! In this case, name is assumed to be the label
+		// and then converted to lowerCase for the real name.
 		if (typeof label != 'string') {
 			startIndex = 1;
 			label = name;
@@ -166,7 +166,8 @@ EditForm.inject(new function() {
 		return group;
 	}
 	
-	// These functions can reference "this", as they are set to properties bellow:
+	// These functions can reference "this", as they are set to properties
+	// bellow:
 	function addToGroup(name /*, ... */) {
 		var form = this.getGroupForm(name);
 		if (form) {
@@ -328,7 +329,8 @@ EditForm.inject(new function() {
 
 		getShowLabels: function(showLabels) {
 			// optional showLabels is needed for EditableListItem
-			showLabels = Base.pick(showLabels, this.showLabels, EditForm.SHOW_LABELS);
+			showLabels = Base.pick(showLabels, this.showLabels,
+					EditForm.SHOW_LABELS);
 			return showLabels != 'none' ? showLabels : null;
 		},
 
@@ -450,7 +452,8 @@ EditForm.inject(new function() {
 		addToRow: function(nameOrIndex /*, ... */) {
 			var row = this.getRow(nameOrIndex);
 			if (row) {
-				return insertItems(rowm.form, row.index, row.length, arguments, 1);
+				return insertItems(rowm.form, row.index, row.length,
+						arguments, 1);
 			}
 			return false;
 		},
@@ -463,7 +466,8 @@ EditForm.inject(new function() {
 			if (item) {
 				var index = item.index;
 				if (index < 0) index = 0;
-				return insertItems(item.form, item.row.index, index, arguments, 1);
+				return insertItems(item.form, item.row.index, index,
+						arguments, 1);
 			}
 			return false;
 		},
@@ -477,7 +481,8 @@ EditForm.inject(new function() {
 				var index = item.index;
 				if (index >= 0) index++;
 				else index = item.row.length;
-				return insertItems(item.form, item.row.index, index, arguments, 1);
+				return insertItems(item.form, item.row.index, index,
+						arguments, 1);
 			}
 			return false;
 		},
@@ -541,7 +546,8 @@ EditForm.inject(new function() {
 				var item = arguments[i];
 				if (!item.type)
 					item.type = 'button';
-				initializeItem(this, item, this.buttons, this.buttons.push(item));
+				initializeItem(this, item, this.buttons,
+						this.buttons.push(item));
 				item.form = this;
 			}
 		},
@@ -595,7 +601,8 @@ EditForm.inject(new function() {
 					return 'null';
 				var name = obj.getEditName ? obj.getEditName(detailed) : null;
 				if (!name) {
-					name = obj.getDisplayName && obj.getDisplayName() || obj.name;
+					name = obj.getDisplayName && obj.getDisplayName()
+							|| obj.name;
 					if (name) {
 						name = name.truncate(28, '...')
 							+ (detailed && EditForm.SHOW_DETAILS
@@ -629,15 +636,16 @@ EditForm.inject(new function() {
 
 			// Constants
 
-			// A constant object for item.convert to return when nothing should be
-			// done afterwards. Used by items of type "button" and "hidden".
+			// A constant object for item.convert to return when nothing should
+			// be done afterwards. Used by items of type "button" and "hidden".
 			DONT_APPLY: {},
 
 			COMMIT: {},
 
 			NOT_ALLOWED: {},
 
-			// Setting onApply to EditForm.DO_NOTHING prevents execution of onApply
+			// Setting onApply to EditForm.DO_NOTHING prevents execution of
+			// onApply
 			DO_NOTHING: function() {},
 		}
 	}

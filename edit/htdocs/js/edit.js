@@ -1,4 +1,4 @@
-// Copyright (c) 2003 - 2008 Juerg Lehni, Lineto.com. All rights reserved.
+// Copyright (c) 2003 - 2010 Juerg Lehni, Lineto.com. All rights reserved.
 // Copying and reuse is strictly prohibited.
 
 EditForm = Base.extend({
@@ -11,7 +11,8 @@ EditForm = Base.extend({
 		// in close()
 		this.empty = true;
 		if (EditForm.mode == 'inline') {
-			this.container = target.injectAfter('div', { id: 'edit-container-' + id });
+			this.container = target.injectAfter('div', { id: 'edit-container-'
+					+ id });
 			// Pass on style and class settings
 			if (parent) {
 				this.container.setStyle(parent.container.getStyle());
@@ -24,8 +25,8 @@ EditForm = Base.extend({
 		// On Safari, there is a very odd bug that very rarely mixes all the
 		// buttons on one page, as if they were all thrown into one container,
 		// and redistributed by picking blindy. The workaround is to not produce
-		// buttons in edit forms, but use <a> tags, and replace them with buttons
-		// here, if buttons.convert is set to true:
+		// buttons in edit forms, but use <a> tags, and replace them with
+		// buttons here, if buttons.convert is set to true:
 		if (EditSettings.buttons.convert) {
 			$$('a.edit-button', obj).each(function(el, index) {
 				var id = el.getId();
@@ -40,8 +41,8 @@ EditForm = Base.extend({
 			});
 		}
 		var that = this;
-		// Remember focused elements and their last selection and scroll position,
-		// so they can be restored after previewing pages.
+		// Remember focused elements and their last selection and scroll
+		// position, so they can be restored after previewing pages.
 		// Do not store direct references since the elements are replaced when
 		// saving before preview, therefore use ids instead.
 		var fields = $$('input[type=text],input[type=password],textarea', obj);
@@ -56,26 +57,27 @@ EditForm = Base.extend({
 				that.focus = { id: this.getId() };
 			},
 			// Since we cannot store getSelection in blur on IE (it relies on
-			// focus() which cannot be called in blur), store status in all of these
-			// occasions:
+			// focus() which cannot be called in blur), store status in all of
+			// these occasions:
 			keyup: store,
 			mouseup: store,
 			change: store
 		});
 		// We're asking inputs and textareas to be a certain size, but they grow
-		// bigger due to their border and padding settings that differ from browser
-		// to browser.
-		// This can be fixed by calculating these widths now and subtracting them
-		// from  their resulting size. Since we're using getWidth(), this needs
-		// to happen after this.show(true). Also, it needs to happen before
-		// TabPane.setup(), since that would hide tabs again, for which the fix
-		// won't work...
+		// bigger due to their border and padding settings that differ from
+		// browser to browser.
+		// This can be fixed by calculating these widths now and subtracting
+		// them from  their resulting size. Since we're using getWidth(), this
+		// needs to happen after this.show(true). Also, it needs to happen
+		// before TabPane.setup(), since that would hide tabs again, for which
+		// the fix won't work...
 		fields.each(function(field) {
 			function width(val) {
 				return field.getStyle('border-' + val + '-width').toInt()
 						+ field.getStyle('padding-' + val).toInt();
 			}
-			var width = field.getWidth() - 2 * (width('left') + width('right')) + 'px';
+			var width = field.getWidth() - 2 * (width('left') + width('right'))
+			 		+ 'px';
 			field.setStyles({
 				width: width,
 				// Prevent textareas from resizing horizontally. 
@@ -190,7 +192,8 @@ EditForm = Base.extend({
 							// TODO: See if we also need to restore these states
 							// after clicking back, or apply & back, and if so,
 							// put it in one central place.
-							var focus = that.focus && $(that.focus.id, that.form);
+							var focus = that.focus && $(that.focus.id,
+									that.form);
 							if (focus) {
 								focus.setSelection(that.focus.selection);
 								focus.setScrollOffset(that.focus.offset);
@@ -243,7 +246,8 @@ EditForm = Base.extend({
 					};
 				}) };
 			} else if ((!(el instanceof Input) 
-				|| !/^(file|button)$/.test(el.getType())) && el.getValue() != null) {
+					|| !/^(file|button)$/.test(el.getType()))
+					&& el.getValue() != null) {
 				val = { value: el.getValue() };
 			}
 			if (val)
@@ -318,8 +322,8 @@ EditForm = Base.extend({
 					// Not found -> add
 					val = { text: opt.getText(), value: opt.getValue() };
 					multi.values.push(val);
-					// If the option is in the selected list, add it to lookupIds,
-					// so it gets selected again:
+					// If the option is in the selected list, add it to
+					// lookupIds, so it gets selected again:
 					if (multi.left.lookup[val.value])
 						lookupIds[val.value] = true;
 				}
@@ -355,7 +359,7 @@ EditForm = Base.extend({
 		var back = param.edit_back;
 		var that = this;
 		if (post) {
- 			// Post values using internal form
+			// Post values using internal form
 			method = 'post';
 			// Set / add fields to form as elements and use the form as param.
 			param = this.form.setValues(param);
@@ -379,8 +383,10 @@ EditForm = Base.extend({
 								|| current == status.current
 								&& new Date().getTime() - startTime > 6000)
 									that.uploadTimer = that.uploadTimer.clear();
-							uploadStatus.setWidth(status.current / status.total * maxWidth);
-							// .setHtml(status.current + ' of ' + status.total + ' uploaded.');
+							uploadStatus.setWidth(
+									status.current / status.total * maxWidth);
+							// .setHtml(status.current + ' of '+ status.total
+							//		+ ' uploaded.');
 							current = status.current;
 						}
 					});
@@ -428,9 +434,9 @@ EditForm = Base.extend({
 	execute: function(mode, param) {
 		if (!param) param = {};
 		if (!param.confirm || confirm(param.confirm)) {
-			// This is necessay for mozilla browsers, because otherwise form focus
-			// gets messed up (because the input that still has the focus gets
-			// deleted by innerHTML....)
+			// This is necessay for mozilla browsers, because otherwise form
+			// focus gets messed up (because the input that still has the focus
+		 	// gets deleted by innerHTML....)
 			this.form.blur();
 			var post = param.post;
 			var enable = !!param.enable;
@@ -518,7 +524,8 @@ EditForm = Base.extend({
 				alert('Cannot find edit form for object ' + param.id);
 			} else if (!param.confirm || confirm(param.confirm)) {
 				var offset = target.getOffset(); // for scrolling
-				var elements = $('#edit-elements-' + param.target + '-' + param.id + '.edit-elements');
+				var elements = $('#edit-elements-' + param.target + '-'
+						+ param.id + '.edit-elements');
 				var progress = $('.edit-progress', elements);
 				var buttons = $('.edit-buttons', elements);
 				if (progress) {
@@ -544,7 +551,8 @@ EditForm = Base.extend({
 						EditForm.set(values);
 						if (values.id != param.id)
 							editForm = EditForm.get(values.id);
-						// Only set the style once the stuff is loaded and hidden
+						// Only set the style once the stuff is loaded and
+						// hidden
 						if (param.style)
 							editForm.container.setStyle(param.style);
 						if (param['class'])
@@ -568,8 +576,8 @@ EditForm = Base.extend({
 					var parent = this.get(values.parent.id);
 					form = this.get(values.id, parent.target, parent);
 				} else {
-					// handle other form to be closed now, insead
-					// of directly when editing is requested, to avoid flickering
+					// Handle other form to be closed now, insead of directly
+					// when editing is requested, to avoid flickering
 					if (form.closeOther)
 						form.closeOther.close(form);
 					form.closeOther = null;
@@ -595,7 +603,8 @@ EditForm = Base.extend({
 			if (values.preview)
 				this.preview(values.id, this.setPage(values.preview));
 			if (values.redirect) {
-				// Redirect one level up, since the href object itself was removed
+				// Redirect one level up, since the href object itself was
+				// removed
 				// TODO: Find a way to implement this in lineto.
 				window.location.href = values.redirect;
 			}
@@ -617,7 +626,7 @@ EditForm = Base.extend({
 		},
 
 		setContent: function(content) {
-			// store references to the targets and remove containers from
+			// Store references to the targets and remove containers from
 			// the dom, so they can be inserted again bellow in the new dom.
 			this.forms.each(function(form, id) {
 				form.container.remove();
@@ -694,11 +703,13 @@ EditForm.inject(new function() {
 			},
 
 			handle: function(formOrId, action, element) {
-				var form = formOrId instanceof EditForm ? formOrId : EditForm.get(formOrId);
+				var form = formOrId instanceof EditForm ? formOrId
+						: EditForm.get(formOrId);
 				if (form)
 					return form.handle.apply(form, Array.slice(arguments, 1));
 				else
-					alert('Cannot find form: ' + formOrId + ' ' + Json.encode(EditForm.data));
+					alert('Cannot find form: ' + formOrId + ' '
+							+ Json.encode(EditForm.data));
 			}
 		}
 	};
@@ -719,7 +730,8 @@ EditForm.register({
 
 	apply: function(element, param) {
 		if ($$('.edit-list-remove input[value=1]').find(function(item) {
-			// Only warn for items not newly created. (= not containing ids like _n10_)
+			// Only warn for items not newly created. (= not containing ids
+			// like _n10_)
 			if (!/_n\d*_/.test(item.getId()))
 				return true;
 		})) {
@@ -754,15 +766,19 @@ EditForm.register({
 	// TODO: Implement as bootstrap behavior instead, the new way, like all else
 	text_count: function(element) {
 		// Split at punctiation. Values taken from Java's \p{Punct}
-		var words = element.getValue().trim().split(/[!"#$%&'()*+,-.\/:;<=>?@[\]^_`{|}~\s]+/g);
+		var words = element.getValue().trim().split(
+				/[!"#$%&'()*+,-.\/:;<=>?@[\]^_`{|}~\s]+/g);
 		var count = words.length;
 		if (count && !words[count - 1])
 			count--;
 		var name = element.getId();
 		var label = $('#edit-label-' + name);
 		var element = $('.edit-count', label);
-		if (!element)
-			element = label.getFirst().injectAfter('div', { className: 'edit-count' });
+		if (!element) {
+			element = label.getFirst().injectAfter('div', {
+				className: 'edit-count'
+			});
+		}
 		element.setHtml(count + (count == 1 ? ' Word' : ' Words'));
 	},
 
@@ -794,8 +810,9 @@ EditForm.register(new function() {
 				});
 			}
 		});
-		return values.length > 0 ?
-			{ values: values, names: names.join(', '), ids: values.join() } : null;
+		return values.length > 0
+			? { values: values, names: names.join(', '), ids: values.join() }
+			: null;
 	}
 
 	var prototypeChooser = null;
@@ -843,7 +860,8 @@ EditForm.register(new function() {
 					sel.getSelected().remove();
 				 	// Generate values
 					// TODO: replace substring with regexp
-					this.updateMultiselects(el.name.substring(0, el.name.indexOf('_left')));
+					this.updateMultiselects(el.name.substring(0,
+							el.name.indexOf('_left')));
 				}, this);
 			}
 		},
@@ -887,20 +905,20 @@ EditForm.register(new function() {
 			var right = $('#' + name + '_right', this.form);
 			var options = left.getOptions();
 			switch(dir) {
-				case 'up':
-					for (var i = 1; i < options.length; i++)
-						swapSelected(options, i, i - 1);
-					break;
-				case 'down':
-					for (var i = options.length - 2; i >= 0; i--)
-						swapSelected(options, i, i + 1);
-					break;
-				case 'left':
-					moveSelected(right, left);
-					break;
-				case 'right':
-					moveSelected(left, right);
-					break;
+			case 'up':
+				for (var i = 1; i < options.length; i++)
+					swapSelected(options, i, i - 1);
+				break;
+			case 'down':
+				for (var i = options.length - 2; i >= 0; i--)
+					swapSelected(options, i, i + 1);
+				break;
+			case 'left':
+				moveSelected(right, left);
+				break;
+			case 'right':
+				moveSelected(left, right);
+				break;
 			}
 			// After each change, update the value, in case the user submits
 			this.updateMultiselects(name);
@@ -1009,8 +1027,9 @@ EditForm.register(new function() {
 		choose_url: function(element, name) {
 			var field = $('#' + name, this.form);
 			if (field) {
-				var url = prompt('Enter link URL (email or internet address):\n' +
-					'Email addresses are encrypted and protected against spam.');
+				var url = prompt('Enter link URL (email or internet address):\n'
+						+ 'Email addresses are encrypted and protected against '
+						+ 'spam.');
 				if (url) {
 					var text = prompt('Enter link text (empty = same as URL):',
 						field.getSelectedText());
@@ -1022,11 +1041,13 @@ EditForm.register(new function() {
 							if (!text)
 								text = 'Email';
 						} else {
-							link = EditSettings.tags[text ? 'url' : 'urlUnnamed'];
+							link = EditSettings.tags[text ? 'url'
+									: 'urlUnnamed'];
 							if (!text)
 								text = url;
 						}
-						field.replaceSelectedText(link.replace('@link', url).replace('@text', text));
+						field.replaceSelectedText(link.replace('@link',
+								url).replace('@text', text));
 					}
 				}
 			}
@@ -1067,7 +1088,8 @@ EditForm.register(new function() {
 		choose_image_select: function(element, param) {
 			var text = field.getSelectedText();
 			field.replaceSelectedText(
-				EditSettings.tags.image.replace('@name', param.image_name).replace('@text', text)
+				EditSettings.tags.image.replace('@name',
+						param.image_name).replace('@text', text)
 			);
 			EditChooser.closeAll();
 		},
@@ -1119,26 +1141,32 @@ EditForm.register(new function() {
 					field.setValue(crop);
 					param.image_crop = crop;
 					this.load('crop_preview', param, function(result) {
-						var image =  element.getParent('.edit-item').getElement('.edit-crop-preview img');
+						var image = element.getParent('.edit-item').getElement(
+								'.edit-crop-preview img');
 						if (image) {
 							var id = image.getId();
 							image = image.replaceWith(result.html);
 							// TODO: We need to set id correctly, as the server
 							// side looses the EditableListItem's variablePrefix
-							// since this information is not cached on client/server.
+							// since this information is not cached on
+							// client/server.
 							// TODO: Fix this!
 							image.setId(id);
 						}
 					});
 				} else {
-					// TODO: Find a way to produce this through EditSettings too, maybe
-					// as a function that takes crop and preset?
+					// TODO: Find a way to produce this through EditSettings
+					// too, maybe as a function that takes crop and preset?
 					// Only render imageWidth if imageScale != 1
 					var tag = '<crop "' + param.image_name + '" '
-						+ ['x', 'y', 'width', 'height', 'imageWidth'].collect(function(name) {
-							if(crop[name] && (name != 'imageWidth' || crop.imageScale != 1))
-								return name.toLowerCase() + '="' + crop[name] + '"';
-						}).join(' ') + ' />';
+						+ ['x', 'y', 'width', 'height', 'imageWidth'].collect(
+							function(name) {
+								if(crop[name] && (name != 'imageWidth'
+										|| crop.imageScale != 1))
+									return name.toLowerCase() + '="'
+											+ crop[name] + '"';
+							}
+						).join(' ') + ' />';
 					field.replaceSelectedText(tag);
 				}
 			}).bind(this);
@@ -1147,7 +1175,8 @@ EditForm.register(new function() {
 
 		clear_crop: function(element, name) {
 			$('#' + name, this.form).setValue('');
-			$('#' + name + '_preview', this.form).setProperty('src', '/static/edit/assets/spacer.gif');
+			$('#' + name + '_preview', this.form).setProperty('src',
+			 		'/static/edit/assets/spacer.gif');
 		}
 	};
 });
@@ -1156,7 +1185,8 @@ EditForm.register(new function() {
 EditForm.register(new function() {
 	function updateColor(target) {
 		if (!target.color)
-			target.color = $('#' + target.getId() + '-color', target.getParent('form'));
+			target.color = $('#' + target.getId() + '-color',
+					target.getParent('form'));
 		var value = ColorChooser.filter(target);
 		if (value.length != 7)
 			value = '#dddddd';
@@ -1297,8 +1327,8 @@ EditForm.register(new function() {
 							position: 'relative',
 							opacity: opacity,
 							zIndex: 0,
-							// Clear width and height again, so Textarea resizing
-							// can still work in Safari.
+							// Clear width and height again, so Textarea
+							// resizing can still work in Safari.
 							width: null,
 							height: null
 						});
@@ -1328,7 +1358,8 @@ EditForm.register(new function() {
 							}
 						});
 						if (closest)
-							dummy[above ? 'insertBefore' : 'insertAfter'](closest);
+							dummy[above ? 'insertBefore'
+									: 'insertAfter'](closest);
 					}
 				});
 				handle.triggerEvent('dragstart', [event]);
@@ -1341,7 +1372,9 @@ EditForm.register(new function() {
 // Choosers:
 EditChooser = Base.extend({
 	initialize: function(param) {
-		this.element = $('body').injectBottom('div', { className: 'edit-chooser' });
+		this.element = $('body').injectBottom('div', {
+			className: 'edit-chooser'
+		});
 		// Create link from dom object to chooser, as needed by PrototypeChooser
 		this.element.chooser = this;
 		this.content = this.element.injectBottom('div', {
@@ -1377,7 +1410,8 @@ EditChooser = Base.extend({
 			$document.addEvent('mousedown', function(event) {
 				var close = true;
 				var chooser = EditChooser.current;
-				if (chooser && chooser.buttons && !chooser.buttons.hasClass('hidden'))
+				if (chooser && chooser.buttons
+							&& !chooser.buttons.hasClass('hidden'))
 					close = false;
 				if (close)
 					EditChooser.closeAll();
@@ -1448,13 +1482,18 @@ PrototypeChooser = HtmlChooser.extend({
 		this.prototypes = prototypes;
 		this.target = target;
 		if (prototypes.length == 1) {
-			// Call the href function directl on element, so 'this' is still right
+			// Call the href function directl on element, so 'this' is still
+			// right
 			this.handle(0);
 		} else {
-			this.base(editForm, name, '<ul>' + prototypes.map(function(proto, index) {
-					return '<li><a href="#" onclick="EditChooser.getChooser(this).handle('
-						+ index + '); return false;">' + proto.name + '</a></li>';
-				}).join('') + '</ul>');
+			this.base(editForm, name, '<ul>' + prototypes.map(
+				function(proto, index) {
+					return '<li><a href="#" onclick="'
+						+ 'EditChooser.getChooser(this).handle('
+						+ index + '); return false;">' + proto.name
+						+ '</a></li>';
+				}
+			).join('') + '</ul>');
 		}
 	},
 
@@ -1490,16 +1529,20 @@ ObjectChooser = EditChooser.extend({
 	setArrow: function(id, open) {
 		var arrow = $('#edit-choose-arrow-' + id, this.content);
 		if (arrow) {
-			var src = arrow.getProperty('src').match(/^(.*?)(?:close|open)(.*)$/);
-			arrow.setProperty('src', src[1] + (open ? 'open' : 'close') + src[2]);
+			var src = arrow.getProperty('src').match(
+					/^(.*?)(?:close|open)(.*)$/);
+			arrow.setProperty('src', src[1] + (open ? 'open' : 'close')
+					+ src[2]);
 		}
 	},
 
 	toggle: function(id) {
-		var children = id && $('#edit-choose-children-' + id, this.content) || this.content;
+		var children = id && $('#edit-choose-children-' + id, this.content)
+				|| this.content;
 		var show = children == this.content || children.hasClass('hidden');
 		if (show) {
-			this.editForm.load('choose', Hash.append({ edit_child_id: id || '' }, this.param),
+			this.editForm.load('choose',
+				Hash.append({ edit_child_id: id || '' }, this.param),
 				function(result) {
 					children.setHtml(result.html);
 					this.setArrow(id, true);
@@ -1519,7 +1562,10 @@ ObjectChooser = EditChooser.extend({
 
 ImageChooser = EditChooser.extend({
 	initialize: function() {
-		this.base({ padding: 4, className: 'edit-simple-chooser edit-image-chooser' });
+		this.base({
+			padding: 4,
+			className: 'edit-simple-chooser edit-image-chooser'
+		});
 	},
 
 	choose: function(editForm, target, name, action, param) {
@@ -1595,11 +1641,14 @@ ColorChooser = EditChooser.extend({
 				obj.setStyle('cursor', 'default');
 				if (name != 'preview') obj.addEvent('drag', function(e) {
 					var rel;
-					if (this == that.overlay || this == that.cross) rel = that.overlay;
+					if (this == that.overlay || this == that.cross)
+						rel = that.overlay;
 					else rel = that.rainbow;
 					var offs = rel.getOffset();
-					var x = Math.min(1, Math.max(0, (e.page.x - offs.x) / that.size));
-					var y = 1 - Math.min(1, Math.max(0, (e.page.y - offs.y) / that.size));
+					var x = Math.min(1, Math.max(0,
+							(e.page.x - offs.x) / that.size));
+					var y = 1 - Math.min(1, Math.max(0,
+							(e.page.y - offs.y) / that.size));
 					if (rel == that.overlay) {
 						that.hsb[1] = Math.round(x * 100);
 						that.hsb[2] = Math.round(y * 100);
@@ -1651,7 +1700,8 @@ ColorChooser = EditChooser.extend({
 				Math.round((1 - hsb[2] / 100) * this.size) - 6
 			);
 			this.slider.setTop(Math.round((1 - hsb[0] / 360) * this.size) - 3);
-			this.overlay.setStyle('background', [hsb[0], 100, 100].hsbToRgb().rgbToHex());
+			this.overlay.setStyle('background',
+					[hsb[0], 100, 100].hsbToRgb().rgbToHex());
 			rgb = hsb.hsbToRgb();
 		}
 		if (rgb) {
@@ -1703,7 +1753,8 @@ ColorChooser = EditChooser.extend({
 	statics: {
 		filter: function(target) {
 			var value = target.getValue().toLowerCase();
-			if (value && !/^#/.test(value)) value = ('#' + value).substring(0, 7);
+			if (value && !/^#/.test(value))
+				value = ('#' + value).substring(0, 7);
 			if (value != target.getValue()) {
 				target.setValue(value);
 				target.setCaret(target.getCaret() + 1);
@@ -1722,8 +1773,9 @@ Edit = {
 			} else if (values.move) {
 				var param = values.param;
 				param.confirm = 'Do you really want to move ' +
-					(values.values.length > 1 ? 'these items: "' + values.names :
-					'"' + values.names) + '" to "' + name + '"?';
+					(values.values.length > 1
+							? 'these items: "' + values.names
+							: '"' + values.names) + '" to "' + name + '"?';
 				param.edit_object_ids = values.ids;
 				param.edit_object_id = id;
 				this.execute(id, 'move', param);
