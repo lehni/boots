@@ -8,9 +8,9 @@ User.inject({
 		},
 
 		logError: function(title, e) {
-			var shortDesc = e.fileName
+			var shortDesc = (e.fileName
 				? 'Error in ' + e.fileName + ', Line ' + e.lineNumber
-				: 'Error'
+				: 'Error')
 					+ ' (' + title + '): ' + e;
 			// In some situations, the global req object might not be available,
 			// so make sure we check to not produce another error.
