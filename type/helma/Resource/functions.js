@@ -219,29 +219,37 @@ Resource.inject({
 		 * image, audio, video, code, director, flash, pdf, text
 		 */
 		getBasicType: function(mimeType) {
-			if (/^image/.test(mimeType))
-				return 'image';
-			else if (/^video/.test(mimeType))
-			 	return 'video';
-			else if (/^audio/.test(mimeType))
-				return 'audio';
-			else if (mimeType == 'application/x-shockwave-flash')
-				return 'flash';
-			else if (mimeType == 'application/x-director')
-				return 'director';
-			else if (mimeType == 'application/x-javascript')
-				return 'code';
-			else if (mimeType == 'application/pdf')
+			// Simple comparisson
+			switch (mimeType) {
+			case 'application/pdf':
 				return 'pdf';
-			else if (/^application\/(zip|x-(stuffit|gtar|tar|gzip))$/.test(mimeType))
+			case 'application/x-javascript':
+				// TODO: Support other code types!
+				return 'code';
+			case 'application/x-shockwave-flash':
+				return 'flash';
+			case 'application/x-director':
+				return 'director';
+			}
+			// Expression Matching
+			if (/^image/.test(mimeType)) {
+				return 'image';
+			} else if (/^video/.test(mimeType)) {
+			 	return 'video';
+			} else if (/^audio/.test(mimeType)) {
+				return 'audio';
+			} else if (/^application\/(zip|x-(stuffit|gtar|tar|gzip))$/.test(
+					mimeType)) {
 				return 'archive';
-			else
-				return 'text';
+			}
+			// TODO: Use mime for text, binary as fallback
+			return 'text';
 		},
 
 		create: function(mimeObj) {
 			if (mimeObj && mimeObj.name) {
-				var type = Resource.getBasicType(File.getContentType(mimeObj.name));
+				var type = Resource.getBasicType(
+						File.getContentType(mimeObj.name));
 				if (type) {
 					switch (type) {
 						case 'image':
