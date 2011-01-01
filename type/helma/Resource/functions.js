@@ -60,8 +60,8 @@ Resource.inject({
 			this.extension = ext;
 			var file = this.getFile();
 			mimeObj.writeToFile(file.getParent(), file.getName());
-			// Every time the file is changed, it can increase a verion field in the database.
-			// This can be used to force refresh of caches. 
+			// Every time the file is changed, it can increase a verion field in
+			// the database. This can be used to force refresh of caches. 
 			// But only do this if the field is actually defined.
 			if (this.version !== undefined) {
 				if (this.version == null) this.version = 0;
@@ -115,15 +115,17 @@ Resource.inject({
 	},
 
 	getVersionFile: function(versionId, extension) {
-		return new File(app.properties.resourceDir, 'versions/' + this._id +
-			(versionId ? '_' + versionId : '') + '.' + (extension || this.extension));
+		return new File(app.properties.resourceDir, 'versions/' + this._id
+				+ (versionId ? '_' + versionId : '') + '.'
+				+ (extension || this.extension));
 	},
 
 	removeVersionFiles: function() {
 		if (this.extension) {
-			// Remove all thumbnails of this image through java.io.File filtering
-			var versions = new File(app.properties.resourceDir, 'versions').list(
-					new RegExp('^' + this._id + '[_.]'));
+			// Remove all thumbnails of this image through java.io.File
+			// filtering
+			var versions = new File(app.properties.resourceDir,
+					'versions').list(new RegExp('^' + this._id + '[_.]'));
 			for each (file in versions) {
 				User.log('Removing ' + file);
 				file.remove();
@@ -141,8 +143,8 @@ Resource.inject({
 	},
 
 	/**
-	 * By default, anything that is not image, video or audio needs to be downloaded
-	 * This can be overridden by any application
+	 * By default, anything that is not image, video or audio needs to be
+	 * downloaded This can be overridden by any application
 	 */
 	forceDownload: function() {
 		return !/^(image|movie|audio)/.test(this.getContentType());
@@ -158,7 +160,8 @@ Resource.inject({
 				res.servletResponse.setHeader('Content-Disposition',
 						'attachment; filename="' + this.name + '"');
 			}
-			// res.forward takes the filename relative to the protectedStatic, so resolve here.
+			// res.forward takes the filename relative to the protectedStatic,
+			// so resolve here.
 			res.forward(file.getRelativePath(app.properties.protectedDir));
 		} else {
 			app.log('ERROR: Requesting inexisting file: ' + file);
@@ -179,12 +182,13 @@ Resource.inject({
 		param.src = app.properties.iconUri + this.getIcon(param.iconSmall);
 		// TODO: Put rendering of details in its own function and macro
 		if (param.iconDetails)
-			param.details = ' (' +
+			param.details = ' ('
 				// Display image / video size for media
-				(this.instanceOf(Medium) ? this.width + ' \xd7 ' + this.height + ' Pixels, ' : '') +
+				+ (this.instanceOf(Medium) ? this.width + ' \xd7 ' + this.height
+				+ ' Pixels, ' : '')
 				// File size
-				this.getFile().getSizeAsString() + 
-				')';
+				+ this.getFile().getSizeAsString()
+				+ ')';
 		param.width = param.height = param.iconSmall ? 16 : 32;
 		return this.renderTemplate('icon', param, out);
 	},
