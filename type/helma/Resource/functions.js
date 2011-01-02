@@ -17,10 +17,10 @@ Resource.inject({
 				name: 'name', type: 'string', label: 'Name',
 				length: 64
 			}, false),
-			form.createItem(param.file, { 
+			form.createItem(param.file, {
 				name: 'file', type: 'file', label: 'File',
 				onApply: this.setFile,
-				preview: this.name && this.renderIcon({ 
+				preview: this.name && this.renderIcon({
 					iconSmall: true, iconDetails: true
 				})
 			}, true),
@@ -61,7 +61,7 @@ Resource.inject({
 			var file = this.getFile();
 			mimeObj.writeToFile(file.getParent(), file.getName());
 			// Every time the file is changed, it can increase a verion field in
-			// the database. This can be used to force refresh of caches. 
+			// the database. This can be used to force refresh of caches.
 			// But only do this if the field is actually defined.
 			if (this.version !== undefined) {
 				if (this.version == null) this.version = 0;
@@ -172,6 +172,19 @@ Resource.inject({
 		return File.getContentType(this.extension);
 	},
 
+	/**
+	 * Returns any of these, based on the content type:
+	 * image, audio, video, code, director, flash, text
+	 */
+	getBasicType: function() {
+		return Resource.getBasicType(this.getContentType());
+	},
+
+	getIcon: function(small) {
+		var type = this.getBasicType();
+		return (small ? type + '_small' : type) + '.gif';
+	},
+
 	renderIcon: function(param, out) {
 		// Use Bootstrap's param.extend to create a new param object that
 		// inherits from param and can be modified without changing the
@@ -201,20 +214,6 @@ Resource.inject({
 	 */
 	render: function(param, out) {
 		return this.renderIcon(param, out);
-	},
-
-	/**
-	 * Returns any of these, based on the content type:
-	 * image, audio, video, code, director, flash, text
-	 */
-	getBasicType: function() {
-		return Resource.getBasicType(this.getContentType());
-	},
-
-	getIcon: function(small) {
-		var icon = this.getBasicType();
-		if (small) icon += '_small';
-		return icon + '.gif';
 	},
 
 	statics: {
@@ -256,18 +255,18 @@ Resource.inject({
 						File.getContentType(mimeObj.name));
 				if (type) {
 					switch (type) {
-						case 'image':
-							var picture = new Picture(mimeObj);
-							if (picture.isValid()) return picture;
-							else picture.remove();
-							break;
-						case 'video':
-						case 'audio':
-						case 'flash':
-						case 'director':
-							return new Medium(mimeObj);
-						default:
-							return new Resource(mimeObj);
+					case 'image':
+						var picture = new Picture(mimeObj);
+						if (picture.isValid()) return picture;
+						else picture.remove();
+						break;
+					case 'video':
+					case 'audio':
+					case 'flash':
+					case 'director':
+						return new Medium(mimeObj);
+					default:
+						return new Resource(mimeObj);
 					}
 				}
 			}
