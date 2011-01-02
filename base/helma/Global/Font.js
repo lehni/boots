@@ -1,12 +1,12 @@
 /**
- * A Font prototype that wraps both a native java.awt.Font and a 
+ * A Font prototype that wraps both a native java.awt.Font and a
  * com.lowagie.text.pdf.BaseFont pointing to the same TrueType file.
  *
  * BaseFont is then used to apply kerning corrections by reading the tables.
  *
  * Carefull: One Font object is not thread safe, so make sure to retrieve
  * new instances for each rendering session (e.g. when changin size).
- * Font.getInstance and Font#initialize handle this properly. 
+ * Font.getInstance and Font#initialize handle this properly.
  */
 
 Font = Base.extend({
@@ -280,8 +280,9 @@ Font = Base.extend({
 			g2d.setColor(java.awt.Color.decode(param.color || '#000000'));
 			g2d.setRenderingHints(this.getRenderingHints());
 
+			// 0 == 'left' / default
 			var multiplier = param.justification == 'right' ? 1 :
-					param.justification == 'centered' ? 0.5 : 0; // 0 == 'left' / default
+					param.justification == 'centered' ? 0.5 : 0;
 			for (var i = 0, l = lines.length; i < l; i++) {
 				var desc = lines[i];
 				this.drawGlyphs(g2d, desc,
@@ -298,7 +299,7 @@ Font = Base.extend({
 	renderText: function(text, param, out) {
 		this.setSize((param.size || 16).toFloat());
 		this.setCharSpacing((param.charSpacing || 0).toFloat());
-		var id = [ 
+		var id = [
 				this.getUniqueString(), text,
 				param.color, param.bgColor, param.maxWidth,
 				param.lineHeight, param.justification
