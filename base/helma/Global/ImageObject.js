@@ -106,5 +106,277 @@ ImageObject = Base.extend({
 				}
 			}
 		});
+	},
+
+	statics: {
+		/**
+		 * @param image either be a file pointing to an image, a native Helma
+		 *        ImageWrapper object or a ImageObject wrapper of either.
+		 * @return the same ImageObject object containing the modified image
+		 */
+		process: function(image, param) {
+			if (!(image instanceof ImageObject))
+				image = new ImageObject(image);
+
+			// Scale and maximum Size
+			var maxWidth = param.maxWidth;
+			var maxHeight = param.maxHeight;
+			var crop = param.crop;
+			var scale = param.scale || 1;
+
+			if (crop) {
+				// Calculate imageScale if it was not set directly, but
+				// indirectly through imageWidth / Height.
+				if (!crop.imageScale) {
+					crop.imageScale =
+					crop.imageWidth && crop.imageWidth / image.width
+						|| crop.imageHeight && crop.imageHeight / image.height
+						|| 1;
+				}
+				// Scale crop according to param.scale and to fit
+				// maxWidth / Height.
+				if (crop.width * scale > maxWidth
+						|| crop.height * scale > maxHeight) {
+					crop = Picture.getScaledCrop(crop, Math.min(
+							maxWidth / crop.width * scale,
+							maxHeight / crop.height * scale
+					) * scale);
+				}
+				scale = crop.imageScale;
+			} else if (image.width * scale > maxWidth
+					|| image.height * scale > maxHeight) {
+				scale *= Math.min(
+						maxWidth / (image.width * scale),
+						maxHeight / (image.height * scale)
+				);
+			}
+
+			// Resize before crop
+			if (scale != 1.0) {
+				image.image.resize(Math.round(image.width * scale),
+						Math.round(image.height * scale));
+				image.modified = true;
+			}
+
+			// Check if we need to crop the image
+			if (crop) {
+				// Image is only set if it was resized before
+				var cropWidth = crop.width || image.width;
+				var cropHeight = crop.height || image.height;
+				var x = (crop.x || 0).toInt();
+				var y = (crop.y || 0).toInt();
+				if (crop.halign) {
+					x += (image.width - cropWidth) *
+							(crop.halign == 'center'
+									? 0.5 : crop.halign == 'right' ? 1 : 0);
+				}
+				if (crop.valign) {
+					y += (image.height - cropHeight) *
+							(crop.valign == 'middle'
+									? 0.5 : crop.valign == 'bottom' ? 1 : 0);
+				}
+				image.image.crop(x, y, cropWidth, cropHeight);
+				image.modified = true;
+			}
+
+			// Check if we need to tint the image with a color
+			if (param.tint) {
+				// Image is only set if it was resized before
+				image.image = Picture.processTint(image.image, param);
+			}
+
+			// Check if we need to paper the image with a color
+			if (param.paper) {
+				// Image is only set if it was resized before
+				image.image = Picture.processPaper(image.image, param);
+			}
+
+			// Set the transparant pixel only if the image was modified so far
+			if (param.transparentPixel && image.modified) {
+				image.image.setTransparentPixel(image.image.getPixel(
+					param.transparentPixel.x || 0,
+					param.transparentPixel.y || 0
+				));
+				image.modified = true;
+			}
+
+			return image;
+		},
+
+		processTint: function(image, param) {
+			var tintColor = java.awt.Color.decode(param.tint);
+			if (!tintColor) {
+				User.logError('Picture#processTint()', 'Unsupported Tint: '
+						+ param.tint);
+				return image;
+			}
+			// Convert to grayscale first:
+			var gray = new java.awt.image.BufferedImage(
+					image.width, image.height,
+					java.awt.image.BufferedImage.TYPE_BYTE_GRAY);
+			var g2d = gray.createGraphics();
+			g2d.setColor(java.awt.Color.WHITE);
+			g2d.fillRect(0, 0, image.width, image.height);
+			g2d['drawImage(java.awt.Image,int,int,java.awt.image.ImageObserver)'](
+					image.getImage(), 0, 0, null);
+			g2d.dispose();
+
+			var r = tintColor.getRed();
+			var g = tintColor.getGreen();
+			var b = tintColor.getBlue();
+
+			// Create IndexColorModel with new tinted palette
+			// Boring: there seems to be no other way to create a byte value for
+			// the JavaScript bridge:
+			function toByte(val) {
+				return val > 127 ? val - 256 : val;
+			}
+
+			var cmap = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE,
+					256 * 3);
+			var c = 0;
+			var dr = (255 - r) / 255.0;
+			var dg = (255 - g) / 255.0;
+			var db = (255 - b) / 255.0;
+			for (var i = 0; i < 256; i++) {
+				cmap[c++] = toByte(Math.round(r));
+				cmap[c++] = toByte(Math.round(g));
+				cmap[c++] = toByte(Math.round(b));
+				r += dr;
+				g += dg;
+				b += db;
+			}
+			// And then tint with color:
+			var cm = new java.awt.image.IndexColorModel(8, 256, cmap, 0, false);
+			var col = new java.awt.image.BufferedImage(cm, gray.getRaster(),
+					false, null);
+			gray.flush();
+			return new Image(col);
+		},
+
+		processPaper: function(image, param) {
+			var paperDir = app.properties.assetDir + '/type/paper/';
+			// Load images:
+			var topLeft = new Image(paperDir + 'topLeft.png');
+			var topRight = new Image(paperDir + 'topRight.png');
+			var bottomLeft = new Image(paperDir + 'bottomLeft.png');
+			var bottomRight = new Image(paperDir + 'bottomRight.png');
+			var left = new Image(paperDir + 'left.png');
+			var top = new Image(paperDir + 'top.png');
+			var right = new Image(paperDir + 'right.png');
+			var bottom = new Image(paperDir + 'bottom.png');
+			var shade = new Image(paperDir + 'shade.png');
+			var corner = new Image(paperDir + 'corner.png');
+
+			var overlay = null;
+			var scaleFactor = 1;
+
+			var scale = (param.paperFactor || 1).toFloat();
+			scale *= scaleFactor;
+
+			// Fill background white:
+			var tmp = image.clone();
+			tmp.setColor(java.awt.Color.WHITE);
+			tmp.fillRect(0, 0, image.width, image.height);
+			tmp.drawImage(image, 0, 0);
+			image.dispose();
+			image = tmp;
+
+			function drawImage(img, dest, x, y, scaleX, scaleY) {
+				var at = java.awt.geom.AffineTransform.getTranslateInstance(
+						x, y);
+				at.scale(scaleX || scale, scaleY || scale);
+				dest.drawImage(img, at);
+			}
+
+			// 'Cut' away transparent corner from image, by using DstIn rule to
+			// apply the coner.png alpha channel.
+			var g2d = image.getGraphics();
+			var oldComp = g2d.getComposite();
+			g2d.setComposite(java.awt.AlphaComposite.DstIn);
+			drawImage(corner, image, image.width - corner.width * scale, 0);
+			g2d.setComposite(oldComp);
+			g2d.dispose();
+
+			// Create new image for destination
+
+			var paper = new Image(
+					image.width + (left.width + right.width) * scale,
+					image.height + (top.height + bottom.height) * scale);
+
+			// Fill with bg color
+
+			var bgColor = param.bgColor && java.awt.Color.decode(param.bgColor);
+			if (bgColor) {
+				paper.setColor(bgColor);
+				paper.fillRect(0, 0, paper.width, paper.height);
+			}
+
+			// Draw image on top first
+			paper.drawImage(image, left.width * scale, top.height * scale);
+
+			// Draw shade
+			drawImage(shade, paper, paper.width
+					- (shade.width + right.width) * scale, top.height * scale);
+
+			// Draw corners
+			drawImage(topLeft, paper, 0, 0);
+			drawImage(topRight, paper, paper.width - topRight.width * scale, 0);
+			drawImage(bottomLeft, paper, 0,
+					paper.height - bottomLeft.height * scale);
+			drawImage(bottomRight, paper,
+					paper.width - bottomRight.width * scale,
+					paper.height - bottomRight.height * scale);
+
+			// Stretch sides into place
+			var length = paper.height
+					- (topLeft.height + bottomLeft.height) * scale;
+			if (length > 0) {
+				drawImage(left, paper, 0, topLeft.height * scale, scale,
+						length / left.height);
+			}
+
+			length = paper.height
+					- (topRight.height + bottomRight.height) * scale;
+			if (length > 0) {
+				drawImage(right, paper, paper.width - right.width * scale,
+						topRight.height * scale, scale, length / right.height);
+			}
+
+			length = paper.width
+					- (topLeft.width + topRight.width) * scale;
+			if (length > 0) {
+				drawImage(top, paper, topLeft.width * scale, 0,
+						length / top.width, scale);
+			}
+
+			length = paper.width
+					- (bottomLeft.width + bottomRight.width) * scale;
+			if (length > 0) {
+				drawImage(bottom, paper, bottomLeft.width * scale,
+						paper.height - bottom.height * scale,
+						length / bottom.width, scale);
+			}
+
+			if (overlay) {
+				try {
+					overlay = new Image(paperDir + 'overlay/' + overlay
+							+ '.png');
+				} catch (e) {
+					overlay = null;
+				}
+				if (overlay) {
+					if (scaleFactor != 1.0) {
+						overlay.resize(overlay.width * scaleFactor,
+								overlay.height * scaleFactor);
+					}
+					paper.drawImage(overlay,
+						paper.width - overlay.width - right.width - 1,
+						paper.height - overlay.height - bottom.height - 1);
+				}
+			}
+			g2d.dispose();
+			return paper;
+		}
 	}
 });
