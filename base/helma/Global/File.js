@@ -452,7 +452,7 @@ File = Base.extend(new function() {
 		 * value should always be checked to make sure that the 
 		 * rename operation was successful. 
 		 * 
-		 * @param {File} toFile File object containing the new path
+		 * @param {File} to File object containing the new path
 		 * @returns true if the renaming succeeded; false otherwise
 		 * @type Boolean
 		 */
@@ -536,8 +536,8 @@ File = Base.extend(new function() {
 		/**
 		 * Makes a copy of a file or directory, possibly over filesystem borders.
 		 * 
-		 * @param {String|File} dest as a File object or the String of
-		 *		  full path of the new file
+		 * @param {String|File} file as a File object or the String of ull path
+		 *        of the new file
 		 */
 		copyTo: function(file) {
 			file = File.get(file);
