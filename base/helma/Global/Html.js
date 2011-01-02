@@ -90,6 +90,10 @@ Html = new function() {
 		},
 
 		image: function(attributes, out) {
+			// Make sure the changes in ImageObjects are persisted before
+			// rendering the html
+			if (attributes instanceof ImageObject)
+				attributes.save();
 			return Html.element('img', attributes, null, out);
 		},
 
