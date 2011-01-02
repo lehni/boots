@@ -61,6 +61,8 @@ label span {
 
 .popup-body {
 	margin: 0px;
+	/* remove scrollbars on chrome */
+	overflow: hidden;
 }
 
 /* edditing */
