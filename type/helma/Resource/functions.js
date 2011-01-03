@@ -218,6 +218,15 @@ Resource.inject({
 		return this.renderIcon(param, out);
 	},
 
+	processThumbnail: function(param) {
+		var cacheId = ImageObject.getUniqueId(param);
+		var file = this.getVersionFile(cacheId, 'png');
+		if (file.exists()) {
+			return new ImageObject(file);
+		}
+		return ImageObject.process(file, param);
+	},
+
 	statics: {
 		/**
 		 * Returns any of these, based on the content type:
