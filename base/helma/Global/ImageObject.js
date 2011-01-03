@@ -10,38 +10,78 @@ ImageObject = Base.extend({
 	 * @param image either be a File or a String pointing to an image or a
 	 *        native Helma ImageWrapper object.
 	 */
-	initialize: function(image) {
+	initialize: function(image, param) {
+		var modified = false, saved = false;
+		var file, original;
+		var info, pdf;
+		var quality;
 		// Is image a ImageWrapper or a file?
-		var isImage = image instanceof Image;
-		var file = isImage ? null : image;
-		var modified = false;
-		var saved = file != null;
-		var quality = (app.properties.imageQuality || 0.9).toFloat();
-		if (isImage) {
+		if (image instanceof Image) {
 			this.width = image.width;
 			this.height = image.height;
 		} else {
 			// Before fully loading the image, use Image.getInfo to see if
 			// we need to.
-			var info = Image.getInfo(image);
-			if (info == null)
-				throw new Error('The provided object is not an image file: '
-						+ image);
-			this.width = info.width;
-			this.height = info.height;
+			file = original = new File(image);
+			image = null;
+			saved = true;
+			info = Image.getInfo(file);
+			if (info != null) {
+				// The file represents a basic image, get size from there.
+				this.width = info.width;
+				this.height = info.height;
+			} else {
+				var type = file.getContentType();
+				if (type == 'application/pdf') {
+					if (!param)
+						param = {};
+					// Read pdf and get page size from there:
+					pdf = new Packages.org.jpedal.PdfDecoder();
+			        pdf.openPdfFile(file.path);
+					var pageNumber = (param.pageNumber || 1).toInt();
+					if (pageNumber > pdf.getPageCount())
+						pageNumber = pdf.getPageCount();
+			        pdf.decodePage(pageNumber);
+					// This is needed so that getPDFWidth and getPDFHeight
+					// returns reasonable values
+					pdf.setPageParameters(1, pageNumber);
+					this.width = pdf.getPDFWidth();
+					this.height = pdf.getPDFHeight();
+					// Calculate scale factor to meet requirements of param
+					var factor = 1;
+					if (param.maxWidth) {
+						factor = Math.min(factor,
+								param.maxWidth / pdf.getPDFWidth());
+					}
+					if (param.maxHeight) {
+						factor = Math.min(factor,
+								param.maxHeight / pdf.getPDFHeight());
+					}
+			        pdf.setExtractionMode(0, 72, factor);
+				} else {
+					// TODO: Add support for other types, e.g. movies?
+					throw new Error(
+							'Cannot convert the provided file to an image: '
+							+ file);
+				}
+			}
 		}
+
 		// There are two reasons why we use inject here:
 		// 1. This allows us to define getters and setters that use different
-		//    local private variables for each object (e.g. isImage)
+		//    local private variables for each object (e.g. file, image, etc.)
 		// 2. These fields are not enumerable, so ImageObjects can be passed
 		//    directly to Html.image(), without image or file appearing as
 		//    attributes.
 		this.inject({
 			get image() {
 				// Load image from file
-				if (!isImage) {
-					image = new Image(image);
-					isImage = true;
+				if (!image) {
+					if (info) {
+						image = new Image(file);
+					} else if (pdf) {
+						image = new Image(pdf.getPageAsImage());
+					}
 				}
 				return image;
 			},
@@ -81,6 +121,10 @@ ImageObject = Base.extend({
 			},
 
 			get quality() {
+				if (!quality) {
+					// Get default quality
+					quality = (app.properties.imageQuality || 0.9).toFloat();
+				}
 				return quality;
 			},
 
@@ -95,12 +139,22 @@ ImageObject = Base.extend({
 			 */
 			save: function() {
 				if (!saved && file) {
-					if (isImage) {
+					if (image) {
 						// image is a ImageWrapper
-						image.saveAs(file, quality, true);
-					} else {
-						// image is a File
-						image.writeToFile(file);
+						image.saveAs(file, this.quality, true);
+					} else if (file.path != original.path) {
+						// TODO: make this work: file != original
+						// (through File#valueOf() ?)
+						// There were no modifications, so if we keep the same
+						// content type, simply copy to the destination file.
+						if (original.contentType == file.contentType) {
+							original.writeToFile(file);
+						} else {
+							// In any other case, we retrieve the image first
+							// and then store it again through save().
+							image = this.image;
+							this.save();
+						}
 					}
 					saved = true;
 				}
@@ -116,7 +170,7 @@ ImageObject = Base.extend({
 		 */
 		process: function(image, param) {
 			if (!(image instanceof ImageObject))
-				image = new ImageObject(image);
+				image = new ImageObject(image, param);
 
 			// Scale and maximum Size
 			var maxWidth = param.maxWidth;

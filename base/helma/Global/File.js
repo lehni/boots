@@ -36,6 +36,10 @@ File = Base.extend(new function() {
 			return this._file.toString();
 		},
 
+		valueOf: function() {
+			return this._file.getPath();
+		},
+
 		/**
 		 * Returns the name of the file or directory represented by this File object.
 		 *

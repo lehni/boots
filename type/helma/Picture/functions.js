@@ -70,7 +70,7 @@ Picture.inject({
 		// generated if needed
 		var image;
 		if (version.exists()) {
-			image = new ImageObject(version);
+			image = new ImageObject(version, param);
 		} else {
 			var file = this.getFile();
 			if (!file.exists()) {
@@ -80,7 +80,7 @@ Picture.inject({
 			}
 			image = ImageObject.process(file, param);
 			if (!image)
-				image = new ImageObject(file);
+				image = new ImageObject(file, param);
 			// Set the version file. The next time image.save() is called or
 			// image.file gets accessed, it will automatically be persisted to
 			// this file. If only the image object is used, no files will be
