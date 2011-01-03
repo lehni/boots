@@ -7,11 +7,11 @@ File = Base.extend(new function() {
 		_type: 'file',
 
 		/**
-		 * Constructor for File objects, providing read and 
-		 * write access to the file system.
-		 * @class This class represents a local file or directory 
-		 * @param {String|java.io.File} path as String, can be either absolute or relative
-		 *		  to the helma home directory
+		 * Constructor for File objects, providing read and write access to the
+		 * file system.
+		 * @class This class represents a local file or directory
+		 * @param {String|java.io.File} path as String, can be either absolute
+		 *        or relative to the helma home directory
 		 * @constructor
 		 */
 		initialize: function(path, name) {
@@ -41,10 +41,11 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Returns the name of the file or directory represented by this File object.
+		 * Returns the name of the file or directory represented by this File
+		 * object.
 		 *
-		 * This is just the last name in the pathname's name sequence. 
-		 * If the pathname's name sequence is empty, then the empty 
+		 * This is just the last name in the pathname's name sequence.
+		 * If the pathname's name sequence is empty, then the empty
 		 * string is returned.
 		 * 
 		 * @returns String containing the name of the file or directory
@@ -116,9 +117,10 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Tests whether the file or directory represented by this File object exists.
+		 * Tests whether the file or directory represented by this File object
+		 * exists.
 		 * 
-		 * @returns Boolean true if the file or directory exists; false otherwise
+		 * @returns Boolean true if the file or directory exists;
 		 * @type Boolean
 		 */
 		exists: function() {
@@ -138,9 +140,9 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * This methods reads characters until an end of line/file is encountered 
-		 * then returns the string for these characters (without any end of line 
-		 * character).
+		 * This methods reads characters until an end of line/file is
+		 * encountered then returns the string for these characters (without any
+		 * end of line character).
 		 * 
 		 * @returns String of the next unread line in the file
 		 * @type String
@@ -180,7 +182,7 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Appends a string with a platform specific end of 
+		 * Appends a string with a platform specific end of
 		 * line to the file represented by this File object.
 		 * 
 		 * @param {String} what as String, to be written to the file
@@ -197,14 +199,14 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Tests whether this File object's pathname is absolute. 
+		 * Tests whether this File object's pathname is absolute.
 		 *
-		 * The definition of absolute pathname is system dependent. 
-		 * On UNIX systems, a pathname is absolute if its prefix is "/". 
-		 * On Microsoft Windows systems, a pathname is absolute if its prefix 
+		 * The definition of absolute pathname is system dependent.
+		 * On UNIX systems, a pathname is absolute if its prefix is "/".
+		 * On Microsoft Windows systems, a pathname is absolute if its prefix
 		 * is a drive specifier followed by "\\", or if its prefix is "\\".
 		 * 
-		 * @returns Boolean if this abstract pathname is absolute, false otherwise
+		 * @returns Boolean if this abstract pathname is absolute
 		 * @type Boolean
 		 */
 		isAbsolute: function() {
@@ -212,9 +214,11 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * List of all files within the directory represented by this File object.
+		 * List of all files within the directory represented by this File
+		 * object.
 		 *
-		 * You may pass a RegExp Pattern to return just files matching this pattern.
+		 * You may pass a RegExp Pattern to return just files matching this
+		 * pattern.
 		 *
 		 * Example: var xmlFiles = dir.list(/.*\.xml/);
 		 *
@@ -225,17 +229,20 @@ File = Base.extend(new function() {
 			var files = [];
 			if (!this.isOpened() && this._file.isDirectory()) {
 				var regexp = Base.type(iter) == 'regexp';
-				// Always use filter version, even if we're not filtering, so accept
-				// can produce the File objects directly
+				// Always use filter version, even if we're not filtering,
+				// so accept can produce the File objects directly
 				this._file.list(new java.io.FilenameFilter() {
 					accept: function(dir, name) {
 						var file = null;
-					 	if (!iter || regexp && iter.test(name) || !regexp && iter(file = new File(dir, name))) {
+						if (!iter || regexp && iter.test(name)
+							|| !regexp && iter(file = new File(dir, name))) {
 							files.push(file || (file = new File(dir, name)));
 							if (recursive && file._file.isDirectory())
-								files = files.concat(file.list(iter, recursive));
+								files = files.concat(file.list(iter,
+									recursive));
 						}
-						// Always return false so we're not producing a java list as well
+						// Always return false so we're not producing a java
+						// list as well
 						return false;
 					}
 				});
@@ -295,9 +302,9 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Returns the pathname string of this File object. 
+		 * Returns the pathname string of this File object.
 		 *
-		 * The resulting string uses the default name-separator character 
+		 * The resulting string uses the default name-separator character
 		 * to separate the names in the name sequence.
 		 * 
 		 * @returns String of this file's pathname
@@ -308,10 +315,10 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Tests whether the application can read the file 
+		 * Tests whether the application can read the file
 		 * represented by this File object.
 		 * 
-		 * @returns Boolean true if the file exists and can be read; false otherwise
+		 * @returns Boolean true if the file exists and can be read
 		 * @type Boolean
 		 */
 		canRead: function() {
@@ -321,7 +328,7 @@ File = Base.extend(new function() {
 		/**
 		 * Tests whether the file represented by this File object is writable.
 		 * 
-		 * @returns Boolean true if the file exists and can be modified; false otherwise.
+		 * @returns Boolean true if the file exists and can be modified
 		 * @type Boolean
 		 */
 		canWrite: function() {
@@ -343,16 +350,16 @@ File = Base.extend(new function() {
 		/**
 		 * Returns the absolute pathname string of this file.
 		 *
-		 * If this File object's pathname is already absolute, then the pathname 
-		 * string is simply returned as if by the getPath() method. If this 
-		 * abstract pathname is the empty abstract pathname then the pathname 
-		 * string of the current user directory, which is named by the system 
-		 * property user.dir, is returned. Otherwise this pathname is resolved 
-		 * in a system-dependent way. On UNIX systems, a relative pathname is 
-		 * made absolute by resolving it against the current user directory. 
-		 * On Microsoft Windows systems, a relative pathname is made absolute 
-		 * by resolving it against the current directory of the drive named by 
-		 * the pathname, if any; if not, it is resolved against the current user 
+		 * If this File object's pathname is already absolute, then the pathname
+		 * string is simply returned as if by the getPath() method. If this
+		 * abstract pathname is the empty abstract pathname then the pathname
+		 * string of the current user directory, which is named by the system
+		 * property user.dir, is returned. Otherwise this pathname is resolved
+		 * in a system-dependent way. On UNIX systems, a relative pathname is
+		 * made absolute by resolving it against the current user directory.
+		 * On Microsoft Windows systems, a relative pathname is made absolute
+		 * by resolving it against the current directory of the drive named by
+		 * the pathname, if any; if not, it is resolved against the current user
 		 * directory.
 		 * 
 		 * @returns String The absolute pathname string
@@ -363,15 +370,16 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Returns the size of the file represented by this File object. 
-		 *
+		 * Returns the size of the file represented by this File object.
+		 * 
 		 * The return value is unspecified if this pathname denotes a directory.
 		 * 
-		 * @returns Number The length, in bytes, of the file, or 0L if the file does not exist
+		 * @returns Number The length, in bytes, of the file, or 0L if the file
+		 *          does not exist
 		 * @type Number
 		 */
-		// Do not use getLength as a name, since this will produce the .length bean
-		// and make BootStrap think it's iterable as an array.
+		// Do not use getLength as a name, since this will produce the .length
+		// bean and make BootStrap think it's iterable as an array.
 		getSize: function() {
 			return this._file.length();
 		},
@@ -381,9 +389,10 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Tests whether the file represented by this File object is a directory.
+		 * Tests whether the file represented by this File object is a
+		 * directory.
 		 * 
-		 * @returns Boolean true if this File object is a directory and exists; false otherwise
+		 * @returns Boolean true if this File object is a directory and exists
 		 * @type Boolean
 		 */
 		isDirectory: function() {
@@ -391,13 +400,15 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Tests whether the file represented by this File object is a normal file. 
-		 *
+		 * Tests whether the file represented by this File object is a normal
+		 * file. 
+		 * 
 		 * A file is normal if it is not a directory and, in addition, satisfies 
 		 * other system-dependent criteria. Any non-directory file created by a 
 		 * Java application is guaranteed to be a normal file.
 		 * 
-		 * @returns Boolean true if this File object is a normal file and exists; false otherwise
+		 * @returns Boolean true if this File object is a normal file and
+		 *          exists
 		 * @type Boolean
 		 */
 		isFile: function() {
@@ -405,9 +416,11 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Tests whether the file represented by this File object is a hidden file.
+		 * Tests whether the file represented by this File object is a hidden
+		 * file.
 		 *
-		 * What constitutes a hidden file may depend on the platform we are running on.
+		 * What constitutes a hidden file may depend on the platform we are
+		 * running on.
 		 *
 		 * @returns Boolean true if this File object is hidden
 		 * @type Boolean
@@ -417,11 +430,12 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Returns the time when the file represented by this File object was last modified.
+		 * Returns the time when the file represented by this File object was
+		 * last modified.
 		 *
-		 * A number representing the time the file was last modified, 
-		 * measured in milliseconds since the epoch (00:00:00 GMT, January 1, 1970), 
-		 * or 0L if the file does not exist or if an I/O error occurs.
+		 * A number representing the time the file was last modified,
+		 * measured in milliseconds since the epoch (00:00:00 GMT, January 1,
+		 * 1970), or 0L if the file does not exist or if an I/O error occurs.
 		 * 
 		 * @returns Number in milliseconds since 00:00:00 GMT, January 1, 1970
 		 * @type Number
@@ -437,24 +451,24 @@ File = Base.extend(new function() {
 		/**
 		 * Creates the directory represented by this File object.
 		 * 
-		 * @returns Boolean true if the directory was created; false otherwise
+		 * @returns Boolean true if the directory was created
 		 * @type Boolean
 		 */
 		makeDirectory: function() {
 			// Don't do anything if file exists or use multi directory version
-			return !this.isOpened() && (this._file.isDirectory() || this._file.mkdirs());
+			return !this.isOpened() && (this._file.isDirectory()
+					|| this._file.mkdirs());
 		},
 
 		/**
 		 * Renames the file represented by this File object.
 		 *
-		 * Whether or not this method can move a file from one 
-		 * filesystem to another is platform-dependent. The return 
-		 * value should always be checked to make sure that the 
-		 * rename operation was successful. 
+		 * Whether or not this method can move a file from one filesystem to
+		 * another is platform-dependent. The return value should always be
+		 * checked to make sure that the rename operation was successful.
 		 * 
 		 * @param {File} to File object containing the new path
-		 * @returns true if the renaming succeeded; false otherwise
+		 * @returns true if the renaming succeeded
 		 * @type Boolean
 		 */
 		renameTo: function(to) {
@@ -509,7 +523,8 @@ File = Base.extend(new function() {
 		readLines: function() {
 			if (!this._file.isFile())
 				throw new Error("File does not exist or is not a regular file");
-			var reader = new java.io.BufferedReader(new java.io.FileReader(this._file));
+			var reader = new java.io.BufferedReader(
+					new java.io.FileReader(this._file));
 			// Read content line by line to setup proper eol
 			var lines = [];
 			while (true) {
@@ -531,11 +546,13 @@ File = Base.extend(new function() {
 		 * @type String
 		 */
 		readAll: function() {
-			return this.readLines().join(java.lang.System.getProperty('line.separator'));
+			return this.readLines().join(
+					java.lang.System.getProperty('line.separator'));
 		},
 
 		/**
-		 * Makes a copy of a file or directory, possibly over filesystem borders.
+		 * Makes a copy of a file or directory, possibly over filesystem
+		 * borders.
 		 * 
 		 * @param {String|File} file as a File object or the String of ull path
 		 *        of the new file
@@ -552,8 +569,10 @@ File = Base.extend(new function() {
 			} else {
 				// Copy the file with FileChannels:
 				file.createNewFile();
-				var src = new java.io.FileInputStream(this.getPath()).getChannel();
-				var dst = new java.io.FileOutputStream(file.getPath()).getChannel();
+				var src = new java.io.FileInputStream(
+						this.getPath()).getChannel();
+				var dst = new java.io.FileOutputStream(
+						file.getPath()).getChannel();
 				var amount = dst.transferFrom(src, 0, src.size());
 				src.close();
 				dst.close();
@@ -564,7 +583,8 @@ File = Base.extend(new function() {
 
 		// writeToFile mimics MimePart writeToFile and uses copyTo internally
 		writeToFile: function(file, filename) {
-			return this.copyTo(filename ? new File(file, filename) : File.get(file));
+			return this.copyTo(filename ? new File(file, filename)
+					: File.get(file));
 		},
 
 		/**
@@ -592,7 +612,8 @@ File = Base.extend(new function() {
 				var body = new java.io.ByteArrayOutputStream();
 				var stream = new java.io.BufferedInputStream(
 					new java.io.FileInputStream(this.getAbsolutePath()));
-				var buf = java.lang.reflect.Array.newInstance(java.lang.Byte.TYPE, 1024);
+				var buf = java.lang.reflect.Array.newInstance(
+						java.lang.Byte.TYPE, 1024);
 				var read;
 				while ((read = stream.read(buf)) > -1)
 					body.write(buf, 0, read);
@@ -603,8 +624,8 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Define iterator to loop through the lines of the file for ordinary files,
-		 * or the names of contained files for directories.
+		 * Define iterator to loop through the lines of the file for ordinary
+		 * files, or the names of contained files for directories.
 		 *
 		 *	for each (var line in file) ...
 		 *
@@ -670,9 +691,10 @@ File = Base.extend(new function() {
 		},
 
 		/**
-		 * Create a new empty temporary file in the this directory, or in the directory
-		 * containing this file.
-		 * @param {String} prefix the prefix of the temporary file; must be at least three characters long
+		 * Create a new empty temporary file in the this directory, or in the
+		 * directory containing this file.
+		 * @param {String} prefix the prefix of the temporary file; must be at
+		 *        least three characters long
 		 * @param {String} suffix the suffix of the temporary file; may be null
 		 * @return {File} the temporary file 
 		 */
@@ -701,13 +723,14 @@ File = Base.extend(new function() {
 					var reader = new java.io.BufferedReader(
 						new java.io.InputStreamReader(resource.getInputStream())
 					);
-					// Parse mime.types: 
+					// Parse mime.types:
 					mimeTypes = {};
 					var line;
 					while ((line = reader.readLine()) != null) {
 						line = line.trim();
-						if (line && line[0] != '#') { // skip empty lines and comments
-							// split the line at white spaces
+						// Skip empty lines and comments
+						if (line && line[0] != '#') {
+							// Split the line at white spaces
 							line = line.split(/\s+/gi);
 							for (var i = 1; i < line.length; i++)
 								mimeTypes[line[i]] = line[0];
@@ -718,19 +741,27 @@ File = Base.extend(new function() {
 			},
 
 			getContentType: function(name) {
-				return File.getMimeTypes()[File.getExtension(name)] || 'application/octetstream';
+				return File.getMimeTypes()[File.getExtension(name)]
+						|| 'application/octetstream';
 			},
 
 			getSizeAsString: function(size) {
-				if (size < 1024) return size + ' B';
-				else if (size < 1048576) return Math.round(size / 10.24) / 100 + ' KB';
-				else return Math.round(size / 10485.76) / 100 + ' MB';
+				if (size < 1024) {
+					return size + ' B';
+				} else if (size < 1048576) {
+					return Math.round(size / 10.24) / 100 + ' KB';
+				} else {
+					return Math.round(size / 10485.76) / 100 + ' MB';
+				}
 			},
 
 			/**
-			 * Create a new empty temporary file in the default temporary-file directory.
-			 * @param {String} prefix the prefix of the temporary file; must be at least three characters long
-			 * @param {String} suffix the suffix of the temporary file; may be null
+			 * Create a new empty temporary file in the default temporary-file
+			 * directory.
+			 * @param {String} prefix the prefix of the temporary file; must be
+			 *        at least three characters long
+			 * @param {String} suffix the suffix of the temporary file; may be
+			 *        null
 			 * @return {File} the temporary file
 			 */
 			createTempFile: function(prefix, suffix) {
