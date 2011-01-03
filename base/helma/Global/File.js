@@ -377,10 +377,7 @@ File = Base.extend(new function() {
 		},
 
 		getSizeAsString: function() {
-			var size = this.getSize();
-			if (size < 1024) return size + ' B';
-			else if (size < 1048576) return Math.round(size / 10.24) / 100 + ' KB';
-			else return Math.round(size / 10485.76) / 100 + ' MB';
+			return File.getSizeAsString(this.getSize());
 		},
 
 		/**
@@ -723,7 +720,13 @@ File = Base.extend(new function() {
 			getContentType: function(name) {
 				return File.getMimeTypes()[File.getExtension(name)] || 'application/octetstream';
 			},
-	
+
+			getSizeAsString: function(size) {
+				if (size < 1024) return size + ' B';
+				else if (size < 1048576) return Math.round(size / 10.24) / 100 + ' KB';
+				else return Math.round(size / 10485.76) / 100 + ' MB';
+			},
+
 			/**
 			 * Create a new empty temporary file in the default temporary-file directory.
 			 * @param {String} prefix the prefix of the temporary file; must be at least three characters long
