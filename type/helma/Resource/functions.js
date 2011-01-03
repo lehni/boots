@@ -51,6 +51,8 @@ Resource.inject({
 	},
 
 	setFile: function(mimeObj) {
+		User.log('Resource#setFile() ' + mimeObj + ' ' 
+				+ (mimeObj && mimeObj.name));
 		var ext = mimeObj && File.getExtension(mimeObj.name);
 		if (ext) {
 			ext = ext.toLowerCase();
@@ -59,6 +61,7 @@ Resource.inject({
 			this.name = mimeObj.name;
 			this.extension = ext;
 			var file = this.getFile();
+			User.log('Resource#setFile() writing to' + file);
 			mimeObj.writeToFile(file.getParent(), file.getName());
 			// Every time the file is changed, it can increase a verion field in
 			// the database. This can be used to force refresh of caches.
@@ -115,9 +118,8 @@ Resource.inject({
 	},
 
 	getVersionFile: function(versionId, extension) {
-		return new File(app.properties.resourceDir, 'versions/' + this._id
-				+ (versionId ? '_' + versionId : '') + '.'
-				+ (extension || this.extension));
+		return new File(app.properties.resourceDir, 'versions/' + this._id + '/'
+				+ versionId + '.' + (extension || this.extension));
 	},
 
 	removeVersionFiles: function() {
@@ -125,10 +127,10 @@ Resource.inject({
 			// Remove all thumbnails of this image through java.io.File
 			// filtering
 			var versions = new File(app.properties.resourceDir,
-					'versions').list(new RegExp('^' + this._id + '[_.]'));
-			for each (file in versions) {
-				User.log('Removing ' + file);
-				file.remove();
+					'versions/' + this._id);
+			if (versions.exists()) {
+				User.log('Removing ' + versions);
+				versions.remove(true);
 			}
 		}
 	},
@@ -138,7 +140,6 @@ Resource.inject({
 			this.getFile().remove();
 			this.removeVersionFiles();
 			this.extension = null;
-
 		}
 	},
 
