@@ -57,7 +57,7 @@ Resource.inject({
 		var ext = mimeObj && File.getExtension(mimeObj.name);
 		if (ext) {
 			ext = ext.toLowerCase();
-			// remove old file:
+			// Remove old file:
 			this.removeResource();
 			this.name = mimeObj.name;
 			this.extension = ext;
@@ -68,8 +68,11 @@ Resource.inject({
 			// the database. This can be used to force refresh of caches.
 			// But only do this if the field is actually defined.
 			if (this.version !== undefined) {
-				if (this.version == null) this.version = 0;
-				else this.version++;
+				if (this.version == null) {
+					this.version = 0;
+				} else {
+					this.version++;
+				}
 			}
 			return true;
 		}
