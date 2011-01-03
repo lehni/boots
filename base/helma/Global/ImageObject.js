@@ -191,7 +191,7 @@ ImageObject = Base.extend({
 				// maxWidth / Height.
 				if (crop.width * scale > maxWidth
 						|| crop.height * scale > maxHeight) {
-					crop = Picture.getScaledCrop(crop, Math.min(
+					crop = ImageObject.getScaledCrop(crop, Math.min(
 							maxWidth / crop.width * scale,
 							maxHeight / crop.height * scale
 					) * scale);
@@ -236,13 +236,13 @@ ImageObject = Base.extend({
 			// Check if we need to tint the image with a color
 			if (param.tint) {
 				// Image is only set if it was resized before
-				image.image = Picture.processTint(image.image, param);
+				image.image = ImageObject.processTint(image.image, param);
 			}
 
 			// Check if we need to paper the image with a color
 			if (param.paper) {
 				// Image is only set if it was resized before
-				image.image = Picture.processPaper(image.image, param);
+				image.image = ImageObject.processPaper(image.image, param);
 			}
 
 			// Set the transparant pixel only if the image was modified so far
@@ -255,6 +255,37 @@ ImageObject = Base.extend({
 			}
 
 			return image;
+		},
+
+		/**
+		 * Generates a unique id to identify the characteristics of this
+		 * image processing request.
+		 */
+		getUniqueId: function(param) {
+			var crop = param.crop;
+			var values = [
+				param.maxWidth, param.maxHeight, param.quality, param.scale,
+				param.bgColor,
+				// TODO: These depend on processTint / processPaper, which will
+				// be modularised soon. Find a way to also modularise id
+				// generation
+				param.tint, param.paper, param.paperFactor, param.rotation,
+				crop && [crop.x, crop.y, crop.width, crop.height,
+						crop.halign, crop.valign, crop.imageScale,
+						crop.imageWidth, crop.imageHeight],
+				param.transparentPixel && [param.transparentPixel.x,
+						param.transparentPixel.y]
+			];
+			return encodeMd5(values.join(''));
+		},
+
+		getScaledCrop: function(crop, scale) {
+			return scale == 1 ? crop : crop.each(function(value, key) {
+				this[key] = typeof value == 'number'
+					? key == 'imageScale'
+						? value * scale : Math.round(value * scale)
+					: value;
+			}, {});
 		},
 
 		processTint: function(image, param) {

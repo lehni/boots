@@ -43,29 +43,13 @@ Picture.inject({
 	 	return this.base(param, out);
 	},
 
-	getUniqueValues: function(param) {
-		// Generate an array of unique values to identify the characteristics of
-		// this image. The list is is then converted to an id in processImage.
-		var crop = param.crop;
-		return [
-			param.maxWidth, param.maxHeight, param.quality, param.scale,
-			param.bgColor,
-			param.tint, param.paper, param.paperFactor, param.rotation,
-			crop && [crop.x, crop.y, crop.width, crop.height,
-					crop.halign, crop.valign, crop.imageScale,
-					crop.imageWidth, crop.imageHeight],
-			param.transparentPixel && [param.transparentPixel.x,
-					param.transparentPixel.y]
-		];
-	},
-
 	/**
 	 * Returns an ImageObject object.
 	 */
 	processImage: function(param) {
 		// Generate a unique id for the characteristics of this image:
 		var versionId = this.VERSIONED || param.versioned
-				? encodeMd5(this.getUniqueValues(param).join(''))
+				? ImageObject.getUniqueId(param)
 				: '';
 		var version = this.getVersionFile(versionId);
 		// We use on the fly generation of image versions (e.g. thumbnails).
@@ -132,15 +116,6 @@ Picture.inject({
 				param.crop = crop;
 				return picture.renderImage(param, out);
 			}
-		},
-
-		getScaledCrop: function(crop, scale) {
-			return scale == 1 ? crop : crop.each(function(value, key) {
-				this[key] = typeof value == 'number'
-					? key == 'imageScale'
-						? value * scale : Math.round(value * scale)
-					: value;
-			}, {});
 		}
 	}
 });

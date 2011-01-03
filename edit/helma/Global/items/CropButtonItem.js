@@ -45,7 +45,7 @@ CropButtonItem = EditItem.extend({
 			var scale = Math.min(1, Math.min(
 				size.width / crop.width,
 				size.height / crop.height));
-			crop = Picture.getScaledCrop(crop, scale);
+			crop = ImageObject.getScaledCrop(crop, scale);
 			return Picture.renderCrop(crop, { 
 				attributes: { id: id } 
 			}, out);
