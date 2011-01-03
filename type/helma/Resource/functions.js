@@ -52,7 +52,8 @@ Resource.inject({
 
 	setFile: function(mimeObj) {
 		User.log('Resource#setFile() ' + mimeObj + ' ' 
-				+ (mimeObj && mimeObj.name));
+				+ (mimeObj ? mimeObj.name + ' ' 
+				+ File.getSizeAsString(mimeObj.contentLength) : ''));
 		var ext = mimeObj && File.getExtension(mimeObj.name);
 		if (ext) {
 			ext = ext.toLowerCase();
@@ -258,8 +259,11 @@ Resource.inject({
 					switch (type) {
 					case 'image':
 						var picture = new Picture(mimeObj);
-						if (picture.isValid()) return picture;
-						else picture.remove();
+						if (picture.isValid()) {
+							return picture;
+						} else {
+							picture.remove();
+						}
 						break;
 					case 'video':
 					case 'audio':
