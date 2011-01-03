@@ -11,7 +11,8 @@ HtmlRenderer = Base.extend({
 		});
 		if (stylesheet) {
 			var ss = new javax.swing.text.html.StyleSheet();
-			var reader = new java.io.BufferedReader(new java.io.FileReader(stylesheet));
+			var reader = new java.io.BufferedReader(
+					new java.io.FileReader(stylesheet));
 			ss.loadRules(reader, null);
 			reader.close();
 			this.kit.setStyleSheet(ss);
@@ -51,7 +52,8 @@ HtmlRenderer = Base.extend({
 			}
 			img = new Image(width, height);
 			var g = img.getGraphics();
-			Packages.javax.swing.SwingUtilities.paintComponent(g, pane, new java.awt.Container(), 0, 0, width, height);
+			Packages.javax.swing.SwingUtilities.paintComponent(g, pane,
+					new java.awt.Container(), 0, 0, width, height);
 			g.dispose();
 		} catch (e) {
 			User.logError('HtmlRenderer#renderHtmlImage()', e);
