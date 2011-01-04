@@ -65,14 +65,7 @@ Picture.inject({
 					+ this._id + '.' + this.extension + ' missing.');
 				return null;
 			}
-			image = ImageObject.process(file, param);
-			if (!image)
-				image = new ImageObject(file, param);
-			// Set the version file. The next time image.save() is called or
-			// image.file gets accessed, it will automatically be persisted to
-			// this file. If only the image object is used, no files will be
-			// created on the harddrive.
-			image.file = version;
+			image = ImageObject.process(file, param, version);
 		}
 		// Set the src attribute for this version
 		image.src = this.getUri();

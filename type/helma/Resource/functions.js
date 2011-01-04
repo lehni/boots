@@ -224,10 +224,14 @@ Resource.inject({
 	processThumbnail: function(param) {
 		var cacheId = ImageObject.getUniqueId(param);
 		var file = this.getVersionFile(cacheId, 'png');
-		if (file.exists()) {
-			return new ImageObject(file);
+		if (!file.exists()) {
+			var image = ImageObject.process(this.getFile(), param, file);
+			// Call save straight away, as we always want the processed image
+			// persisted
+			image.save();
+			return image;
 		}
-		return ImageObject.process(file, param);
+		return new ImageObject(file);
 	},
 
 	statics: {
