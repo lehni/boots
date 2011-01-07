@@ -2,12 +2,8 @@
 // that depend on it. A better way to support this would be if Helma offered an
 // inlcude() method...
 
-// Abstract baes for SelectItem and EditableListItem
+// Abstract base for SelectItem and EditableListItem
 ListItem = EditItem.extend({
-
-	getPosition: function(object) {
-		// TODO: Implement
-	},
 
 	/**
 	 * We are supporting two modes of sorting / hiding in lists and
@@ -20,12 +16,25 @@ ListItem = EditItem.extend({
 	 *   visible and hidden items, in their respective lists. visible
 	 *   controlls the visibility.
 	 *
-	 * setPosition is here to fasciliate these modes
+	 * get/setPosition and is/setVisible are here to fasciliate these modes
 	 */
+
+	getPosition: function(object) {
+		if (object) {
+			if (object.position !== undefined) {
+				return object.position;
+			} else if (object.index !== undefined) {
+				return object.index;
+			}
+		}
+		return null;
+	},
+
 	setPosition: function(object, position, visible) {
 		if (object.position !== undefined && object.visible !== undefined) {
 			// Position / Visible mode
-			if (object.position != position || !object.visible != !visible) {
+			// !A ^ !B == A xor B
+			if (object.position != position || !object.visible ^ !visible) {
 				object.position = position;
 				object.visible = visible;
 				return true;
@@ -47,12 +56,31 @@ ListItem = EditItem.extend({
 	},
 
 	isVisible: function(object) {
-		return true;
-		// TODO: Implement
+		if (object) {
+			if (object.visible !== undefined) {
+				return object.visible;
+			} else if (object.index !== undefined) {
+				return object.index != null;
+			}
+		}
+		return false;
 	},
 
 	setVisible: function(object, visible) {
-		// TODO: Implement
+		if (object) {
+			if (object.visible !== undefined) {
+				object.visible = visible;
+			} else if (object.index !== undefined) {
+				var curVisible = object.index != null;
+				// !A ^ !B == A xor B
+				if (!curVisible ^ !visible) {
+					// Since index is defining both visibility and position,
+					// set it to the end of the collection, to make object
+					// visible.
+					object.index = visible ? this.collection.count() : null;
+				}
+			}
+		}
 	},
 
 	/**
