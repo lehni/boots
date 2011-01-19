@@ -6,8 +6,10 @@ Picture.inject({
 					// Make sure we're rendering the popup image versioned even if
 					// the site is not using versioning, as it will show in a
 					// different size.
-					picture: this.renderImage(Hash.append({ versioned: true },
-						this.MAX_POPUP_SIZE))
+					picture: this.renderImage(Hash.append({
+							versioned: true,
+							popup: true
+						}, this.MAX_POPUP_SIZE))
 				})
 			}, res);
 		} else { // Just the file
