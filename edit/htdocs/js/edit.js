@@ -341,7 +341,7 @@ EditForm = Base.extend({
 					var options = lookupIds[opt.value]
 						? multi.left.element :  multi.right.element;
 					if (options)
-						options.appendChild(new SelectOption(opt));
+						options.appendChild(new HtmlOption(opt));
 				}
 			});
 			this.updateMultiselects(name);
@@ -985,7 +985,7 @@ EditForm.register(new function() {
 						alert('This element was already added to the list.');
 					} else {
 						var selected = element.getSelected().getLast();
-						var opt = new SelectOption({ text: title, value: id });
+						var opt = new HtmlOption({ text: title, value: id });
 						if (selected)
 							opt.insertAfter(selected);
 						else
@@ -1426,7 +1426,7 @@ EditChooser = Base.extend({
 	},
 
 	createButton: function(title, handler) {
-		return new Input({
+		return new HtmlInput({
 			type: 'button', value: title, className: 'edit-button'
 		}).addEvent('mouseup', handler);
 	},

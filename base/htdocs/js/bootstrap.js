@@ -2966,7 +2966,7 @@ HtmlElement.inject({
 	}
 });
 
-Form = HtmlElement.extend({
+HtmlForm = HtmlElement.extend({
 	_tag: 'form',
 	_properties: ['action', 'method', 'target'],
 	_methods: ['submit'],
@@ -2984,7 +2984,7 @@ Form = HtmlElement.extend({
 	}
 });
 
-FormElement = HtmlElement.extend({
+HtmlFormElement = HtmlElement.extend({
 	_properties: ['name', 'disabled'],
 	_methods: ['focus', 'blur'],
 
@@ -2996,7 +2996,7 @@ FormElement = HtmlElement.extend({
 	}
 });
 
-Input = FormElement.extend({
+HtmlInput = HtmlFormElement.extend({
 	_tag: 'input',
 	_properties: ['type', 'checked', 'defaultChecked', 'readOnly', 'maxLength'],
 	_methods: ['click'],
@@ -3014,12 +3014,12 @@ Input = FormElement.extend({
 	}
 });
 
-TextArea = FormElement.extend({
+HtmlTextArea = HtmlFormElement.extend({
 	_tag: 'textarea',
 	_properties: ['value']
 });
 
-Select = FormElement.extend({
+HtmlSelect = HtmlFormElement.extend({
 	_tag: 'select',
 	_properties: ['type', 'selectedIndex'],
 
@@ -3052,12 +3052,12 @@ Select = FormElement.extend({
 	}
 });
 
-SelectOption = FormElement.extend({
+HtmlOption = HtmlFormElement.extend({
 	_tag: 'option',
 	_properties: ['text', 'value', 'selected', 'defaultSelected', 'index']
 });
 
-FormElement.inject({
+HtmlFormElement.inject({
 	setSelection: function(start, end) {
 		var sel = end == undefined ? start : { start: start, end: end };
 		this.focus();
@@ -3122,6 +3122,11 @@ FormElement.inject({
 	setCaret: function(pos) {
 		return this.setSelection(pos, pos);
 	}
+});
+
+HtmlImage = HtmlElement.extend({
+	_tag: 'img',
+	_properties: ['src', 'alt', 'title']
 });
 
 $document = Browser.document = DomNode.wrap(document);
@@ -3464,7 +3469,7 @@ Request = Base.extend(Chain, Callback, new function() {
 	};
 });
 
-Form.inject({
+HtmlForm.inject({
 	send: function(url) {
 		if (!this.sender)
 			this.sender = new Request({ link: 'cancel' });
