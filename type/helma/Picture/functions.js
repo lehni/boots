@@ -11,9 +11,11 @@ Picture.inject({
 	},
 
 	setFile: function(mimeObj) {
-		User.log('Picture#setFile() ' + mimeObj + ' ' 
-				+ (mimeObj ? mimeObj.name + ' ' 
-				+ File.getSizeAsString(mimeObj.contentLength) : ''));
+		if (app.properties.debugEdit) {
+			User.log('Picture#setFile() ' + mimeObj + ' ' 
+					+ (mimeObj ? mimeObj.name + ' ' 
+					+ File.getSizeAsString(mimeObj.contentLength) : ''));
+		}
 		if (mimeObj) {
 			var info = Image.getInfo(mimeObj);
 			if (info && this.base(mimeObj)) {

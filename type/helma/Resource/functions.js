@@ -51,9 +51,11 @@ Resource.inject({
 	},
 
 	setFile: function(mimeObj) {
-		User.log('Resource#setFile() ' + mimeObj + ' ' 
-				+ (mimeObj ? mimeObj.name + ' ' 
-				+ File.getSizeAsString(mimeObj.contentLength) : ''));
+		if (app.properties.debugEdit) {
+			User.log('Resource#setFile() ' + mimeObj + ' ' 
+					+ (mimeObj ? mimeObj.name + ' ' 
+					+ File.getSizeAsString(mimeObj.contentLength) : ''));
+		}
 		var ext = mimeObj && File.getExtension(mimeObj.name);
 		if (ext) {
 			ext = ext.toLowerCase();
@@ -62,7 +64,9 @@ Resource.inject({
 			this.name = mimeObj.name;
 			this.extension = ext;
 			var file = this.getFile();
-			User.log('Resource#setFile() writing to' + file);
+			if (app.properties.debugEdit) {
+				User.log('Resource#setFile() writing to' + file);
+			}
 			mimeObj.writeToFile(file.getParent(), file.getName());
 			// Every time the file is changed, it can increase a verion field in
 			// the database. This can be used to force refresh of caches.
@@ -268,9 +272,15 @@ Resource.inject({
 		},
 
 		create: function(mimeObj) {
+			if (app.properties.debugEdit) {
+				User.log('Resouce.create()', mimeObj);
+			}
 			if (mimeObj && mimeObj.name) {
 				var type = Resource.getBasicType(
 						File.getContentType(mimeObj.name));
+				if (app.properties.debugEdit) {
+					User.log(type);
+				}
 				if (type) {
 					switch (type) {
 					case 'image':
