@@ -278,7 +278,7 @@ RootTag = MarkupTag.extend({
 		// Determine encoder to be used, default is not encoding anything:
 		var encoder = param.encoding && global['encode'
 				+ param.encoding.capitalize()]
-			|| function(val) { return val };
+			|| function(val) { return val; };
 		var str = this.renderChildren(param, encoder);
 		return str;
 	}

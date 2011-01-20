@@ -211,7 +211,7 @@ Html = new function() {
 				if (!line || /^\s*$/.test(line)) {
 					// what if line |= '' but only contains \s*?
 					if (isParagraph) {
-						out.push(lineBreak, '</p>')
+						out.push(lineBreak, '</p>');
 						isParagraph = false;
 					} else {
 						// Only add one break on empty lines if the previous line
@@ -230,7 +230,7 @@ Html = new function() {
 							wasParagraph = false;
 						} else if (!isParagraph && !isBlockTag && !isSuffix) {
 							// if (report) User.log('Tag', tag);
-							out.push(lineBreak, '<p>')
+							out.push(lineBreak, '<p>');
 							isParagraph = true;
 						}
 						if (isBlockTag && !emptyTags[tag]) {
@@ -315,7 +315,7 @@ Html = new function() {
 						}
 					} else {
 						if (!isParagraph && !isSuffix) {
-							out.push(lineBreak, '<p>')
+							out.push(lineBreak, '<p>');
 							isParagraph = true;
 						}
 					}
