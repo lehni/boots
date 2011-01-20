@@ -19,29 +19,35 @@ Codec = new function() {
 				/<br\s*\/?>/g, '\n');
 		},
 
-		// "Rename" the already existing ones so they match the encoding="" scheme of
-		// skins and templates, and also to provide the additional ones to Template.js
-		// that looks them up in the global scope.
+		// "Rename" the already existing ones so they match the encoding=""
+		// scheme of skins and templates, and also to provide the additional
+		// ones to Template.js that looks them up in the global scope.
 
 		/**
-		 * Encodes all text with entities but preserves html markup. Replaces \n with <br />
+		 * Encodes all text with entities but preserves html markup. Replaces \n
+		 * with <br>
 		 * TODO: Helma falsy uses <br /> even for non XHTML...
 		 */
 		encodeHtml: format,
 
 		/**
-		 * Encodes all text and html markup with entities. Replaces \n with <br />
+		 * Encodes all text and html markup with entities. Replaces \n with
+		 * <br>
 		 * TODO: Helma falsy uses <br /> even for non XHTML...
 		 */
-		encodeAll: encode, // encode calls HtmlEncoder.encodeAll internally.
+		encodeAll: encode,
+		// encode calls HtmlEncoder.encodeAll internally.
 
 		/**
 		 * Encode all text and html markup with entities.
 		 */
-		encodeEntities: encodeForm, // encodeForm calls HtmlEncoder.encodeAll with encodeNewline=false internally.
+		encodeEntities: encodeForm, 
+		// encodeForm calls HtmlEncoder.encodeAll with encodeNewline=false
+		// internally.
 
 		encodeUrl: function encodeUrl(str) {
-			return str ? UrlEncoded.encode(str, 'UTF-8').replace('%20', '+') : str;
+			return str ? UrlEncoded.encode(str, 'UTF-8').replace('%20', '+')
+					: str;
 		},
 
 		decodeUrl: function decodeUrl(str) {
@@ -56,7 +62,7 @@ Codec = new function() {
 
 		/**
 		 * Encodes all text with entities but preserves html markup.
-		 * Wrapps paragraphs in <p></p> And adds <br /> sometimes (?).
+		 * Wrapps paragraphs in <p></p> And adds <br> sometimes (?).
 		 * TODO: Seems to cause a row issues, so should maybe be
 		 * replaced with JS only solution.
 		 */ 
@@ -67,9 +73,10 @@ Codec = new function() {
 
 		encodeHex: function encodeHex(str) {
 			var hex = '';
-			// two \\ needed because it's javascript encoded (for the client side)
 			for (var i = 0; i < str.length; i++) {
 				var ch = str.charCodeAt(i);
+				// Two \\ are needed because it's javascript encoded
+				// (for the client side)
 				hex += ch < 256
 					? '\\x' + ch.toPaddedString(2, 16)
 					: '\\u' + ch.toPaddedString(4, 16);
@@ -106,5 +113,4 @@ Codec = new function() {
 };
 
 // Make all of these functions global as well:
-
 global.inject(Codec);
