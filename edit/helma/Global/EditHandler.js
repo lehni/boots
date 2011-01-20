@@ -112,8 +112,13 @@ EditHandler = Base.extend(new function() {
 				} else if (handler) {
 					res.push();
 					try {
-						if (!fullId)
-							throw 'Missing form data: edit_id';
+						if (!fullId) {
+							throw 'A rare error has occured, as a result of '
+								+ 'which your changes were unfortunately lost. '
+								+ 'If text was lost, it may be restored from '
+								+ 'log-files on the server.\n\nPlease contact '
+								+ 'the administrator.';
+						}
 						var node = EditNode.get(fullId);
 						if (node) {
 							// Call the handler and commit changes if there are.
