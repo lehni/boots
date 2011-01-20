@@ -227,6 +227,6 @@ EditNode = Base.extend({
 				});
 				editData.version = clientData.version;
 			}
-		},
+		}
 	}
 });

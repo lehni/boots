@@ -109,7 +109,7 @@ new function() {
 
 		addMessage: function(key, value) {
 			this.constructor.addMessage(key, value);
-		},
+		}
 	});
 };
 

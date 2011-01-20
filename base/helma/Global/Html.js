@@ -4,7 +4,7 @@ Html = new function() {
 	var properties = {
 		'className': 'class', 'htmlFor': 'for', colSpan: 'colspan',
 		rowSpan: 'rowspan', accessKey: 'accesskey', tabIndex: 'tabindex',
-		maxLength: 'maxlength', readOnly: 'readonly',
+		maxLength: 'maxlength', readOnly: 'readonly'
 	};
 
 	// Block tags are tags that require to be rendered outside of paragraphs.

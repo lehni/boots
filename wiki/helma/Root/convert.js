@@ -5,7 +5,7 @@ function convert_action() {
 		COMMENT: 2,
 		CREATE: 3,
 		EDIT: 4,
-		ADMINISTRATE: 5,
+		ADMINISTRATE: 5
 	};
 	this.assurePrivileges(Privileges.ADMINISTRATE);
 	res.push();

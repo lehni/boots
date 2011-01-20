@@ -14,5 +14,5 @@ Post.inject({
 	},
 
 	outer_macro: function(param) {
-	},
+	}
 });

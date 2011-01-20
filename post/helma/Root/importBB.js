@@ -138,7 +138,7 @@ Root.inject({
 					mail.setSubject("// Scriptographer.org: New Login Information //");
 					mail.addPart(this.renderTemplate("emailPassword", {
 						username: user.name,
-						password: password,
+						password: password
 					}));
 					mail.send();
 				}
