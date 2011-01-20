@@ -622,8 +622,8 @@ EditForm.inject(new function() {
 				EditForm.addMessage('editMessage', str);
 			},
 
-			reportError: function(e) {
-				var desc = User.logError('EditForm.reportError', e);
+			reportError: function(title, e) {
+				var desc = User.logError(title, e);
 				if (typeof e == 'string') {
 					EditForm.alert(e);
 				} else {

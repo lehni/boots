@@ -52,18 +52,12 @@ EditForm.inject({
 					} else {
 						var name = item.getEditName();
 						var value = req.data[name];
-						if (value === undefined) {
-							// Make sure the value was defined from the client.
-							// If something went wrong and it is not, report it
-							// and do not apply!
-							User.logError('EditForm#applyItems',
-								'No value received from client for ' + name
-								+ ', type = ' + item.type);
-						} else {
-						 	if (this.applyItem(item, value)) {
-								root.itemsChanged = changed = true;
-								root.changedItems[item.name] = item;
-							}
+						// Make sure the value was defined from the client
+						// and ony apply if it is valid
+						if (value !== undefined
+								&& this.applyItem(item, value)) {
+							root.itemsChanged = changed = true;
+							root.changedItems[item.name] = item;
 						}
 					}
 				}

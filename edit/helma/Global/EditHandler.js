@@ -88,15 +88,16 @@ EditHandler = Base.extend(new function() {
 				EditNode.onRequest();
 				var editResponse = res.data.editResponse = new Hash();
 				var mode = req.data.edit_mode || mode || 'edit';
-				var fullId = req.data.edit_id || base.getFullId();
+				var fullId = req.data.edit_id;
 				if (app.properties.debugEdit) {
-					User.log('Edit Request:', fullId, "'" + mode + "'");
+					User.log();
 					var values = [];
 					var filter = /^(http_host|HopSession|http_language|http_remotehost|autoLogin|http_browser|http_referer)$/;
 					for (var i in req.data)
 						if (!filter.test(i))
 							values.push(i + ': ' + Json.encode(req.data[i]));
-					User.log('Edit Data:\n' + values.join('\n'));
+					User.log('EditHandler.handle() Request:', fullId,
+							"'" + mode + "', Form Data:\n" + values.join('\n'));
 				}
 				var handler = handlers[mode];
 				var out = null;
@@ -106,10 +107,13 @@ EditHandler = Base.extend(new function() {
 				var handled = true;
 				if (req.data.helma_upload_error) {
 					EditForm.alert(req.data.helma_upload_error);
-					User.log('Upload Error', req.data.helma_upload_error);
+					User.log('EditHandler.handle() Upload Error',
+							req.data.helma_upload_error);
 				} else if (handler) {
 					res.push();
 					try {
+						if (!fullId)
+							throw 'Missing form data: edit_id';
 						var node = EditNode.get(fullId);
 						if (node) {
 							// Call the handler and commit changes if there are.
@@ -117,7 +121,7 @@ EditHandler = Base.extend(new function() {
 							handled = handle(handler, node, base, mode);
 						}
 					} catch (e) {
-						EditForm.reportError(e);
+						EditForm.reportError('EditHandler.handle()', e);
 						// Rollback changes in case there was an exception in
 						// res.commit() above, as otherwise the same error  will
 						// be thrown again at the end of the response handling
@@ -145,12 +149,13 @@ EditHandler = Base.extend(new function() {
 							try {
 								node.render(base, 'edit');
 							} catch (e) {
-								EditForm.reportError(e);
+								EditForm.reportError('EditHandler.handle()', e);
 							}
 						}
 					}
 				} else {
-					EditForm.reportError('Unknown edit handler: ' + mode);
+					EditForm.reportError('EditHandler.handle()',
+							'Unknown edit handler: ' + mode);
 				}
 				if (!out) {
 					if (res.message)

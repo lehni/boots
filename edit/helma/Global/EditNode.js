@@ -60,7 +60,7 @@ EditNode = Base.extend({
 				if (this.group)
 					this.form = this.form.getGroupForm(this.group);
 			} catch (e) {
-				EditForm.reportError(e);
+				EditForm.reportError('EditNode#getForm()', e);
 			}
 		}
 		return this.form;
@@ -123,6 +123,8 @@ EditNode = Base.extend({
 
 	statics: {
 		get: function(fullIdOrObject, parentItem, cached) {
+			if (fullIdOrObject == null)
+				return null;
 			var data = EditNode.getEditData(cached);
 			var node = null;
 			if (data) {

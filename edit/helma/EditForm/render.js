@@ -103,7 +103,7 @@ EditForm.inject({
 				html = this.renderTemplate('form', param);
 			}
 		} catch (e) {
-			EditForm.reportError(e);
+			EditForm.reportError('EditForm#render()', e);
 		}
 		// Create response object:
 		var response = {
