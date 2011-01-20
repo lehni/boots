@@ -20,15 +20,17 @@ Html = new function() {
 		}, {});
 
 	return {
-		/* Global switch to control XHTML format */
-
+		/*
+		 * Global switch to control XHTML format. Since we're defaulting to 
+		 * HTML5 now, set it to false
+		 */
 		XHTML: false,
 		
 		/* Tag rendering functions */
 
 		/**
 		 * Renders attributes for an Html tag. The first param is prepended by
-		 * a space, so the tag rendering code does not need to take care of that.
+		 * a space, so the tag rendering code does not need to take care of that
 		 */
 		attributes: function(attributes, out) {
 			var asString = !out;
@@ -292,7 +294,7 @@ Html = new function() {
 												// on the same line. We don't want these to
 												// be rendered in a new paragraph. Instead
 												// it should just follow the block tag and
-												// be terminated with a br tag. iSuffix handles
+												// be terminated with a br tag. isSuffix handles
 												// that. This might not be a suffix thought but
 												// another block tag. The parsing of the line
 												// that's been put back will tell...
@@ -326,7 +328,8 @@ Html = new function() {
 					if (i > 0)
 						out.push(lineBreak);
 					out.push(line);
-					// Suffixes are outside paragraphs and therefore need a break after.
+					// Suffixes are outside paragraphs and therefore need a
+					// break after.
 					if (isSuffix) {
 						out.push(breakTag);
 						wasSuffix = true;
@@ -349,14 +352,18 @@ Html = new function() {
 			// Lists
 			// -–—• = \x2d\u2013\u2014\u2022
 			var hasLists = false;
-			var str = input.replace(/^(\n*)(?:\s*)[\x2d\u2013\u2014\u2022](?:\s*)(.*)$/gm, function(all, pre, line) {
-				hasLists = true;
-				return pre + '<li>' + line.trim() + '</li>';
-			});
+			var str = input.replace(
+				/^(\n*)(?:\s*)[\x2d\u2013\u2014\u2022](?:\s*)(.*)$/gm,
+				function(all, pre, line) {
+					hasLists = true;
+					return pre + '<li>' + line.trim() + '</li>';
+				}
+			);
 			if (hasLists) {
 				str = str.replace(/(?:<li>(?:.*?)<\/li>\s*)+/gm, function(all) {
 					var end = all.match(/<\/li>(.*)$/m)[1];
-					return '<ul class="list">' + all.substring(0, all.length - end.length) + '</ul>\n' + end;
+					return '<ul class="list">' + all.substring(0,
+							all.length - end.length) + '</ul>\n' + end;
 				});
 			}
 			return str;
