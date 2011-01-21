@@ -57,10 +57,6 @@ Medium.inject({
 			} else {
 				param.src = this.getUri();
 				type = this.type;
-				// Flash video is a special case.
-				// TODO: consider a different BasicType for it?
-				if (type == 'video' && this.extension == 'flv')
-					type = 'video_flv';
 			}
 			return this.renderTemplate(type, param, out);
 		}
