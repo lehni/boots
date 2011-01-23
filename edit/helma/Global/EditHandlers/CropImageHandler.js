@@ -4,7 +4,7 @@ CropImageHandler = EditHandler.extend({
 	handle: function(base, object, node, form, item) {
 		var picture = HopObject.get(req.data.image_id);
 		if (item && picture) {
-			var options = item.getCropOptions(object);
+			var options = item.getCropOptions(object, picture);
 			var presets = options.presets;
 			if (presets) {
 				presets.each(function(preset, i) {
@@ -36,7 +36,7 @@ CropImageHandler = EditHandler.extend({
 			res.contentType = 'text/html';
 			form.renderTemplate('cropper', {
 				picture: picture,
-				options: options || {}
+				options: options || { width: 50, height: 50 }
 			}, res);
 		 }
 	}

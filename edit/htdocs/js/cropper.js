@@ -68,6 +68,7 @@ Cropper = Base.extend(Chain, Callback, {
 	},
 
 	setup: function(scroll) {
+		this.setupPreset();
 		if (this.resize === true)
 			this.resize = { width: true, height: true };
 		var size = this.image.size, scaled = this.image.scaled;
@@ -75,7 +76,7 @@ Cropper = Base.extend(Chain, Callback, {
 			size = this.image.size = this.image.getSize();
 		if (!scaled)
 			scaled = this.image.scaled = size;
-		var crop = this.crop, scale = this.image.scale;
+		var crop = this.crop, scale = this.image.scale || 1;
 		if (!crop) {
 			var crop = this.options.crop;
 			if (crop) {
@@ -101,10 +102,9 @@ Cropper = Base.extend(Chain, Callback, {
 			crop.width = this.min.width;
 		if (!this.resize.height && crop.height > this.min.height)
 			crop.height = this.min.height;
-		this.crop = crop; // Needed by setZoom
+		this.crop = this.setCrop(crop);
 		this.setupHandles();
 		this.setZoom(scale);
-		this.crop = this.setCrop(crop);
 		if (scroll)
 			this.scrollTo(
 				this.crop.left + this.crop.width / 2,
@@ -370,27 +370,26 @@ Cropper = Base.extend(Chain, Callback, {
 
 	},
 
+	setupPreset: function() {
+		var preset = this.getPreset();
+		if (preset) {
+			if (preset.resize) {
+				this.resize = preset.resize;
+			} else {
+				this.resize = {
+					width: preset.width === undefined,
+					height: preset.height === undefined
+				};
+			}
+			this.min = preset;
+		}
+	},
+
 	buildSizePresets: function() {
 		if (this.options.presets) {
 			this.presets = $('#cropper-buttons').injectBottom('select', {
 				id: 'presets',
-				events: {
-					change: function() {
-						var preset = this.getPreset();
-						if (preset) {
-							if (preset.resize) {
-								this.resize = preset.resize;
-							} else {
-								this.resize = {
-									width: preset.width === undefined,
-									height: preset.height === undefined
-								};
-							}
-							this.min = preset;
-							this.setup();
-						}
-					}.bind(this)
-				}
+				events: { change: this.setup.bind(this) }
 			});
 			this.presets.injectBottom('option', { text: 'Presets', value: '' });
 			this.options.presets.each(function(preset, i) {

@@ -48,8 +48,8 @@ TextItem = StringItem.extend({
 				|| this.base(object);
 	},
 
-	getCropOptions: function(object) {
-		return this.buttons.crop && this.buttons.crop.options
-				|| this.base(object);
+	getCropOptions: function(object, picture) {
+		return this.base(object, picture,
+				this.buttons.crop && this.buttons.crop.options);
 	}
 });

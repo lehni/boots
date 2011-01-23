@@ -196,8 +196,43 @@ EditItem = Base.extend(new function() {
 			});
 		},
 
-		getCropOptions: function(object) {
-			return {};
+		getCropOptions: function(object, picture, options) {
+			// options is only optionally provided by overriding prototypes.
+			// By default it is null.
+			if (!options)
+				options = {};
+			if (!options.crop) {
+				// If no crop is provided for a new picture yet, calculate a
+				// default one now.
+				var crop = options.crop = { width: 50, height: 50 };
+				// Scan through presets and select one if none is selected
+				var presets = options.presets;
+				if (presets) {
+					// Find selected preset first
+					var selected = presets.find(function(preset) {
+						if (preset.selected)
+							return preset;
+					});
+					// If there is none, find the first and select it.
+					if (!selected) {
+						selected = presets.find(function(preset) {
+							if (preset)
+								return preset;
+						});
+						if (selected)
+							selected.selected = true;
+					}
+					if (selected) {
+						if (crop.width < selected.width)
+							crop.width = selected.width;
+						if (crop.height < selected.height)
+							crop.height = selected.height;
+					}
+				}
+				crop.left = Math.round((picture.width - crop.width) / 2);
+				crop.top = Math.round((picture.height - crop.height) / 2);
+			}
+			return options;
 		},
 
 		getButtons: function(baseForm, name) {
