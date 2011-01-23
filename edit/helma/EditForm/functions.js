@@ -560,12 +560,17 @@ EditForm.inject(new function() {
 		 */
 		createItem: function(item, defaults, useDefaults) {
 			if (item) {
-				if (item == true)
+				if (item == true) {
 					return defaults;
-				else
-					return new Hash(defaults).append(item);
-			} else if (item === undefined && useDefaults)
+				} else {
+					// We cannot use Hash#append here, since we require on
+					// inject functionality to be able to use this.base() for
+					// things like onApply in Node's param.title field.
+					return defaults.clone().inject(item);
+				}
+			} else if (item === undefined && useDefaults) {
 				return defaults;
+			}
 			return null;
 		},
 
