@@ -238,14 +238,14 @@ EditForm = Base.extend({
 		var values = new Hash();
 		$$('[name^="value_"]', this.form).each(function(el) {
 			var val = null;
-			if (el instanceof Select) {
+			if (el instanceof HtmlSelect) {
 				val = { options: el.getOptions().map(function(opt) {
 					return { 
 						text: opt.getText(), value: opt.getValue(), 
 						selected: opt.getSelected()
 					};
 				}) };
-			} else if ((!(el instanceof Input) 
+			} else if ((!(el instanceof HtmlInput) 
 					|| !/^(file|button)$/.test(el.getType()))
 					&& el.getValue() != null) {
 				val = { value: el.getValue() };
@@ -784,7 +784,7 @@ EditForm.register({
 
 	help_toggle: function(element) {
 		var el = $('.edit-help-button', this.container);
-		if (el instanceof Input) {
+		if (el instanceof HtmlInput) {
 			el.setValue(el.getValue() == 'Help' ? 'Close Help' : 'Help');
 		} else {
 			el.setText(el.getText() == 'Help' ? 'Close Help' : 'Help');
@@ -1633,7 +1633,7 @@ ColorChooser = EditChooser.extend({
 
 		$A('red green blue hue saturation brightness hex overlay rainbow cross slider preview').each(function(name) {
 			var obj = this[name] = $('#edit-color-' + name, this.form);
-			if ((obj instanceof Input)) {
+			if ((obj instanceof HtmlInput)) {
 				obj.addEvent('keyup', function() {
 					that.editField(this);
 				});

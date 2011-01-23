@@ -1,4 +1,4 @@
-SearchField = Input.extend({
+SearchField = HtmlInput.extend({
 	_class: 'search-field',
 
 	initialize: function() {
