@@ -46,6 +46,7 @@ EditForm.SHOW_LABELS = 'top';
 
 // The width value to be used in tables. Can be in pecent, otherwise pixels.
 EditForm.WIDTH_TOTAL = "100%";
+// The horizontal space between two items in the same row.
 EditForm.WIDTH_SPACER = "1%";
 // The amount the width gets reduced in each nesting of forms
 EditForm.WIDTH_PADDING = "2%";

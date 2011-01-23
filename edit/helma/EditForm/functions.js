@@ -295,7 +295,7 @@ EditForm.inject(new function() {
 
 		getConvertedWidth: function(value) {
 			var num = parseFloat(value);
-			return /%$/.test(value)
+			return /%$/.test(value) // Convert percentages to width values
 				?  Math.round(100 * num / this.width)
 				: num;
 		},
