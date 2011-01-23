@@ -36,7 +36,7 @@ CropImageHandler = EditHandler.extend({
 			res.contentType = 'text/html';
 			form.renderTemplate('cropper', {
 				picture: picture,
-				options: options || { width: 50, height: 50 }
+				options: options
 			}, res);
 		 }
 	}
