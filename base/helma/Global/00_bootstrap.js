@@ -59,7 +59,7 @@ new function() {
 							}, true);
 						} catch (e) {}
 				}
-				if (!res || func || !res.get && !res.set)
+				if (!res || func || res instanceof java.lang.Object || !res.get && !res.set)
 					res = { value: res, writable: true };
 				if ((describe(dest, name) || { configurable: true }).configurable) {
 					res.configurable = true;
@@ -173,9 +173,8 @@ new function() {
 
 			type: function(obj) {
 				return (obj || obj === 0) && (obj._type
-					|| (obj instanceof java.lang.Object
-						&& !(obj instanceof org.mozilla.javascript.Scriptable)
-						? 'java' : typeof obj)) || null;
+					|| (obj instanceof java.lang.Object ? 'java' : typeof obj))
+					|| null;
 			},
 
 			check: function(obj) {
