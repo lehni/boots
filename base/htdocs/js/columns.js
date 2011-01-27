@@ -4,7 +4,7 @@
 // Copyright (c) 2005 Cdric Savarese <pro@4213miles.com>
 // Licensed under the CC-GNU LGPL <http://creativecommons.org/licenses/LGPL/2.1/>
 //
-// Changes by (c) 2009 - 2010 Juerg Lehni
+// Changes (c) 2009 - 2011 Juerg Lehni
 
 HtmlElement.inject(new function() {
 
