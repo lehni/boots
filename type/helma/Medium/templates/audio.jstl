@@ -1,7 +1,7 @@
 <audio<%-%>
 <%= param.id prefix=' id="' suffix='"' -%>
 <%= param.src prefix=' src="' suffix='"' -%>
-<%= ' controller' if=param.controller -%>
+<%= ' controls' if=param.controls -%>
 <%= ' autoplay' if=param.autoplay -%>
 <%= ' loop' if=param.loop -%>
 <%= ' preload' if=param.preload -%>

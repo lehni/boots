@@ -4,7 +4,7 @@
 <%= param.poster prefix=' poster="' suffix='"' -%>
 <%= param.width prefix=' width="' suffix='"' -%>
 <%= param.height prefix=' height="' suffix='"' -%>
-<%= ' controller' if=param.controller -%>
+<%= ' controls' if=param.controls -%>
 <%= ' autoplay' if=param.autoplay -%>
 <%= ' loop' if=param.loop -%>
 <%= ' preload' if=param.preload -%>
