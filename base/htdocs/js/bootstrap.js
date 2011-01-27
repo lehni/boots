@@ -1404,6 +1404,10 @@ DomNode.inject(new function() {
 			return this;
 		},
 
+		hasProperty: function(name) {
+			return this.getProperty(name) !== undefined;
+		},
+
 		removeProperty: function(name) {
 			var key = properties[name], bool = key && bools[name];
 			key = key && typeof key == 'function' ? key(this) : key;
@@ -1815,6 +1819,16 @@ DomElement.inject(new function() {
 			var bounds = this.getBounds();
 			return pos.x >= bounds.left && pos.x < bounds.right &&
 				pos.y >= bounds.top && pos.y < bounds.bottom;
+		},
+
+		isVisible: function(fully) {
+			var win = this.getWindow(), top = win.getScrollOffset().y,
+				bottom = top + win.getSize().height, bounds = this.getBounds();
+			return (bounds.height > 0 || bounds.width > 0) 
+					&& (bounds.top >= top && bounds.bottom <= bottom 
+						|| (fully && bounds.top <= top && bounds.bottom >= bottom) 
+						|| !fully && (bounds.top <= top && bounds.bottom >= top 
+							|| bounds.top <= bottom && bounds.bottom >= bottom)); 
 		}
 	};
 
