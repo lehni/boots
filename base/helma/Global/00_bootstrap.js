@@ -295,7 +295,7 @@ Enumerable = {
 	},
 
 	max: function(iter, bind) {
-		var that = this;
+		var that = this, iter = Base.iterator(iter);
 		return Base.each(this, function(val, i) {
 			val = iter.call(bind, val, i, that);
 			if (val >= (this.max || val)) this.max = val;
@@ -303,7 +303,7 @@ Enumerable = {
 	},
 
 	min: function(iter, bind) {
-		var that = this;
+		var that = this, iter = Base.iterator(iter);
 		return Base.each(this, function(val, i) {
 			val = iter.call(bind, val, i, that);
 			if (val <= (this.min || val)) this.min = val;
@@ -317,7 +317,7 @@ Enumerable = {
 	},
 
 	sortBy: function(iter, bind) {
-		var that = this;
+		var that = this, iter = Base.iterator(iter);
 		return this.map(function(val, i) {
 			return { value: val, compare: iter.call(bind, val, i, that) };
 		}, bind).sort(function(left, right) {
