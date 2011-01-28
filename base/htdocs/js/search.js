@@ -23,9 +23,15 @@ SearchField = HtmlInput.extend({
 				clear = that.get('value').length > 0;
 				right.modifyClass('search-field-clear', clear);
 			}
-			this.wrap('div', { width: this.getStyle('width') });
-			this.injectBefore('span', { 'class': 'search-field-left' });
-			var right = this.injectAfter('span', { 'class': 'search-field-right' });
+			this.wrap('div', {
+				width: this.getStyle('width')
+			});
+			this.injectBefore('span', {
+				'class': 'search-field-left'
+			});
+			var right = this.injectAfter('span', {
+				'class': 'search-field-right'
+			});
 			this.addClass('search-field-input');
 			this.setWidth(this.getWidth() - 50); // 2 * 19 + 4 * 3
 			var value = this.get('value');
