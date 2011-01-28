@@ -449,13 +449,6 @@ Array.inject({
 
 	remove: function(iter, bind) {
 		var entry = this.findEntry(iter, bind);
-		if (entry.key != null)
-			this.splice(entry.key, 1);
-		return entry.value;
-	},
-
-	remove: function(iter, bind) {
-		var entry = this.findEntry(iter, bind);
 		if (entry) {
 			this.splice(entry.key, 1);
 			return entry.value;
@@ -483,19 +476,6 @@ Array.inject({
 	append: function(items) {
 		for (var i = 0, l = items.length; i < l; i++)
 			this[this.length++] = items[i];
-		return this;
-	},
-
-	subtract: function(items) {
-		for (var i = 0, l = items.length; i < l; i++)
-			Array.remove(this, items[i]);
-		return this;
-	},
-
-	intersect: function(items) {
-		for (var i = this.length - 1; i >= 0; i--)
-			if (!items.find(this[i]))
-				this.splice(i, 1);
 		return this;
 	},
 
@@ -557,6 +537,22 @@ Array.inject({
 
 	getLast: function() {
 		return this[this.length - 1];
+	}
+}, new function() {
+	function combine(subtract) {
+		return function(items) {
+			var res = new this.constructor();
+			for (var i = this.length - 1; i >= 0; i--)
+				if (subtract == !Array.find(items, this[i]))
+					res.push(this[i]);
+			return res;
+		}
+	}
+
+	return {
+		subtract: combine(true),
+
+		intersect: combine(false)
 	}
 });
 
