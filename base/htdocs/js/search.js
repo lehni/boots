@@ -12,6 +12,16 @@ SearchField = HtmlInput.extend({
 					this.fireEvent('search');
 				}
 			}
+
+			this.addEvents({
+				focus: function() {
+					this.focused = true;
+				},
+
+				blur: function() {
+					this.focused = false;
+				}
+			});
 		} else {
 			var that = this, clear = false;
 			var placeholder = this.getProperty('placeholder');
