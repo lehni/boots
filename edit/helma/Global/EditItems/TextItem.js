@@ -3,16 +3,17 @@ TextItem = StringItem.extend({
 	_scale: true,
 
 	render: function(baseForm, name, value, param, out) {
-		Html.textarea({
+		var textarea = {
 			name: name, value: value,
 			cols: this.cols || '40',
 			rows: this.rows || '5',
 			wrap: this.wrap || 'virtual',
 			className: this.className + (this.countWords
-					? ' edit-text-count' : ''),
-			onKeyUp: this.countWords
-					? baseForm.renderHandle('text_count') : null
-		}, out);
+					? ' edit-text-count' : '')
+		};
+		if (this.countWords)
+			textarea.onKeyUp = baseForm.renderHandle('text_count');
+		Html.textarea(textarea, out);
 		this.renderButtons(baseForm, name, true, out);
 	},
 
