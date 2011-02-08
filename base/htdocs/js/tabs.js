@@ -1,5 +1,6 @@
 // Tab Pane 1.02, Created by Erik Arvidsson, http://webfx.eae.net/
 // Adapted and optimized by Juerg Lehni for Lineto.com, 2003-2007
+// TODO: Convert to Bootstrap _class mechanism
 
 TabPane = Base.extend({
 	initialize: function(el) {
@@ -43,20 +44,18 @@ TabPane = Base.extend({
 	},
 	
 	statics: {
-		tabs: [],
-
 		setup: function() {
-			this.tabs = [];
+			var tabs = [];
 			$$('div.tab-pane').each(function(el) {
 				if (!el.tabPane)
-					this.tabs.push(new TabPane(el));
-			}, this);
+					tabs.push(new TabPane(el));
+			});
 			$$('div.tab-page').each(function(el) {
 				if (!el.tabPage && el.getParent().tabPane)
-					this.tabs.push(new TabPane(el));
-			}, this);
+					tabs.push(new TabPane(el));
+			});
 			// Hide tab if there's only one
-			this.tabs.each(function(p) {
+			tabs.each(function(p) {
 				if (p.pages.length == 1)
 					p.pages[0].tab.addClass('hidden');
 			});
