@@ -42,7 +42,7 @@ function json_macro(param, object) {
 	return Json.encode(object, param.properties && param.properties.split(','));
 }
 
-function link_macro(param) {	
+function link_macro(param) {
 	 // Backwards compatibility
 	if (param.mail)
 		param.email = param.mail;
