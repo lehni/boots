@@ -195,22 +195,36 @@ EditForm.inject({
 	}.toRender(),
 
 	renderItems: function(baseForm, param, out) {
-		if (this.tabs != null) {
-			out.push();
+		if (this.tabs) {
+			// If param.itemsOnly is provided from the start, just render
+			// all items from all tabs, but not the tabs themselves.
+			// This is required by EditableListItem.
+			// TODO: Code could use some major clean-up...
+			var itemsOnly = param.itemsOnly;
+			if (!itemsOnly) {
+				out.push();
+			}
 			var tabs = this.tabs;
+			// Set param.itemsOnly for tab.groupForm.renderItems()
 			param.itemsOnly = true;
 			for (var i = 0; i < tabs.length; i++) {
 				var tab = tabs[i];
 				if (tab.type == 'tab') {
-					baseForm.renderTemplate('tab#page', {
-						label: tab.groupForm.label,
-						items: tab.groupForm.renderItems(baseForm, param),
-						width: param.width
-					}, out);
+					if (itemsOnly) {
+						tab.groupForm.renderItems(baseForm, param, out);
+					} else {
+						baseForm.renderTemplate('tab#page', {
+							label: tab.groupForm.label,
+							items: tab.groupForm.renderItems(baseForm, param),
+							width: param.width
+						}, out);
+					}
 				}
 			}
-			param.tabs = out.pop();
-			baseForm.renderTemplate('tab#pane', param, out);
+			if (!itemsOnly) {
+				param.tabs = out.pop();
+				baseForm.renderTemplate('tab#pane', param, out);
+			}
 		} else {
 			var rows = this.rows;
 			if (!param.itemsOnly)
