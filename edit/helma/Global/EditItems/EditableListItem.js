@@ -17,7 +17,7 @@ EditableListItem = ListItem.extend({
 			form.setWidth(this.form.getInnerWidth(width, this.padding));
 		// Update the edit form's variablePrefix to group by this
 		// edit item.
-		form.variablePrefix = this.getEditName() + '_' + id + '_';
+		form.setVariablePrefix(this.getEditName() + '_' + id + '_');
 		// Copy over labels setting, to allow list to control whether labels
 		// appear or not.
 		form.showLabels = this.showLabels;

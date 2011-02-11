@@ -154,9 +154,10 @@ EditForm.inject(new function() {
 		form.name = name;
 		if (addRows)
 			insertRows(form, 0, args, startIndex);
-		// Use a different variable prefix for the values of this tab:
-		// append name + '_':
-		form.variablePrefix = that.variablePrefix + name + '_';
+		// Erase variablePrefix so it gets calculated the first time
+		// form.getVariablePrefix() is called. This allows the root form to
+		// change prefix, as required by EditableListItem.
+		form.variablePrefix = null;
 		var group = { name: name, label: label, type: type, groupForm: form };
 		// Keep all groups in root, so things can be nested endlessly.
 		// but only unique group names in nested structures work
@@ -332,6 +333,28 @@ EditForm.inject(new function() {
 			showLabels = Base.pick(showLabels, this.showLabels,
 					EditForm.SHOW_LABELS);
 			return showLabels != 'none' ? showLabels : null;
+		},
+
+		setVariablePrefix: function(prefix) {
+			// Only allow root forms to change prefix. Grouped forms have their
+			// prefix generated based on the root form's prefix.
+			if (this.root == this) {
+				this.variablePrefix = prefix;
+				return true;
+			}
+			return false;
+		},
+
+		getVariablePrefix: function() {
+			if (!this.variablePrefix) {
+				// For group / tab forms, use the parent's prefix plus the name.
+				// Cache the value internally so it's not calculated for each
+				// field. But do not set it at creation time, as we need to 
+				// allow EditableListItems to change the root prefix first.
+				this.variablePrefix = this.parent.getVariablePrefix()
+					+ this.name + '_';
+			}
+			return this.variablePrefix;
 		},
 
 		setParent: function(parent) {

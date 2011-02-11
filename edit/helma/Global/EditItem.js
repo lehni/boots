@@ -119,7 +119,7 @@ EditItem = Base.extend(new function() {
 		},
 
 		getEditName: function() {
-			return this.name && this.form.variablePrefix + this.name;
+			return this.name ? this.form.getVariablePrefix() + this.name : null;
 		},
 
 		getEditParam: function(params) {
