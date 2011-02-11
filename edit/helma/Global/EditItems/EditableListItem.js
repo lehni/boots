@@ -117,6 +117,7 @@ EditableListItem = ListItem.extend({
 		}
 		baseForm.renderTemplate('listItem#list', {
 			name: name,
+			inline: this.inline,
 			addEntries: this.addEntries,
 			addHandler: this.addEntries
 				&& this.getAddPrototypeButton(baseForm, name, {

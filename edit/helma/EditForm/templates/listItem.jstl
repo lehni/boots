@@ -1,5 +1,5 @@
 <% #list -%>
-<div id="edit-list-<%= param.name %>" class="edit-list edit-nounderline<%= param.addEntries prefix=' edit-list-insert-' %>">
+<div id="edit-list-<%= param.name %>" class="edit-list edit-nounderline<%= ' edit-list-inline' if=param.inline %><%= param.addEntries prefix=' edit-list-insert-' %>">
 <div class="edit-list-header">
 <% this.template '#addButton' id=param.name
 	if=<%= param.addHandler && param.addEntries == 'top' %>
