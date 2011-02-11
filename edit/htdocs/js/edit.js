@@ -182,7 +182,7 @@ EditForm = Base.extend({
 				className: 'edit-preview'
 			}, [
 				'a', {
-					html: 'Exit Preview', href: '#',
+					text: 'Exit Preview', href: '#',
 					events: {
 						click: function(event) {
 							that.show(true);
