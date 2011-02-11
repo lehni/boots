@@ -29,25 +29,28 @@ EditableListItem = ListItem.extend({
 			// In order to avoid endless recursion, we are first setting
 			// the chooser object to the valid name.
 			// Since getPrototypeChooserList calls getAddPrototypeButton through
-			// renderEntry again, this would lead to an endless recursion otherwise.
+			// renderEntry again, this would lead to an endless recursion
+			// otherwise.
 			this.chooser = { name: name + '_chooser' };
-			this.chooser.list = this.getPrototypeChooserList(baseForm, function(ctor) {
-				// Create an empty instance in order to render small edit form:
-				// TODO: Cache created instances and produced html somehow?
-				// Can we use bootstrap's internal version number?
-				// Should this be exposed through a method on Function even?
-				// Or simpy caching within 'this'...
-				var html = this.renderEntry(baseForm, name, new ctor(this), {
-					add: param.add, width: param.width,
-					id: '{%' + name + '_id%}'
+			this.chooser.list = this.getPrototypeChooserList(baseForm,
+				function(ctor) {
+					// Create an empty instance in order to render small edit
+					// form.
+					// Pass ctor.dont and call initialize() explicitely, in
+					// order to not rely Boot's internal edit node structure
+					// which consumes a lot of memory and performs unneeded
+					// initialization steps. 
+					var obj = new ctor(ctor.dont);
+					if (obj.initialize)
+					 	obj = obj.initialize() || obj;
+					obj.cache.parentNode = this.form.root.node.object;
+					var html = this.renderEntry(baseForm, name, obj, {
+						add: param.add, width: param.width,
+						id: '{%' + name + '_id%}'
+					});
+					return baseForm.renderHandle('list_add', name, html,
+						'{%' + name + '_entry_id%}');
 				});
-				return baseForm.renderHandle('list_add', name, html,
-					'{%' + name + '_entry_id%}');
-			});
-			/*
-			var t = Date().now();
-			User.log(Date().now() - t);
-			*/
 		}
 		return this.getPrototypeChooserButton(baseForm, { 
 			name: name + (param.entryId ? '_' + param.entryId : ''),
