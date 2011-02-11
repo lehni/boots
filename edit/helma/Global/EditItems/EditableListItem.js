@@ -2,7 +2,7 @@ EditableListItem = ListItem.extend({
 	_types: 'list',
 
 	getEditForm: function(object, id, width, force) {
-		var form = EditForm.get(object, force);
+		var form = object.getEditForm({});
 		// TODO: Since we're using cached forms, this means we cannot use
 		// the same form elsewhere at the same time.
 		if (id == null)
