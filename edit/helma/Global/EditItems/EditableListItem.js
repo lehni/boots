@@ -2,9 +2,10 @@ EditableListItem = ListItem.extend({
 	_types: 'list',
 
 	getEditForm: function(object, id, width, force) {
+		// Do not use cached forms, but rather ask the object for a new form
+		// each time. This reduces memory foot-print and should be faster enough,
+		// as most nested editable list forms are quick to generate.
 		var form = object.getEditForm({});
-		// TODO: Since we're using cached forms, this means we cannot use
-		// the same form elsewhere at the same time.
 		if (id == null)
 			id = object._id;
 		form.entryId = id;
