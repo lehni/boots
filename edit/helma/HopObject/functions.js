@@ -22,8 +22,10 @@ HopObject.inject(new function() {
 				if (parentItem) {
 					// Set temporary parentNode through it's parent EditItem
 					// Allways access the root form to get the node, as
-					// parenItem.form might be a group
-					this.cache.parentNode = parentItem.form.root.node.object;
+					// parenItem.form might be a group.
+					// Do not rely on the form's edit node, as forms used in
+					// editable lists do not have associated nodes.
+					this.cache.parentNode = parentItem.form.root.object;
 				}
 				// Remember transientId so we can check in onPersist if onStore
 				// should be called.

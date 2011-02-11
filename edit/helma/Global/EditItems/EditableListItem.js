@@ -43,7 +43,9 @@ EditableListItem = ListItem.extend({
 					var obj = new ctor(ctor.dont);
 					if (obj.initialize)
 					 	obj = obj.initialize() || obj;
-					obj.cache.parentNode = this.form.root.node.object;
+					// Do not rely on the form's edit node, as forms used in
+					// editable lists do not have associated nodes.
+				 	obj.cache.parentNode = this.form.root.object;
 					var html = this.renderEntry(baseForm, name, obj, {
 						add: param.add, width: param.width,
 						id: '{%' + name + '_id%}'
