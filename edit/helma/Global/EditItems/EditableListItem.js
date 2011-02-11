@@ -41,11 +41,22 @@ EditableListItem = ListItem.extend({
 					// which consumes a lot of memory and performs unneeded
 					// initialization steps. 
 					var obj = new ctor(ctor.dont);
-					if (obj.initialize)
-					 	obj = obj.initialize() || obj;
+					// Set the parentNode, which normally gets set automatically
+					// in setCreating(). This is required to make 
+					// getParentNode() to work in initialize() and getEditForm()
 					// Do not rely on the form's edit node, as forms used in
 					// editable lists do not have associated nodes.
-				 	obj.cache.parentNode = this.form.root.object;
+					var parent = this.form.root.object;
+				 	obj.cache.parentNode = parent;
+					if (obj.initialize) {
+						var ret = obj.initialize();
+						if (ret) {
+							obj = ret;
+							// In case initialize() returns another object,
+							// set it again
+						 	obj.cache.parentNode = parent;
+						}
+					}
 					var html = this.renderEntry(baseForm, name, obj, {
 						add: param.add, width: param.width,
 						id: '{%' + name + '_id%}'
