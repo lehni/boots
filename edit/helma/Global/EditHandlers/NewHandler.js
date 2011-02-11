@@ -28,7 +28,9 @@ NewHandler = EditHandler.extend({
 					// is called, getParentNode works as expected.
 					// See edit/Global/Function.js for further explanations.
 					var object = new ctor(item);
-					var node = EditNode.get(object);
+					// Make sure the new object's edit node knows about the
+					// parent.
+					var node = EditNode.get(object, item);
 					form = node.getForm();
 					if (!form) {
 						EditForm.alert(

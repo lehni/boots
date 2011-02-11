@@ -4,7 +4,7 @@ HopObject.inject(new function() {
 	var transients = {};
 
 	return {
-		setCreating: function(creating, id) {
+		setCreating: function(creating, id, parentItem) {
 			if (creating) {
 				// Make sure the modified getById finds this:
 				transients[this._id] = this;
@@ -18,6 +18,12 @@ HopObject.inject(new function() {
 					// parent since the fullId would change and the EditNode
 					// could not be found.
 					this.cache.creationId = this._id;
+				}
+				if (parentItem) {
+					// Set temporary parentNode through it's parent EditItem
+					// Allways access the root form to get the node, as
+					// parenItem.form might be a group
+					this.cache.parentNode = parentItem.form.root.node.object;
 				}
 				// Remember transientId so we can check in onPersist if onStore
 				// should be called.
@@ -46,6 +52,7 @@ HopObject.inject(new function() {
 					delete transients[this.cache.creationId];
 				delete this.cache.creationId;
 				delete this.cache.transientId;
+				delete this.cache.parentNode;
 			}
 		},
 
@@ -128,14 +135,8 @@ HopObject.inject(new function() {
 			// a collection e.g. resources, and we need to step one up further.
 			while (parent && parent.constructor == HopObject)
 				parent = parent.getParent();
-			if (!parent) {
-				// See if there is a cached edit node, and if so, determine
-				// future edit parent from it:
-				var node = EditNode.getCached(this);
-				if (node && node.parent)
-					parent = node.parent.object;
-			}
-			return parent;
+			// If parent is null, see if there is a cached parent node.
+			return parent || this.cache.parentNode;
 		},
 
 		// remove deletes an object and its subnodes according to the values set

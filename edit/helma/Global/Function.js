@@ -18,23 +18,22 @@ Function.inject({
 		if (proto instanceof HopObject && proto.getEditForm) {
 			proto.constructor = function(param) {
 				if (param !== ctor.dont) {
-					this.setCreating(true);
+					var isItem = param instanceof EditItem;
+					this.setCreating(true, null, isItem ? param : null);
 					// Now get the node. This gets getParentNode to work.
 					// Support passing an EditItem to the constructor, so
 					// the editing parent can be determined from it. This
 					// is then passed to EditNode.get...
-					var isItem = param instanceof EditItem;
 					if (app.properties.debugEdit)
 						User.log('Creating', this.getEditId(), isItem, param);
-					EditNode.get(this, isItem ? param : null);
 					// Now call initialize that we suppressed above when
 					// creating ctor:
 					if (proto.initialize) {
 						var ret = proto.initialize.apply(this, isItem
-									? [] : arguments);
+								? [] : arguments);
 						// TODO: Check if this really works?
 						if (ret && ret != this) {
-							ret.setCreating(true);
+							ret.setCreating(true, null, isItem ? param : null);
 							return ret;
 						}
 					}
