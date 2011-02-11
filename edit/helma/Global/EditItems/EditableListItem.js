@@ -149,7 +149,6 @@ EditableListItem = ListItem.extend({
 				var pos = rest.indexOf('_');
 				var id = rest.substring(0, pos);
 				if (/^n/.test(id)) { // Create
-					User.log('Create', id);
 					// Group values and process later.
 					// This is needed by the onCreate handler that
 					// can produce an object based on e.g. file type
