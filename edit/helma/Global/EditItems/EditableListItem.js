@@ -14,8 +14,12 @@ EditableListItem = ListItem.extend({
 		form.listEntryId = object.getFullId();
 		// Only shrink if it does not fit. It might be the user has already
 		// taken care of it.
-		if (form.getWidth() >= width)
-			form.setWidth(this.form.getInnerWidth(width, this.padding));
+		if (width && form.width >= width) {
+			form.width = width;
+		}
+		if (this.padding !== undefined) {
+			form.padding = this.padding;
+		}
 		// Update the edit form's variablePrefix to group by this
 		// edit item.
 		form.setVariablePrefix(this.getEditName() + '_' + id + '_');

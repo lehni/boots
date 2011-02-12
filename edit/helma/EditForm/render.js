@@ -255,8 +255,9 @@ EditForm.inject({
 			rowSpan = 2 * this.maxRowLength - 1;
 
 		var itemWidth, spacerWidth = this.spacerWidth;
+		// Remove padding from available width
+		var availableWidth = this.width - this.padding;
 		// Scan through each item and see if it sets width
-		var availableWidth = this.width;
 		var definedWidths = {};
 		var cellCount = 0;
 		var autoLayoutCount = 0;

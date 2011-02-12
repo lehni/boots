@@ -283,15 +283,15 @@ EditForm.inject(new function() {
 			this.allGroups = {};
 			// the width of the table, defaults to 100 percent, but can
 			// be specified in pixels too
-			this.setWidth(param.width || EditForm.WIDTH_TOTAL);
-		},
-
-		setWidth: function(width) {
+			var width = param.width || EditForm.WIDTH_TOTAL;
+			// Parse width string
 			this.width = parseFloat(width);
 			this.widthInPercent = /%$/.test(width);
 			this.widthUnit = this.widthInPercent ? '%' : '';
 			this.spacerWidth = this.getConvertedWidth(EditForm.WIDTH_SPACER);
-			this.widthPadding = this.getConvertedWidth(EditForm.WIDTH_PADDING);
+			this.padding = this.getConvertedWidth(
+					param.padding !== undefined
+						? param.padding : EditForm.WIDTH_PADDING);
 		},
 
 		getConvertedWidth: function(value) {
@@ -299,17 +299,6 @@ EditForm.inject(new function() {
 			return /%$/.test(value) // Convert percentages to width values
 				?  Math.round(100 * num / this.width)
 				: num;
-		},
-
-		getInnerWidth: function(width, padding) {
-			padding = padding === undefined
-				? this.widthPadding
-				: this.getConvertedWidth(padding);
-			return ((width || this.width) - padding) + this.widthUnit;
-		},
-
-		getWidth: function() {
-			return this.width;
 		},
 
 		getShowTitle: function() {
@@ -367,6 +356,7 @@ EditForm.inject(new function() {
 			this.width = parent.width;
 			this.spacerWidth = parent.spacerWidth;
 			this.widthInPercent = parent.widthInPercent;
+			this.padding = parent.padding;
 			// Inherit don't cache
 			this.dontCache = parent.dontCache;
 			
