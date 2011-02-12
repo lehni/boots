@@ -11,6 +11,27 @@ Codec = new function() {
 		return str ? (str = uneval(str)).substring(1, str.length - 1) : str;
 	}
 
+	function encoder(encoder, str) {
+		return function(str) {
+			// format() ignores trailing line break characters, so add
+			// periods to make them render, then remove the periods again:
+			var begin = /^[\n\r]/.test(str);
+			var end = /[\n\r]$/.test(str);
+			if (begin)
+				str = '.' + str;
+			if (end)
+				str = str + '.';
+			str = encoder(str);
+			if (begin || end)
+				str = str.substring(begin ? 1 : 0, str.length - (end ? 1 : 0));
+			if (str && !Html.XHTML) {
+			 	// Helma falsy uses <br /> even for non XHTML, so fix this here
+				str = str.replaceAll('<br />', '<br>');
+			}
+			return str;
+		}
+	}
+
 	return {
 
 		// The opposite of helma's encode, using org.htmlparser:
@@ -26,16 +47,14 @@ Codec = new function() {
 		/**
 		 * Encodes all text with entities but preserves html markup. Replaces \n
 		 * with <br>
-		 * TODO: Helma falsy uses <br /> even for non XHTML...
 		 */
-		encodeHtml: format,
+		encodeHtml: encoder(format),
 
 		/**
 		 * Encodes all text and html markup with entities. Replaces \n with
 		 * <br>
-		 * TODO: Helma falsy uses <br /> even for non XHTML...
 		 */
-		encodeAll: encode,
+		encodeAll: encoder(encode),
 		// encode calls HtmlEncoder.encodeAll internally.
 
 		/**
