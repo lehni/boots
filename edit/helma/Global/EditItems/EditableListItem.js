@@ -19,6 +19,8 @@ EditableListItem = ListItem.extend({
 		}
 		if (this.padding !== undefined) {
 			form.padding = this.padding;
+		} else if (this.inline) {
+			form.padding = 0;
 		}
 		// Update the edit form's variablePrefix to group by this
 		// edit item.
@@ -106,7 +108,7 @@ EditableListItem = ListItem.extend({
 		if (baseForm.getShowLabels(this.showLabels) != 'top') {
 			// If there are no labels at the top, remove the width for the
 			// editing buttons from the width available to the nested forms
-			var buttonWidth = 16;
+			var buttonWidth = 16; // 12px + 4px margin
 			if (this.addEntries)
 				width -= buttonWidth;
 			if (this.sortable)
