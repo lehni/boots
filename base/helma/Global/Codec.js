@@ -12,6 +12,7 @@ Codec = new function() {
 	}
 
 	function encoder(encoder, str) {
+		// TODO: This is used so much, it would make sense to fix Helma instead
 		return function(str) {
 			// format() ignores trailing line break characters, so add
 			// periods to make them render, then remove the periods again:
