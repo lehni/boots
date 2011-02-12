@@ -54,3 +54,10 @@ TRUNCATE TABLE search;
 # 10. position -> int
 ALTER TABLE  `nodes` CHANGE  `position`  `position` INT UNSIGNED NULL DEFAULT NULL;
 ALTER TABLE  `resources` CHANGE  `position`  `position` INT UNSIGNED NULL DEFAULT NULL;
+
+# 11. Movie -> Video
+
+ALTER TABLE  `resources` ADD  `url` TEXT NULL DEFAULT NULL AFTER  `type`;
+UPDATE resources set url = data WHERE prototype = 'Movie';
+UPDATE resources set data = NULL WHERE prototype = 'Movie';
+UPDATE resources set prototype = 'Video' WHERE prototype = 'Movie';

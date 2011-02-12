@@ -1,4 +1,4 @@
-Movie.inject({
+Video.inject({
 	getEditForm: function(param) {
 		if (param.file === undefined)
 			param.file = false;
@@ -6,7 +6,7 @@ Movie.inject({
 			param.hasDimensions = false;
 		var form = this.base(param);
 		form.insertAt(0, form.createItem(param.url, {
-			name: 'url', type: 'string', label: 'Movie',
+			name: 'url', type: 'string', label: 'Video URL',
 			requirements: {
 				notNull: true,
 				url: true
@@ -15,8 +15,6 @@ Movie.inject({
 				if (this.url != url) {
 					this.url = url;
 					var data = OEmbedTag.getData({ url: this.url }, { timeout: 1000 });
-					if (app.properties.debugEdit)
-						User.log('OEmbed Movie Data', Json.encode(data));
 					if (data) {
 						this.width = data.width;
 						this.height = data.height;
