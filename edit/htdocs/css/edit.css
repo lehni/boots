@@ -10,7 +10,7 @@
 	border-bottom: 1px solid #000;
 }
 
-/* default */
+/* Default */
 
 #edit td, #edit input, #edit select, #edit textarea, #edit a.edit-button, #edit .tab-pane .edit-title {
 	font-family: "Lucida Grande", Geneva, Verdana, Arial, sans-serif;
@@ -34,7 +34,7 @@
 	vertical-align: top;
 }
 
-/* checkbox */
+/* Checkbox */
 
 #edit label {
 	display: block;
@@ -78,7 +78,7 @@
 	padding-top: 2px;
 }
 
-/* do not filter through #edit since buttons are also used in choosers */
+/* Do not filter through #edit since buttons are also used in choosers */
 .edit-buttons-left .edit-button {
 	margin-left: 0;
 	margin-right: 2px;
@@ -93,7 +93,7 @@
 	text-align: right;
 }
 
-/* only change padding within the main edit form, not in the choosers -> use #edit */
+/* Only change padding within the main edit form, not in the choosers -> use #edit */
 
 #edit .edit-footer .edit-buttons-left {
 	padding: 2px 0 8px 8px;
@@ -103,7 +103,7 @@
 	padding: 2px 8px 8px 0;
 }
 
-/* chooser */
+/* Chooser */
 
 .edit-chooser {
 	position: absolute;
@@ -155,7 +155,7 @@
 	background: #f7f7f7;
 }
 
-/* preview */
+/* Preview */
 
 .edit-preview {
 	position: fixed;
@@ -176,7 +176,7 @@
 	color: #f00;
 }
 
-/* elements */
+/* Elements */
 
 #edit .edit-progress {
 	text-align: right;
@@ -223,6 +223,7 @@
 	padding: 5px 10px;
 	background: #ffe1e0;
 	border: 1px solid #d81e00;
+	border-radius: 6px;
 	-moz-border-radius: 6px;
 	-webkit-border-radius: 6px;
 }
@@ -260,7 +261,7 @@
 	display: none;
 }
 
-/* image / cropper */
+/* Image / cropper */
 
 #edit .edit-crop-preview img {
 	border: 1px dashed #999;
@@ -285,7 +286,7 @@
 	margin-bottom: -4px;
 }
 
-/* edit lists */
+/* Edit lists */
 
 #edit .edit-list-separator {
 	height: 8px;
@@ -296,20 +297,80 @@
 	margin-bottom: -8px;
 }
 
-.edit-list-buttons {
+
+#edit .edit-list-button, #edit .edit-list-button .overlay {
+	width: 12px;
+	height: 12px;
+}
+
+#edit .edit-list-button:hover {
+	background-position: 0 -12px; 
+}
+
+#edit .edit-list-button {
+	display: inline-block;
+	margin-left: 4px;
+}
+
+#edit .edit-list-buttons {
 	text-align: right;
 	height: 12px;
+	line-height: 12px;
 	/* Needed to make mouse events work on ie when over a div, but it would break Safari, so use a css hack */
 	position: relative\9;
 }
 
-#edit .edit-list-header .edit-list-buttons {
-	margin-top: -14px;
+/* Have buttons in edit list entries not move form down */
+#edit .edit-list-entry .edit-list-buttons {
+	margin: 0 0 -17px 0;
 }
 
-#edit .edit-list-entry .edit-list-buttons {
-	margin: 2px 0 -14px 0;
+
+/* Right-align buttons at header of edit lists, and suround with rounded box that blends with entries */
+#edit .edit-list-header .edit-list-buttons {
+	float: right;
+	margin: -16px 0 -16px 0;
+	padding: 8px 8px 8px 4px; /* -4px left, to compensate button left margin */
+	border-radius: 6px;
+	-moz-border-radius: 6px;
+	-webkit-border-radius: 6px;
 }
+
+#edit .edit-list-entries {
+	/* Clear after the floating buttons */
+	clear: left;
+}
+
+#edit .edit-list-entry-background {
+	/* Padding for nesting of lists */
+	padding: 8px;
+}
+
+/* Inline edit lists */
+
+#edit .edit-list-inline .edit-list-separator {
+	height: 4px;
+}
+
+#edit .edit-list-inline .edit-list-header {
+	/* Use the seperator space at the beginning too */
+	margin-bottom: 2px;
+}
+
+#edit .edit-list-inline .edit-list-header .edit-list-buttons {
+	/* Do not draw border around inline list buttons, and move up 2px little more, to go with header margin, and space evenly with inline entries */
+	padding: 0;
+	margin: -18px 0 -18px 0;
+	background: none !important;
+}
+
+#edit .edit-list-inline .edit-list-entry-background {
+	/* Use the parent list's background instead, and no padding */
+	background: none !important;
+	padding: 0;
+}
+
+/* Edit list buttons */
 
 #edit .edit-list-handle {
 	display: inline-block;
@@ -318,20 +379,6 @@
 	margin-left: 4px;
 	background: url(/static/edit/assets/list-handle.png);
 	cursor: row-resize;
-}
-
-#edit .edit-list-button, #edit .edit-list-button .overlay {
-	width: 12px;
-	height: 12px;
-}
-
-#edit .edit-list-button {
-	display: inline-block;
-	margin-left: 4px;
-}
-
-#edit .edit-list-button:hover {
-	background-position: 0 -12px; 
 }
 
 #edit .edit-list-add {
@@ -358,7 +405,7 @@
 	opacity: 0.5;
 }
 
-/* help */
+/* Help */
 
 #edit .edit-help div {
 	border: 1px dotted #999;
@@ -373,7 +420,7 @@
 	white-space: normal;
 }
 
-/* tab pane */
+/* Tab pane */
 
 #edit .tab-pane {
 	position: relative;
@@ -417,7 +464,7 @@
 	margin: 6px 8px 6px 8px;
 }
 
-/* icons */
+/* Icons */
 
 #edit .icon .icon-label {
 	display: inline;
