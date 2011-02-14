@@ -24,11 +24,13 @@ new function() {
 	}
 
 	function inject(dest, src, enumerable, base, generics, version) {
+		var beans;
+
 		function field(name, val, dontCheck, generics) {
 			if (!val)
 				val = (val = describe(src, name)) && (val.get ? val : val.value);
 			var type = typeof val, func = type == 'function', res = val,
-				prev = dest[name], bean;
+				prev = dest[name], bean, part;
 			if (generics && func && (!src.preserve || !generics[name])) generics[name] = function(bind) {
 				return bind && dest[name].apply(bind,
 					Array.prototype.slice.call(arguments, 1));
@@ -51,13 +53,8 @@ new function() {
 							res._dest = dest;
 						}
 					}
-					if (src.beans && (bean = name.match(/^(get|is)(([A-Z])(.*))$/)))
-						try {
-							field(bean[3].toLowerCase() + bean[4], {
-								get: src['get' + bean[2]] || src['is' + bean[2]],
-								set: src['set' + bean[2]]
-							}, true);
-						} catch (e) {}
+					if (beans && (bean = name.match(/^(get|is)(([A-Z])(.*))$/)))
+						beans.push([ bean[3].toLowerCase() + bean[4], bean[2] ]);
 				}
 				if (!res || func || res instanceof java.lang.Object || !res.get && !res.set)
 					res = { value: res, writable: true };
@@ -69,9 +66,18 @@ new function() {
 			}
 		}
 		if (src) {
+			beans = src.beans && [];
 			for (var name in src)
 				if (has(src, name) && !/^(statics|generics|preserve|beans|prototype)$/.test(name))
 					field(name, null, true, generics);
+			for (var i = 0, l = beans && beans.length; i < l; i++)
+				try {
+					var bean = beans[i], part = bean[1];
+					field(bean[0], {
+						get: dest['get' + part] || dest['is' + part],
+						set: dest['set' + part]
+					}, true);
+				} catch (e) {}
 		}
 	}
 

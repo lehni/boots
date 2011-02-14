@@ -1620,7 +1620,7 @@ DomDocument = DomElement.extend({
 	_type: 'document',
 
 	initialize: function() {
-		if(Browser.TRIDENT && Browser.VERSION < 7)
+		if (Browser.TRIDENT && Browser.VERSION < 7)
 			try {
 				this.$.execCommand('BackgroundImageCache', false, true);
 			} catch (e) {}
@@ -3073,7 +3073,7 @@ HtmlFormElement.inject({
 	setSelection: function(start, end) {
 		var sel = end == undefined ? start : { start: start, end: end };
 		this.focus();
-		if(this.$.setSelectionRange) {
+		if (this.$.setSelectionRange) {
 			this.$.setSelectionRange(sel.start, sel.end);
 		} else {
 			var value = this.getValue();
@@ -3120,7 +3120,7 @@ HtmlFormElement.inject({
 		var range = this.getSelection(), current = this.getValue();
 		var top = this.$.scrollTop, height = this.$.scrollHeight;
 		this.setValue(current.substring(0, range.start) + value + current.substring(range.end, current.length));
-		if(top != null)
+		if (top != null)
 			this.$.scrollTop = top + this.$.scrollHeight - height;
 		return select || select == undefined
 			? this.setSelection(range.start, range.start + value.length)
