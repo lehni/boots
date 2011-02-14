@@ -36,7 +36,7 @@ String.inject({
 	},
 
 	urlize: function() {
-		return this.unaccent().replace(/([^a-z0-9\.]+)/gi, '-').trim('-').toLowerCase();
+		return this.unaccent().replace(/([^a-z0-9]+)/gi, '-').trim('-').toLowerCase();
 	},
 
 	truncate: function(length, suffix, preserveWords) {
