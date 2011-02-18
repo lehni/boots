@@ -23,19 +23,18 @@ new function() {
 		}
 	}
 
-	function inject(dest, src, enumerable, base, generics, version) {
-		var beans;
+	function inject(dest, src, enumerable, base, preserve, generics, version) {
+		var beans, bean;
 
 		function field(name, val, dontCheck, generics) {
-			if (!val)
-				val = (val = describe(src, name)) && (val.get ? val : val.value);
-			var type = typeof val, func = type == 'function', res = val,
-				prev = dest[name], bean, part;
-			if (generics && func && (!src.preserve || !generics[name])) generics[name] = function(bind) {
+			var val = val || (val = describe(src, name)) && (val.get ? val : val.value),
+				func = typeof val == 'function', res = val,
+				prev = preserve || func ? (val && val.get ? name in dest : dest[name]) : null;
+			if (generics && func && (!preserve || !generics[name])) generics[name] = function(bind) {
 				return bind && dest[name].apply(bind,
 					Array.prototype.slice.call(arguments, 1));
 			}
-			if ((dontCheck || val !== undefined && has(src, name)) && (!prev || !src.preserve)) {
+			if ((dontCheck || val !== undefined && has(src, name)) && (!preserve || !prev)) {
 				if (func) {
 					if (prev && /\bthis\.base\b/.test(val)) {
 						while (prev._version && prev._version != version && prev._dest == dest)
@@ -99,8 +98,8 @@ new function() {
 				var proto = this.prototype, base = proto.__proto__ && proto.__proto__.constructor;
 				var version = (this == HopObject || proto instanceof HopObject)
 						&& (proto.constructor._version || (proto.constructor._version = 1));
-				inject(proto, src, false, base && base.prototype, src.generics && this, version);
-				inject(this, src.statics, true, base, null, version);
+				inject(proto, src, false, base && base.prototype, src.preserve, src.generics && this, version);
+				inject(this, src.statics, true, base, src.preserve, null, version);
 				if (version) {
 					var update = proto.onCodeUpdate;
 					if (!update || !update._wrapped) {

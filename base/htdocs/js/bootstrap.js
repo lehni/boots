@@ -12,15 +12,15 @@ new function() {
 			return obj[name] !== (obj.__proto__ || Object.prototype)[name];
 		};
 
-	function inject(dest, src, enumerable, base, generics) {
+	function inject(dest, src, enumerable, base, preserve, generics) {
+
 		function field(name, dontCheck, generics) {
-			var val = src[name], func = typeof val == 'function', res = val,
-				prev = dest[name];
-			if (generics && func && (!src.preserve || !generics[name])) generics[name] = function(bind) {
+			var val = src[name], func = typeof val == 'function', res = val, prev = dest[name];
+			if (generics && func && (!preserve || !generics[name])) generics[name] = function(bind) {
 				return bind && dest[name].apply(bind,
 					Array.prototype.slice.call(arguments, 1));
 			}
-			if ((dontCheck || val !== undefined && has(src, name)) && (!prev || !src.preserve)) {
+			if ((dontCheck || val !== undefined && has(src, name)) && (!preserve || !prev)) {
 				if (func) {
 					if (prev && /\bthis\.base\b/.test(val)) {
 						var fromBase = base && base[name] == prev;
@@ -61,8 +61,8 @@ new function() {
 		inject: function(src) {
 			if (src) {
 				var proto = this.prototype, base = proto.__proto__ && proto.__proto__.constructor;
-				inject(proto, src, false, base && base.prototype, src.generics && this);
-				inject(this, src.statics, true, base);
+				inject(proto, src, false, base && base.prototype, src.preserve, src.generics && this);
+				inject(this, src.statics, true, base, src.preserve);
 			}
 			for (var i = 1, l = arguments.length; i < l; i++)
 				this.inject(arguments[i]);
@@ -418,6 +418,12 @@ Array.inject({
 		for (var l = this.length; i < l; i++)
 			value = fn.call(null, value, this[i], i, this);
 		return value;
+	},
+
+	statics: {
+		isArray: function(obj) {
+			return Object.prototype.toString.call(obj) === '[object Array]';
+		}
 	}
 }, Enumerable, {
 	generics: true,
