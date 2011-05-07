@@ -34,6 +34,9 @@ Codec = new function() {
 	}
 
 	return {
+		preserve: true,
+
+		encode: encode,
 
 		// The opposite of helma's encode, using org.htmlparser:
 		decode: function decode(str) {
