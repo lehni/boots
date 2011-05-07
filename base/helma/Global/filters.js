@@ -80,9 +80,18 @@ function substring_filter(input, param, from, to) {
  * supported too.
  */
 function format_filter(input, param, format, locale) {
-	return input != null && input.format(
-			param.format || format,
-			param.locale || locale
+	return input == null ? null
+		: (input instanceof Date ? input : input.toFloat()).format(
+				param.format || format,
+				param.locale || locale
+		);
+}
+
+function padded_filter(input, param, length, base, prefix) {
+	return input != null && input.toFloat().toPaddedString(
+			param.length || length,
+			param.base || base,
+			param.prefix || prefix
 	);
 }
 
