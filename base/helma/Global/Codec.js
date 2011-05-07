@@ -128,8 +128,7 @@ Codec = new function() {
 		},
 
 		decodeBase64: function decodeBase64(str) {
-			var bytes = Base64.decode(
-					new JavaString(str).toCharArray());
+			var bytes = Base64.decode(new JavaString(str).toCharArray());
 			return new JavaString(bytes, "UTF-8");
 		}
 	}
