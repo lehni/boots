@@ -1,7 +1,9 @@
 Root.inject({
 	getEditForm: function(param) {
-		param.resources = false;
-		param.text = false;
+		if (param.resources === undefined)
+			param.resources = false;
+		if (param.text === undefined)
+			param.text = false;
 		return this.base(param);
 	},
 
