@@ -49,7 +49,7 @@ Markup = {
 					// If this tag does not allow nesting, search for its end
 					// immediately now, all what's inbetween to its parts and
 					// close it straight away.
-					if (tag._nesting === false) {
+					if (!empty && tag._nesting === false) {
 						// Search for closing tag
 						var close = '</' + tag.name + '>';
 						start = text.indexOf(close, end);
