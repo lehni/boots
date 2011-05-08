@@ -13,7 +13,7 @@ HopObject.inject({
 		return false;
 	},
 
-	isVisiting: function() {
+	isActive: function() {
 		return this == path[path.length - 1];
 	},
 
