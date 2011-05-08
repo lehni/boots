@@ -16,7 +16,7 @@ NumberItem = EditItem.extend({
 
 	convert: function(value) {
 		if (value != null && value != '') {
-			value = value.toInt();
+			value = this.type == 'integer' ? value.toInt() : value.toFloat();
 			if (this.minValue != null && value < this.minValue)
 				value = this.minValue;
 			else if (this.maxValue != null && value > this.maxValue)
