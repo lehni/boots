@@ -7,12 +7,11 @@ Markup = {
 			return null;
 		// Create the root tag as a container for all the other bits
 		var rootTag = MarkupTag.create('root');
-		var start = 0, end = 0, offset = 0;
+		var start = 0, end = 0;
 		// Current tag:
 		var tag = rootTag;
 		while (start != -1) { 
-			start = text.indexOf('<', end + offset);
-			offset = 0;
+			start = text.indexOf('<', end);
 			if (start > end)
 				tag.parts.push(text.substring(end, start));
 			if (start >= 0) {
@@ -27,15 +26,6 @@ Markup = {
 				var empty = !closing && text.charAt(end - 2) == '/';
 				var definition = text.substring(start + (closing ? 2 : 1),
 						end - (empty ? 2 : 1));
-				// This could be something else than a tag, e.g. some code.
-				// For now, the convention simply is to allow tag definitions to
-				// be only one line long.
-				if (/[\n\r]/.test(definition)) {
-					end = start;
-					// Skip the < when searching for the next tag
-					offset = 1;
-					continue;
-				}
 				// There is a special convention in place for empty tags:
 				// These are interpretated as empty tags:
 				// <tag/>, <tag />, <tag param />
@@ -52,22 +42,38 @@ Markup = {
 					empty = false;
 					definition += '/';
 				}
-				if (!closing || empty)
+				var closeTag = null;
+				if (!closing || empty) {
 					// Opening tag, pass current tag as parent
 					tag = MarkupTag.create(definition, tag, param);
+					// If this tag does not allow nesting, search for its end
+					// immediately now, all what's inbetween to its parts and
+					// close it straight away.
+					if (tag._nesting === false) {
+						// Search for closing tag
+						var close = '</' + tag.name + '>';
+						start = text.indexOf(close, end);
+						if (start >= 0) {
+							// Found it, add the part
+							tag.parts.push(text.substring(end, start));
+							end = start + close.length;
+							// Close this tag now (see below):
+							closeTag = tag;
+						}
+					}
+				}
 				if (closing || empty) {
 					// Closing tag
-					var openTag = tag;
+					closeTag = tag;
 					// Walk up hierarchy until we find opening tag:
-					if (!empty)
-						while(openTag && openTag.name != definition)
-							openTag = openTag.parent;
-					if (openTag && openTag != rootTag) {
-						// Activate parent tag
-					 	tag = openTag.parent;
-						// Add the closed tag to its parent's parts
-						tag.parts.push(openTag);
-					}
+					while(!empty && closeTag && closeTag.name != definition)
+						closeTag = closeTag.parent;
+				}
+				if (closeTag && closeTag != rootTag) {
+					// Activate parent tag
+				 	tag = closeTag.parent;
+					// Add the closed tag to its parent's parts
+					tag.parts.push(closeTag);
 				}
 			}
 		}
