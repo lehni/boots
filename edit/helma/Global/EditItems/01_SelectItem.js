@@ -35,6 +35,7 @@ SelectItem = ListItem.extend({
 			select.onDblClick = baseForm.renderHandle('select_edit', [name],
 					this.getEditParam());
 		select.options = options;
+		select.multiple = true;
 		Html.select(select, out);
 		if (buttons)
 			out.write(buttons);
