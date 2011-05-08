@@ -1,10 +1,10 @@
 /**
  * JavaScript Template Engine
- * (c) 2005 - 2010, Juerg Lehni, http://www.scratchdisk.com
+ * (c) 2005-2011, Juerg Lehni, http://lehni.org
  *
  * Template.js is released under the MIT license
  * http://dev.helma.org/Wiki/JavaScript+Template+Engine/
- * http://bootstrap-js.net/
+ * http://bootstrapjs.org/
  */
 
 function Template(object, name, parent) {
@@ -414,16 +414,21 @@ Template.prototype = {
 					open = true;
 					var variable = match[1], value = match[2];
 					postProcess = postProcess || !!values.separator;
-					var suffix = '_' + (this.listId++);
-					var list = 'list' + suffix, length = 'length' + suffix;
-					var index = 'i' + suffix, first = 'first' + suffix;
+					var suffix = '_' + (this.listId++),
+						list = 'list' + suffix, length = 'length' + suffix,
+						index = 'i' + suffix, first = 'first' + suffix,
+						keys = 'keys' + suffix;
 					var loopStack = stack.loop[variable] = stack.loop[variable] || [];
-					loopStack.push({ list: list, index: index, length: length, first: first });
+					loopStack.push({ list: list, index: index, length: length, keys: keys, first: first });
 					macro.variable = variable;
-					code.push(						'var ' + list + ' = ' + value + '; ',
+					code.push(						'var ' + list + ' = ' + value + ', ' + keys + ';',
 													'if (' + list + ') {',
 						!(/^["'[]/.test(value))	?	'	if (' + list + ' instanceof HopObject) ' + list + ' = ' + list + '.list();' : null,
-													'	if (' + list + '.length == undefined) ' + list + ' = template.toList(' + list + ');',
+												'	if (' + list + '.length == undefined) {',
+												'		var list = template.toList(' + list + ');',
+												'		' + list + ' = list.list;',
+												'		' + keys + ' = list.keys;',
+												'	}',
 													'	var ' + length + ' = ' + list + '.length' + (values.separator ? ', ' + first + ' = true' : '') + ';',
 													'	for (var ' + index + ' = 0; ' + index + ' < ' + length + '; ' + index + '++) {',
 													'		var ' + variable + ' = ' + list + '[' + index + '];',
@@ -552,6 +557,7 @@ Template.prototype = {
 				switch (suffix) {
 				case 'index': return loop.index;
 				case 'length': return loop.length;
+				case 'key': return loop.keys + ' && ' + loop.keys + '[' + loop.index + ']';
 				case 'first': return '(' + loop.index + ' == 0)';
 				case 'last': return '(' + loop.index + ' == ' + loop.length + ' - 1)';
 				case 'even': return '((' + loop.index + ' & 1) == 0)';
@@ -566,8 +572,11 @@ Template.prototype = {
 		var match = tag.tag.match(/^<%\s*([$#]\S*)\s*([+-]?)%>$/);
 		if (match) {
 			var name = match[1], content = tag.buffer.join(''), end = match[2];
-			if (!end) content = content.match(/^\s*[\n\r]?([\u0000-\uffff]*)[\n\r]?\s*$/)[1];
-			else if (end == '-') content = content.trim();
+			content = !end
+				? content.match(/^\s*?[\n\r]?([\u0000-\uffff]*?)[\n\r]?$/)[1]
+				: end == '-'
+					? content.trim()
+					: content;
 			new Template(content, name, this);
 			if (name[0] == '$')
 				this.renderTemplates.push({ name: name, trim: end == '-' });
@@ -657,12 +666,22 @@ Template.prototype = {
 	},
 
 	toList: function(obj) {
-		var ret = [];
-		if (obj.each)
-			obj.each(function(v) { ret.push(v); });
-		else
-			for (var i in obj) { ret.push(obj[i]); }
-		return ret;
+		var list = [], keys = [];
+		if (obj.each) {
+			obj.each(function(val, key) {
+				list.push(val);
+				keys.push(key);
+			});
+		} else {
+			for (var key in obj) {
+				list.push(obj[key]);
+				keys.push(key);
+			}
+		}
+		return {
+			list: list,
+			keys: keys
+		};
 	},
 
 	compile: function() {
@@ -764,7 +783,7 @@ Template.prototype = {
 
 Template.lineBreak = java.lang.System.getProperty('line.separator');
 
-getTemplate = HopObject.prototype.getTemplate = function(template) {
+var getTemplate = HopObject.prototype.getTemplate = function(template) {
 	var name = template;
 	if (!(template instanceof Template)) {
 		var pos = name.indexOf('#');
@@ -785,9 +804,15 @@ getTemplate = HopObject.prototype.getTemplate = function(template) {
 	return template;
 };
 
-renderTemplate = HopObject.prototype.renderTemplate = function(template, param, out) {
+var renderTemplate = HopObject.prototype.renderTemplate = function(template, param, out) {
 	template = this.getTemplate(template);
 	if (template)
 		return template.render(this, param, out);
+}
+
+Function.prototype.renderTemplate = function(template, param, out) {
+	if (!this._renderInstance)
+		this._renderInstance = new this(this.dont);
+	return this._renderInstance.renderTemplate(template, param, out);
 }
 
