@@ -145,6 +145,12 @@ MarkupTag = Base.extend(new function() {
 					this.arguments);
 		},
 
+		renderAttributes: function(attributes) {
+			return Hash.map(attributes || this.attributes, function(value, key) {
+				return key + '="' + value + '"';
+			}).join(' ');			
+		},
+
 		statics: {
 			extend: function(src) {
 				return this.base().inject(src);
@@ -255,7 +261,7 @@ MarkupTag = Base.extend(new function() {
 					arguments.splice(0, index);
 			}
 		}
-	}
+	};
 });
 
 // The RootTag is there to contain all other markup tags and content parts and 
