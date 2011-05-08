@@ -8,7 +8,7 @@ Html = new function() {
 	};
 
 	// Block tags are tags that require to be rendered outside of paragraphs.
-	var blockTags = 'address,dir,div,table,blockquote,center,dl,fieldset,form,h1,h2,h3,h4,h5,h6,hr,isindex,ol,p,pre,ul'
+	var blockTags = 'address,dir,div,table,blockquote,center,dl,fieldset,form,h1,h2,h3,h4,h5,h6,hr,isindex,ol,p,pre,ul,script,canvas'
 		.split(',').each(function(tag) {
 			this[tag] = true;
 		}, {});
