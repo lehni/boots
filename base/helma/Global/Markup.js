@@ -13,12 +13,12 @@ Markup = {
 		while (start != -1) { 
 			start = text.indexOf('<', end);
 			if (start > end)
-				tag.parts.push(text.substring(end, start));
+				tag.nodes.push(text.substring(end, start));
 			if (start >= 0) {
 				end = text.indexOf('>', start) + 1;
 				if (end <= start) {
 					// Non-closed tag:
-					tag.parts.push(text.substring(start));
+					tag.nodes.push(text.substring(start));
 					break;
 				}
 				var closing = text.charAt(start + 1) == '/';
@@ -47,7 +47,7 @@ Markup = {
 					// Opening tag, pass current tag as parent
 					tag = MarkupTag.create(definition, tag, param);
 					// If this tag does not allow nesting, search for its end
-					// immediately now, all what's inbetween to its parts and
+					// immediately now, all what's inbetween to its nodes and
 					// close it straight away.
 					if (!empty && tag._nesting === false) {
 						// Search for closing tag
@@ -55,7 +55,7 @@ Markup = {
 						start = text.indexOf(close, end);
 						if (start >= 0) {
 							// Found it, add the part
-							tag.parts.push(text.substring(end, start));
+							tag.nodes.push(text.substring(end, start));
 							end = start + close.length;
 							// Close this tag now (see below):
 							closeTag = tag;
@@ -72,13 +72,14 @@ Markup = {
 				if (closeTag && closeTag != rootTag) {
 					// Activate parent tag
 				 	tag = closeTag.parent;
-					// Add the closed tag to its parent's parts
-					tag.parts.push(closeTag);
+					// Add the closed tag to its parent's nodes and set its
+					// index inside the nodes array, as required by renderNode()
+					closeTag.index = tag.nodes.push(closeTag) - 1;
 				}
 			}
 		}
 		if (end > start)
-			rootTag.parts.push(text.substring(end));
+			rootTag.nodes.push(text.substring(end));
 		return rootTag;
 	},
 

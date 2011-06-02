@@ -109,32 +109,35 @@ MarkupTag = Base.extend(new function() {
 			// Define in subclasses
 		},
 
+		renderNode: function(node, param, encoder) {
+			if (node.render && (!param.allowedTags
+					|| param.allowedTags[node.name])) {
+				// This is a tag, render its children first into one content
+				// string
+				var content = node.renderChildren(param, encoder);
+				// Now render the tag itself and place it in the resulting
+				// buffer
+				return node.render(content, param, encoder,
+						this.nodes[node.index - 1], this.nodes[node.index + 1]);
+			} else {
+				// A simple string. Just encode it
+			 	return encoder(node);
+			}
+		},
+
 		renderChildren: function(param, encoder) {
-			var buffer = new Array(this.parts.length);
-			for (var i = 0, l = this.parts.length; i < l; i++) {
-				var part = this.parts[i];
-				if (part.render && (!param.allowedTags
-							|| param.allowedTags[part.name])) {
-					// This is a tag, render its children first into one content
-					// string
-					var content = part.renderChildren(param, encoder);
-					// Now render the tag itself and place it in the resulting
-					// buffer
-					buffer[i] = part.render(content, param, encoder,
-								this.parts[i - 1], this.parts[i + 1]);
-				} else {
-					// A simple string. Just encode it
-					buffer[i] = encoder(this.parts[i]);
-				}
+			var buffer = new Array(this.nodes.length);
+			for (var i = 0, l = this.nodes.length; i < l; i++) {
+				buffer[i] = this.renderNode(this.nodes[i], param, encoder);
 			}
 			return buffer.join('');
 		},
 
 		toString: function() {
-			// Since parts contains both strings and tags, join calls toString
+			// Since nodes contains both strings and tags, join calls toString
 			// on each of them, resulting in automatic toString recursion for
 			// child tags.
-			var content = this.parts.join('');
+			var content = this.nodes.join('');
 			return '<' + this.definition + (content 
 					? '>' + content + '</' + this.name + '>' 
 					: '/>');
@@ -207,7 +210,7 @@ MarkupTag = Base.extend(new function() {
 				tag.arguments = def.arguments;
 				tag.parent = parent;
 				tag.definition = definition;
-				tag.parts = [];
+				tag.nodes = [];
 				// Setup children list, and previous / next references
 				tag.children = [];
 				if (parent) {
@@ -218,8 +221,6 @@ MarkupTag = Base.extend(new function() {
 					siblings.push(tag);
 				}
 				// Merge attribute definitions with the one from the prototype
-				if (!def.proto)
-					app.log('NULL: ' + definition + ' ' + Json.encode(def));
 				var attributes = def.proto._attributes;
 				if (attributes)
 					tag.mergeAttributes(attributes);
@@ -266,7 +267,7 @@ MarkupTag = Base.extend(new function() {
 	};
 });
 
-// The RootTag is there to contain all other markup tags and content parts and 
+// The RootTag is there to contain all other markup tags and content nodes and 
 // is produced internally in and returned by Markup.parse. Call render on it
 // to render the parsed Markup tree.
 RootTag = MarkupTag.extend({
