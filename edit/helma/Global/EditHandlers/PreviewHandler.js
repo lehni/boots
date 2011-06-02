@@ -18,6 +18,7 @@ PreviewHandler = EditHandler.extend({
 			if (object.preview_action) {
 				object.preview_action();
 			} else {
+				// TODO: Pass on the action that the edit came from
 				var renderAction = EditForm.ACTION_RENDER + '_action';
 				if (object[renderAction]) {
 					object[renderAction]();
