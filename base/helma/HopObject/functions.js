@@ -15,7 +15,6 @@ HopObject.inject({
 
 	isActive: function(inPath) {
 		for (var i = path.length - 1; i >= 0; i--) {
-			User.log(path[i].getDisplayName(), this.getDisplayName());
 			if (path[i] === this)
 				return true;
 			if (!inPath)
