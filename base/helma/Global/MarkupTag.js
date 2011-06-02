@@ -153,6 +153,8 @@ MarkupTag = Base.extend(new function() {
 
 		statics: {
 			extend: function(src) {
+				// Make sure we're using the new inject, which is only around
+				// after extend() was called.
 				return this.base().inject(src);
 			},
 
