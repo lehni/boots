@@ -1722,7 +1722,7 @@ DomElement.inject(new function() {
 		}
 	}
 
-	function bounds(fields, offset) {
+	function setBounds(fields, offset) {
 		return function(values) {
 			var vals = /^(object|array)$/.test(Base.type(values)) ? values : arguments;
 			if (offset) {
@@ -1737,7 +1737,7 @@ DomElement.inject(new function() {
 		}
 	}
 
-	function body(that) {
+	function isBody(that) {
 		return that.getTag() == 'body';
 	}
 
@@ -1754,13 +1754,13 @@ DomElement.inject(new function() {
 	var fields = {
 
 		getSize: function() {
-			return body(this)
+			return isBody(this)
 				? this.getWindow().getSize()
 				: { width: this.$.offsetWidth, height: this.$.offsetHeight };
 		},
 
-		getOffset: function(relative) {
-			if (body(this))
+		getOffset: function(relative, scroll) {
+			if (isBody(this))
 				return this.getWindow().getOffset();
 		 	if (relative && !DomNode.isNode(relative))
 				return getPositioned(this);
@@ -1769,25 +1769,31 @@ DomElement.inject(new function() {
 				var rel = getAbsolute(DomNode.wrap(relative));
 				off = { x: off.x - rel.x, y: off.y - rel.y };
 			}
+			if (scroll) {
+				scroll = this.getScrollOffset();
+				off.x -= scroll.x;
+				off.y -= scroll.y;
+			}
 			return off;
 		},
 
 		getScrollOffset: function() {
-			return body(this)
+			return isBody(this)
 				? this.getWindow().getScrollOffset()
-			 	: getScrollOffset(this);
+				: getScrollOffset(this);
 		},
 
 		getScrollSize: function() {
-			return body(this)
+			return isBody(this)
 				? this.getWindow().getScrollSize()
 				: { width: this.$.scrollWidth, height: this.$.scrollHeight };
 		},
 
-		getBounds: function(relative) {
-			if (body(this))
+		getBounds: function(relative, scroll) {
+			if (isBody(this))
 				return this.getWindow().getBounds();
-			var off = this.getOffset(relative), el = this.$;
+			var off = this.getOffset(relative, scroll),
+				el = this.$;
 			return {
 				left: off.x,
 				top: off.y,
@@ -1798,14 +1804,14 @@ DomElement.inject(new function() {
 			};
 		},
 
-		setBounds: bounds(['left', 'top', 'width', 'height', 'clip'], true),
+		setBounds: setBounds(['left', 'top', 'width', 'height', 'clip'], true),
 
-		setOffset: bounds(['left', 'top'], true),
+		setOffset: setBounds(['left', 'top'], true),
 
-		setSize: bounds(['width', 'height', 'clip']),
+		setSize: setBounds(['width', 'height', 'clip']),
 
 		setScrollOffset: function(x, y) {
-			if (body(this)) {
+			if (isBody(this)) {
 				this.getWindow().setScrollOffset(x, y);
 			} else {
 				var off = typeof x == 'object' ? x : { x: x, y: y };
@@ -1827,7 +1833,8 @@ DomElement.inject(new function() {
 
 		isVisible: function(fully) {
 			var win = this.getWindow(), top = win.getScrollOffset().y,
-				bottom = top + win.getSize().height, bounds = this.getBounds();
+				bottom = top + win.getSize().height,
+				bounds = this.getBounds(true, true);
 			return (bounds.height > 0 || bounds.width > 0) 
 					&& (bounds.top >= top && bounds.bottom <= bottom 
 						|| (fully && bounds.top <= top && bounds.bottom >= bottom) 
@@ -3704,8 +3711,8 @@ Fx.Scroll = Fx.extend({
 		var offsetSize = this.element.getSize(),
 			scrollSize = this.element.getScrollSize(),
 			scroll = this.element.getScrollOffset(),
-			values = { x: x, y: y };
-		var lookup = { x: 'width', y: 'height' };
+			values = { x: x, y: y },
+			lookup = { x: 'width', y: 'height' };
 		for (var i in values) {
 			var s = lookup[i];
 			var max = scrollSize[s] - offsetSize[s];
