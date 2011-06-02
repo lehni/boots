@@ -112,12 +112,17 @@ MarkupTag = Base.extend(new function() {
 		renderNode: function(node, param, encoder) {
 			if (node.render && (!param.allowedTags
 					|| param.allowedTags[node.name])) {
+				// Prevent nodes from rendering more than once by caching the
+				// result, useful e.g. when a tag uses renderNode to render
+				// selected nodes.
+				if (node.rendered)
+					return node.rendered;
 				// This is a tag, render its children first into one content
 				// string
 				var content = node.renderChildren(param, encoder);
 				// Now render the tag itself and place it in the resulting
 				// buffer
-				return node.render(content, param, encoder,
+				return node.rendered = node.render(content, param, encoder,
 						this.nodes[node.index - 1], this.nodes[node.index + 1]);
 			} else {
 				// A simple string. Just encode it
