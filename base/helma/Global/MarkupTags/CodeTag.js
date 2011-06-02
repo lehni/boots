@@ -13,7 +13,8 @@ CodeTag = MarkupTag.extend({
 					&& (typeof after != 'string' || /^[\n\r]|^$/.test(after))) {
 				// Pass on all attributes to the pre tag.
 				var attributes = this.renderAttributes();
-				return (attributes ? '<pre ' + attributes + '>' : '<pre>')
+				return '<pre class="code"'
+						+ (attributes ? ' ' + attributes + '>' : '>')
 						+ code + '</pre>';
 			} else {
 				return '<tt>' + code + '</tt>';
