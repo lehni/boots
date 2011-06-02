@@ -13,8 +13,15 @@ HopObject.inject({
 		return false;
 	},
 
-	isActive: function() {
-		return this == path[path.length - 1];
+	isActive: function(inPath) {
+		for (var i = path.length - 1; i >= 0; i--) {
+			User.log(path[i].getDisplayName(), this.getDisplayName());
+			if (path[i] === this)
+				return true;
+			if (!inPath)
+				break;
+		}
+		return false;
 	},
 
 	/**
