@@ -139,7 +139,7 @@ ImageObject = Base.extend({
 			 */
 			save: function() {
 				if (!saved && file) {
-					if (image) {
+					if (image && modified) {
 						// image is a ImageWrapper
 						image.saveAs(file, this.quality, true);
 					} else if (file.path != original.path) {
@@ -148,11 +148,15 @@ ImageObject = Base.extend({
 						// There were no modifications, so if we keep the same
 						// content type, simply copy to the destination file.
 						if (original.contentType == file.contentType) {
+							if (!file.parent.exists())
+								file.parent.makeDirectory();
 							original.writeToFile(file);
 						} else {
-							// In any other case, we retrieve the image first
-							// and then store it again through save().
+							// In any other case, we retrieve the image first,
+							// mark it as modified and then store it again
+							// through save().
 							image = this.image;
+							modified = true;
 							this.save();
 						}
 					}
@@ -207,7 +211,7 @@ ImageObject = Base.extend({
 			}
 
 			// Resize before crop
-			if (scale != 1.0) {
+			if (scale != 1) {
 				image.image.resize(Math.round(image.width * scale),
 						Math.round(image.height * scale));
 				image.modified = true;
