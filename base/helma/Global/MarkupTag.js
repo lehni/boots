@@ -130,9 +130,9 @@ MarkupTag = Base.extend(new function() {
 			}
 		},
 
-		renderChildren: function(param, encoder) {
+		renderChildren: function(param, encoder, start, end) {
 			var buffer = new Array(this.nodes.length);
-			for (var i = 0, l = this.nodes.length; i < l; i++) {
+			for (var i = start || 0, l = end || this.nodes.length; i < l; i++) {
 				buffer[i] = this.renderNode(this.nodes[i], param, encoder);
 			}
 			return buffer.join('');
