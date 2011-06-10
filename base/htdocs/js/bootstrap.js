@@ -1,35 +1,66 @@
-new function() { 
-	var fix = !this.__proto__ && [Function, Number, Boolean, String, Array, Date, RegExp];
+var Base = new function() { 
+	var fix = !this.__proto__ && [Function, Number, Boolean, String, Array,
+			Date, RegExp];
 	if (fix)
 		for (var i in fix)
 			fix[i].prototype.__proto__ = fix[i].prototype;
-
-	var has = {}.hasOwnProperty
-		? function(obj, name) {
-			return (!fix || name != '__proto__') && obj.hasOwnProperty(name);
-		}
-		: function(obj, name) {
-			return obj[name] !== (obj.__proto__ || Object.prototype)[name];
+		hidden = /^(statics|generics|preserve|enumerable|prototype|constructor|__proto__|toString|valueOf)$/,
+		proto = Object.prototype,
+		has = proto.hasOwnProperty
+			? fix
+				? function(name) {
+					return name !== '__proto__' && this.hasOwnProperty(name);
+				}
+				: proto.hasOwnProperty
+			: function(name) {
+				return this[name] !== (this.__proto__ || Object.prototype)[name];
+			},
+		proto = Array.prototype,
+		slice = proto.slice,
+		forEach = proto.forEach = proto.forEach || function(iter, bind) {
+			for (var i = 0, l = this.length; i < l; i++)
+				iter.call(bind, this[i], i, this);
+		},
+		forIn = function(iter, bind) {
+			for (var i in this)
+				if (has.call(this, i))
+					iter.call(bind, this[i], i, this);
 		};
 
 	function inject(dest, src, enumerable, base, preserve, generics) {
 
 		function field(name, dontCheck, generics) {
-			var val = src[name], func = typeof val == 'function', res = val, prev = dest[name];
-			if (generics && func && (!preserve || !generics[name])) generics[name] = function(bind) {
-				return bind && dest[name].apply(bind,
-					Array.prototype.slice.call(arguments, 1));
+			var val = src[name],
+				func = typeof val == 'function',
+				res = val,
+				prev = dest[name];
+			if (generics && func && (!preserve || !generics[name])) {
+				generics[name] = function(bind) {
+					return bind && dest[name].apply(bind,
+							slice.call(arguments, 1));
+				}
 			}
-			if ((dontCheck || val !== undefined && has(src, name)) && (!preserve || !prev)) {
+			if ((dontCheck || val !== undefined && has.call(src, name))
+					&& (!preserve || !prev)) {
 				if (func) {
 					if (prev && /\bthis\.base\b/.test(val)) {
 						var fromBase = base && base[name] == prev;
-						res = (function() {
+						res = function() {
 							var tmp = this.base;
 							this.base = fromBase ? base[name] : prev;
-							try { return val.apply(this, arguments); }
-							finally { tmp ? this.base = tmp : delete this.base; }
-						}).pretend(val);
+							try {
+								return val.apply(this, arguments);
+							} finally {
+								tmp ? this.base = tmp
+									: delete this.base;
+							}
+						};
+						res.toString = function() {
+							return val.toString();
+						}
+						res.valueOf = function() {
+							return val.valueOf();
+						}
 					}
 				}
 				dest[name] = res;
@@ -37,15 +68,16 @@ new function() {
 		}
 		if (src) {
 			for (var name in src)
-				if (has(src, name) && !/^(statics|generics|preserve|prototype|constructor|__proto__|toString|valueOf)$/.test(name))
+				if (has.call(src, name) && !hidden.test(name))
 					field(name, true, generics);
 			field('toString');
 			field('valueOf');
 		}
+		return dest;
 	}
 
 	function extend(obj) {
-		function ctor(dont) {
+		var ctor = function(dont) {
 			if (fix) this.__proto__ = obj;
 			if (this.initialize && dont !== ctor.dont)
 				return this.initialize.apply(this, arguments);
@@ -57,12 +89,42 @@ new function() {
 		return ctor;
 	}
 
+	function iterator(iter) {
+		return !iter
+			? function(val) { return val }
+			: typeof iter !== 'function'
+				? function(val) { return val == iter }
+				: iter;
+	}
+
+	function each(obj, iter, bind, asArray) {
+		try {
+			if (obj)
+				(asArray || asArray === undefined && Base.type(obj) == 'array'
+					? forEach : forIn).call(obj, iterator(iter),
+						bind = bind || obj);
+		} catch (e) {
+			if (e !== Base.stop) throw e;
+		}
+		return bind;
+	}
+
+	function clone(obj) {
+		return each(obj, function(val, i) {
+			this[i] = val;
+		}, new obj.constructor());
+	}
+
 	inject(Function.prototype, {
 		inject: function(src) {
 			if (src) {
-				var proto = this.prototype, base = proto.__proto__ && proto.__proto__.constructor;
-				inject(proto, src, false, base && base.prototype, src.preserve, src.generics && this);
-				inject(this, src.statics, true, base, src.preserve);
+				var proto = this.prototype,
+					base = proto.__proto__ && proto.__proto__.constructor,
+					statics = src.statics == true ? src : src.statics;
+				if (statics != src)
+					inject(proto, src, src.enumerable, base && base.prototype,
+							src.preserve, src.generics && this);
+				inject(this, statics, true, base, src.preserve);
 			}
 			for (var i = 1, l = arguments.length; i < l; i++)
 				this.inject(arguments[i]);
@@ -70,36 +132,16 @@ new function() {
 		},
 
 		extend: function(src) {
-			var proto = new this(this.dont), ctor = proto.constructor = extend(proto);
+			var proto = new this(this.dont),
+				ctor = proto.constructor = extend(proto);
 			ctor.dont = {};
 			inject(ctor, this, true);
 			return arguments.length ? this.inject.apply(ctor, arguments) : ctor;
-		},
-
-		pretend: function(fn) {
-			this.toString = function() {
-				return fn.toString();
-			}
-			this.valueOf = function() {
-				return fn.valueOf();
-			}
-			return this;
 		}
 	});
-
-	function each(obj, iter, bind) {
-		return obj ? (typeof obj.length == 'number'
-			? Array : Hash).prototype.each.call(obj, iter, bind) : bind;
-	}
-
-	Base = Object.extend({
-		has: function(name) {
-			return has(this, name);
-		},
-
-		each: function(iter, bind) {
-			return each(this, iter, bind);
-		},
+	return Object.extend({
+		has: has,
+		each: each,
 
 		inject: function() {
 			for (var i = 0, l = arguments.length; i < l; i++)
@@ -112,9 +154,22 @@ new function() {
 			return res.inject.apply(res, arguments);
 		},
 
+		each: function(iter, bind) {
+			return each(this, iter, bind);
+		},
+
+		clone: function() {
+			return clone(this);
+		},
+
 		statics: {
-			has: has,
 			each: each,
+			clone: clone,
+			iterator: iterator,
+
+			has: function(obj, name) {
+				return has.call(obj, name);
+			},
 
 			type: function(obj) {
 				return (obj || obj === 0) && (
@@ -137,45 +192,19 @@ new function() {
 				return null;
 			},
 
-			iterator: function(iter) {
-				return !iter
-					? function(val) { return val }
-					: typeof iter != 'function'
-						? function(val) { return val == iter }
-						: iter;
-			},
-
 			stop: {}
-		}
-	}, {
-		generics: true,
-
-		debug: function() {
-			return /^(string|number|function|regexp)$/.test(Base.type(this)) ? this
-				: Base.each(this, function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
-		},
-
-		clone: function() {
-			return Base.each(this, function(val, i) {
-				this[i] = val;
-			}, new this.constructor());
-		},
-
-		toQueryString: function() {
-			return Base.each(this, function(val, key) {
-				this.push(key + '=' + encodeURIComponent(val));
-			}, []).join('&');
 		}
 	});
 }
 
-$each = Base.each;
-$type = Base.type;
-$check = Base.check;
-$pick = Base.pick;
-$stop = $break = Base.stop;
+var $each = Base.each,
+	$type = Base.type,
+	$check = Base.check,
+	$pick = Base.pick,
+	$stop = Base.stop,
+	$break = $stop;
 
-Enumerable = {
+var Enumerable = {
 	generics: true,
 	preserve: true,
 
@@ -282,7 +311,7 @@ Enumerable = {
 	}
 };
 
-Hash = Base.extend(Enumerable, {
+var Hash = Base.extend(Enumerable, {
 	generics: true,
 
 	initialize: function(arg) {
@@ -296,15 +325,7 @@ Hash = Base.extend(Enumerable, {
 	},
 
 	each: function(iter, bind) {
-		var bind = bind || this, iter = Base.iterator(iter), has = Base.has;
-		try {
-			for (var i in this)
-				if (has(this, i))
-					iter.call(bind, this[i], i, this);
-		} catch (e) {
-			if (e !== Base.stop) throw e;
-		}
-		return bind;
+		return Base.each(this, iter, bind, false); 
 	},
 
 	append: function() {
@@ -339,6 +360,12 @@ Hash = Base.extend(Enumerable, {
 		}, { size: 0 }).size;
 	},
 
+	toQueryString: function() {
+		return Base.each(this, function(val, key) {
+			this.push(key + '=' + encodeURIComponent(val));
+		}, []).join('&');
+	},
+
 	statics: {
 		create: function(obj) {
 			return arguments.length == 1 && obj.constructor == Hash
@@ -353,7 +380,7 @@ Hash = Base.extend(Enumerable, {
 	}
 });
 
-$H = Hash.create;
+var $H = Hash.create;
 
 Array.inject({
 	generics: true,
@@ -429,12 +456,7 @@ Array.inject({
 	generics: true,
 
 	each: function(iter, bind) {
-		try {
-			Array.prototype.forEach.call(this, Base.iterator(iter), bind = bind || this);
-		} catch (e) {
-			if (e !== Base.stop) throw e;
-		}
-		return bind;
+		return Base.each(this, iter, bind, true); 
 	},
 
 	collect: function(iter, bind) {
@@ -614,7 +636,7 @@ Array.inject(new function() {
 	};
 });
 
-$A = Array.create;
+var $A = Array.create;
 
 Function.inject(new function() {
 
@@ -699,6 +721,12 @@ String.inject({
 
 	toFloat: Number.prototype.toFloat,
 
+	capitalize: function() {
+		return this.replace(/\b[a-z]/g, function(match) {
+			return match.toUpperCase();
+		});
+	},
+
 	camelize: function(separator) {
 		return this.replace(separator ? new RegExp('[' + separator + '](\\w)', 'g') : /-(\w)/g, function(all, chr) {
 			return chr.toUpperCase();
@@ -714,12 +742,6 @@ String.inject({
 
 	hyphenate: function(separator) {
 		return this.uncamelize(separator || '-').toLowerCase();
-	},
-
-	capitalize: function() {
-		return this.replace(/\b[a-z]/g, function(match) {
-			return match.toUpperCase();
-		});
 	},
 
 	escapeRegExp: function() {
@@ -786,12 +808,11 @@ Array.inject({
 
 	rgbToHex: function(toArray) {
 		if (this.length >= 3) {
-			if (this.length == 4 && this[3] == 0 && !toArray) return 'transparent';
+			if (this.length == 4 && this[3] == 0 && !toArray)
+				return 'transparent';
 			var hex = [];
-			for (var i = 0; i < 3; i++) {
-				var bit = (this[i] - 0).toString(16);
-				hex.push(bit.length == 1 ? '0' + bit : bit);
-			}
+			for (var i = 0; i < 3; i++)
+				hex.push((this[i] - 0).toPaddedString(2, 16));
 			return toArray ? hex : '#' + hex.join('');
 		}
 	},
@@ -802,7 +823,7 @@ Array.inject({
 		var max = Math.max(r, g, b), min = Math.min(r, g, b);
 		var delta = max - min;
 		brightness = max / 255;
-		saturation = (max != 0) ? delta / max : 0;
+		saturation = max != 0 ? delta / max : 0;
 		if (saturation == 0) {
 			hue = 0;
 		} else {
@@ -852,7 +873,7 @@ String.inject({
 	}
 });
 
-Json = function(JSON) {
+var Json = function(JSON) {
 	var special = { '\b': '\\b', '\t': '\\t', '\n': '\\n', '\f': '\\f', '\r': '\\r', '"' : '\\"', "'" : "\\'", '\\': '\\\\' };
 	return {
 		encode: JSON
@@ -916,7 +937,7 @@ Json = function(JSON) {
 	};
 }(this.JSON);
 
-Browser = new function() {
+var Browser = new function() {
 	var name = window.orientation != undefined ? 'ipod'
 			: (navigator.platform.match(/mac|win|linux|nix/i) || ['other'])[0].toLowerCase();
 	var fields = {
@@ -973,7 +994,7 @@ Browser = new function() {
 	return fields;
 };
 
-DomNodes = Array.extend(new function() {
+var DomNodes = Array.extend(new function() {
 	var unique = 0;
 	return {
 		initialize: function(nodes) {
@@ -1035,7 +1056,7 @@ DomNodes = Array.extend(new function() {
 	};
 });
 
-DomNode = Base.extend(new function() {
+var DomNode = Base.extend(new function() {
 	var nodes = [];
 	var tags = {}, classes = {}, classCheck, unique = 0;
 
@@ -1491,9 +1512,9 @@ DomNode.inject(new function() {
 	return fields;
 });
 
-DomElements = DomNodes.extend();
+var DomElements = DomNodes.extend();
 
-DomElement = DomNode.extend({
+var DomElement = DomNode.extend({
 	_type: 'element',
 	_collection: DomElements,
 
@@ -1615,14 +1636,14 @@ DomElement.inject(new function() {
 	};
 });
 
-$ = DomElement.get;
-$$ = DomElement.getAll;
+var $ = DomElement.get,
+	$$ = DomElement.getAll;
 
-DomTextNode = DomNode.extend({
+var DomTextNode = DomNode.extend({
 	_type: 'textnode'
 });
 
-DomDocument = DomElement.extend({
+var DomDocument = DomElement.extend({
 	_type: 'document',
 
 	initialize: function() {
@@ -1665,7 +1686,7 @@ DomDocument = DomElement.extend({
 	}
 });
 
-Window = DomWindow = DomElement.extend({
+var DomWindow, Window = DomWindow = DomElement.extend({
 	_type: 'window',
 	_initialize: false,
 	_methods: ['close', 'alert', 'prompt', 'confirm', 'blur', 'focus', 'reload'],
@@ -1719,7 +1740,7 @@ DomElement.inject(new function() {
 				y += cur.$[top] || 0;
 			} while((next = DomNode.wrap(cur.$[parent])) && (!iter || iter(cur, next)))
 			return { x: x, y: y };
-		}
+		};
 	}
 
 	function setBounds(fields, offset) {
@@ -1734,7 +1755,7 @@ DomElement.inject(new function() {
 				var val = vals.length ? vals[i++] : vals[name];
 				if (val != null) this.setStyle(name, val);
 			}, this);
-		}
+		};
 	}
 
 	function isBody(that) {
@@ -1780,7 +1801,7 @@ DomElement.inject(new function() {
 		getScrollOffset: function() {
 			return isBody(this)
 				? this.getWindow().getScrollOffset()
-				: getScrollOffset(this);
+			 	: getScrollOffset(this);
 		},
 
 		getScrollSize: function() {
@@ -1925,7 +1946,7 @@ DomElement.inject(new function() {
 	}
 });
 
-DomEvent = Base.extend(new function() {
+var DomEvent = Base.extend(new function() {
 	var keys = {
 		 '8': 'backspace',
 		'13': 'enter',
@@ -1987,12 +2008,6 @@ DomEvent = Base.extend(new function() {
 			}
 		},
 
-		stop: function() {
-			this.stopPropagation();
-			this.preventDefault();
-			return this;
-		},
-
 		stopPropagation: function() {
 			if (this.event.stopPropagation) this.event.stopPropagation();
 			else this.event.cancelBubble = true;
@@ -2004,6 +2019,10 @@ DomEvent = Base.extend(new function() {
 			if (this.event.preventDefault) this.event.preventDefault();
 			else this.event.returnValue = false;
 			return this;
+		},
+
+		stop: function() {
+			return this.stopPropagation().preventDefault();
 		},
 
 		statics: {
@@ -2679,9 +2698,9 @@ DomElement.pseudos = new function() {
 	};
 };
 
-HtmlElements = DomElements.extend();
+var HtmlElements = DomElements.extend();
 
-HtmlElement = DomElement.extend({
+var HtmlElement = DomElement.extend({
 	_collection: HtmlElements
 });
 
@@ -2791,7 +2810,7 @@ String.inject({
 	}
 });
 
-HtmlDocument = DomDocument.extend({
+var HtmlDocument = DomDocument.extend({
 	_collection: HtmlElements
 });
 
@@ -2987,11 +3006,11 @@ HtmlElement.inject({
 	},
 
 	toQueryString: function() {
-		return Base.toQueryString(this.getValues());
+		return Hash.toQueryString(this.getValues());
 	}
 });
 
-HtmlForm = HtmlElement.extend({
+var HtmlForm = HtmlElement.extend({
 	_tag: 'form',
 	_properties: ['action', 'method', 'target'],
 	_methods: ['submit'],
@@ -3009,7 +3028,7 @@ HtmlForm = HtmlElement.extend({
 	}
 });
 
-HtmlFormElement = HtmlElement.extend({
+var HtmlFormElement = HtmlElement.extend({
 	_properties: ['name', 'disabled'],
 	_methods: ['focus', 'blur'],
 
@@ -3021,7 +3040,7 @@ HtmlFormElement = HtmlElement.extend({
 	}
 });
 
-HtmlInput = HtmlFormElement.extend({
+var HtmlInput = HtmlFormElement.extend({
 	_tag: 'input',
 	_properties: ['type', 'checked', 'defaultChecked', 'readOnly', 'maxLength'],
 	_methods: ['click'],
@@ -3039,12 +3058,12 @@ HtmlInput = HtmlFormElement.extend({
 	}
 });
 
-HtmlTextArea = HtmlFormElement.extend({
+var HtmlTextArea = HtmlFormElement.extend({
 	_tag: 'textarea',
 	_properties: ['value']
 });
 
-HtmlSelect = HtmlFormElement.extend({
+var HtmlSelect = HtmlFormElement.extend({
 	_tag: 'select',
 	_properties: ['type', 'selectedIndex'],
 
@@ -3077,7 +3096,7 @@ HtmlSelect = HtmlFormElement.extend({
 	}
 });
 
-HtmlOption = HtmlFormElement.extend({
+var HtmlOption = HtmlFormElement.extend({
 	_tag: 'option',
 	_properties: ['text', 'value', 'selected', 'defaultSelected', 'index']
 });
@@ -3149,15 +3168,15 @@ HtmlFormElement.inject({
 	}
 });
 
-HtmlImage = HtmlElement.extend({
+var HtmlImage = HtmlElement.extend({
 	_tag: 'img',
 	_properties: ['src', 'alt', 'title']
 });
 
-$document = Browser.document = DomNode.wrap(document);
-$window = Browser.window = DomNode.wrap(window).addEvent('unload', DomNode.dispose);
+var $document = Browser.document = DomNode.wrap(document);
+var $window = Browser.window = DomNode.wrap(window).addEvent('unload', DomNode.dispose);
 
-Chain = {
+var Chain = {
 	chain: function(fn) {
 		(this._chain = this._chain || []).push(fn);
 		return this;
@@ -3175,7 +3194,7 @@ Chain = {
 	}
 };
 
-Callback = {
+var Callback = {
 	addEvent: function(type, fn) {
 		var ref = this.events = this.events || {};
 		ref = ref[type] = ref[type] || [];
@@ -3219,7 +3238,7 @@ Callback = {
 	}
 };
 
-Request = Base.extend(Chain, Callback, new function() {
+var Request = Base.extend(Chain, Callback, new function() {
 	var unique = 0;
 
 	function createRequest(that) {
@@ -3414,7 +3433,7 @@ Request = Base.extend(Chain, Callback, new function() {
 						data = data.toQueryString();
 					break;
 				case 'object':
-					data = Base.toQueryString(data);
+					data = Hash.toQueryString(data);
 					break;
 				default:
 					data = data.toString();
@@ -3514,7 +3533,7 @@ HtmlElement.inject({
 	}
 });
 
-Asset = new function() {
+var Asset = new function() {
 	function getProperties(props) {
 		return props ? Hash.create(props).each(function(val, key) {
 			if (/^on/.test(key)) delete this[key];
@@ -3596,7 +3615,7 @@ Asset = new function() {
 	}
 };
 
-Cookie = {
+var Cookie = {
 	set: function(name, value, expires, path) {
 		document.cookie = name + '=' + encodeURIComponent(value) + (expires ? ';expires=' +
 			expires.toGMTString() : '') + ';path=' + (path || '/');
@@ -3611,7 +3630,7 @@ Cookie = {
 	}
 };
 
-Fx = Base.extend(Chain, Callback, {
+var Fx = Base.extend(Chain, Callback, {
 	options: {
 		fps: 50,
 		unit: false,
@@ -3805,7 +3824,7 @@ Fx.CSS = new function() {
 			},
 
 			get: function(value, unit) {
-				return (unit) ? value + unit : value;
+				return unit ? value + unit : value;
 			}
 		}
 	});

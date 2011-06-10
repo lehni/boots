@@ -1,8 +1,19 @@
-new function() { 
+var Base = new function() { 
+	var hidden = /^(statics|generics|preserve|enumerable|beans|prototype)$/,
+		proto = Object.prototype,
+		has = proto.hasOwnProperty,
+		proto = Array.prototype,
+		slice = proto.slice,
+		forEach = proto.forEach = proto.forEach || function(iter, bind) {
+			for (var i = 0, l = this.length; i < l; i++)
+				iter.call(bind, this[i], i, this);
+		},
+		forIn = function(iter, bind) {
+			for (var i in this)
+				if (this.hasOwnProperty(i))
+					iter.call(bind, this[i], i, this);
 
-	function has(obj, name) {
-		return obj.hasOwnProperty(name);
-	}
+		};
 
 	function define(obj, name, desc) {
 		try {
@@ -17,8 +28,9 @@ new function() {
 		try {
 			return Object.getOwnPropertyDescriptor(obj, name);
 		} catch (e) {
-			return has(obj, name)
-				? { enumerable: true, configurable: true, writable: true, value: obj[name] }
+			return has.call(obj, name)
+				? { value: obj[name], enumerable: true, configurable: true,
+						writable: true }
 				: null;
 		}
 	}
@@ -27,37 +39,58 @@ new function() {
 		var beans, bean;
 
 		function field(name, val, dontCheck, generics) {
-			var val = val || (val = describe(src, name)) && (val.get ? val : val.value),
-				func = typeof val == 'function', res = val,
-				prev = preserve || func ? (val && val.get ? name in dest : dest[name]) : null;
-			if (generics && func && (!preserve || !generics[name])) generics[name] = function(bind) {
-				return bind && dest[name].apply(bind,
-					Array.prototype.slice.call(arguments, 1));
+			var val = val || (val = describe(src, name))
+					&& (val.get ? val : val.value),
+				func = typeof val == 'function',
+				res = val,
+				prev = preserve || func
+					? (val && val.get ? name in dest : dest[name]) : null;
+			if (generics && func && (!preserve || !generics[name])) {
+				generics[name] = function(bind) {
+					return bind && dest[name].apply(bind,
+							slice.call(arguments, 1));
+				}
 			}
-			if ((dontCheck || val !== undefined && has(src, name)) && (!preserve || !prev)) {
+			if ((dontCheck || val !== undefined && has.call(src, name))
+					&& (!preserve || !prev)) {
 				if (func) {
 					if (prev && /\bthis\.base\b/.test(val)) {
-						while (prev._version && prev._version != version && prev._dest == dest)
+						while (prev._version && prev._version != version
+								&& prev._dest == dest)
 							prev = prev._previous;
 						var fromBase = base && base[name] == prev;
-						res = (function() {
+						res = function() {
 							var tmp = describe(this, 'base');
-							define(this, 'base', { value: fromBase ? base[name] : prev, configurable: true });
-							try { return val.apply(this, arguments); }
-							finally { tmp ? define(this, 'base', tmp) : delete this.base; }
-						}).pretend(val);
+							define(this, 'base', { value: fromBase
+								? base[name] : prev, configurable: true });
+							try {
+								return val.apply(this, arguments);
+							} finally {
+								tmp ? define(this, 'base', tmp)
+									: delete this.base;
+							}
+						};
+						res.toString = function() {
+							return val.toString();
+						}
+						res.valueOf = function() {
+							return val.valueOf();
+						}
 						if (version) {
 							res._version = version;
 							res._previous = prev;
 							res._dest = dest;
 						}
 					}
-					if (beans && (bean = name.match(/^(get|is)(([A-Z])(.*))$/)))
+					if (beans && val.length == 0
+							&& (bean = name.match(/^(get|is)(([A-Z])(.*))$/)))
 						beans.push([ bean[3].toLowerCase() + bean[4], bean[2] ]);
 				}
-				if (!res || func || res instanceof java.lang.Object || !res.get && !res.set)
+				if (!res || func || res instanceof java.lang.Object
+						|| !res.get && !res.set)
 					res = { value: res, writable: true };
-				if ((describe(dest, name) || { configurable: true }).configurable) {
+				if ((describe(dest, name)
+						|| { configurable: true }).configurable) {
 					res.configurable = true;
 					res.enumerable = enumerable;
 				}
@@ -67,7 +100,7 @@ new function() {
 		if (src) {
 			beans = src.beans && [];
 			for (var name in src)
-				if (has(src, name) && !/^(statics|generics|preserve|beans|prototype)$/.test(name))
+				if (has.call(src, name) && !hidden.test(name))
 					field(name, null, true, generics);
 			for (var i = 0, l = beans && beans.length; i < l; i++)
 				try {
@@ -78,10 +111,11 @@ new function() {
 					}, true);
 				} catch (e) {}
 		}
+		return dest;
 	}
 
 	function extend(obj) {
-		function ctor(dont) {
+		var ctor = function(dont) {
 			if (this.initialize && dont !== ctor.dont)
 				return this.initialize.apply(this, arguments);
 		}
@@ -92,19 +126,51 @@ new function() {
 		return ctor;
 	}
 
+	function iterator(iter) {
+		return !iter
+			? function(val) { return val }
+			: typeof iter !== 'function'
+				? function(val) { return val == iter }
+				: iter;
+	}
+
+	function each(obj, iter, bind, asArray) {
+		try {
+			if (obj)
+				(asArray || asArray === undefined && Base.type(obj) == 'array'
+					? forEach : forIn).call(obj, iterator(iter),
+						bind = bind || obj);
+		} catch (e) {
+			if (e !== Base.stop) throw e;
+		}
+		return bind;
+	}
+
+	function clone(obj) {
+		return each(obj, function(val, i) {
+			this[i] = val;
+		}, new obj.constructor());
+	}
+
 	inject(Function.prototype, {
 		inject: function(src) {
 			if (src) {
-				var proto = this.prototype, base = proto.__proto__ && proto.__proto__.constructor;
+				var proto = this.prototype,
+					base = proto.__proto__ && proto.__proto__.constructor,
+					statics = src.statics == true ? src : src.statics;
 				var version = (this == HopObject || proto instanceof HopObject)
-						&& (proto.constructor._version || (proto.constructor._version = 1));
-				inject(proto, src, false, base && base.prototype, src.preserve, src.generics && this, version);
-				inject(this, src.statics, true, base, src.preserve, null, version);
+						&& (proto.constructor._version
+						|| (proto.constructor._version = 1));
+				if (statics != src)
+					inject(proto, src, src.enumerable, base && base.prototype,
+							src.preserve, src.generics && this, version);
+				inject(this, statics, true, base, src.preserve, null, version);
 				if (version) {
 					var update = proto.onCodeUpdate;
 					if (!update || !update._wrapped) {
 						var res = function(name) {
-							this.constructor._version = (this.constructor._version || 0) + 1;
+							this.constructor._version =
+								(this.constructor._version || 0) + 1;
 							if (update)
 								update.call(this, name);
 						};
@@ -127,37 +193,18 @@ new function() {
 		},
 
 		extend: function(src) {
-			var proto = new this(this.dont), ctor = extend(proto);
-			define(proto, 'constructor', { value: ctor, writable: true, configurable: true });
+			var proto = new this(this.dont),
+				ctor = extend(proto);
+			define(proto, 'constructor',
+					{ value: ctor, writable: true, configurable: true });
 			ctor.dont = {};
 			inject(ctor, this, true);
 			return arguments.length ? this.inject.apply(ctor, arguments) : ctor;
-		},
-
-		pretend: function(fn) {
-			this.toString = function() {
-				return fn.toString();
-			}
-			this.valueOf = function() {
-				return fn.valueOf();
-			}
-			return this;
 		}
 	});
-
-	function each(obj, iter, bind) {
-		return obj ? (typeof obj.length == 'number'
-			? Array : Hash).prototype.each.call(obj, iter, bind) : bind;
-	}
-
-	Base = Object.inject({
-		has: function(name) {
-			return has(this, name);
-		},
-
-		each: function(iter, bind) {
-			return each(this, iter, bind);
-		},
+	return Object.inject({
+		has: has,
+		each: each,
 
 		inject: function() {
 			for (var i = 0, l = arguments.length; i < l; i++)
@@ -170,11 +217,24 @@ new function() {
 			return res.inject.apply(res, arguments);
 		},
 
+		each: function(iter, bind) {
+			return each(this, iter, bind);
+		},
+
+		clone: function() {
+			return clone(this);
+		},
+
 		statics: {
-			has: has,
 			each: each,
+			clone: clone,
 			define: define,
 			describe: describe,
+			iterator: iterator,
+
+			has: function(obj, name) {
+				return has.call(obj, name);
+			},
 
 			type: function(obj) {
 				return (obj || obj === 0) && (obj._type
@@ -193,45 +253,19 @@ new function() {
 				return null;
 			},
 
-			iterator: function(iter) {
-				return !iter
-					? function(val) { return val }
-					: typeof iter != 'function'
-						? function(val) { return val == iter }
-						: iter;
-			},
-
 			stop: {}
-		}
-	}, {
-		generics: true,
-
-		debug: function() {
-			return /^(string|number|function|regexp)$/.test(Base.type(this)) ? this
-				: Base.each(this, function(val, key) { this.push(key + ': ' + val); }, []).join(', ');
-		},
-
-		clone: function() {
-			return Base.each(this, function(val, i) {
-				this[i] = val;
-			}, new this.constructor());
-		},
-
-		toQueryString: function() {
-			return Base.each(this, function(val, key) {
-				this.push(key + '=' + escape(val));
-			}, []).join('&');
 		}
 	});
 }
 
-$each = Base.each;
-$type = Base.type;
-$check = Base.check;
-$pick = Base.pick;
-$stop = $break = Base.stop;
+var $each = Base.each,
+	$type = Base.type,
+	$check = Base.check,
+	$pick = Base.pick,
+	$stop = Base.stop,
+	$break = $stop;
 
-Enumerable = {
+var Enumerable = {
 	generics: true,
 	preserve: true,
 
@@ -338,7 +372,7 @@ Enumerable = {
 	}
 };
 
-Hash = Base.extend(Enumerable, {
+var Hash = Base.extend(Enumerable, {
 	generics: true,
 
 	initialize: function(arg) {
@@ -352,15 +386,7 @@ Hash = Base.extend(Enumerable, {
 	},
 
 	each: function(iter, bind) {
-		var bind = bind || this, iter = Base.iterator(iter);
-		try {
-			for (var i in this)
-				if (this.hasOwnProperty(i))
-					iter.call(bind, this[i], i, this);
-		} catch (e) {
-			if (e !== Base.stop) throw e;
-		}
-		return bind;
+		return Base.each(this, iter, bind, false); 
 	},
 
 	append: function() {
@@ -395,6 +421,12 @@ Hash = Base.extend(Enumerable, {
 		}, { size: 0 }).size;
 	},
 
+	toQueryString: function() {
+		return Base.each(this, function(val, key) {
+			this.push(key + '=' + escape(val));
+		}, []).join('&');
+	},
+
 	statics: {
 		create: function(obj) {
 			return arguments.length == 1 && obj.constructor == Hash
@@ -409,7 +441,7 @@ Hash = Base.extend(Enumerable, {
 	}
 });
 
-$H = Hash.create;
+var $H = Hash.create;
 
 Array.inject(Enumerable, {
 	generics: true,
@@ -417,12 +449,7 @@ Array.inject(Enumerable, {
 	_type: 'array',
 
 	each: function(iter, bind) {
-		try {
-			Array.prototype.forEach.call(this, Base.iterator(iter), bind = bind || this);
-		} catch (e) {
-			if (e !== Base.stop) throw e;
-		}
-		return bind;
+		return Base.each(this, iter, bind, true); 
 	},
 
 	collect: function(iter, bind) {
@@ -596,7 +623,7 @@ Array.inject(new function() {
 	};
 });
 
-$A = Array.create;
+var $A = Array.create;
 
 Function.inject(new function() {
 
@@ -655,6 +682,12 @@ String.inject({
 
 	toFloat: Number.prototype.toFloat,
 
+	capitalize: function() {
+		return this.replace(/\b[a-z]/g, function(match) {
+			return match.toUpperCase();
+		});
+	},
+
 	camelize: function(separator) {
 		return this.replace(separator ? new RegExp('[' + separator + '](\\w)', 'g') : /-(\w)/g, function(all, chr) {
 			return chr.toUpperCase();
@@ -670,12 +703,6 @@ String.inject({
 
 	hyphenate: function(separator) {
 		return this.uncamelize(separator || '-').toLowerCase();
-	},
-
-	capitalize: function() {
-		return this.replace(/\b[a-z]/g, function(match) {
-			return match.toUpperCase();
-		});
 	},
 
 	escapeRegExp: function() {
@@ -738,12 +765,11 @@ Array.inject({
 
 	rgbToHex: function(toArray) {
 		if (this.length >= 3) {
-			if (this.length == 4 && this[3] == 0 && !toArray) return 'transparent';
+			if (this.length == 4 && this[3] == 0 && !toArray)
+				return 'transparent';
 			var hex = [];
-			for (var i = 0; i < 3; i++) {
-				var bit = (this[i] - 0).toString(16);
-				hex.push(bit.length == 1 ? '0' + bit : bit);
-			}
+			for (var i = 0; i < 3; i++)
+				hex.push((this[i] - 0).toPaddedString(2, 16));
 			return toArray ? hex : '#' + hex.join('');
 		}
 	},
@@ -754,7 +780,7 @@ Array.inject({
 		var max = Math.max(r, g, b), min = Math.min(r, g, b);
 		var delta = max - min;
 		brightness = max / 255;
-		saturation = (max != 0) ? delta / max : 0;
+		saturation = max != 0 ? delta / max : 0;
 		if (saturation == 0) {
 			hue = 0;
 		} else {
@@ -804,7 +830,7 @@ String.inject({
 	}
 });
 
-Json = {
+var Json = {
 	encode: function(obj, properties) {
 		return Base.type(obj) != 'java' ? JSON.stringify(obj, properties) : null;
 	},
