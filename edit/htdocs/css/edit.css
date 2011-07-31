@@ -163,7 +163,7 @@
 	border: 1px solid #000;
 	left: 32px;
 	top: 32px;
-	z-index: 100;
+	z-index: 1000;
 }
 
 .edit-preview a {
