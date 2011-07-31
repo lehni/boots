@@ -92,7 +92,8 @@ HopObject.inject({
 	 * simple template.
 	 */
 	renderHtml: function(param, out) {
-		param.title = param.title || this.getDisplayName && this.getDisplayName() || this.name;
+		param.title = param.title != null ? param.title : this.getDisplayName
+				? this.getDisplayName() : this.name;
 		return this.renderTemplate('html', param, out);
 	},
 
@@ -101,7 +102,8 @@ HopObject.inject({
 	 * TODO: Maybe merge both templates using switches?
 	 */
 	renderPopup: function(param, out) {
-		param.title = param.title || this.getDisplayName && this.getDisplayName() || this.name;
+		param.title = param.title != null ? param.title : this.getDisplayName
+				? this.getDisplayName() : this.name;
 		return this.renderTemplate('popup', param, out);
 	},
 
