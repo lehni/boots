@@ -10,17 +10,30 @@ Markup = {
 		var start = 0, end = 0;
 		// Current tag:
 		var tag = rootTag;
+		function addString(str) {
+			// 'Unescape' escape characters, such as '\<', '\>'
+			tag.nodes.push(str.replace(/\\(.)/g, function(all, chr) {
+				return chr;
+			}));
+		}
 		while (start != -1) { 
 			start = text.indexOf('<', end);
+			// Filter out escaped '\<'
+			while (start > 0 && text.charAt(start - 1) == '\\')
+				start = text.indexOf('<', start + 1);
 			if (start > end)
-				tag.nodes.push(text.substring(end, start));
+				addString(text.substring(end, start));
 			if (start >= 0) {
-				end = text.indexOf('>', start) + 1;
-				if (end <= start) {
-					// Non-closed tag:
-					tag.nodes.push(text.substring(start));
+				end = text.indexOf('>', start);
+				// Filter out escaped '\>'
+				while (end > 0 && text.charAt(end - 1) == '\\')
+					end = text.indexOf('>', end + 1);
+				if (end == -1) {
+					// Non-closing tag. Add rest of string and bail out
+					addString(text.substring(start));
 					break;
 				}
+				end++; // Increase by one since we're using it for substring()
 				var closing = text.charAt(start + 1) == '/';
 				// empty = contentless tag: <tag/>
 				var empty = !closing && text.charAt(end - 2) == '/';
@@ -55,7 +68,7 @@ Markup = {
 						start = text.indexOf(close, end);
 						if (start >= 0) {
 							// Found it, add the part
-							tag.nodes.push(text.substring(end, start));
+							addString(text.substring(end, start));
 							end = start + close.length;
 							// Close this tag now (see below):
 							closeTag = tag;

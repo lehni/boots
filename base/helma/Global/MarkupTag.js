@@ -25,7 +25,8 @@ MarkupTag = Base.extend(new function() {
 				attribute = match[1];
 			} else { // string or value
 				// Do not eval match[2] as it might contain line breaks which
-				// will throw errors.
+				// will throw errors. Instead, just take away the quotes and
+				// filter out escape chars.
 				var value = match[2];
 				value = value 
 						&& value.substring(1, value.length - 1).replace(
