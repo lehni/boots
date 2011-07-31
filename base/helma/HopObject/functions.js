@@ -23,6 +23,52 @@ HopObject.inject({
 		return false;
 	},
 
+	getParent: function() {
+		// to be used wherever _parent is accessed, so apps can override
+		// the way parents are handled (e.g. liento)
+		return this._parent; // default is returning _parent
+	},
+
+	isParent: function(item) {
+		return this.getParent() == item;
+	},
+
+	/**
+	 * Checks whether the specified item is a child of the item.
+	 * 
+	 * @param {Item} item The item to check against
+	 * @return {Boolean} {@true it is a child of the item}
+	 */
+	isChild: function(item) {
+		return item && item.getParent() == this;
+	},
+
+	/**
+	 * Checks if the item is contained within the specified item.
+	 * 
+	 * @param {Item} item The item to check against
+	 * @return {Boolean} {@true if it is inside the specified item}
+	 */
+	isDescendant: function(item) {
+		var parent = this;
+		while (parent = parent.getParent()) {
+			if (parent == item)
+				return true;
+		}
+		return false;
+	},
+
+	/**
+	 * Checks if the item is an ancestor of the specified item.
+	 * 
+	 * @param {Item} item the item to check against
+	 * @return {Boolean} {@true if the item is an ancestor of the specified
+	 * item}
+	 */
+	isAncestor: function(item) {
+		return item ? item.isDescendant(this) : false;
+	},
+
 	/**
 	 * Parses the text into a helma skin and renders it. This will be deprecated
 	 * in favour of Markup.js and Template.js
@@ -132,12 +178,6 @@ HopObject.inject({
 		// to another persisted node before creation is finished.
 		// See EditNode#initialize
 		return this._prototype + '-' + (this.cache.creationId || this._id);
-	},
-
-	getParent: function() {
-		// to be used wherever _parent is accessed, so apps can override
-		// the way parents are handled (e.g. liento)
-		return this._parent; // default is returning _parent
 	},
 
 	/**
