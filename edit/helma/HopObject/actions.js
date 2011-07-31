@@ -12,6 +12,7 @@ HopObject.inject({
 	login_action: function() {
 		this.handleLogin();
 		this.renderHtml({
+			title: 'Login',
 			content: this.renderTemplate("editLogin")
 		}, res);
 	},
