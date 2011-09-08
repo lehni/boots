@@ -31,7 +31,7 @@ var Base = new function() {
 
 		function field(name, dontCheck, generics) {
 			var val = src[name],
-				func = typeof val == 'function',
+				func = typeof val === 'function',
 				res = val,
 				prev = dest[name];
 			if (generics && func && (!preserve || !generics[name])) {
@@ -1229,10 +1229,10 @@ DomNode.inject(new function() {
 		'disabled', 'readonly', 'multiple', 'selected', 'noresize', 'defer'
 	].associate();
 	var properties = Hash.append({ 
-		text: Browser.TRIDENT || Browser.WEBKIT && Browser.VERSION < 420 || Browser.PRESTO && Browser.VERSION < 9
-			? function(node) {
-				return node.$.innerText !== undefined ? 'innerText' : 'nodeValue'
-			} : 'textContent',
+		text: (function() {
+			var div = document.createElement('div');
+			return div.textContent == null ? 'innerText' : 'textContent';
+		})(),
 		html: 'innerHTML', 'class': 'className', className: 'className', 'for': 'htmlFor'
 	}, [ 
 		'value', 'accessKey', 'cellPadding', 'cellSpacing', 'colSpan',
@@ -1528,7 +1528,7 @@ var DomElement = DomNode.extend({
 		},
 
 		create: function(tag, props, doc) {
-			if (Browser.TRIDENT && props) {
+			if (Browser.TRIDENT && Browser.VERSION < 8 && props) {
 				['name', 'type', 'checked'].each(function(key) {
 					if (props[key]) {
 						tag += ' ' + key + '="' + props[key] + '"';
