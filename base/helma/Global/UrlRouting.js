@@ -158,7 +158,7 @@ UrlRoute.prototype.match = function(level, name) {
 			return part.name == name;
 		}
 	}
-}
+};
 
 /**
  * UrlRouteHandler
@@ -234,12 +234,11 @@ UrlRouteHandler.prototype = {
 			// if there are still more than one, take the first and report
 			// wrong routing setup to user through log:
 			if (routes.length > 1) {
-				res.push();
-				res.writeln('UrlRouting Error: More than one route possible:');
+				var lines = ['UrlRouting Error: More than one route possible:'];
 				for (var i = 0; i < routes.length; i++) {
-					res.writeln(routes[i].path);
+					lines.push(routes[i].path);
 				}
-				app.log(res.pop());
+				app.log(lines.join(Template.lineBreak));
 			}
 
 			var route = routes[0];
@@ -263,7 +262,11 @@ UrlRouteHandler.prototype = {
 			} else if (route.handler) {
 				// If it's calling a handler, a argument list is set up and
 				// passed when calling the handler function
-				var handler = this.object[route.handler];
+				var handler = route.handler;
+				// Support both functions and strings which are looked up in the
+				// object itself
+				if (typeof handler != 'function')
+					handler = this.object[handler];
 				if (handler) {
 					// fill arguments list:
 					var args = [];

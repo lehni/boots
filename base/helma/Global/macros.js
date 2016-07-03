@@ -71,6 +71,6 @@ function random_macro(param, first, second) {
 		res.write(Math.random());
 }
  
-// dummy macro named __ in order to create comments in skins like this: <%__ comment %>
+// Dummy macro named __ in order to create comments in skins like this: <%__ comment %>
 function ___macro(param) {
 }

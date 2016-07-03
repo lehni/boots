@@ -3,9 +3,11 @@ NumberItem = EditItem.extend({
 	_scale: true,
 
 	render: function(baseForm, name, value, param, out) {
+		// TODO: What if value is 0? Shouldn't we use it then? Check for
+		// undefined instead?
 		var def = value || this.defaultValue || "''";
 		Html.input({
-			type: 'text', name: name, size: this.size || '5', value: value, 
+			type: 'text', name: name, size: this.size || '5', value: value,
 			onChange: baseForm.renderHandle('number_format', name, this.type,
 				def, this.minValue, this.maxValue),
 			className: this.className

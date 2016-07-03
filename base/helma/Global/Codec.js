@@ -34,6 +34,7 @@ Codec = new function() {
 	}
 
 	return {
+		// When injecting into global, do not override existing methods
 		preserve: true,
 
 		encode: encode,

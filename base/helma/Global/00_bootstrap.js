@@ -41,7 +41,7 @@ var Base = new function() {
 		function field(name, val, dontCheck, generics) {
 			var val = val || (val = describe(src, name))
 					&& (val.get ? val : val.value),
-				func = typeof val == 'function',
+				func = typeof val === 'function',
 				res = val,
 				prev = preserve || func
 					? (val && val.get ? name in dest : dest[name]) : null;

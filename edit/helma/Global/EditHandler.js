@@ -113,6 +113,17 @@ EditHandler = Base.extend(new function() {
 					res.push();
 					try {
 						if (!fullId) {
+							var hasEdit = false;
+							for (var key in req.data) {
+								if (/^edit_/.test(key)) {
+									hasEdit = true;
+									break;
+								}
+							}
+							if (!hasEdit) {
+								app.log('HACK ATTEMPT? ' + req.data.http_remotehost);
+								return false;
+							}
 							throw 'A rare error has occured, as a result of '
 								+ 'which your changes were unfortunately lost. '
 								+ 'If text was lost, it may be restored from '

@@ -8,7 +8,7 @@ Html = new function() {
 	};
 
 	// Block tags are tags that require to be rendered outside of paragraphs.
-	var blockTags = 'address,dir,div,table,blockquote,center,dl,fieldset,form,h1,h2,h3,h4,h5,h6,hr,isindex,ol,p,pre,ul,script,canvas'
+	var blockTags = 'address,dir,div,table,blockquote,center,dl,fieldset,form,h1,h2,h3,h4,h5,h6,hr,isindex,ol,p,pre,ul'
 		.split(',').each(function(tag) {
 			this[tag] = true;
 		}, {});
@@ -101,6 +101,8 @@ Html = new function() {
 
 		textarea: function(attributes, out) {
 			var value = attributes.value;
+			// TODO: Do not modify passed objets, instead add filter to
+			// Html.element()
 			delete attributes.value;
 			// Form elements should have both id and name
 			if (!attributes.id)
@@ -114,8 +116,12 @@ Html = new function() {
 			if (asString)
 				(out = res).push();
 
-			var options = attributes.options;
+			var options = attributes.options,
+				current = attributes.current;
+			// TODO: Do not modify passed objets, instead add filter to
+			// Html.element()
 			delete attributes.options;
+			delete attributes.current;
 			// Form elements should have both id and name
 			if (!attributes.id)
 				attributes.id = attributes.name;
@@ -126,26 +132,31 @@ Html = new function() {
 				var option = options[i];
 				if (option == null)
 					continue;
+				var name, value, seleced;
 				if (typeof option == 'object') {
-					if (option.name == null) {
-						option.name = option.value;
-					} else if (option.value == null) {
-						option.value = option.name;
+					name = option.name;
+					value = option.value;
+					selected = option.selected;
+					if (name == null) {
+						name = value;
+					} else if (value == null) {
+						value = name;
 					}
 				} else {
-					option = {
-						name: option, 
-						value: option
-					};
+					name = value = option;
+					selected = false;
 				}
-				if (option.selected || option.value == attributes.current) {
+				// Create a copy now, to be modified before rendered.
+				option = {
+					name: name,
+					value: value
+				};
+				if (selected || value == current) {
 					// Setting selected to null causes an non-xhtml attribute
 					// without a value in Html.attributes() (<... selected ...>)
 					option.selected = Html.XHTML ? 'selected' : null;
-				} else {
-					delete option.selected;
 				}
-				Html.element('option', option, option.name, out);
+				Html.element('option', option, name, out);
 			}
 			out.write('</select>');
 
@@ -168,6 +179,8 @@ Html = new function() {
 			// Form elements should have both id and name
 			if (attributes.id === undefined)
 				attributes.id = attributes.name;
+			// TODO: Do not modify passed objets, instead add filter to
+			// Html.element()
 			delete attributes.current;
 			return Html.element('input', attributes, null, out);
 		},

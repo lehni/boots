@@ -1,0 +1,11 @@
+- Add nowrap tag to code
+
+- Remember text edit resized sizes. per-name cookies?
+
+- Upload button in Attachment lists (similar to preview?)
+
+- Fix issue with not using Prototype.inject() and getEditForm (EditNode parent history does not get corrected if inject is not used)
+
+- User Account Password Resetter Email
+
+Ã Support case insensitive attributes in Markup
