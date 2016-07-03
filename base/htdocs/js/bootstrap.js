@@ -587,7 +587,7 @@ Array.inject({
 Array.inject(new function() {
 	var proto = Array.prototype, fields = ['push','pop','shift','unshift','sort',
 		'reverse','join','slice','splice','forEach','indexOf','lastIndexOf',
-		'filter','map','every','some','reduce','concat'].each(function(name) {
+		'filter','map','every','some','reduce','concat','find'].each(function(name) {
 		this[name] = proto[name];
 	}, { generics: true, preserve: true });
 
